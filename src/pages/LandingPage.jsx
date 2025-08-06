@@ -1,20 +1,38 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, FolderOpen, Plus, Book, Users } from 'lucide-react';
-import { getProsjekter } from '../api/index';
+import { getProsjekter } from '../api/endpoints';
 import { useQuery } from '@tanstack/react-query';
 
 export default function LandingPage() {
-  const { data, isLoading } = useQuery({
+  console.log('LandingPage: Component mounting, about to make API call');
+  
+  const { data, isLoading, error } = useQuery({
     queryKey: ['projects_list'],
     queryFn: getProsjekter,
     select: res => res.data,
-    refetchOnWindowFocus: true
+    refetchOnWindowFocus: true,
+    onError: (error) => {
+      console.error('LandingPage: API call failed:', error);
+    },
+    onSuccess: (data) => {
+      console.log('LandingPage: API call succeeded:', data);
+    }
   });
+
+  console.log('LandingPage: Query state - isLoading:', isLoading, 'error:', error, 'data:', data);
 
   const projects = data || [];
 
-  if (isLoading) return <div>Laster prosjekter...</div>;
+  if (isLoading) {
+    console.log('LandingPage: Showing loading state');
+    return <div>Laster prosjekter...</div>;
+  }
+
+  if (error) {
+    console.log('LandingPage: Showing error state:', error);
+    return <div>Feil ved lasting av prosjekter: {error.message}</div>;
+  }
 
   return (
     <div className="bg-white min-h-screen">

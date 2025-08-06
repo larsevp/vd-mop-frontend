@@ -4,25 +4,37 @@ import AppRouter from './AppRouter';
 import { MsalProvider, AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from '@azure/msal-react';
 import { useAuth } from './hooks/useAuth';
 import LoadingSpinner from './components/LoadingSpinner';
-import ErrorPage from './pages/ErrorPage';
+import StatusPage from './pages/StatusPage';
 import { loginRequest } from './msalConfig';
 
 function UnauthenticatedRedirect() {
-  const { instance } = useMsal();
   const location = useLocation();
+  const { instance } = useMsal();
 
+  console.log('UnauthenticatedRedirect: Current location:', location.pathname);
+
+  // DEBUG: Check MSAL state
   useEffect(() => {
-    // Store the intended destination and redirect directly to Microsoft SSO
-    const returnUrl = location.pathname + location.search;
-    
-    instance.loginRedirect({
-      ...loginRequest,
-      state: JSON.stringify({ returnUrl })
-    }).catch(error => {
-      // Login redirect failed - redirect to login page for error handling
+    const checkMsalState = async () => {
+      await instance.initialize();
+      const accounts = instance.getAllAccounts();
+      console.log('UnauthenticatedRedirect: MSAL accounts:', accounts);
+      console.log('UnauthenticatedRedirect: MSAL cache:', instance.getTokenCache());
+    };
+    checkMsalState();
+  }, [instance]);
+
+  // Instead of auto-redirecting to Microsoft, redirect to our login page
+  // This gives users choice between SSO and manual login
+  useEffect(() => {
+    // Only redirect if not already on a login page
+    if (!location.pathname.includes('login')) {
+      console.log('UnauthenticatedRedirect: Redirecting to /login from:', location.pathname);
       window.location.href = '/login';
-    });
-  }, [instance, location]);
+    } else {
+      console.log('UnauthenticatedRedirect: Already on login page, not redirecting');
+    }
+  }, [location]);
 
   return <LoadingSpinner />;
 }
@@ -30,29 +42,31 @@ function UnauthenticatedRedirect() {
 function AuthenticatedApp() {
   const { syncStatus, syncError, authErrorCount } = useAuth();
 
+  // DEBUG: Log current status
+  console.log('AuthenticatedApp - syncStatus:', syncStatus, 'syncError:', syncError);
+
   // Show loading spinner during authentication sync
   if (syncStatus === 'syncing') {
+    console.log('Showing LoadingSpinner due to syncing status');
     return <LoadingSpinner />;
   }
 
+  // RE-ENABLED - to see auth errors during debugging
   // Show error page if authentication fails (including runtime 401 errors)
   if (syncStatus === 'error') {
-    return <ErrorPage error={syncError} />;
+    console.log('Showing StatusPage due to error status:', syncError);
+    return <StatusPage type="sync-error" error={syncError} showRefreshButton={true} showLogoutButton={true} />;
   }
 
-  // Show main app if authentication succeeds
+  // Show main app if authentication succeeds (or even if there are errors - for debugging)
+  console.log('Showing AppRouter due to success status');
   return <AppRouter />;
 }
 
 export default function App({ msalInstance }) {
   return (
     <MsalProvider instance={msalInstance}>
-      <AuthenticatedTemplate>
-        <AuthenticatedApp />
-      </AuthenticatedTemplate>
-      <UnauthenticatedTemplate>
-        <UnauthenticatedRedirect />
-      </UnauthenticatedTemplate>
+      <AppRouter />
     </MsalProvider>
   );
 }

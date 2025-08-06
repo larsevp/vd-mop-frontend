@@ -3,9 +3,11 @@ import { List, Briefcase, Home, ArrowLeft } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useMsal } from '@azure/msal-react';
 import { useUserStore } from './stores/store';
+import LogoutButton from './components/LogoutButton';
 
 export default function HeaderNav({ showBackButton = false }) {
   const name = useUserStore(state => state.name);
+  const user = useUserStore(state => state.user);
   const location = useLocation();
   const navigate = useNavigate();
   const { accounts } = useMsal();
@@ -70,10 +72,15 @@ export default function HeaderNav({ showBackButton = false }) {
               </ul>
             </nav>
             {/* Show user name and logout button if logged in */}
-            {accounts && accounts.length > 0 && (
+            {(user || (accounts && accounts.length > 0)) && (
               <div className="flex items-center gap-2 ml-4">
-                {name && <span className="text-neutral-700 font-medium">{name}</span>}
-                {/* LogoutButton will be rendered in App */}
+                {/* Display name from either manual login or MSAL */}
+                {(user?.name || user?.navn || name) && (
+                  <span className="text-neutral-700 font-medium">
+                    {user?.name || user?.navn || name}
+                  </span>
+                )}
+                <LogoutButton variant="ghost" className="text-sm" />
               </div>
             )}
           </div>

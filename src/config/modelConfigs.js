@@ -1,5 +1,5 @@
-import { getUsers, deleteUser, createUser, updateUser } from '../api/userApi';
-import { getProsjekter, deleteProsjekt, createProsjekt, updateProsjekt } from '../api/prosjektApi';
+import { getUsers, deleteUser, createUser, updateUser } from '../api/endpoints';
+import { getProsjekter, deleteProsjekt, createProsjekt, updateProsjekt } from '../api/endpoints';
 
 // Centralized model configurations
 export const modelConfigs = {
@@ -17,7 +17,7 @@ export const modelConfigs = {
         { value: 'user', label: 'User' },
         { value: 'admin', label: 'Admin' },
       ] },
-      { name: 'enhet1Id', label: 'Enhet1 ID', type: 'number', required: true },
+      { name: 'enhetId', label: 'Enhet ID', type: 'number', required: true },
     ]
   },
   prosjekter: {

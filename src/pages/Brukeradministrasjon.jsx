@@ -19,6 +19,10 @@ export default function Brukeradministrasjon() {
     });
   }
 
+  function handleBack() {
+    navigate('/');
+  }
+
   return (
     <AdminPage
       title="Brukeradministrasjon"
@@ -26,6 +30,10 @@ export default function Brukeradministrasjon() {
       listTitle="Brukerliste"
       newButtonLabel="Ny bruker"
       onNew={handleNew}
+      onBack={handleBack}
+      showBackButton={true}
+      backButtonLabel="Tilbake til hovedsiden"
+      showNewButton={false}  // Kan settes til false for å skjule knappen
     >
       <RowList
         fields={config.fields}

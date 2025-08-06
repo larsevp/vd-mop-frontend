@@ -19,6 +19,10 @@ export default function Prosjektadministrasjon() {
     });
   }
 
+  function handleBack() {
+    navigate('/');
+  }
+
   return (
     <AdminPage
       title="Prosjektadministrasjon"
@@ -26,6 +30,9 @@ export default function Prosjektadministrasjon() {
       listTitle="Prosjektliste"
       newButtonLabel="Nytt prosjekt"
       onNew={handleNew}
+      onBack={handleBack}
+      showBackButton={true}
+      backButtonLabel="Tilbake til hovedsiden"
     >
       <RowList
         fields={config.fields}

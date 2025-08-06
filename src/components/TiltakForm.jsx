@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { createTiltak } from '../api';
+import { createTiltak } from '../api/endpoints';
 
 export default function TiltakForm({ onSuccess }) {
   const [tittel, setTittel] = useState('');
