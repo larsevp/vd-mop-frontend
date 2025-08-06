@@ -1,0 +1,55 @@
+# dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# testing
+coverage/
+*.lcov
+
+# production build
+build/
+dist/
+
+# misc
+.DS_Store
+.env
+.env.*.local
+*.local
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# IDEs and editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# optional npm cache
+.npm
+
+# Mac system files
+*.DS_Store
+
+# Windows system files
+Thumbs.db
+
+# parcel-bundler cache
+.cache/
+
+# eslint cache
+.eslintcache
+
+# React Native (if relevant)
+.expo/
+
+# typescript
+*.tsbuildinfo
+
+# vite cache
+node_modules/.vite/

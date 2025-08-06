@@ -1,0 +1,48 @@
+import { getUsers, deleteUser, createUser, updateUser } from '../api/userApi';
+import { getProsjekter, deleteProsjekt, createProsjekt, updateProsjekt } from '../api/prosjektApi';
+
+// Centralized model configurations
+export const modelConfigs = {
+  users: {
+    queryKey: ["users"],
+    queryFn: getUsers,
+    createFn: createUser,
+    updateFn: updateUser,
+    deleteFn: deleteUser,
+    modelPrintName: 'bruker',
+    fields: [
+      { name: 'navn', label: 'Navn', type: 'text', required: true },
+      { name: 'epost', label: 'E-post', type: 'email', required: true },
+      { name: 'rolle', label: 'Rolle', type: 'select', required: true, options: [
+        { value: 'user', label: 'User' },
+        { value: 'admin', label: 'Admin' },
+      ] },
+      { name: 'enhet1Id', label: 'Enhet1 ID', type: 'number', required: true },
+    ]
+  },
+  prosjekter: {
+    queryKey: ["prosjekter"],
+    queryFn: getProsjekter,
+    createFn: createProsjekt,
+    updateFn: updateProsjekt,
+    deleteFn: deleteProsjekt,
+    modelPrintName: 'prosjekt',
+    fields: [
+      { name: 'id', label: 'ID', type: 'number', hiddenIndex: true, hiddenEdit: true, hiddenCreate: true },
+      { name: 'prosjektnummer', label: 'Prosjektnummer', type: 'number', hiddenIndex: false, hiddenEdit: false, hiddenCreate: false },
+      { name: 'navn', label: 'Navn', type: 'text', hiddenIndex: false, hiddenEdit: false, hiddenCreate: false },
+      { name: 'beskrivelse', label: 'Beskrivelse', type: 'text', hiddenIndex: false, hiddenEdit: false, hiddenCreate: false },
+      { name: 'enhet1Id', label: 'Enhet1 ID', type: 'number', hiddenIndex: false, hiddenEdit: false, hiddenCreate: false },
+      { name: 'enhet2Id', label: 'Enhet2 ID', type: 'number', hiddenIndex: false, hiddenEdit: false, hiddenCreate: false },
+      { name: 'enhet3Id', label: 'Enhet3 ID', type: 'number', hiddenIndex: false, hiddenEdit: false, hiddenCreate: false },
+      { name: 'userId', label: 'User ID', type: 'number', hiddenIndex: false, hiddenEdit: false, hiddenCreate: false },
+      { name: 'createdBy', label: 'Created By', type: 'number', hiddenIndex: true, hiddenEdit: true, hiddenCreate: true },
+      { name: 'updatedBy', label: 'Updated By', type: 'number', hiddenIndex: true, hiddenEdit: true, hiddenCreate: true },
+    ]
+  }
+};
+
+// Helper function to get config by model type
+export function getModelConfig(modelType) {
+  return modelConfigs[modelType];
+}
