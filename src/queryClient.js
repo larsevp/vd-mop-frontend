@@ -1,4 +1,4 @@
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, QueryCache } from '@tanstack/react-query';
 
 // Global auth error handler - will be set by AuthSync component
 let globalAuthErrorHandler = null;
@@ -14,6 +14,13 @@ export const getGlobalAuthErrorHandler = () => {
 };
 
 export const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: (error) => {
+      if (error?.response?.status === 401 && globalAuthErrorHandler) {
+        globalAuthErrorHandler(error);
+      }
+    }
+  }),
   defaultOptions: {
     queries: {
       //cacheTime: 30 * 60 * 1000, // 30 minutes in milliseconds
@@ -26,11 +33,6 @@ export const queryClient = new QueryClient({
         }
         // Default retry logic for other errors (max 3 retries)
         return failureCount < 3;
-      },
-      onError: (error) => {
-        if (error?.response?.status === 401 && globalAuthErrorHandler) {
-          globalAuthErrorHandler(error);
-        }
       }
     },
     mutations: {
@@ -41,11 +43,6 @@ export const queryClient = new QueryClient({
         }
         // Default retry logic for other errors (max 3 retries)
         return failureCount < 3;
-      },
-      onError: (error) => {
-        if (error?.response?.status === 401 && globalAuthErrorHandler) {
-          globalAuthErrorHandler(error);
-        }
       }
     }
   }

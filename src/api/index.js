@@ -27,13 +27,9 @@ API.interceptors.request.use(async (config) => {
       const result = await msalInstance.acquireTokenSilent({ scopes: [apiScope], account });
       config.headers = config.headers || {};
       config.headers['Authorization'] = `Bearer ${result.accessToken}`;
-      console.log('[API] Added Authorization header for request to:', config.url);
     } catch (error) {
-      console.error('[API] Failed to acquire token:', error);
       throw error;
     }
-  } else {
-    console.warn('[API] No account available for token acquisition');
   }
   // Only attach x-user-id if user is present
   if (user && user.id) {
@@ -46,13 +42,7 @@ API.interceptors.request.use(async (config) => {
 API.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error('[API] Response error:', error?.response?.status, error?.response?.data);
-    
     // For 401 errors, ensure React Query will handle it by preserving the error structure
-    if (error?.response?.status === 401) {
-      console.error('[API] 401 error - should trigger React Query error handlers');
-    }
-    
     // Always reject the promise so React Query can handle it
     return Promise.reject(error);
   }

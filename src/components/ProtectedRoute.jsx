@@ -11,7 +11,6 @@ const ProtectedRoute = () => {
   if (!user) {
     // This case would typically happen if someone tries to access a protected route
     // without having gone through the MSAL login flow.
-    console.warn('[ProtectedRoute] No user found, redirecting to login.');
     return <Navigate to="/login" replace />;
   }
 

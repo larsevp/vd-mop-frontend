@@ -60,31 +60,36 @@ A modern React-based frontend application for the MOP (Environment and Project M
 
 ```
 src/
-├── api/                    # API layer
-│   ├── index.js           # Main API client with interceptors
-│   ├── userApi.js         # User-related API calls
-│   └── prosjektApi.js     # Project-related API calls
-├── components/            # Reusable components
-│   ├── AuthSync.jsx       # Authentication synchronization
+├── hooks/                 # Custom React hooks
+│   └── useAuth.js         # Authentication state management
+├── components/            # Reusable UI components
+│   ├── LoadingSpinner.jsx # Loading state component
+│   ├── MainLayout.jsx     # Main app layout wrapper
 │   ├── RowNew.jsx         # Generic form for creating records
-│   ├── RowEdit.jsx        # Generic form for editing records
-│   └── AdminPage.jsx      # Admin dashboard components
+│   └── RowEdit.jsx        # Generic form for editing records
 ├── pages/                 # Page components
+│   ├── ErrorPage.jsx      # Full-screen error display
 │   ├── LandingPage.jsx    # Main dashboard/landing page
 │   ├── LoginPage.jsx      # Error handling and manual login
 │   ├── Brukeradministrasjon.jsx      # User administration
 │   ├── Prosjektadministrasjon.jsx    # Project administration
 │   ├── TiltaksoversiktGenerelle.jsx  # General tasks overview
 │   └── TiltaksoversiktProsjekt.jsx   # Project-specific tasks
+├── api/                   # API layer
+│   ├── index.js           # Main API client with interceptors
+│   ├── userApi.js         # User-related API calls
+│   └── prosjektApi.js     # Project-related API calls
 ├── stores/                # State management
-│   ├── store.js          # Main store configuration
-│   └── userStore.js      # User-specific state
-├── config/               # Configuration files
-├── App.jsx              # Main application component
-├── AppRouter.jsx        # Route definitions
-├── HeaderNav.jsx        # Navigation component
-├── main.jsx            # Application entry point
-└── msalConfig.js       # Microsoft authentication configuration
+│   ├── store.js           # Main store configuration
+│   └── userStore.js       # User-specific state
+├── config/                # Configuration files
+│   └── modelConfigs.js    # Model configuration for forms
+├── App.jsx                # Main application controller
+├── AppRouter.jsx          # Route definitions
+├── HeaderNav.jsx          # Navigation component
+├── main.jsx               # Application entry point
+├── msalConfig.js          # Microsoft authentication configuration
+└── queryClient.js         # React Query configuration
 ```
 
 ## Authentication Flow
@@ -95,31 +100,33 @@ src/
 2. **Direct Redirect**: Automatically redirected to Microsoft Azure AD
 3. **Authentication**: User authenticates with Microsoft credentials
 4. **Token Return**: Microsoft redirects back with authentication tokens
-5. **User Sync**: `AuthSync` component checks/creates user in backend
+5. **User Sync**: `useAuth` hook checks/creates user in backend automatically
 6. **App Access**: User gains access to the intended page
 
 ### Automatic User Creation
 
 When a user authenticates for the first time:
-- System extracts user info from Microsoft token (`externalId`, `name`, `email`)
-- Checks if user exists in backend database
-- If not found, automatically creates user with default settings:
+- System extracts user info from Microsoft token (`oid`, `sub`, `preferred_username`)
+- `useAuth` hook optimistically sets user info from MSAL token
+- First API call to backend triggers automatic user creation if needed:
+  - `authJwt.ts` validates Microsoft token
+  - `processJwtPayload.ts` extracts user info and creates user with default settings
   - Role: 'user'
-  - Unit: Default unit (enhet1Id: 1)
-- Sets user in global application state
+  - Unit: Default unit (enhetId: 1)
+- If user creation fails or user doesn't exist, 401 error triggers error page
 
 ### Error Handling
 
-- **Login Page**: Serves as error handler for authentication failures
-- **Detailed Feedback**: Shows specific error messages from Microsoft SSO
-- **Recovery Options**: Retry login or return to application
-- **Sync Errors**: Visual feedback for backend synchronization issues
+- **ErrorPage Component**: Serves as full-screen error display for authentication failures
+- **Detailed Feedback**: Shows specific error messages from authentication or sync processes
+- **Recovery Options**: Retry sync or logout and restart authentication
+- **No Navigation**: Error pages display without header navigation for clean error isolation
 
 ## Error Handling Architecture
 
 ### Centralized Authentication Management
 
-The application uses a clean, centralized approach for handling authentication and error states:
+The application uses a clean, centralized approach for handling authentication and error states with a "fail fast" pattern:
 
 #### useAuth Custom Hook
 
@@ -128,12 +135,13 @@ The application uses a clean, centralized approach for handling authentication a
 export const useAuth = () => {
   const { accounts, instance } = useMsal();
   const setUser = useUserStore(state => state.setUser);
-  const [syncStatus, setSyncStatus] = useState('syncing');
+  const [syncStatus, setSyncStatus] = useState('success'); // Start optimistic
   const [syncError, setSyncError] = useState(null);
 
   // Sets up global error handler for React Query
-  // Handles user synchronization with backend
-  // Returns: { syncStatus, syncError, instance }
+  // Optimistically extracts user info from MSAL token
+  // Backend validates user existence on first API call
+  // Returns: { syncStatus, syncError, instance, authErrorCount }
 };
 ```
 
@@ -143,7 +151,7 @@ The main `App.jsx` component acts as the central controller:
 
 ```javascript
 function AuthenticatedApp() {
-  const { syncStatus, syncError } = useAuth();
+  const { syncStatus, syncError, authErrorCount } = useAuth();
 
   if (syncStatus === 'syncing') return <LoadingSpinner />;
   if (syncStatus === 'error') return <ErrorPage error={syncError} />;
@@ -156,42 +164,50 @@ function AuthenticatedApp() {
 1. **`App.jsx`**: Top-level controller using MSAL templates
    - `AuthenticatedTemplate`: Shows `AuthenticatedApp` for logged-in users
    - `UnauthenticatedTemplate`: Redirects to Microsoft SSO
+   - Uses `useAuth` hook to determine application state
 
 2. **`useAuth` Hook**: Encapsulates all authentication logic
-   - User synchronization with backend
-   - Global error handling for React Query
-   - State management for sync status
+   - Optimistic user setup from MSAL token (no initial backend validation)
+   - Global error handling setup for React Query via QueryCache
+   - State management for sync status ('success', 'error')
+   - "Fail fast" pattern - backend validates user on first API call
+   - Automatic error page display when backend rejects user
 
 3. **`LoadingSpinner.jsx`**: Dedicated loading component
    - Shows during initial authentication sync
-   - Clean, reusable component
+   - Clean, reusable component with modern styling
 
 4. **`ErrorPage.jsx`**: Full-screen error display
    - No navigation bar interference
-   - Retry and logout options
-   - Clean error presentation
+   - Retry sync and logout options
+   - Complete error state isolation from main app
 
 5. **`AppRouter.jsx`**: Main application routing
-   - Uses nested route structure with `ProtectedRoute`
-   - `MainLayout` component wraps all authenticated pages
+   - All routes use `MainLayout` wrapper for consistent navigation
+   - Authentication handled at App level by MSAL templates
+   - Clean route structure without redundant protection layers
 
 6. **`MainLayout.jsx`**: Layout wrapper for authenticated pages
-   - Contains `HeaderNav` and `ScrollToTop`
-   - Only appears after successful authentication
+   - Contains `HeaderNav` and `ScrollToTop` components
+   - Only appears after successful authentication and sync
+   - Uses React Router `Outlet` pattern for nested routes
 
 #### Authentication Flow
 
-1. **Unauthenticated User**: Direct redirect to Microsoft Azure AD
-2. **Authentication Success**: User info extracted and stored
-3. **User Sync**: Backend automatically creates/validates user
-4. **App Access**: Main application router with protected routes
-5. **Runtime Errors**: 401 errors trigger full-screen error page
+1. **Unauthenticated User**: Direct redirect to Microsoft Azure AD via MSAL templates
+2. **Authentication Success**: User info extracted and MSAL `AuthenticatedTemplate` renders
+3. **Optimistic User Setup**: `useAuth` hook extracts user info from MSAL token and shows app immediately
+4. **First API Call**: Any route (e.g., LandingPage → `/prosjekt`) makes backend request
+5. **Backend Validation**: `authJwt` + `setUser` middleware validate token and user existence
+6. **Two Outcomes**:
+   - ✅ **Valid User**: API succeeds, app works normally
+   - ❌ **Invalid User**: 401 error → QueryCache → Error page
 
-#### Error Flow
+#### Error Flow ("Fail Fast" Pattern)
 
-1. **API Call Fails (401)**: React Query catches the error
-2. **Global Handler**: `useAuth` hook receives the error
-3. **State Update**: `syncStatus` changes to 'error'
+1. **API Call Fails (401)**: React Query QueryCache catches the error
+2. **Global Handler**: `useAuth` hook receives the error via QueryCache.onError
+3. **State Update**: `syncStatus` changes from 'success' to 'error'
 4. **UI Switch**: App.jsx renders `ErrorPage` instead of main app
 5. **No Navigation**: Error page is full-screen without header
 
@@ -200,16 +216,62 @@ function AuthenticatedApp() {
 1. **Single Responsibility**: Each component has one clear purpose
 2. **Centralized Logic**: All auth logic in `useAuth` hook
 3. **Clean Separation**: UI components separate from business logic
-4. **Reusable**: Hook can be used by any component needing auth state
-5. **Maintainable**: Clear flow from App → useAuth → Components
-6. **Testable**: Hook logic easily mockable for testing
+4. **Fail Fast**: Invalid users discovered immediately on first API call
+5. **No Duplication**: Backend middleware is single source of truth for user validation
+6. **Optimistic UX**: App shows immediately after Microsoft authentication
+7. **Maintainable**: Clear flow from App → useAuth → Components
+8. **Testable**: Hook logic easily mockable for testing
 
 #### Error Handling Strategy
 
-- **No Retries for 401**: Immediate failure for auth errors
-- **Global Coverage**: All React Query calls monitored
+- **Optimistic Start**: Show app immediately after MSAL authentication
+- **Backend Authority**: Let backend middleware validate user existence
+- **No Retries for 401**: Immediate failure for auth errors via QueryCache
+- **Global Coverage**: All React Query calls monitored via QueryCache.onError
 - **Full-Screen Errors**: Complete UI takeover on auth failure
 - **Clean Recovery**: Reload or logout options available
+
+### Backend Integration
+
+The frontend seamlessly integrates with the Express.js backend for user management:
+
+#### JWT Token Handling
+- Microsoft tokens are passed directly to backend for validation
+- Backend middleware (`authJwt.ts`) validates Microsoft JWT tokens
+- Automatic user creation using Microsoft token fields:
+  - `oid` → `externalId` (unique Microsoft user identifier)
+  - `sub` → `externalId` (fallback if `oid` not available)
+  - `preferred_username` → `email`
+  - `name` → `name`
+
+#### User Synchronization Process
+```javascript
+// "Fail Fast" Pattern - No separate validation endpoint needed
+// 1. Frontend extracts user info from MSAL token optimistically
+// 2. Backend middleware validates on every API request:
+//    - authJwt.ts: Validates Microsoft JWT token
+//    - setUser.ts: Checks user exists in database
+// 3. 401 response triggers immediate error page via QueryCache
+```
+
+#### Global Error Handling Setup
+```javascript
+// queryClient.js - QueryCache approach for global error handling
+export const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: (error) => {
+      if (error?.response?.status === 401 && globalAuthErrorHandler) {
+        globalAuthErrorHandler(error); // Triggers useAuth error state
+      }
+    }
+  })
+});
+```
+
+#### API Authentication
+- All API requests include `Authorization: Bearer <microsoft-jwt>` header
+- Backend validates tokens on each request
+- 401 responses trigger frontend error handling and logout
 
 ## Configuration
 
@@ -276,10 +338,16 @@ The application automatically adds required headers to API requests:
 - `x-user-id: <user-id>` - Internal user ID for backend operations
 
 ### Error Handling
-- **401 Unauthorized**: Redirects to Microsoft authentication
+- **401 Unauthorized**: Triggers immediate error page via QueryCache global handler
 - **403 Forbidden**: Shows access denied message
 - **404 Not Found**: Shows resource not found
 - **500 Server Error**: Shows generic error with retry option
+
+### Global Error Architecture
+- **QueryCache.onError**: Captures all React Query errors globally
+- **No Retries for 401**: Immediate failure to prevent unnecessary requests
+- **Centralized Handler**: Single error handler in `useAuth` hook
+- **Fail Fast Pattern**: Let backend be authoritative on user validation
 
 ## Security Considerations
 

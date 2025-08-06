@@ -19,8 +19,7 @@ function UnauthenticatedRedirect() {
       ...loginRequest,
       state: JSON.stringify({ returnUrl })
     }).catch(error => {
-      console.error('Login redirect failed:', error);
-      // On error, redirect to login page for error handling
+      // Login redirect failed - redirect to login page for error handling
       window.location.href = '/login';
     });
   }, [instance, location]);
@@ -29,14 +28,14 @@ function UnauthenticatedRedirect() {
 }
 
 function AuthenticatedApp() {
-  const { syncStatus, syncError } = useAuth();
+  const { syncStatus, syncError, authErrorCount } = useAuth();
 
   // Show loading spinner during authentication sync
   if (syncStatus === 'syncing') {
     return <LoadingSpinner />;
   }
 
-  // Show error page if authentication fails
+  // Show error page if authentication fails (including runtime 401 errors)
   if (syncStatus === 'error') {
     return <ErrorPage error={syncError} />;
   }

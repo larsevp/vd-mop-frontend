@@ -31,7 +31,7 @@ export default function LoginPage() {
         return parsedState.returnUrl || '/';
       }
     } catch (error) {
-      console.warn('Could not parse state parameter:', error);
+      // Could not parse state parameter
     }
     return '/';
   };
@@ -43,7 +43,6 @@ export default function LoginPage() {
     try {
       await instance.loginRedirect(loginRequest);
     } catch (error) {
-      console.error('Login error:', error);
       setLoginError('Det oppstod en feil under innlogging. Vennligst prøv igjen.');
       setIsLoggingIn(false);
     }
