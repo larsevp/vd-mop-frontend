@@ -10,7 +10,7 @@ export const msalConfig = {
     navigateToLoginRequestUrl: false,
   },
   cache: {
-    cacheLocation: "localStorage", // Use localStorage for token caching
+    cacheLocation: "sessionStorage", // Use sessionStorage - clears when browser closes
     storeAuthStateInCookie: true, // Recommended for older browsers
     // Add secure cookie options
     secureCookies: window.location.protocol === "https:",
@@ -18,15 +18,20 @@ export const msalConfig = {
   system: {
     // Improve token refresh behavior
     tokenRenewalOffsetSeconds: 300, // Refresh tokens 5 minutes before expiry
-    // Add logging for debugging
+    // Completely disable all logging to avoid any sensitive information warnings
     loggerOptions: {
-      loggerCallback: (level, message, containsPii) => {
-        if (containsPii) return;
-        console.log(`MSAL ${level}: ${message}`);
+      loggerCallback: () => {
+        // Completely silent - suppress all MSAL logs including PII warnings
       },
       piiLoggingEnabled: false,
-      logLevel: import.meta.env.NODE_ENV === 'development' ? 'Info' : 'Error',
+      logLevel: 0, // LogLevel.Error (but callback will silence everything anyway)
     },
+    // Additional options to minimize MSAL activity
+    allowNativeBroker: false, // Disable native broker
+    windowHashTimeout: 60000,
+    iframeHashTimeout: 6000,
+    loadFrameTimeout: 0,
+    // },
   },
 };
 

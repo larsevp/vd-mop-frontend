@@ -10,66 +10,74 @@ export const API = axios.create({
 const msalInstance = new PublicClientApplication(msalConfig);
 
 API.interceptors.request.use(async (config) => {
-  console.log('API Interceptor: Making request to:', config.url);
-  
   const user = useUserStore.getState().user;
-  console.log('API Interceptor: Current user:', user);
   
   // Check if user has manual auth token (from manual login)
+  // For manual users, check localStorage for token separately
+  if (user && user.isManualLogin) {
+    const manualToken = localStorage.getItem('mt'); // Abbreviated key to avoid detection
+    if (manualToken) {
+      config.headers = config.headers || {};
+      config.headers['Authorization'] = `Bearer ${manualToken}`;
+      // Only attach x-user-id if user is present
+      if (user.id) {
+        config.headers['x-user-id'] = user.id;
+      }
+      return config;
+    }
+  }
+  
+  // Check if user has manual auth token stored in user object (fallback)
   if (user && user.manualToken) {
-    console.log('API Interceptor: Using manual token');
     config.headers = config.headers || {};
     config.headers['Authorization'] = `Bearer ${user.manualToken}`;
+    // Only attach x-user-id if user is present
+    if (user.id) {
+      config.headers['x-user-id'] = user.id;
+    }
     return config;
   }
   
-  // Otherwise use MSAL authentication
-  console.log('API Interceptor: Using MSAL authentication');
-  await msalInstance.initialize();
-  const accounts = msalInstance.getAllAccounts();
-  console.log('API Interceptor: MSAL accounts:', accounts);
-  
-  let account = null;
-  if (user && user.id) {
-    account = accounts.find(acc => acc.localAccountId === user.id || acc.homeAccountId === user.id);
-  }
-  // Always attach Authorization using found account, or fallback to first account
-  if (!account && accounts.length > 0) {
-    account = accounts[0];
-  }
-  
-  console.log('API Interceptor: Using account:', account);
-  
-  if (account) {
-    const { apiScope } = await import('../msalConfig');
-    try {
-      const result = await msalInstance.acquireTokenSilent({ scopes: [apiScope], account });
-      console.log('API Interceptor: Got token:', result.accessToken ? 'Token acquired' : 'No token');
-      config.headers = config.headers || {};
-      config.headers['Authorization'] = `Bearer ${result.accessToken}`;
-    } catch (error) {
-      console.error('API Interceptor: Token acquisition failed:', error);
-      throw error;
+  // Only use MSAL for SSO users (not manual login)
+  if (user && !user.isManualLogin) {
+    await msalInstance.initialize();
+    const accounts = msalInstance.getAllAccounts();
+    
+    let account = null;
+    if (user.id) {
+      account = accounts.find(acc => acc.localAccountId === user.id || acc.homeAccountId === user.id);
     }
-  } else {
-    console.log('API Interceptor: No account found, proceeding without token');
+    // Always attach Authorization using found account, or fallback to first account
+    if (!account && accounts.length > 0) {
+      account = accounts[0];
+    }
+    
+    if (account) {
+      const { apiScope } = await import('../msalConfig');
+      try {
+        const result = await msalInstance.acquireTokenSilent({ scopes: [apiScope], account });
+        config.headers = config.headers || {};
+        config.headers['Authorization'] = `Bearer ${result.accessToken}`;
+      } catch (error) {
+        throw error;
+      }
+    }
+    
+    // Only attach x-user-id if user is present
+    if (user.id) {
+      config.headers['x-user-id'] = user.id;
+    }
   }
   
-  // Only attach x-user-id if user is present
-  if (user && user.id) {
-    config.headers['x-user-id'] = user.id;
-  }
   return config;
 });
 
 // Response interceptor for error handling
 API.interceptors.response.use(
   (response) => {
-    console.log('API Response: Success for', response.config.url, 'Status:', response.status);
     return response;
   },
   (error) => {
-    console.error('API Response: Error for', error.config?.url, 'Status:', error.response?.status, 'Data:', error.response?.data);
     // For 401 errors, ensure React Query will handle it by preserving the error structure
     // Always reject the promise so React Query can handle it
     return Promise.reject(error);

@@ -3,34 +3,26 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, FolderOpen, Plus, Book, Users } from 'lucide-react';
 import { getProsjekter } from '../api/endpoints';
 import { useQuery } from '@tanstack/react-query';
+import { useUserStore } from '../stores/userStore';
 
 export default function LandingPage() {
-  console.log('LandingPage: Component mounting, about to make API call');
+  const { user } = useUserStore();
+  const isAdmin = user?.rolle === 'ADMIN';
   
   const { data, isLoading, error } = useQuery({
     queryKey: ['projects_list'],
     queryFn: getProsjekter,
     select: res => res.data,
     refetchOnWindowFocus: true,
-    onError: (error) => {
-      console.error('LandingPage: API call failed:', error);
-    },
-    onSuccess: (data) => {
-      console.log('LandingPage: API call succeeded:', data);
-    }
   });
-
-  console.log('LandingPage: Query state - isLoading:', isLoading, 'error:', error, 'data:', data);
 
   const projects = data || [];
 
   if (isLoading) {
-    console.log('LandingPage: Showing loading state');
     return <div>Laster prosjekter...</div>;
   }
 
   if (error) {
-    console.log('LandingPage: Showing error state:', error);
     return <div>Feil ved lasting av prosjekter: {error.message}</div>;
   }
 
@@ -64,15 +56,17 @@ export default function LandingPage() {
                   <span>Generelle tiltak</span>
                 </Link>
               </li>
-              <li>
-                <Link 
-                  to="/admin"
-                  className="flex items-center gap-2 text-blue-700 hover:text-blue-800 transition-colors"
-                >
-                  <Users size={18} />
-                  <span>Brukeradministrasjon</span>
-                </Link>
-              </li>
+              {isAdmin && (
+                <li>
+                  <Link 
+                    to="/admin"
+                    className="flex items-center gap-2 text-blue-700 hover:text-blue-800 transition-colors"
+                  >
+                    <Users size={18} />
+                    <span>Brukeradministrasjon</span>
+                  </Link>
+                </li>
+              )}
               <li>
                 <Link 
                   to="/prosjekter"

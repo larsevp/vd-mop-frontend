@@ -13,8 +13,9 @@ export function useLogout() {
     try {
       // Check if user is logged in via manual authentication
       if (user && user.isManualLogin) {
-        // Manual login logout - just clear local state and redirect
+        // Manual login logout - clear local state, token, and redirect
         clearUser();
+        localStorage.removeItem('mt'); // Remove manual token
         window.location.href = redirectTo;
         return;
       }
@@ -31,9 +32,9 @@ export function useLogout() {
         window.location.href = redirectTo;
       }
     } catch (error) {
-      console.error('Logout error:', error);
       // Fallback: always clear local state and redirect
       clearUser();
+      localStorage.removeItem('mt'); // Remove manual token on error too
       window.location.href = redirectTo;
     }
   };

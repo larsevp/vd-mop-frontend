@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import AppRouter from './AppRouter';
 import { MsalProvider, AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from '@azure/msal-react';
 import { useAuth } from './hooks/useAuth';
+import { useUserStore } from './stores/userStore';
 import LoadingSpinner from './components/LoadingSpinner';
 import StatusPage from './pages/StatusPage';
 import { loginRequest } from './msalConfig';
@@ -18,8 +19,8 @@ function UnauthenticatedRedirect() {
     const checkMsalState = async () => {
       await instance.initialize();
       const accounts = instance.getAllAccounts();
-      console.log('UnauthenticatedRedirect: MSAL accounts:', accounts);
-      console.log('UnauthenticatedRedirect: MSAL cache:', instance.getTokenCache());
+      console.log('UnauthenticatedRedirect: MSAL accounts count:', accounts.length);
+      console.log('UnauthenticatedRedirect: MSAL cache present:', !!instance.getTokenCache());
     };
     checkMsalState();
   }, [instance]);
