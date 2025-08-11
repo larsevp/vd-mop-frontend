@@ -53,3 +53,6 @@ Thumbs.db
 
 # vite cache
 node_modules/.vite/
+
+localhost+2.pem
+localhost+2-key.pem

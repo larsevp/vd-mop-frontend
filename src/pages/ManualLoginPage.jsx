@@ -23,17 +23,25 @@ export default function ManualLoginPage() {
       const response = await manualLogin(email, password);
       const { token, user } = response.data;
       
+      console.log('Manual login successful:', { user, tokenLength: token.length });
+      
       // Store token separately to avoid sensitive data detection
       localStorage.setItem('mt', token); // Abbreviated key
       
-      // Store user without token in main store
-      setUser({
+      // Store user with manual login flag
+      const manualUser = {
         ...user,
         isManualLogin: true
-      });
+      };
+      
+      console.log('Setting user in store:', manualUser);
+      setUser(manualUser);
 
-      // Navigate to home page
-      navigate('/', { replace: true });
+      // Navigate to home page after a short delay to ensure store update
+      setTimeout(() => {
+        console.log('Navigating to home page');
+        navigate('/', { replace: true });
+      }, 100);
     } catch (error) {
       console.error('Login error:', error);
       if (error.response?.status === 401) {

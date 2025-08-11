@@ -8,6 +8,7 @@ import UserInitializer from './components/auth/UserInitializer';
 import LandingPage from './pages/LandingPage';
 import StatusPage from './pages/StatusPage';
 import ManualLoginPage from './pages/ManualLoginPage';
+import AuthRedirectPage from './pages/AuthRedirectPage';
 import TiltaksoversiktGenerelle from './pages/TiltaksoversiktGenerelle';
 import TiltaksoversiktProsjekt from './pages/TiltaksoversiktProsjekt';
 import Brukeradministrasjon from './pages/Brukeradministrasjon';
@@ -15,8 +16,10 @@ import { RowNew, RowEdit } from './components/tableComponents';
 import Prosjektadministrasjon from './pages/Prosjektadministrasjon';
 import MainLayout from './components/layout/MainLayout';
 
+
+
 function AuthenticatedApp() {
-  const { syncStatus, syncError, authErrorCount } = useAuth();
+  const { syncStatus, syncError } = useAuth();
 
   // DEBUG: Log current status
   console.log('AuthenticatedApp - syncStatus:', syncStatus, 'syncError:', syncError);
@@ -44,33 +47,41 @@ function AuthenticatedApp() {
 
   // Show main app if authentication succeeds (or even if there are errors - for debugging)
   console.log('Showing protected routes due to success status');
+  return <ProtectedRoutes />;
+}
+
+function ManualAuthenticatedApp() {
+  console.log('ManualAuthenticatedApp - Manual user authenticated, skipping MSAL sync');
+  return <ProtectedRoutes />;
+}
+
+function ProtectedRoutes() {
   return (
-    <UserInitializer>
-      <Routes>
-        {/* Protected routes with main layout */}
-        <Route element={<MainLayout />}>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/tiltak" element={<div className="pb-20 max-w-screen-xl mx-auto"><TiltaksoversiktGenerelle /></div>} />
-          <Route path="/tiltak-prosjekt" element={<div className="pb-20 max-w-screen-xl mx-auto"><TiltaksoversiktProsjekt /></div>} />
-          <Route path="/admin" element={<Brukeradministrasjon />} />
-          <Route path="/admin/ny" element={<RowNew />} />
-          <Route path="/admin/:id/rediger" element={<RowEdit />} />
-          <Route path="/prosjekter" element={<Prosjektadministrasjon />} />
-          <Route path="/prosjekter/ny" element={<RowNew />} />
-          <Route path="/prosjekter/:id/rediger" element={<RowEdit />} />
-          {/* Redirect any other route (including /login) to home when authenticated */}
-          <Route path="*" element={<LandingPage />} />
-        </Route>
-      </Routes>
-    </UserInitializer>
+    <Routes>
+      {/* Protected routes with main layout */}
+      <Route element={<MainLayout />}>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/tiltak" element={<div className="pb-20 max-w-screen-xl mx-auto"><TiltaksoversiktGenerelle /></div>} />
+        <Route path="/tiltak-prosjekt" element={<div className="pb-20 max-w-screen-xl mx-auto"><TiltaksoversiktProsjekt /></div>} />
+        <Route path="/admin" element={<Brukeradministrasjon />} />
+        <Route path="/admin/ny" element={<RowNew />} />
+        <Route path="/admin/:id/rediger" element={<RowEdit />} />
+        <Route path="/prosjekter" element={<Prosjektadministrasjon />} />
+        <Route path="/prosjekter/ny" element={<RowNew />} />
+        <Route path="/prosjekter/:id/rediger" element={<RowEdit />} />
+        {/* Redirect any other route (including /login) to home when authenticated */}
+        <Route path="*" element={<LandingPage />} />
+      </Route>
+    </Routes>
   );
 }
 
 function UnauthenticatedApp() {
   return (
     <Routes>
-      {/* Public routes */}
+      {/* Public routes - using StatusPage for consistent auth UI */}
       <Route path="/login" element={<StatusPage type="login" showLoginButton={true} />} />
+      <Route path="/auth-redirect" element={<AuthRedirectPage />} />
       <Route path="/manualLogin" element={<ManualLoginPage />} />
       {/* Redirect any other route to login */}
       <Route path="*" element={<StatusPage type="login" showLoginButton={true} />} />
@@ -80,17 +91,22 @@ function UnauthenticatedApp() {
 
 function AppRouterInner() {
   const { user } = useUserStore();
-  const { inProgress, accounts } = useMsal();
-  const hydrating = inProgress !== 'none' && accounts.length === 0;
-  if (hydrating) return <LoadingSpinner />;
+  
+  console.log('[AppRouter] Current user state:', user);
+  
   const isManuallyAuthenticated = user && user.isManualLogin;
+  console.log('[AppRouter] Is manually authenticated:', isManuallyAuthenticated);
+  
   if (isManuallyAuthenticated) {
+    console.log('[AppRouter] Showing manual authenticated app - bypassing MSAL');
     return (
       <UserInitializer>
-        <AuthenticatedApp />
+        <ManualAuthenticatedApp />
       </UserInitializer>
     );
   }
+  
+  console.log('[AppRouter] Showing MSAL-based authentication flow');
   return (
     <>
       <AuthenticatedTemplate>

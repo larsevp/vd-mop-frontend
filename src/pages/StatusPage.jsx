@@ -1,13 +1,14 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useMsal } from '@azure/msal-react';
+import { useIsAuthenticated, useMsal, UnauthenticatedTemplate } from '@azure/msal-react';
 import { loginRequest, signupRequest } from '../msalConfig';
 import { AlertCircle, LogIn, AlertTriangle } from 'lucide-react';
 import { useLogout } from '../hooks/useLogout';
 import { useUserStore } from '../stores/userStore';
 import { getReturnUrl } from '../utils/msalUtils';
 import { handleLogin, handleSignup, handleLogout } from '../utils/authFlows';
+import { getMsalInstance } from '../utils/msalUtils';
 import { getStatusPageContent, shouldShowSignupButton, shouldShowReloadButton } from '../utils/statusPageUtils';
 
 /**
@@ -29,15 +30,33 @@ export default function StatusPage({
 }) {
   console.log('StatusPage: Rendering with props:', { type, error, title, description, showLoginButton, showLogoutButton, showRefreshButton, showBackButton });
  
-  const { instance, accounts, inProgress } = useMsal();
+  // Use safer hooks that don't depend on MSAL state
+  const isAuthenticated = useIsAuthenticated();
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useLogout();
-  const { user } = useUserStore(); // Add user from store
+  const { user } = useUserStore();
+  
+  // Local state
   const [loginError, setLoginError] = useState(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isSigningUp, setIsSigningUp] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  
+  // Get MSAL instance safely - only when needed
+  const getMsalData = () => {
+    try {
+      const { instance, accounts } = useMsal();
+      return { instance, accounts, available: true };
+    } catch (error) {
+      console.warn('MSAL not available, using fallback instance');
+      return { 
+        instance: getMsalInstance(), 
+        accounts: [], 
+        available: false 
+      };
+    }
+  };
 
   // Error handling
   useEffect(() => {
@@ -48,43 +67,46 @@ export default function StatusPage({
     if (urlError) setLoginError(errorDescription || 'Innlogging mislyktes. Vennligst prøv igjen.');
   }, [error, location]);
 
-  // Auto-redirect if already authenticated (for login type)
+  // Auto-redirect if already authenticated (for login type) - but avoid during login process
   useEffect(() => {
-    const isAuthenticated = accounts && accounts.length > 0;
-    if (type === 'login' && isAuthenticated) {
+    if (type === 'login' && isAuthenticated && !isLoggingIn && !isSigningUp) {
       const returnUrl = getReturnUrl(location);
       navigate(returnUrl, { replace: true });
     }
-  }, [accounts, user, navigate, type, location]);
+  }, [isAuthenticated, navigate, type, location, isLoggingIn, isSigningUp]);
 
-  const onLogin = () => handleLogin({
-    instance,
-    loginRequest,
-    location,
-    navigate,
-    setIsLoggingIn,
-    setLoginError,
-    isLoggingIn,
-    isSigningUp,
-    inProgress
-  });
+  const onLogin = () => {
+    const msalData = getMsalData();
+    handleLogin({
+      instance: msalData.instance,
+      loginRequest,
+      location,
+      navigate,
+      setIsLoggingIn,
+      setLoginError,
+      isLoggingIn,
+      isSigningUp,
+    });
+  };
 
-  const onSignup = () => handleSignup({
-    instance,
-    signupRequest,
-    location,
-    setIsSigningUp,
-    setLoginError,
-    isSigningUp,
-    isLoggingIn,
-    inProgress
-  });
+  const onSignup = () => {
+    const msalData = getMsalData();
+    handleSignup({
+      instance: msalData.instance,
+      signupRequest,
+      location,
+      setIsSigningUp,
+      setLoginError,
+      isSigningUp,
+      isLoggingIn,
+    });
+  };
 
   const onLogout = () => handleLogout({ logout, setIsLoggingOut });
 
   const content = getStatusPageContent({ type, title, description, loginError, error });
   const hasError = loginError || error;
-  const loginDisabled = isLoggingIn || isSigningUp || inProgress !== 'none';
+  const loginDisabled = isLoggingIn || isSigningUp;
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-white">
@@ -126,41 +148,84 @@ export default function StatusPage({
           <div className="space-y-3">
             {showLoginButton && !showLogoutButton && (
               <>
-                <button
-                  onClick={onLogin}
-                  disabled={loginDisabled}
-                  className="w-full bg-blue-600 text-white rounded-lg px-6 py-3 font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {isLoggingIn ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span>Logger inn...</span>
-                    </>
-                  ) : (
-                    <>
-                      <LogIn size={20} />
-                      <span>Logg inn med Microsoft</span>
-                    </>
-                  )}
-                </button>
-                {showLoginButton && shouldShowSignupButton(loginError, type) && (
-                  <button
-                    onClick={onSignup}
-                    disabled={isSigningUp || isLoggingIn || inProgress !== 'none'}
-                    className="w-full bg-green-600 text-white rounded-lg px-6 py-3 font-medium hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {isSigningUp ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        <span>Oppretter konto...</span>
-                      </>
-                    ) : (
-                      <>
-                        <LogIn size={20} />
-                        <span>Opprett ny konto</span>
-                      </>
+                {type === 'login' ? (
+                  <UnauthenticatedTemplate>
+                    <button
+                      onClick={onLogin}
+                      disabled={loginDisabled}
+                      className="w-full bg-blue-600 text-white rounded-lg px-6 py-3 font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {isLoggingIn ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span>Logger inn...</span>
+                        </>
+                      ) : (
+                        <>
+                          <LogIn size={20} />
+                          <span>Logg inn med Microsoft</span>
+                        </>
+                      )}
+                    </button>
+                    {showLoginButton && shouldShowSignupButton(loginError, type) && (
+                      <button
+                        onClick={onSignup}
+                        disabled={isSigningUp || isLoggingIn}
+                        className="w-full bg-green-600 text-white rounded-lg px-6 py-3 font-medium hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {isSigningUp ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span>Oppretter konto...</span>
+                          </>
+                        ) : (
+                          <>
+                            <LogIn size={20} />
+                            <span>Opprett ny konto</span>
+                          </>
+                        )}
+                      </button>
                     )}
-                  </button>
+                  </UnauthenticatedTemplate>
+                ) : (
+                  <>
+                    <button
+                      onClick={onLogin}
+                      disabled={loginDisabled}
+                      className="w-full bg-blue-600 text-white rounded-lg px-6 py-3 font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {isLoggingIn ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span>Logger inn...</span>
+                        </>
+                      ) : (
+                        <>
+                          <LogIn size={20} />
+                          <span>Logg inn med Microsoft</span>
+                        </>
+                      )}
+                    </button>
+                    {showLoginButton && shouldShowSignupButton(loginError, type) && (
+                      <button
+                        onClick={onSignup}
+                        disabled={isSigningUp || isLoggingIn}
+                        className="w-full bg-green-600 text-white rounded-lg px-6 py-3 font-medium hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {isSigningUp ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span>Oppretter konto...</span>
+                          </>
+                        ) : (
+                          <>
+                            <LogIn size={20} />
+                            <span>Opprett ny konto</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </>
                 )}
               </>
             )}
