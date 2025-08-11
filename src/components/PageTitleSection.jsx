@@ -26,13 +26,15 @@ function PageTitleSection({
           <div>
             <div className="flex items-center gap-3 mb-2">
               {showBackButton && (
-                <button
-                  onClick={onBack}
-                  className="inline-flex items-center gap-2 text-text-muted hover:text-primary-600 transition-colors"
-                >
-                  <ArrowLeft size={20} />
-                  <span className="font-medium">{backButtonLabel}</span>
-                </button>
+                <div>
+                  <button
+                    onClick={onBack}
+                    className="inline-flex items-center gap-2 text-text-muted hover:text-primary-600 transition-colors"
+                  >
+                    <ArrowLeft size={20} />
+                    <span className="font-medium">{backButtonLabel}</span>
+                  </button>
+                </div>
               )}
             </div>
             <h1 className="text-3xl font-bold mb-2 text-primary-700">{title}</h1>

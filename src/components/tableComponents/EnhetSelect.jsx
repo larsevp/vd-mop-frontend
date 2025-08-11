@@ -2,6 +2,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getEnheter } from '../../api/endpoints';
 import { getThemeClasses } from '../../hooks/useTheme';
+import { ArrowLeft } from 'lucide-react';
 
 /**
  * EnhetSelec            className={`
@@ -204,10 +205,7 @@ export default function EnhetSelect({
       
       <div className="relative" ref={dropdownRef}>
         {/* Main trigger button */}
-        <button
-          type="button"
-          onClick={() => !isLoading && setIsOpen(!isOpen)}
-          disabled={isLoading}
+        <div
           className={`
             ${getThemeClasses.input.base} relative w-full pl-4 pr-10 py-3 text-left cursor-pointer
             transition-all duration-200 ease-in-out
@@ -218,6 +216,9 @@ export default function EnhetSelect({
             ${isLoading ? 'bg-background-muted cursor-not-allowed' : 'hover:bg-background-muted'}
             ${isOpen ? getThemeClasses.input.focus : ''}
           `}
+          onClick={() => !isLoading && setIsOpen(!isOpen)}
+          role="button"
+          tabIndex={0}
         >
           <span className={`block truncate ${selectedEnhet ? 'text-text-primary' : 'text-text-muted'}`}>
             {isLoading 
@@ -227,22 +228,19 @@ export default function EnhetSelect({
                 : placeholder
             }
           </span>
-          
-          {/* Dropdown arrow */}
           <span className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
             {selectedEnhet && !isLoading && (
-              <button
-                type="button"
+              <div
                 onClick={(e) => {
                   e.stopPropagation();
                   handleClear();
                 }}
                 className="mr-2 p-1 hover:bg-background-muted rounded-full transition-colors pointer-events-auto"
+                role="button"
+                tabIndex={0}
               >
-                <svg className="w-4 h-4 text-text-muted hover:text-text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+                <ArrowLeft size={20} />
+              </div>
             )}
             <svg 
               className={`w-5 h-5 text-text-muted transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} 
@@ -253,7 +251,7 @@ export default function EnhetSelect({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </span>
-        </button>
+        </div>
 
         {/* Dropdown panel */}
         {isOpen && !isLoading && (

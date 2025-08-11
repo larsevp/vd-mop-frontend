@@ -48,8 +48,8 @@ export const useTheme = () => {
 export const getThemeClasses = {
   // Button classes
   button: {
-    primary: 'bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white border-primary-500',
-    secondary: 'bg-secondary-100 hover:bg-secondary-200 active:bg-secondary-300 text-text-primary border-border-primary',
+    primary: 'bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white border-2 border-primary-500 rounded-md p-2',
+    secondary: 'bg-secondary-100 hover:bg-secondary-200 active:bg-secondary-300 text-text-primary border-2 border-border-primary rounded-md p-2',
     success: 'bg-success-500 hover:bg-success-600 active:bg-success-700 text-white border-success-500',
     error: 'bg-error-500 hover:bg-error-600 active:bg-error-700 text-white border-error-500',
     warning: 'bg-warning-500 hover:bg-warning-600 active:bg-warning-700 text-white border-warning-500',
@@ -58,7 +58,7 @@ export const getThemeClasses = {
   
   // Form input classes
   input: {
-    base: 'bg-white border-border-primary focus:border-primary-500 focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20 text-text-primary placeholder-text-tertiary',
+    base: 'bg-white border-border-primary focus:border-primary-500 focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20 text-text-primary placeholder-text-tertiary w-3/4 p-2',
     error: 'border-error-500 focus:border-error-500 focus:ring-error-500',
     success: 'border-success-500 focus:border-success-500 focus:ring-success-500',
   },

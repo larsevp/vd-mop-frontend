@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import NumberInput from './NumberInput';
@@ -97,6 +96,10 @@ export default function RowForm({ fields, row, onSuccess, onCancel, createFn, up
     }
   }
 
+  function getInputStyles() {
+    return "w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-sm";
+  }
+
   return (
     <div className="bg-white rounded-xl border border-neutral-200 p-6 shadow-sm">
       <h2 className="text-lg font-semibold text-neutral-900 mb-4">{editing ? `Rediger ${modelPrintName}` : `Ny ${modelPrintName}`}</h2>
@@ -185,11 +188,7 @@ export default function RowForm({ fields, row, onSuccess, onCancel, createFn, up
                   value={form[field.name] || ''}
                   onChange={handleChange}
                   placeholder={field.placeholder}
-                  className={`${getThemeClasses.input.base} ${
-                    errors[field.name] 
-                      ? getThemeClasses.input.error 
-                      : ''
-                  }`}
+                  className={getInputStyles()}
                   required={field.required}
                 />
                 {errors[field.name] && (
