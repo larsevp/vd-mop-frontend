@@ -55,8 +55,9 @@ API.interceptors.request.use(async (config) => {
       if (account) {
         try {
           // Attempt to acquire token silently
+          const API_CLIENT_ID = import.meta.env.VITE_MSAL_CLIENT_ID;
           const result = await instance.acquireTokenSilent({
-            scopes: ["User.Read"],
+            scopes: [`api://${API_CLIENT_ID}/user_access`],
             account: account,
             forceRefresh: false
           });
@@ -65,6 +66,17 @@ API.interceptors.request.use(async (config) => {
           config.headers['Authorization'] = `Bearer ${result.accessToken}`;
           
           console.log('[API] Token acquired successfully, expires:', new Date(result.expiresOn));
+          console.log('[API] Token preview:', result.accessToken.substring(0, 50) + '...');
+          console.log('[API] Token parts count:', result.accessToken.split('.').length);
+          
+          // Debug: decode token to see what we're sending
+          try {
+            const tokenParts = result.accessToken.split('.');
+            const payload = JSON.parse(atob(tokenParts[1]));
+            console.log('[API] Token payload - iss:', payload.iss, 'aud:', payload.aud, 'exp:', payload.exp);
+          } catch (decodeError) {
+            console.warn('[API] Could not decode token for debugging:', decodeError);
+          }
           
         } catch (tokenError) {
           console.warn('[API] Token acquisition failed:', tokenError.errorCode);

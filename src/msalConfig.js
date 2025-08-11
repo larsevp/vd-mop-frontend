@@ -25,7 +25,7 @@ if (!CLIENT_ID || !TENANT_ID) {
 export const msalConfig = {
   auth: {
     clientId: CLIENT_ID,
-    authority: `https://login.microsoftonline.com/${TENANT_ID}`,
+    authority: `https://login.microsoftonline.com/${TENANT_ID}/v2.0`, // Force v2.0 endpoint
     redirectUri: `${window.location.origin}/auth-redirect`,
     postLogoutRedirectUri: `${window.location.origin}/login`,
     navigateToLoginRequestUrl: false, // We handle navigation manually
@@ -64,15 +64,20 @@ export const msalConfig = {
 /**
  * Login Request Configuration
  */
+
+// Use only the API scope for backend authentication
+const API_CLIENT_ID = import.meta.env.VITE_MSAL_CLIENT_ID;
 export const loginRequest = {
-  scopes: ['User.Read'], // Basic profile information
-  prompt: 'select_account', // Always show account picker for clarity
+  scopes: [`api://${API_CLIENT_ID}/user_access`],
+  prompt: 'select_account',
 };
 
 /**
  * Signup Request Configuration (for new account creation)
  */
+
+// Use only the API scope for backend authentication
 export const signupRequest = {
-  scopes: ['User.Read'],
-  prompt: 'create', // Force account creation flow
+  scopes: [`api://${API_CLIENT_ID}/user_access`],
+  prompt: 'create',
 };
