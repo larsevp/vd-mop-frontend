@@ -20,21 +20,17 @@ export function useLogout() {
         return;
       }
 
-      // MSAL logout - clear cache locally without redirecting to Microsoft
+      // MSAL logout - use logoutRedirect for cleanup and redirect
       if (instance) {
-        // Clear all MSAL cache and tokens
-        await instance.clearCache();
-        
-        // Clear user state
         clearUser();
-        
-        // Navigate to specified page (default: login page) with full reload
+        await instance.logoutRedirect({ postLogoutRedirectUri: window.location.origin + redirectTo });
+      } else {
         window.location.href = redirectTo;
       }
     } catch (error) {
+      console.error('Logout error:', error);
       // Fallback: always clear local state and redirect
       clearUser();
-      localStorage.removeItem('mt'); // Remove manual token on error too
       window.location.href = redirectTo;
     }
   };

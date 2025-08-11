@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { getCurrentUserInfo } from '../api/userApi';
 
+// Main user store with authentication, roles, and user management
 export const useUserStore = create(
   persist(
     (set, get) => ({
@@ -58,6 +59,7 @@ export const useUserStore = create(
           id: state.user.id,
           rolle: state.user.rolle,
           navn: state.user.navn,
+          name: state.user.name, // Legacy support for HeaderNav
           isManualLogin: state.user.isManualLogin,
           // Explicitly exclude manualToken and other sensitive data
         } : null
@@ -65,3 +67,11 @@ export const useUserStore = create(
     }
   )
 );
+
+// Project store: not persisted, always fresh from backend
+export const useProjectStore = create((set) => ({
+  projects: [],
+  setProjects: (projects) => set({ projects }),
+  addProject: (project) => set((state) => ({ projects: [...state.projects, project] })),
+  clearProjects: () => set({ projects: [] }),
+}));

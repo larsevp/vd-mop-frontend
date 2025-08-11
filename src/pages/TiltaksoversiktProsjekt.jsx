@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import HeaderNav from '../components/HeaderNav';
-import PageTitleSection from '../components/PageTitleSection';
-import FilterSection from '../components/FilterSection';
-import TemaSection from '../components/TemaSection';
+import HeaderNav from '../components/layout/HeaderNav';
+import PageTitleSection from '../components/ui/PageTitleSection';
+import FilterSection from '../components/ui/FilterSection';
+import TemaSection from '../components/ui/TemaSection';
 
 // Mock data
 const temaer = [

@@ -16,3 +16,9 @@ export const getUsers = () => API.get('/user');
 export const createUser = (user) => API.post('/user', user);
 export const updateUser = (user) => API.put(`/user/${user.id}`, user);
 export const deleteUser = (id) => API.delete(`/user/${id}`);
+
+// Enhet API endpoints
+export const getEnheter = () => API.get('/enhet');
+export const createEnhet = (enhet) => API.post('/enhet', enhet);
+export const updateEnhet = (enhet) => API.put(`/enhet/${enhet.id}`, enhet);
+export const deleteEnhet = (id) => API.delete(`/enhet/${id}`);

@@ -1,85 +1,87 @@
 import axios from 'axios';
 import { useUserStore } from '../stores/userStore';
-import { PublicClientApplication } from '@azure/msal-browser';
-import { msalConfig } from '../msalConfig';
+import { getMsalInstance } from '../utils/msalUtils';
 
 export const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL
 });
 
-const msalInstance = new PublicClientApplication(msalConfig);
+// Removed separate PublicClientApplication to avoid duplicate instances.
 
 API.interceptors.request.use(async (config) => {
   const user = useUserStore.getState().user;
+  const instance = getMsalInstance();
   
-  // Check if user has manual auth token (from manual login)
-  // For manual users, check localStorage for token separately
   if (user && user.isManualLogin) {
-    const manualToken = localStorage.getItem('mt'); // Abbreviated key to avoid detection
+    const manualToken = localStorage.getItem('mt');
     if (manualToken) {
       config.headers = config.headers || {};
       config.headers['Authorization'] = `Bearer ${manualToken}`;
-      // Only attach x-user-id if user is present
-      if (user.id) {
-        config.headers['x-user-id'] = user.id;
-      }
+      if (user.id) config.headers['x-user-id'] = user.id;
       return config;
     }
   }
   
-  // Check if user has manual auth token stored in user object (fallback)
   if (user && user.manualToken) {
     config.headers = config.headers || {};
     config.headers['Authorization'] = `Bearer ${user.manualToken}`;
-    // Only attach x-user-id if user is present
-    if (user.id) {
-      config.headers['x-user-id'] = user.id;
-    }
+    if (user.id) config.headers['x-user-id'] = user.id;
     return config;
   }
   
-  // Only use MSAL for SSO users (not manual login)
-  if (user && !user.isManualLogin) {
-    await msalInstance.initialize();
-    const accounts = msalInstance.getAllAccounts();
-    
-    let account = null;
-    if (user.id) {
-      account = accounts.find(acc => acc.localAccountId === user.id || acc.homeAccountId === user.id);
-    }
-    // Always attach Authorization using found account, or fallback to first account
-    if (!account && accounts.length > 0) {
-      account = accounts[0];
-    }
-    
-    if (account) {
-      const { apiScope } = await import('../msalConfig');
-      try {
-        const result = await msalInstance.acquireTokenSilent({ scopes: [apiScope], account });
-        config.headers = config.headers || {};
-        config.headers['Authorization'] = `Bearer ${result.accessToken}`;
-      } catch (error) {
-        throw error;
+  if (user && !user.isManualLogin && instance) {
+    try {
+      const accounts = instance.getAllAccounts();
+      let account = null;
+      if (user.id) account = accounts.find(acc => acc.localAccountId === user.id || acc.homeAccountId === user.id);
+      if (!account && accounts.length > 0) account = accounts[0];
+      if (account) {
+        try {
+          const result = await instance.acquireTokenSilent({
+            scopes: ["User.Read"],
+            account: account,
+            forceRefresh: false // Try cache first
+          });
+          config.headers = config.headers || {};
+          config.headers['Authorization'] = `Bearer ${result.accessToken}`;
+          console.log('Token acquired successfully, expires:', new Date(result.expiresOn));
+        } catch (tokenError) {
+          console.log('Token acquisition failed:', tokenError.errorCode);
+          // Try force refresh if silent fails
+          if (tokenError.errorCode === 'token_renewal_required' || 
+              tokenError.errorCode === 'invalid_grant' ||
+              tokenError.errorCode === 'expired_token') {
+            try {
+              const refreshResult = await instance.acquireTokenSilent({
+                scopes: ["User.Read"],
+                account: account,
+                forceRefresh: true
+              });
+              config.headers = config.headers || {};
+              config.headers['Authorization'] = `Bearer ${refreshResult.accessToken}`;
+              console.log('Token force-refreshed successfully');
+            } catch (refreshError) {
+              console.warn('Token refresh also failed:', refreshError.errorCode);
+            }
+          }
+          // Proceed without token on expected interaction errors
+          if (!['consent_required','interaction_required','login_required'].includes(tokenError.errorCode)) {
+            console.warn('Unexpected token acquisition error:', tokenError);
+          }
+        }
       }
-    }
-    
-    // Only attach x-user-id if user is present
-    if (user.id) {
-      config.headers['x-user-id'] = user.id;
+      if (user.id) {
+        config.headers = config.headers || {};
+        config.headers['x-user-id'] = user.id;
+      }
+    } catch (error) {
+      console.error('MSAL token pipeline failed:', error);
     }
   }
-  
   return config;
 });
 
-// Response interceptor for error handling
 API.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  (error) => {
-    // For 401 errors, ensure React Query will handle it by preserving the error structure
-    // Always reject the promise so React Query can handle it
-    return Promise.reject(error);
-  }
+  (response) => response,
+  (error) => Promise.reject(error)
 );

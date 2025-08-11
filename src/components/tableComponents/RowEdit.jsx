@@ -1,8 +1,8 @@
 import React from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import RowForm from '../components/RowForm';
+import RowForm from './RowForm';
 import { useQuery } from '@tanstack/react-query';
-import { getModelConfig } from '../config/modelConfigs';
+import { getModelConfig } from '../../config/modelConfigs';
 
 export default function RowEdit() {
   const { id } = useParams();

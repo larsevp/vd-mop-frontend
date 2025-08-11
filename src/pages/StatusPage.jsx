@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useMsal } from '@azure/msal-react';
-import { loginRequest } from '../msalConfig';
-import { AlertCircle, LogIn, Home, RefreshCcw, AlertTriangle, LogOut } from 'lucide-react';
-import LogoutButton from '../components/LogoutButton';
+import { loginRequest, signupRequest } from '../msalConfig';
+import { AlertCircle, LogIn, AlertTriangle } from 'lucide-react';
 import { useLogout } from '../hooks/useLogout';
 import { useUserStore } from '../stores/userStore';
+import { getReturnUrl } from '../utils/msalUtils';
+import { handleLogin, handleSignup, handleLogout } from '../utils/authFlows';
+import { getStatusPageContent, shouldShowSignupButton, shouldShowReloadButton } from '../utils/statusPageUtils';
 
 /**
  * Unified status page component that handles:
@@ -25,144 +28,63 @@ export default function StatusPage({
   showBackButton = false
 }) {
   console.log('StatusPage: Rendering with props:', { type, error, title, description, showLoginButton, showLogoutButton, showRefreshButton, showBackButton });
-  
-  const { instance, accounts } = useMsal();
+ 
+  const { instance, accounts, inProgress } = useMsal();
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useLogout();
   const { user } = useUserStore(); // Add user from store
   const [loginError, setLoginError] = useState(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isSigningUp, setIsSigningUp] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  console.log('StatusPage: MSAL state - accounts:', accounts, 'instance:', instance ? 'present' : 'missing');
-  console.log('StatusPage: Manual user state:', user);
-
-  // Auto-detect login errors from URL or props
+  // Error handling
   useEffect(() => {
-    console.log('StatusPage: Checking for errors - error prop:', error);
-    if (error) {
-      setLoginError(error);
-      return;
-    }
-
-    // Handle login errors from URL parameters (from Microsoft redirect)
+    if (error) { setLoginError(error); return; }
     const urlParams = new URLSearchParams(location.search);
     const urlError = urlParams.get('error');
     const errorDescription = urlParams.get('error_description');
-    
-    console.log('StatusPage: URL error check - urlError:', urlError, 'errorDescription:', errorDescription);
-    
-    if (urlError) {
-      setLoginError(errorDescription || 'Innlogging mislyktes. Vennligst prøv igjen.');
-    }
+    if (urlError) setLoginError(errorDescription || 'Innlogging mislyktes. Vennligst prøv igjen.');
   }, [error, location]);
 
   // Auto-redirect if already authenticated (for login type)
   useEffect(() => {
-    console.log('StatusPage: Checking auto-redirect - type:', type, 'accounts.length:', accounts.length, 'manual user:', user);
-    
-    // Check for both MSAL and manual authentication
-    const isMsalAuthenticated = accounts.length > 0;
-    const isManualAuthenticated = user && user.isManualLogin;
-    
-    if (type === 'login' && (isMsalAuthenticated || isManualAuthenticated)) {
-      const returnUrl = getReturnUrl();
-      console.log('StatusPage: Auto-redirecting authenticated user to:', returnUrl);
+    const isAuthenticated = accounts && accounts.length > 0;
+    if (type === 'login' && isAuthenticated) {
+      const returnUrl = getReturnUrl(location);
       navigate(returnUrl, { replace: true });
     }
-  }, [accounts, user, navigate, type]);
+  }, [accounts, user, navigate, type, location]);
 
-  const getReturnUrl = () => {
-    try {
-      const urlParams = new URLSearchParams(location.search);
-      const state = urlParams.get('state');
-      console.log('StatusPage: getReturnUrl - URL params:', location.search, 'state:', state);
-      if (state) {
-        const parsedState = JSON.parse(state);
-        console.log('StatusPage: getReturnUrl - parsed state:', parsedState);
-        return parsedState.returnUrl || '/';
-      }
-    } catch (error) {
-      console.error('StatusPage: getReturnUrl - could not parse state parameter:', error);
-    }
-    console.log('StatusPage: getReturnUrl - returning default "/"');
-    return '/';
-  };
+  const onLogin = () => handleLogin({
+    instance,
+    loginRequest,
+    location,
+    navigate,
+    setIsLoggingIn,
+    setLoginError,
+    isLoggingIn,
+    isSigningUp,
+    inProgress
+  });
 
-  const handleLogin = async () => {
-    setIsLoggingIn(true);
-    setLoginError(null);
+  const onSignup = () => handleSignup({
+    instance,
+    signupRequest,
+    location,
+    setIsSigningUp,
+    setLoginError,
+    isSigningUp,
+    isLoggingIn,
+    inProgress
+  });
 
-    try {
-      // Store the intended destination for after login
-      const returnUrl = getReturnUrl();
-      
-      await instance.loginRedirect({
-        ...loginRequest,
-        state: JSON.stringify({ returnUrl })
-      });
-    } catch (error) {
-      setLoginError('Det oppstod en feil under innlogging. Vennligst prøv igjen.');
-      setIsLoggingIn(false);
-    }
-  };
+  const onLogout = () => handleLogout({ logout, setIsLoggingOut });
 
-  const handleRefresh = () => {
-    window.location.reload();
-  };
-
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-    try {
-      await logout('/login');
-      // Force a full page reload to ensure all state is cleared
-      window.location.href = '/login';
-    } catch (error) {
-      console.error('Logout failed:', error);
-      // Fallback - force reload to login page even if logout fails
-      window.location.href = '/login';
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
-
-  const handleBackToApp = () => {
-    navigate('/');
-  };
-
-  // Dynamic content based on type
-  const getContent = () => {
-    const hasError = loginError || error;
-
-    switch (type) {
-      case 'error':
-      case 'sync-error':
-        return {
-          title: title || 'Synkroniseringsfeil',
-          description: description || 'Det oppstod et problem under synkronisering av brukerdata',
-          icon: <AlertTriangle className="w-8 h-8 text-red-600" />,
-          iconBg: 'bg-red-100'
-        };
-      
-      case 'login':
-      default:
-        return {
-          title: title || (hasError ? 'Innloggingsfeil' : 'Logg inn'),
-          description: description || (hasError 
-            ? 'Det oppstod et problem under innlogging' 
-            : 'Bruk din Microsoft-konto for å fortsette'
-          ),
-          icon: hasError ? <AlertCircle className="w-8 h-8 text-red-600" /> : <LogIn className="w-8 h-8 text-blue-600" />,
-          iconBg: hasError ? 'bg-red-100' : 'bg-blue-100'
-        };
-    }
-  };
-
-  const content = getContent();
+  const content = getStatusPageContent({ type, title, description, loginError, error });
   const hasError = loginError || error;
-
-  console.log('StatusPage: Render state - isLoggingIn:', isLoggingIn, 'loginError:', loginError, 'hasError:', hasError, 'content:', content);
+  const loginDisabled = isLoggingIn || isSigningUp || inProgress !== 'none';
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-white">
@@ -177,7 +99,7 @@ export default function StatusPage({
         <div className="bg-white rounded-xl shadow-lg border border-neutral-200 p-8">
           <div className="text-center mb-6">
             <div className={`w-16 h-16 ${content.iconBg} rounded-full flex items-center justify-center mx-auto mb-4`}>
-              {content.icon}
+              {content.iconType === 'AlertTriangle' ? <AlertTriangle className="w-8 h-8 text-red-600" /> : content.iconType === 'LogIn' && !hasError ? <LogIn className="w-8 h-8 text-blue-600" /> : <AlertCircle className="w-8 h-8 text-red-600" />}
             </div>
             <h2 className="text-2xl font-semibold text-neutral-900 mb-2">
               {content.title}
@@ -191,7 +113,7 @@ export default function StatusPage({
           {hasError && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
               <AlertCircle size={20} className="text-red-600 flex-shrink-0 mt-0.5" />
-              <div>
+              <div className="flex-grow">
                 <h3 className="text-sm font-medium text-red-800">
                   {type === 'login' ? 'Innloggingsfeil' : 'Feil'}
                 </h3>
@@ -203,78 +125,66 @@ export default function StatusPage({
           {/* Action Buttons */}
           <div className="space-y-3">
             {showLoginButton && !showLogoutButton && (
-              <button
-                onClick={handleLogin}
-                disabled={isLoggingIn}
-                className="w-full bg-blue-600 text-white rounded-lg px-6 py-3 font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {isLoggingIn ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Logger inn...</span>
-                  </>
-                ) : (
-                  <>
-                    <LogIn size={20} />
-                    <span>Logg inn med Microsoft</span>
-                  </>
+              <>
+                <button
+                  onClick={onLogin}
+                  disabled={loginDisabled}
+                  className="w-full bg-blue-600 text-white rounded-lg px-6 py-3 font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isLoggingIn ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Logger inn...</span>
+                    </>
+                  ) : (
+                    <>
+                      <LogIn size={20} />
+                      <span>Logg inn med Microsoft</span>
+                    </>
+                  )}
+                </button>
+                {showLoginButton && shouldShowSignupButton(loginError, type) && (
+                  <button
+                    onClick={onSignup}
+                    disabled={isSigningUp || isLoggingIn || inProgress !== 'none'}
+                    className="w-full bg-green-600 text-white rounded-lg px-6 py-3 font-medium hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {isSigningUp ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>Oppretter konto...</span>
+                      </>
+                    ) : (
+                      <>
+                        <LogIn size={20} />
+                        <span>Opprett ny konto</span>
+                      </>
+                    )}
+                  </button>
                 )}
-              </button>
-            )}
-
-            {showRefreshButton && (
-              <button 
-                onClick={handleRefresh}
-                className="w-full bg-blue-600 text-white rounded-lg px-6 py-3 font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-              >
-                <RefreshCcw size={20} />
-                <span>Prøv igjen</span>
-              </button>
+              </>
             )}
 
             {showLogoutButton && (
               <button
-                onClick={handleLogout}
+                onClick={onLogout}
                 disabled={isLoggingOut}
-                className="w-full bg-gray-100 text-gray-700 rounded-lg px-6 py-3 font-medium hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full bg-neutral-600 text-white rounded-lg px-6 py-3 font-medium hover:bg-neutral-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {isLoggingOut ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-gray-700 border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     <span>Logger ut...</span>
                   </>
                 ) : (
                   <>
-                    <LogOut size={20} />
-                    <span>Logg ut og start på nytt</span>
+                    <LogIn size={20} />
+                    <span>Logg ut</span>
                   </>
                 )}
               </button>
             )}
           </div>
-
-          {/* Login-specific footer */}
-          {type === 'login' && !hasError && (
-            <div className="mt-6 text-center">
-              <p className="text-sm text-neutral-500">
-                Ved å logge inn godtar du våre{' '}
-                <a href="#" className="text-blue-600 hover:text-blue-700">
-                  vilkår for bruk
-                </a>
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Help Section */}
-        <div className="mt-8 text-center">
-          <p className="text-sm text-neutral-500 mb-2">Trenger du hjelp?</p>
-          <a 
-            href="#" 
-            className="text-sm text-blue-600 hover:text-blue-700"
-          >
-            Kontakt systemadministrator
-          </a>
         </div>
       </div>
     </div>

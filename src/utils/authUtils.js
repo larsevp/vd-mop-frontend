@@ -1,41 +1,40 @@
 import { useUserStore } from '../stores/userStore';
-import { PublicClientApplication } from '@azure/msal-browser';
-import { msalConfig } from '../msalConfig';
-
-const msalInstance = new PublicClientApplication(msalConfig);
+import { getMsalInstance } from '../utils/msalUtils';
 
 // Helper to get current user info (supports both MSAL and manual login)
-export async function getCurrentUserInfo() {
+export function getCurrentUserInfo() {
   const user = useUserStore.getState().user;
-  
-  // If user is logged in via manual authentication
   if (user && user.isManualLogin) {
-    return {
-      id: user.id,
-      name: user.navn || user.name,
-      email: user.epost || user.email
-    };
+    return { id: user.id, name: user.navn || user.name, email: user.epost || user.email };
   }
-  
-  // For MSAL/SSO users
-  await msalInstance.initialize();
-  const accounts = msalInstance.getAllAccounts();
+
+  const instance = getMsalInstance();
+  if (!instance) return null;
+
+  let accounts = [];
+  try { accounts = instance.getAllAccounts() || []; } catch { return null; }
   if (accounts.length === 0) return null;
-  const account = accounts[0];
-  // Extract user info for frontend use
+
+  let active = instance.getActiveAccount();
+  if (!active) {
+    if (accounts.length === 1) {
+      active = accounts[0];
+      instance.setActiveAccount(active);
+      console.log('Active account set (single account):', active.username);
+    } else {
+      // Multiple accounts with no active selection – caller can trigger account picker
+      return null;
+    }
+  }
+
   return {
-    id: account.localAccountId || account.homeAccountId,
-    name: account.name || account.username,
-    email: account.username
+    id: active.localAccountId || active.homeAccountId,
+    name: active.name || active.username,
+    email: active.username
   };
 }
 
-// Helper to extract user info from MSAL account (for useAuth hook)
 export function extractUserFromMsalAccount(account) {
   if (!account) return null;
-  return {
-    id: account.localAccountId || account.homeAccountId,
-    name: account.name || account.username,
-    email: account.username
-  };
+  return { id: account.localAccountId || account.homeAccountId, name: account.name || account.username, email: account.username };
 }

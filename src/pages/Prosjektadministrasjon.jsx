@@ -1,7 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import RowList from '../components/RowList';
-import AdminPage from '../components/AdminPage';
+import { RowList, AdminPage } from '../components/tableComponents';
 import { getModelConfig } from '../config/modelConfigs';
 
 export default function Prosjektadministrasjon() {

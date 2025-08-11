@@ -4,6 +4,7 @@ import { ArrowRight, FolderOpen, Plus, Book, Users } from 'lucide-react';
 import { getProsjekter } from '../api/endpoints';
 import { useQuery } from '@tanstack/react-query';
 import { useUserStore } from '../stores/userStore';
+import { getThemeClasses } from '../hooks/useTheme';
 
 export default function LandingPage() {
   const { user } = useUserStore();
@@ -27,9 +28,9 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-background-primary min-h-screen">
       {/* Hero section */}
-      <section className="bg-blue-900 text-white">
+      <section className="bg-primary-900 text-white">
         <div className="max-w-screen-xl mx-auto px-4 py-8 sm:py-12 sm:px-6 md:px-8">
           <div className="text-center">
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">MOP</h1>
@@ -44,13 +45,13 @@ export default function LandingPage() {
       <section className="max-w-screen-xl mx-auto px-4 py-12 sm:px-6 md:px-8">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {/* Quick access card */}
-          <div className="bg-blue-50 rounded-xl border border-blue-100 p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-blue-900 mb-4">Hurtigtilgang</h2>
+          <div className="bg-primary-50 rounded-xl border border-primary-100 p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-primary-900 mb-4">Hurtigtilgang</h2>
             <ul className="space-y-3">
               <li>
                 <Link 
                   to="/tiltak"
-                  className="flex items-center gap-2 text-blue-700 hover:text-blue-800 transition-colors"
+                  className="flex items-center gap-2 text-primary-700 hover:text-primary-800 transition-colors"
                 >
                   <Book size={18} />
                   <span>Generelle tiltak</span>
@@ -60,7 +61,7 @@ export default function LandingPage() {
                 <li>
                   <Link 
                     to="/admin"
-                    className="flex items-center gap-2 text-blue-700 hover:text-blue-800 transition-colors"
+                    className="flex items-center gap-2 text-primary-700 hover:text-primary-800 transition-colors"
                   >
                     <Users size={18} />
                     <span>Brukeradministrasjon</span>
@@ -70,7 +71,7 @@ export default function LandingPage() {
               <li>
                 <Link 
                   to="/prosjekter"
-                  className="flex items-center gap-2 text-blue-700 hover:text-blue-800 transition-colors"
+                  className="flex items-center gap-2 text-primary-700 hover:text-primary-800 transition-colors"
                 >
                   <FolderOpen size={18} />
                   <span>Prosjektadministrasjon</span>
@@ -80,20 +81,20 @@ export default function LandingPage() {
           </div>
           
           {/* New project card */}
-          <div className="bg-white rounded-xl border border-neutral-200 p-6 shadow-sm flex flex-col items-center justify-center text-center">
-            <div className="h-16 w-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
-              <Plus size={28} className="text-blue-600" />
+          <div className="bg-background-primary rounded-xl border border-border-muted p-6 shadow-sm flex flex-col items-center justify-center text-center">
+            <div className="h-16 w-16 bg-primary-50 rounded-full flex items-center justify-center mb-4">
+              <Plus size={28} className="text-primary-600" />
             </div>
-            <h2 className="text-lg font-semibold text-neutral-900 mb-2">Opprett nytt prosjekt</h2>
-            <p className="text-neutral-500 mb-6">Start et nytt prosjekt med predefinerte tiltak</p>
-            <button className="bg-blue-500 text-white rounded-lg px-5 py-2.5 font-medium shadow-sm hover:bg-blue-600 transition-all">
+            <h2 className="text-lg font-semibold text-text-primary mb-2">Opprett nytt prosjekt</h2>
+            <p className="text-text-muted mb-6">Start et nytt prosjekt med predefinerte tiltak</p>
+            <button className={`${getThemeClasses.button.primary} rounded-lg px-5 py-2.5 font-medium shadow-sm transition-all`}>
               Nytt prosjekt
             </button>
           </div>
           
           {/* Recent projects */}
           <div className="md:col-span-2 lg:col-span-1">
-            <h2 className="text-xl font-semibold text-neutral-900 mb-4">Nylige prosjekter</h2>
+            <h2 className="text-xl font-semibold text-text-primary mb-4">Nylige prosjekter</h2>
             <div className="space-y-4">
               {projects.map(project => (
                 <div 

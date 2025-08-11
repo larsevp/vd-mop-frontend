@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
-import RowForm from '../components/RowForm';
-import { getModelConfig } from '../config/modelConfigs';
+import RowForm from './RowForm';
+import { getModelConfig } from '../../config/modelConfigs';
 
 export default function RowNew() {
   const location = useLocation();

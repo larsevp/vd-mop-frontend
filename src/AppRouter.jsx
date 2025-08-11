@@ -1,20 +1,19 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { AuthenticatedTemplate, UnauthenticatedTemplate } from '@azure/msal-react';
+import { AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from '@azure/msal-react';
 import { useAuth } from './hooks/useAuth';
 import { useUserStore } from './stores/userStore';
-import LoadingSpinner from './components/LoadingSpinner';
-import UserInitializer from './components/UserInitializer';
+import LoadingSpinner from './components/ui/LoadingSpinner';
+import UserInitializer from './components/auth/UserInitializer';
 import LandingPage from './pages/LandingPage';
 import StatusPage from './pages/StatusPage';
 import ManualLoginPage from './pages/ManualLoginPage';
 import TiltaksoversiktGenerelle from './pages/TiltaksoversiktGenerelle';
 import TiltaksoversiktProsjekt from './pages/TiltaksoversiktProsjekt';
 import Brukeradministrasjon from './pages/Brukeradministrasjon';
-import RowNew from './components/RowNew';
-import RowEdit from './components/RowEdit';
+import { RowNew, RowEdit } from './components/tableComponents';
 import Prosjektadministrasjon from './pages/Prosjektadministrasjon';
-import MainLayout from './components/MainLayout';
+import MainLayout from './components/layout/MainLayout';
 
 function AuthenticatedApp() {
   const { syncStatus, syncError, authErrorCount } = useAuth();
@@ -28,10 +27,18 @@ function AuthenticatedApp() {
     return <LoadingSpinner />;
   }
 
-  // RE-ENABLED - to see auth errors during debugging
-  // Show error page if authentication fails (including runtime 401 errors)
+  // Handle Safari-specific authentication issues more gracefully
   if (syncStatus === 'error') {
     console.log('Showing StatusPage due to error status:', syncError);
+    
+    // For Safari-specific authentication errors, show login page instead of error page
+    const isSafariAuthIssue = syncError && syncError.includes('[Safari/iOS]') && syncError.includes('Authentication required');
+    
+    if (isSafariAuthIssue) {
+      console.log('Safari authentication issue detected - showing login page');
+      return <StatusPage type="login" error={syncError} showLoginButton={true} />;
+    }
+    
     return <StatusPage type="sync-error" error={syncError} showRefreshButton={true} showLogoutButton={true} />;
   }
 
@@ -71,22 +78,19 @@ function UnauthenticatedApp() {
   );
 }
 
-export default function AppRouter() {
+function AppRouterInner() {
   const { user } = useUserStore();
-  
-  // Check if user is authenticated via manual login
+  const { inProgress, accounts } = useMsal();
+  const hydrating = inProgress !== 'none' && accounts.length === 0;
+  if (hydrating) return <LoadingSpinner />;
   const isManuallyAuthenticated = user && user.isManualLogin;
-
   if (isManuallyAuthenticated) {
-    // If manually authenticated, show authenticated app directly with user initialization
     return (
       <UserInitializer>
         <AuthenticatedApp />
       </UserInitializer>
     );
   }
-
-  // Otherwise use MSAL templates for SSO authentication
   return (
     <>
       <AuthenticatedTemplate>
@@ -100,3 +104,5 @@ export default function AppRouter() {
     </>
   );
 }
+
+export default function AppRouter() { return <AppRouterInner />; }

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AlertCircle, LogIn, Eye, EyeOff } from 'lucide-react';
 import { useUserStore } from '../stores/userStore';
 import { manualLogin } from '../api/auth';
+import { getThemeClasses } from '../hooks/useTheme';
 
 export default function ManualLoginPage() {
   const [email, setEmail] = useState('');
@@ -48,24 +49,24 @@ export default function ManualLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full space-y-8">
-        <div className="bg-white rounded-lg shadow-lg p-8">
+        <div className="bg-background-primary rounded-lg shadow-elevated p-8">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Administrator-innlogging</h2>
-            <p className="text-gray-600">Logg inn med e-post og passord</p>
+            <h2 className="text-3xl font-bold text-text-primary mb-2">Administrator-innlogging</h2>
+            <p className="text-text-muted">Logg inn med e-post og passord</p>
           </div>
 
           {loginError && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md flex items-start">
-              <AlertCircle className="h-5 w-5 text-red-400 mt-0.5 mr-3 flex-shrink-0" />
-              <div className="text-sm text-red-700">{loginError}</div>
+            <div className="mb-6 p-4 bg-error-50 border border-error-200 rounded-md flex items-start">
+              <AlertCircle className="h-5 w-5 text-error-400 mt-0.5 mr-3 flex-shrink-0" />
+              <div className="text-sm text-error-700">{loginError}</div>
             </div>
           )}
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-text-primary mb-2">
                 E-post
               </label>
               <input
@@ -74,14 +75,14 @@ export default function ManualLoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={getThemeClasses.input.base}
                 placeholder="din@epost.no"
                 disabled={isLoggingIn}
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-text-primary mb-2">
                 Passord
               </label>
               <div className="relative">
