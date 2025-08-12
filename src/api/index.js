@@ -29,7 +29,7 @@ API.interceptors.request.use(async (config) => {
       config.headers = config.headers || {};
       config.headers['Authorization'] = `Bearer ${manualToken}`;
       if (user.id) config.headers['x-user-id'] = user.id;
-      console.log('[API] Using manual token for request');
+      //console.log('[API] Using manual token for request');
       return config;
     }
   }
@@ -64,16 +64,16 @@ API.interceptors.request.use(async (config) => {
           
           config.headers = config.headers || {};
           config.headers['Authorization'] = `Bearer ${result.accessToken}`;
-          
+          /*
           console.log('[API] Token acquired successfully, expires:', new Date(result.expiresOn));
           console.log('[API] Token preview:', result.accessToken.substring(0, 50) + '...');
           console.log('[API] Token parts count:', result.accessToken.split('.').length);
-          
+          */
           // Debug: decode token to see what we're sending
           try {
             const tokenParts = result.accessToken.split('.');
             const payload = JSON.parse(atob(tokenParts[1]));
-            console.log('[API] Token payload - iss:', payload.iss, 'aud:', payload.aud, 'exp:', payload.exp);
+            //console.log('[API] Token payload - iss:', payload.iss, 'aud:', payload.aud, 'exp:', payload.exp);
           } catch (decodeError) {
             console.warn('[API] Could not decode token for debugging:', decodeError);
           }

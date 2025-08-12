@@ -96,13 +96,9 @@ export default function RowForm({ fields, row, onSuccess, onCancel, createFn, up
     }
   }
 
-  function getInputStyles() {
-    return "w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-sm";
-  }
-
   return (
     <div className="bg-white rounded-xl border border-neutral-200 p-6 shadow-sm">
-      <h2 className="text-lg font-semibold text-neutral-900 mb-4">{editing ? `Rediger ${modelPrintName}` : `Ny ${modelPrintName}`}</h2>
+      <h2 className="text-lg font-semibold text-neutral-900 mb-4"></h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         {fields.filter(f => !(editing ? f.hiddenEdit : f.hiddenCreate)).map(field => (
           <div key={field.name} className="space-y-2">
@@ -167,6 +163,7 @@ export default function RowForm({ fields, row, onSuccess, onCancel, createFn, up
                   step={field.step}
                   integer={field.integer}
                   placeholder={field.placeholder}
+                  hasError={!!errors[field.name]}
                 />
                 {errors[field.name] && (
                   <div className="mt-1 flex items-center text-sm text-red-600">
@@ -188,7 +185,11 @@ export default function RowForm({ fields, row, onSuccess, onCancel, createFn, up
                   value={form[field.name] || ''}
                   onChange={handleChange}
                   placeholder={field.placeholder}
-                  className={getInputStyles()}
+                  className={`${getThemeClasses.input.base} ${
+                    errors[field.name] 
+                      ? getThemeClasses.input.error 
+                      : ''
+                  }`}
                   required={field.required}
                 />
                 {errors[field.name] && (

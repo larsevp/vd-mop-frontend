@@ -4,3 +4,4 @@ export { default as LoadingSpinner } from './LoadingSpinner';
 export { default as LogoutButton } from './LogoutButton';
 export { default as PageTitleSection } from './PageTitleSection';
 export { default as TemaSection } from './TemaSection';
+export {default as SimpleCard} from './SimpleCard';

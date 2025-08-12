@@ -17,7 +17,6 @@ let msalHydrated = false;
  */
 export const registerMsalInstance = (instance) => {
   msalInstance = instance;
-  console.log('[MSAL Utils] Instance registered');
 };
 
 /**
@@ -38,7 +37,6 @@ export const getMsalInstance = () => {
  */
 export const setMsalHydrated = () => {
   msalHydrated = true;
-  console.log('[MSAL Utils] MSAL marked as hydrated');
 };
 
 /**
@@ -63,7 +61,6 @@ export const getReturnUrl = (location) => {
   const returnUrl = urlParams.get('returnUrl');
   
   if (returnUrl) {
-    console.log('[MSAL Utils] Return URL from params:', returnUrl);
     return returnUrl;
   }
   
@@ -72,11 +69,9 @@ export const getReturnUrl = (location) => {
   const authPages = ['/login', '/auth-redirect', '/manualLogin'];
   
   if (!authPages.includes(currentPath) && currentPath !== '/') {
-    console.log('[MSAL Utils] Return URL from current path:', currentPath);
     return currentPath;
   }
   
   // Default to home page
-  console.log('[MSAL Utils] Using default return URL: /');
   return '/';
 };

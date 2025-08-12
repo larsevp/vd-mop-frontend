@@ -15,7 +15,7 @@ export default function RowNew() {
   return (
     <div className="bg-white min-h-screen">
       <div className="max-w-screen-xl mx-auto px-4 py-12 sm:px-6 md:px-8">
-        <h2 className="text-2xl font-bold mb-4">Ny {config.modelPrintName}</h2>
+        <h2 className="text-2xl font-bold mb-4">Nytt {config.modelPrintName}</h2>
         <RowForm
           fields={config.fields}
           modelPrintName={config.modelPrintName}

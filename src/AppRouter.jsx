@@ -15,30 +15,30 @@ import Brukeradministrasjon from './pages/Brukeradministrasjon';
 import { RowNew, RowEdit } from './components/tableComponents';
 import Prosjektadministrasjon from './pages/Prosjektadministrasjon';
 import MainLayout from './components/layout/MainLayout';
-
+import ProjectLanding from './pages/ProjectLanding';
 
 
 function AuthenticatedApp() {
   const { syncStatus, syncError } = useAuth();
 
   // DEBUG: Log current status
-  console.log('AuthenticatedApp - syncStatus:', syncStatus, 'syncError:', syncError);
+  //console.log('AuthenticatedApp - syncStatus:', syncStatus, 'syncError:', syncError);
 
   // Show loading spinner during authentication sync
   if (syncStatus === 'syncing') {
-    console.log('Showing LoadingSpinner due to syncing status');
+    //console.log('Showing LoadingSpinner due to syncing status');
     return <LoadingSpinner />;
   }
 
   // Handle Safari-specific authentication issues more gracefully
   if (syncStatus === 'error') {
-    console.log('Showing StatusPage due to error status:', syncError);
+    //console.log('Showing StatusPage due to error status:', syncError);
     
     // For Safari-specific authentication errors, show login page instead of error page
     const isSafariAuthIssue = syncError && syncError.includes('[Safari/iOS]') && syncError.includes('Authentication required');
     
     if (isSafariAuthIssue) {
-      console.log('Safari authentication issue detected - showing login page');
+      //console.log('Safari authentication issue detected - showing login page');
       return <StatusPage type="login" error={syncError} showLoginButton={true} />;
     }
     
@@ -46,12 +46,12 @@ function AuthenticatedApp() {
   }
 
   // Show main app if authentication succeeds (or even if there are errors - for debugging)
-  console.log('Showing protected routes due to success status');
+//  console.log('Showing protected routes due to success status');
   return <ProtectedRoutes />;
 }
 
 function ManualAuthenticatedApp() {
-  console.log('ManualAuthenticatedApp - Manual user authenticated, skipping MSAL sync');
+  //console.log('ManualAuthenticatedApp - Manual user authenticated, skipping MSAL sync');
   return <ProtectedRoutes />;
 }
 
@@ -64,6 +64,7 @@ function ProtectedRoutes() {
         <Route path="/tiltak" element={<div className="pb-20 max-w-screen-xl mx-auto"><TiltaksoversiktGenerelle /></div>} />
         <Route path="/tiltak-prosjekt" element={<div className="pb-20 max-w-screen-xl mx-auto"><TiltaksoversiktProsjekt /></div>} />
         <Route path="/admin" element={<Brukeradministrasjon />} />
+        <Route path="/project-landing" element={<ProjectLanding />} />
         <Route path="/admin/ny" element={<RowNew />} />
         <Route path="/admin/:id/rediger" element={<RowEdit />} />
         <Route path="/prosjekter" element={<Prosjektadministrasjon />} />
@@ -92,13 +93,13 @@ function UnauthenticatedApp() {
 function AppRouterInner() {
   const { user } = useUserStore();
   
-  console.log('[AppRouter] Current user state:', user);
+  //console.log('[AppRouter] Current user state:', user);
   
   const isManuallyAuthenticated = user && user.isManualLogin;
-  console.log('[AppRouter] Is manually authenticated:', isManuallyAuthenticated);
+  //console.log('[AppRouter] Is manually authenticated:', isManuallyAuthenticated);
   
   if (isManuallyAuthenticated) {
-    console.log('[AppRouter] Showing manual authenticated app - bypassing MSAL');
+    //console.log('[AppRouter] Showing manual authenticated app - bypassing MSAL');
     return (
       <UserInitializer>
         <ManualAuthenticatedApp />
@@ -106,7 +107,7 @@ function AppRouterInner() {
     );
   }
   
-  console.log('[AppRouter] Showing MSAL-based authentication flow');
+  //console.log('[AppRouter] Showing MSAL-based authentication flow');
   return (
     <>
       <AuthenticatedTemplate>

@@ -26,7 +26,7 @@ export const modelConfigs = {
     createFn: createProsjekt,
     updateFn: updateProsjekt,
     deleteFn: deleteProsjekt,
-    modelPrintName: 'prosjekt',
+    modelPrintName: 'Prosjekt',
     fields: [
       { name: 'id', label: 'ID', type: 'number', hiddenIndex: true, hiddenEdit: true, hiddenCreate: true },
       { name: 'prosjektnummer', label: 'Prosjektnummer', type: 'number', hiddenIndex: false, hiddenEdit: false, hiddenCreate: false, integer: true, min: 1, placeholder: 'Skriv inn prosjektnummer' },

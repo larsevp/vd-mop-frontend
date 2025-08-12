@@ -21,7 +21,8 @@ export default function NumberInput({
   step = 1, 
   placeholder = '',
   className = '',
-  integer = false // Force integer values only
+  integer = false, // Force integer values only
+  hasError = false // External error state from parent form
 }) {
   const [inputValue, setInputValue] = React.useState(value?.toString() || '');
   const [isValid, setIsValid] = React.useState(true);
@@ -199,9 +200,9 @@ export default function NumberInput({
         pattern="[0-9]*"
         className={`
           ${getThemeClasses.input.base} transition-colors
-          ${isValid 
-            ? '' 
-            : getThemeClasses.input.error
+          ${(!isValid || hasError)
+            ? getThemeClasses.input.error
+            : ''
           }
         `}
         required={required}

@@ -5,19 +5,11 @@ import { getProsjekter } from '../api/endpoints';
 import { useQuery } from '@tanstack/react-query';
 import { useUserStore } from '../stores/userStore';
 import { getThemeClasses } from '../hooks/useTheme';
-import { useNavigate } from 'react-router-dom';
 import {SimpleCard} from '../components/ui'
-export default function LandingPage() {
+export default function ProjectLanding() {
   const { user } = useUserStore();
   const isAdmin = user?.rolle === 'ADMIN';
-  const navigate = useNavigate();
-
-  function newProject() {
-    navigate('/prosjekter/ny', { 
-      state: { modelType: 'prosjekter' } 
-    });
-  }
-
+  
   const { data, isLoading, error } = useQuery({
     queryKey: ['projects_list'],
     queryFn: getProsjekter,
@@ -89,18 +81,17 @@ export default function LandingPage() {
           </div>
           
           {/* New project card */}
-         
-
-          <SimpleCard 
-            title="Nytt prosjekt" 
-            subtitle="Lag et nytt prosjekt og fyll det med tiltak" 
-            content={
-                <button className={`${getThemeClasses.button.primary} rounded-lg px-5 py-2.5 font-medium shadow-sm transition-all`}
-            onClick={() => newProject()}>
+          <div className="bg-background-primary rounded-xl border border-border-muted p-6 shadow-sm flex flex-col items-center justify-center text-center">
+            <div className="h-16 w-16 bg-primary-50 rounded-full flex items-center justify-center mb-4">
+              <Plus size={28} className="text-primary-600" />
+            </div>
+            <h2 className="text-lg font-semibold text-text-primary mb-2">Opprett nytt prosjekt</h2>
+            <p className="text-text-muted mb-6">Start et nytt prosjekt med predefinerte tiltak</p>
+            <button className={`${getThemeClasses.button.primary} rounded-lg px-5 py-2.5 font-medium shadow-sm transition-all`}>
               Nytt prosjekt
             </button>
-            }
-          />
+          </div>
+          
           {/* Recent projects */}
           <div className="md:col-span-2 lg:col-span-1">
             <h2 className="text-xl font-semibold text-text-primary mb-4">Nylige prosjekter</h2>

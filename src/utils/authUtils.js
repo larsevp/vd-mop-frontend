@@ -20,7 +20,6 @@ export function getCurrentUserInfo() {
     if (accounts.length === 1) {
       active = accounts[0];
       instance.setActiveAccount(active);
-      console.log('Active account set (single account):', active.username);
     } else {
       // Multiple accounts with no active selection – caller can trigger account picker
       return null;

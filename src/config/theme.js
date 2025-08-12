@@ -116,7 +116,7 @@ export const colors = {
     secondary: '#6b7280',    // Secondary text
     tertiary: '#9ca3af',     // Tertiary text
     inverse: '#ffffff',      // Text on dark backgrounds
-    muted: '#d1d5db',        // Muted text
+    muted: '#9a9b9bff',        // Muted text
   },
 
   // Border colors

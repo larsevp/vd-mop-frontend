@@ -40,10 +40,10 @@ export default function EnhetSelect({
     queryKey: ['enheter'],
     queryFn: getEnheter,
     select: (response) => {
-      console.log('EnhetSelect API response:', response);
+      //console.log('EnhetSelect API response:', response);
       // Handle both direct array and response.data patterns
       const data = Array.isArray(response) ? response : (response.data || []);
-      console.log('EnhetSelect processed data:', data);
+      //console.log('EnhetSelect processed data:', data);
       return data;
     }
   });
@@ -87,7 +87,7 @@ export default function EnhetSelect({
 
   // Sort enheter hierarchically
   const sortedEnheter = React.useMemo(() => {
-    console.log('EnhetSelect - Processing enheter for sorting:', enheter);
+    //console.log('EnhetSelect - Processing enheter for sorting:', enheter);
     if (!enheter.length) return [];
 
     // Build a tree structure
@@ -103,7 +103,7 @@ export default function EnhetSelect({
       }
     });
 
-    console.log('EnhetSelect - Roots:', roots, 'Map size:', enhetMap.size);
+    //console.log('EnhetSelect - Roots:', roots, 'Map size:', enhetMap.size);
 
     // Second pass: build parent-child relationships
     enheter.forEach(enhet => {
@@ -135,7 +135,7 @@ export default function EnhetSelect({
       .sort((a, b) => enhetMap.get(a).navn.localeCompare(enhetMap.get(b).navn))
       .flatMap(rootId => flattenTree(rootId));
     
-    console.log('EnhetSelect - Sorted result:', result);
+    //console.log('EnhetSelect - Sorted result:', result);
     return result;
   }, [enheter]);
 

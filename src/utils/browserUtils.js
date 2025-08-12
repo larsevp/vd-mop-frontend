@@ -22,7 +22,6 @@ export const getSafariMsalConfig = (baseConfig) => {
     return baseConfig;
   }
 
-  console.log('Safari/iOS detected - applying Safari-specific MSAL config');
 
   return {
     ...baseConfig,
@@ -55,7 +54,6 @@ export const getSafariMsalConfig = (baseConfig) => {
         ...baseConfig.system.loggerOptions,
         logLevel: 1, // Info level for better debugging
         loggerCallback: (level, message, containsPii) => {
-          console.log(`MSAL [Safari][${level}]${containsPii ? " [PII]" : ""}: ${message}`);
         }
       }
     }
@@ -77,19 +75,16 @@ export const safariStorageCleanup = () => {
     return Promise.resolve();
   }
 
-  console.log('Safari: Performing comprehensive storage cleanup');
 
   return new Promise((resolve) => {
     try {
       // Clear all storage types for Safari
       if (typeof sessionStorage !== 'undefined') {
         sessionStorage.clear();
-        console.log('Safari: sessionStorage cleared');
       }
       
       if (typeof localStorage !== 'undefined') {
         localStorage.clear();
-        console.log('Safari: localStorage cleared');
       }
 
       // Add delay for Safari to process cleanup

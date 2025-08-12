@@ -14,14 +14,14 @@ export default function UserInitializer({ children }) {
     const shouldFetchUserInfo = user && !user.isManualLogin && !user.rolle;
     
     if (shouldFetchUserInfo) {
-      console.log('UserInitializer: Fetching user info for SSO user');
+      //console.log('UserInitializer: Fetching user info for SSO user');
       fetchUserInfo();
     } else {
-      console.log('UserInitializer: Skipping user info fetch', {
+      /*console.log('UserInitializer: Skipping user info fetch', {
         hasUser: !!user,
         isManualLogin: user?.isManualLogin,
         hasRole: !!user?.rolle
-      });
+      });*/
     }
   }, [user?.isManualLogin, user?.rolle, fetchUserInfo]);
 

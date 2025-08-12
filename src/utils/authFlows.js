@@ -37,7 +37,6 @@ const clearStuckInteractionState = (instance) => {
       console.warn('[Auth] Found stuck MSAL interaction keys:', stuckKeys);
       stuckKeys.forEach(key => {
         storage.removeItem(key);
-        console.log('[Auth] Cleared stuck key:', key);
       });
       return true;
     }
@@ -87,14 +86,12 @@ export const handleLogin = async ({
   // Rate limiting to prevent rapid clicks
   const now = Date.now();
   if (now - lastLoginAttempt < LOGIN_DEBOUNCE_MS) {
-    console.log('[Auth] Login attempt debounced');
     return;
   }
   lastLoginAttempt = now;
 
   // Prevent multiple simultaneous login attempts
   if (isLoggingIn || isSigningUp) {
-    console.log('[Auth] Login already in progress locally');
     return;
   }
 
@@ -112,12 +109,8 @@ export const handleLogin = async ({
     const activeAccount = instance.getActiveAccount();
     const allAccounts = instance.getAllAccounts();
     
-    console.log('[Auth] Checking existing authentication...');
-    console.log('[Auth] Active account:', activeAccount?.username || 'none');
-    console.log('[Auth] Total accounts:', allAccounts.length);
     
     if (activeAccount || allAccounts.length > 0) {
-      console.log('[Auth] User already authenticated, redirecting...');
       const returnUrl = getReturnUrl(location);
       setIsLoggingIn(false);
       navigate(returnUrl, { replace: true });
@@ -125,7 +118,6 @@ export const handleLogin = async ({
     }
 
     // Start login flow
-    console.log('[Auth] Starting login flow...');
     const returnUrl = getReturnUrl(location);
     const state = JSON.stringify({ 
       returnUrl, 
@@ -174,7 +166,6 @@ export const handleSignup = async ({
 }) => {
   // Prevent multiple simultaneous signup attempts
   if (isSigningUp || isLoggingIn) {
-    console.log('[Auth] Signup already in progress locally');
     return;
   }
 
@@ -188,7 +179,6 @@ export const handleSignup = async ({
   setLoginError(null);
   
   try {
-    console.log('[Auth] Starting signup flow...');
     const returnUrl = getReturnUrl(location);
     const state = JSON.stringify({ 
       returnUrl, 
@@ -230,7 +220,6 @@ export const handleLogout = async ({ logout, setIsLoggingOut }) => {
   setIsLoggingOut(true);
   
   try {
-    console.log('[Auth] Starting logout flow...');
     await logout('/login');
   } catch (error) {
     console.error('[Auth] Logout failed, forcing redirect:', error);
@@ -247,12 +236,9 @@ export const handleLogout = async ({ logout, setIsLoggingOut }) => {
  */
 if (typeof window !== 'undefined') {
   window.clearAllMsalState = () => {
-    console.log('[Auth] Clearing all MSAL state...');
     const keys = Object.keys(localStorage).filter(key => key.startsWith('msal'));
     keys.forEach(key => {
-      console.log('[Auth] Removing:', key);
       localStorage.removeItem(key);
     });
-    console.log(`[Auth] Cleared ${keys.length} MSAL keys. Please refresh the page.`);
   };
 }
