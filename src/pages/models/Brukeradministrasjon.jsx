@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { RowList, AdminPage } from '../components/tableComponents';
-import { getModelConfig } from '../config/modelConfigs';
+import { RowList, AdminPage } from '../../components/tableComponents';
+import { getModelConfig } from '../../config/modelConfigs';
 
 export default function Brukeradministrasjon() {
   const navigate = useNavigate();

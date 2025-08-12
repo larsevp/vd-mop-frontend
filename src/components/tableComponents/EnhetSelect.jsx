@@ -179,13 +179,13 @@ export default function EnhetSelect({
   function getIndentedName(enhet) {
     // Use simple visual indicators for hierarchy
     const indicators = {
-      0: '', // Root level - no indicator
-      1: '├─ ', // First level
-      2: '├──', // Second level  
-      3: '├───' // Third level and beyond
+      0: ' - ', // Root level - no indicator
+      1: '- ', // First level
+      2: '- ', // Second level  
+      3: '- ' // Third level and beyond
     };
     
-    const indicator = indicators[Math.min(enhet.depth, 3)] || '├───';
+    const indicator = indicators[Math.min(enhet.depth, 3)] || '';
     return `${indicator}${enhet.navn}`;
   }
 
@@ -307,11 +307,11 @@ export default function EnhetSelect({
                         ${enhet.depth === 0 
                           ? 'text-text-primary' 
                           : enhet.depth === 1 
-                            ? 'text-text-secondary' 
-                            : 'text-text-muted'
+                            ? 'text-text-primary' 
+                            : 'text-text-primary'
                         }
                       `}>
-                        {getIndentedName(enhet)}
+                        {getIndentedName(enhet)} 
                       </span>
                       {enhet.id === value && (
                         <svg className="ml-auto w-4 h-4 text-primary-600" fill="currentColor" viewBox="0 0 20 20">

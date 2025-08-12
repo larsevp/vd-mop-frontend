@@ -18,6 +18,11 @@ function devHttps() {
 
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
   server: {
     //https: isDev ? devHttps() : undefined, //enable this for https in dev (safari testing)
     host: '0.0.0.0',

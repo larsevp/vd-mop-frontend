@@ -1,11 +1,11 @@
-import { getUsers, deleteUser, createUser, updateUser } from '../api/endpoints';
-import { getProsjekter, deleteProsjekt, createProsjekt, updateProsjekt } from '../api/endpoints';
-
+import { getUsers, deleteUser, createUser, updateUser, getPaginatedUser } from '../api/endpoints';
+import { getProsjekter, deleteProsjekt, createProsjekt, updateProsjekt, getPaginatedProsjekt } from '../api/endpoints';
+import {getEnheter, deleteEnhet, createEnhet, updateEnhet, getPaginatedEnhet} from '../api/endpoints';
 // Centralized model configurations
 export const modelConfigs = {
   users: {
     queryKey: ["users"],
-    queryFn: getUsers,
+    queryFn: getPaginatedUser,
     createFn: createUser,
     updateFn: updateUser,
     deleteFn: deleteUser,
@@ -22,7 +22,7 @@ export const modelConfigs = {
   },
   prosjekter: {
     queryKey: ["prosjekter"],
-    queryFn: getProsjekter,
+    queryFn: getPaginatedProsjekt,
     createFn: createProsjekt,
     updateFn: updateProsjekt,
     deleteFn: deleteProsjekt,
@@ -37,8 +37,25 @@ export const modelConfigs = {
       { name: 'createdBy', label: 'Created By', type: 'number', hiddenIndex: true, hiddenEdit: true, hiddenCreate: true },
       { name: 'updatedBy', label: 'Updated By', type: 'number', hiddenIndex: true, hiddenEdit: true, hiddenCreate: true },
     ]
-  }
+  },
+    enheter: {
+    queryKey: ["enheter"],
+    queryFn: getPaginatedEnhet,
+    createFn: createEnhet,
+    updateFn: updateEnhet,
+    deleteFn: deleteEnhet,
+    modelPrintName: 'Organisasjonstilhørlighet',
+    fields: [
+      { name: 'navn', label: 'Navn', type: 'text', required: true },
+      { name: 'beskrivelse', label: 'Beskrivelse', type: 'text', required: false },
+      { name: 'parentId', label: 'Parent', type: 'number', required: false},
+      { name: 'level', label: 'Nivå', type: 'number', required: true, placeholder:"3 for FO, 2 for virksomhetsområde, 1 for firma" },
+      { name: 'createdBy', label: 'Opprettet av', type: 'number', required: false, hiddenIndex: true, hiddenEdit: true, hiddenCreate: true },
+      { name: 'updatedBy', label: 'Opprettet av', type: 'number', required: false, hiddenIndex: true, hiddenEdit: true, hiddenCreate: true },
+    ]
+  },
 };
+
 
 // Helper function to get config by model type
 export function getModelConfig(modelType) {

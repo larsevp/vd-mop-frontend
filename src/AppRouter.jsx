@@ -11,12 +11,12 @@ import ManualLoginPage from './pages/ManualLoginPage';
 import AuthRedirectPage from './pages/AuthRedirectPage';
 import TiltaksoversiktGenerelle from './pages/TiltaksoversiktGenerelle';
 import TiltaksoversiktProsjekt from './pages/TiltaksoversiktProsjekt';
-import Brukeradministrasjon from './pages/Brukeradministrasjon';
+import Brukeradministrasjon from './pages/models/Brukeradministrasjon';
 import { RowNew, RowEdit } from './components/tableComponents';
-import Prosjektadministrasjon from './pages/Prosjektadministrasjon';
+import Prosjektadministrasjon from './pages/models/Prosjektadministrasjon';
 import MainLayout from './components/layout/MainLayout';
 import ProjectLanding from './pages/ProjectLanding';
-
+import Enhetsadministrasjon from './pages/models/Enhetsadministrasjon';
 
 function AuthenticatedApp() {
   const { syncStatus, syncError } = useAuth();
@@ -70,6 +70,9 @@ function ProtectedRoutes() {
         <Route path="/prosjekter" element={<Prosjektadministrasjon />} />
         <Route path="/prosjekter/ny" element={<RowNew />} />
         <Route path="/prosjekter/:id/rediger" element={<RowEdit />} />
+        <Route path="/enheter" element={<Enhetsadministrasjon />} />
+        <Route path="/enheter/ny" element={<RowNew />} />
+        <Route path="/enheter/:id/rediger" element={<RowEdit />} />
         {/* Redirect any other route (including /login) to home when authenticated */}
         <Route path="*" element={<LandingPage />} />
       </Route>
