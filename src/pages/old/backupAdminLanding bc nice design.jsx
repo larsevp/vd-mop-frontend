@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Users, Building2, Activity, Star, Package, Settings } from "lucide-react";
 import { useUserStore } from "@/stores/userStore";
 
-export default function AdminLanding() {
+export default function OldAdminLanding() {
   const { user } = useUserStore();
   const isAdmin = user?.rolle === "ADMIN";
 

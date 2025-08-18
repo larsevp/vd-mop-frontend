@@ -1,21 +1,19 @@
-import React from 'react';
-import { Plus, Copy, ArrowLeft } from 'lucide-react';
+import React from "react";
+import { Plus, Copy, ArrowLeft } from "lucide-react";
 import { getThemeClasses } from "@/hooks/useTheme";
 
-
-
-function PageTitleSection({
-  title = 'Tittel',
-  subtitle = '',
+function OldPageTitleSection({
+  title = "Tittel",
+  subtitle = "",
   onNew,
-  newButtonLabel = 'Ny',
+  newButtonLabel = "Ny",
   newButtonIcon = <Plus size={18} />,
   showNewButton = true,
   onCopy,
   showCopy = false,
   onBack,
   showBackButton = false,
-  backButtonLabel = 'Tilbake',
+  backButtonLabel = "Tilbake",
   rightChildren,
   children,
 }) {

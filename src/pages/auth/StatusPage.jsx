@@ -2,14 +2,14 @@ import React from "react";
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useIsAuthenticated, useMsal, UnauthenticatedTemplate } from "@azure/msal-react";
-import { loginRequest, signupRequest } from "../msalConfig";
+import { loginRequest, signupRequest } from "../../msalConfig";
 import { AlertCircle, LogIn, AlertTriangle } from "lucide-react";
 import { useLogout } from "@/hooks/useLogout";
 import { useUserStore } from "@/stores/userStore";
-import { getReturnUrl } from "../utils/msalUtils";
-import { handleLogin, handleSignup, handleLogout } from "../utils/authFlows";
-import { getMsalInstance } from "../utils/msalUtils";
-import { getStatusPageContent, shouldShowSignupButton, shouldShowReloadButton } from "../utils/statusPageUtils";
+import { getReturnUrl } from "../../utils/msalUtils";
+import { handleLogin, handleSignup, handleLogout } from "../../utils/authFlows";
+import { getMsalInstance } from "../../utils/msalUtils";
+import { getStatusPageContent, shouldShowSignupButton, shouldShowReloadButton } from "../../utils/statusPageUtils";
 
 /**
  * Unified status page component that handles:

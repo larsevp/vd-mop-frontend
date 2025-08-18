@@ -2,7 +2,7 @@ import { getUsers, deleteUser, createUser, updateUser, getPaginatedUser } from "
 import { getProsjekter, deleteProsjekt, createProsjekt, updateProsjekt, getPaginatedProsjekt } from "@/api/endpoints";
 import { getEnheter, deleteEnhet, createEnhet, updateEnhet, getPaginatedEnhet } from "@/api/endpoints";
 // Centralized model configurations
-export const modelConfigs = {
+export const OldmodelConfigs = {
   users: {
     queryKey: ["users"],
     queryFn: getPaginatedUser,
