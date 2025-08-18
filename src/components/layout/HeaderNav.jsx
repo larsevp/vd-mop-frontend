@@ -1,21 +1,22 @@
-import React from 'react';
-import { List, Briefcase, Home, ArrowLeft } from 'lucide-react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useMsal } from '@azure/msal-react';
-import { useUserStore } from '../../stores/userStore';
-import LogoutButton from '../ui/LogoutButton';
-import { getThemeClasses } from '../../hooks/useTheme';
+import React from "react";
+import { List, Briefcase, Home, ArrowLeft, Users } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useMsal } from "@azure/msal-react";
+import { useUserStore } from "@/stores/userStore";
+import { LogoutButton } from "@/components/ui";
+import { getThemeClasses } from "@/hooks/useTheme";
 
 export default function HeaderNav({ showBackButton = false }) {
-  const user = useUserStore(state => state.user);
+  const user = useUserStore((state) => state.user);
   const location = useLocation();
   const navigate = useNavigate();
   const { accounts } = useMsal();
   const [tenantError] = React.useState(false);
+  const isAdmin = user?.rolle === "ADMIN";
 
   const navItems = [
-    { path: '/tiltak', label: 'Generelle tiltak', icon: <List size={16} /> },
-    { path: '/tiltak-prosjekt', label: 'Prosjekttiltak', icon: <Briefcase size={16} /> },
+    { path: "/tiltak", label: "Generelle tiltak", icon: <List size={16} /> },
+    { path: "/tiltak-prosjekt", label: "Prosjekttiltak", icon: <Briefcase size={16} /> },
   ];
 
   if (tenantError) {
@@ -54,14 +55,12 @@ export default function HeaderNav({ showBackButton = false }) {
           <div className="flex-1 flex items-center justify-end gap-4">
             <nav className="hidden md:flex">
               <ul className="flex gap-1">
-                {navItems.map(item => (
+                {navItems.map((item) => (
                   <li key={item.path}>
-                    <Link 
+                    <Link
                       to={item.path}
                       className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        location.pathname === item.path 
-                          ? 'bg-primary-50 text-primary-700' 
-                          : 'text-text-secondary hover:bg-background-muted'
+                        location.pathname === item.path ? "bg-primary-50 text-primary-700" : "text-text-secondary hover:bg-background-muted"
                       }`}
                     >
                       {item.icon}
@@ -69,17 +68,26 @@ export default function HeaderNav({ showBackButton = false }) {
                     </Link>
                   </li>
                 ))}
+                {isAdmin && (
+                  <>
+                    <li>
+                      <Link
+                        to="/admin-landing"
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors text-text-secondary hover:bg-background-muted"
+                      >
+                        <List size={16}></List>
+                        <span>Admin</span>
+                      </Link>
+                    </li>
+                  </>
+                )}
               </ul>
             </nav>
             {/* Show user name and logout button if logged in */}
             {(user || (accounts && accounts.length > 0)) && (
               <div className="flex items-center gap-2 ml-4">
                 {/* Display name from either manual login or MSAL */}
-                {(user?.name || user?.navn) && (
-                  <span className="text-text-secondary font-medium">
-                    {user?.name || user?.navn}
-                  </span>
-                )}
+                {(user?.name || user?.navn) && <span className="text-text-secondary font-medium">{user?.name || user?.navn}</span>}
                 <LogoutButton variant="ghost" className="text-sm" />
               </div>
             )}
@@ -88,14 +96,14 @@ export default function HeaderNav({ showBackButton = false }) {
         {/* Mobile navigation */}
         <div className="md:hidden border-t border-border-muted">
           <div className="grid grid-cols-2">
-            {navItems.map(item => (
-              <Link 
+            {navItems.map((item) => (
+              <Link
                 key={item.path}
                 to={item.path}
                 className={`flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
-                  location.pathname === item.path 
-                    ? 'bg-primary-50 text-primary-700 border-t-2 border-primary-500' 
-                    : 'text-text-secondary hover:bg-background-muted'
+                  location.pathname === item.path
+                    ? "bg-primary-50 text-primary-700 border-t-2 border-primary-500"
+                    : "text-text-secondary hover:bg-background-muted"
                 }`}
               >
                 {item.icon}

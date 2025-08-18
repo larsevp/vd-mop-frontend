@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { AlertCircle, LogIn, Eye, EyeOff } from 'lucide-react';
-import { useUserStore } from '../stores/userStore';
-import { manualLogin } from '../api/auth';
-import { getThemeClasses } from '../hooks/useTheme';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { AlertCircle, LogIn, Eye, EyeOff } from "lucide-react";
+import { useUserStore } from "@/stores/userStore";
+import { manualLogin } from "@/api/auth";
+import { getThemeClasses } from "@/hooks/useTheme";
 
 export default function ManualLoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const navigate = useNavigate();
-  const setUser = useUserStore(state => state.setUser);
+  const setUser = useUserStore((state) => state.setUser);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -21,35 +21,41 @@ export default function ManualLoginPage() {
 
     try {
       const response = await manualLogin(email, password);
-      const { token, user } = response.data;
-      
-      console.log('Manual login successful:', { user, tokenLength: token.length });
-      
-      // Store token separately to avoid sensitive data detection
-      localStorage.setItem('mt', token); // Abbreviated key
-      
+      const { accessToken, refreshToken, token, user } = response.data;
+
+      // Handle both old (token) and new (accessToken/refreshToken) response formats
+      const finalAccessToken = accessToken || token;
+
+      console.log("Manual login successful:", { user, hasAccessToken: !!finalAccessToken, hasRefreshToken: !!refreshToken });
+
+      // Store tokens separately to avoid sensitive data detection
+      localStorage.setItem("mt", finalAccessToken); // Access token
+      if (refreshToken) {
+        localStorage.setItem("rt", refreshToken); // Refresh token
+      }
+
       // Store user with manual login flag
       const manualUser = {
         ...user,
-        isManualLogin: true
+        isManualLogin: true,
       };
-      
-      console.log('Setting user in store:', manualUser);
+
+      console.log("Setting user in store:", manualUser);
       setUser(manualUser);
 
       // Navigate to home page after a short delay to ensure store update
       setTimeout(() => {
-        console.log('Navigating to home page');
-        navigate('/', { replace: true });
+        console.log("Navigating to home page");
+        navigate("/", { replace: true });
       }, 100);
     } catch (error) {
-      console.error('Login error:', error);
+      console.error("Login error:", error);
       if (error.response?.status === 401) {
-        setLoginError('Ugyldig e-post eller passord.');
+        setLoginError("Ugyldig e-post eller passord.");
       } else if (error.response?.status === 429) {
-        setLoginError('For mange påloggingsforsøk. Vennligst prøv igjen senere.');
+        setLoginError("For mange påloggingsforsøk. Vennligst prøv igjen senere.");
       } else {
-        setLoginError('Det oppstod en feil under innlogging. Vennligst prøv igjen.');
+        setLoginError("Det oppstod en feil under innlogging. Vennligst prøv igjen.");
       }
     } finally {
       setIsLoggingIn(false);
@@ -96,7 +102,7 @@ export default function ManualLoginPage() {
               <div className="relative">
                 <input
                   id="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -110,11 +116,7 @@ export default function ManualLoginPage() {
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   disabled={isLoggingIn}
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-gray-400" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-gray-400" />
-                  )}
+                  {showPassword ? <EyeOff className="h-4 w-4 text-gray-400" /> : <Eye className="h-4 w-4 text-gray-400" />}
                 </button>
               </div>
             </div>
@@ -140,11 +142,8 @@ export default function ManualLoginPage() {
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              Vanlig bruker?{' '}
-              <button
-                onClick={() => navigate('/login')}
-                className="text-blue-600 hover:text-blue-500 font-medium"
-              >
+              Vanlig bruker?{" "}
+              <button onClick={() => navigate("/login")} className="text-blue-600 hover:text-blue-500 font-medium">
                 Bruk Microsoft SSO
               </button>
             </p>
@@ -152,9 +151,7 @@ export default function ManualLoginPage() {
         </div>
 
         <div className="text-center">
-          <p className="text-xs text-gray-500">
-            Denne siden er kun for administratorer med manuell tilgang
-          </p>
+          <p className="text-xs text-gray-500">Denne siden er kun for administratorer med manuell tilgang</p>
         </div>
       </div>
     </div>

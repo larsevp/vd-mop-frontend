@@ -1,25 +1,25 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { RowList, AdminPage } from '../../components/tableComponents';
-import { getModelConfig } from '../../config/modelConfigs';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { RowList, AdminPage } from "@/components/tableComponents";
+import { getModelConfig } from "../../modelConfigs";
 
 export default function Brukeradministrasjon() {
   const navigate = useNavigate();
-  const config = getModelConfig('users');
+  const config = getModelConfig("users");
 
   function handleEdit(user) {
-    navigate(`/admin/${user.id}/rediger`, { 
-      state: { modelType: 'users' } 
+    navigate(`/admin/${user.id}/rediger`, {
+      state: { modelType: "users" },
     });
   }
   function handleNew() {
-    navigate('/admin/ny', { 
-      state: { modelType: 'users' } 
+    navigate("/admin/ny", {
+      state: { modelType: "users" },
     });
   }
 
   function handleBack() {
-    navigate('/');
+    navigate(-1);
   }
 
   return (
@@ -31,8 +31,8 @@ export default function Brukeradministrasjon() {
       onNew={handleNew}
       onBack={handleBack}
       showBackButton={true}
-      backButtonLabel="Tilbake til hovedsiden"
-      showNewButton={false}  // Kan settes til false for å skjule knappen
+      backButtonLabel="Tilbake"
+      showNewButton={false} // Kan settes til false for å skjule knappen
     >
       <RowList
         fields={config.fields}

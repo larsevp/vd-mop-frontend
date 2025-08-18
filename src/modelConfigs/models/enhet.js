@@ -1,0 +1,52 @@
+import { getEnheter, deleteEnhet, createEnhet, updateEnhet, getPaginatedEnhet, getEnhetById } from "@/api/endpoints";
+
+export const enhetModel = {
+  queryKey: ["enheter"],
+  queryFn: getPaginatedEnhet,
+  getByIdFn: getEnhetById,
+  createFn: createEnhet,
+  updateFn: updateEnhet,
+  deleteFn: deleteEnhet,
+  modelPrintName: "Organisasjonstilhørlighet",
+  fields: [
+    { name: "navn", label: "Navn", type: "text", required: true },
+    { name: "beskrivelse", label: "Beskrivelse", type: "text", required: false },
+    {
+      name: "parentId",
+      label: "Parent",
+      type: "parentselect",
+      required: false,
+      hiddenIndex: true,
+      placeholder: "Velg overordnet enhet",
+    },
+    { name: "level", label: "Nivå", type: "number", required: true, placeholder: "3 for FO, 2 for virksomhetsområde, 1 for firma" },
+    {
+      name: "createdBy",
+      label: "Opprettet av",
+      type: "number",
+      required: false,
+      hiddenIndex: true,
+      hiddenEdit: true,
+      hiddenCreate: true,
+    },
+    {
+      name: "updatedBy",
+      label: "Opprettet av",
+      type: "number",
+      required: false,
+      hiddenIndex: true,
+      hiddenEdit: true,
+      hiddenCreate: true,
+    },
+    {
+      name: "parentName",
+      label: "Parent Name",
+      type: "text",
+      required: false,
+      computed: (row) => (row.parent && row.parent.navn ? row.parent.navn : "N/A"),
+      hiddenIndex: true,
+      hiddenEdit: true,
+      hiddenCreate: true,
+    },
+  ],
+};

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { getCurrentUserInfo } from '../api/userApi';
+import { getCurrentUserInfo } from "@/api/userApi";
 
 // Main user store with authentication, roles, and user management
 export const useUserStore = create(

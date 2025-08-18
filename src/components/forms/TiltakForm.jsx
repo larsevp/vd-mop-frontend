@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { createTiltak } from '../../api/endpoints';
-import { getThemeClasses } from '../../hooks/useTheme';
+import { createTiltak } from "@/api/endpoints";
+import { getThemeClasses } from "@/hooks/useTheme";
 
 export default function TiltakForm({ onSuccess }) {
   const [tittel, setTittel] = useState('');

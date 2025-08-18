@@ -1,10 +1,18 @@
-import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 
 export default function ScrollToTop() {
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
+  const prevPathnameRef = useRef(pathname);
+
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
+    // Only scroll to top if the pathname actually changed (not just hash)
+    // and the hash is not "#" (which is used by pagination)
+    if (prevPathnameRef.current !== pathname && hash !== "#") {
+      window.scrollTo(0, 0);
+    }
+    prevPathnameRef.current = pathname;
+  }, [pathname, hash]);
+
   return null;
 }

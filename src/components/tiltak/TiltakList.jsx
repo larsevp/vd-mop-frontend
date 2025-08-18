@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import React from 'react';
-import { getTiltak, deleteTiltak } from '../api/endpoints';
+import { getTiltak, deleteTiltak } from "@/api/endpoints";
 
 export default function TiltakList() {
   const [tiltak, setTiltak] = useState([]);

@@ -4,14 +4,15 @@
     "paths": {
       "@/*": ["src/*"]
     },
-    "allowJs": true,
-    "checkJs": false,
+    "allowJs": true, // Allow JavaScript files in TypeScript project
+    "checkJs": false, // Don't type-check JavaScript files (optional)
     "jsx": "react-jsx",
     "moduleResolution": "node",
     "target": "ES2020",
     "module": "ESNext",
-    "skipLibCheck": true,
-    "allowSyntheticDefaultImports": true
+    "skipLibCheck": true, // Keep true for performance; set to false for stricter type-checking
+    "allowSyntheticDefaultImports": true,
+    "strict": true // Enable strict mode for better type safety
   },
   "include": ["src/**/*"]
 }

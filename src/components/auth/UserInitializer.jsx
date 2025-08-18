@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useUserStore } from '../../stores/userStore';
+import { useUserStore } from "@/stores/userStore";
 
 /**
  * Component responsible for initializing user data on app load

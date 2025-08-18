@@ -1,25 +1,25 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { RowList, AdminPage } from '../../components/tableComponents';
-import { getModelConfig } from '../../config/modelConfigs';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { RowList, AdminPage } from "@/components/tableComponents";
+import { getModelConfig } from "../../modelConfigs";
 
 export default function Prosjektadministrasjon() {
   const navigate = useNavigate();
-  const config = getModelConfig('prosjekter');
+  const config = getModelConfig("prosjekter");
 
   function handleEdit(row) {
-    navigate(`/prosjekter/${row.id}/rediger`, { 
-      state: { modelType: 'prosjekter' } 
+    navigate(`/prosjekter/${row.id}/rediger`, {
+      state: { modelType: "prosjekter" },
     });
   }
   function handleNew() {
-    navigate('/prosjekter/ny', { 
-      state: { modelType: 'prosjekter' } 
+    navigate("/prosjekter/ny", {
+      state: { modelType: "prosjekter" },
     });
   }
 
   function handleBack() {
-    navigate('/');
+    navigate(-1);
   }
 
   return (
@@ -31,7 +31,7 @@ export default function Prosjektadministrasjon() {
       onNew={handleNew}
       onBack={handleBack}
       showBackButton={true}
-      backButtonLabel="Tilbake til hovedsiden"
+      backButtonLabel="Tilbake"
     >
       <RowList
         fields={config.fields}

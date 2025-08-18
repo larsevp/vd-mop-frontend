@@ -1,19 +1,19 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowRight, FolderOpen, Plus, Book, Users } from 'lucide-react';
-import { getProsjekter } from '../api/endpoints';
-import { useQuery } from '@tanstack/react-query';
-import { useUserStore } from '../stores/userStore';
-import { getThemeClasses } from '../hooks/useTheme';
-import {SimpleCard} from '../components/ui'
+import React from "react";
+import { Link } from "react-router-dom";
+import { ArrowRight, FolderOpen, Plus, Book, Users } from "lucide-react";
+import { getProsjekter } from "@/api/endpoints";
+import { useQuery } from "@tanstack/react-query";
+import { useUserStore } from "@/stores/userStore";
+import { getThemeClasses } from "@/hooks/useTheme";
+import { SimpleCard } from "@/components/ui";
 export default function ProjectLanding() {
   const { user } = useUserStore();
-  const isAdmin = user?.rolle === 'ADMIN';
-  
+  const isAdmin = user?.rolle === "ADMIN";
+
   const { data, isLoading, error } = useQuery({
-    queryKey: ['projects_list'],
+    queryKey: ["projects_list"],
     queryFn: getProsjekter,
-    select: res => res.data,
+    select: (res) => res.data,
     refetchOnWindowFocus: true,
   });
 
@@ -34,9 +34,7 @@ export default function ProjectLanding() {
         <div className="max-w-screen-xl mx-auto px-4 py-8 sm:py-12 sm:px-6 md:px-8">
           <div className="text-center">
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">MOP</h1>
-            <p className="max-w-2xl mx-auto mt-6 text-xl">
-              Miljø og Prosjekthåndteringssystem for oversikt over tiltak og prosjekter
-            </p>
+            <p className="max-w-2xl mx-auto mt-6 text-xl">Miljø og Prosjekthåndteringssystem for oversikt over tiltak og prosjekter</p>
           </div>
         </div>
       </section>
@@ -49,37 +47,28 @@ export default function ProjectLanding() {
             <h2 className="text-lg font-semibold text-primary-900 mb-4">Hurtigtilgang</h2>
             <ul className="space-y-3">
               <li>
-                <Link 
-                  to="/tiltak"
-                  className="flex items-center gap-2 text-primary-700 hover:text-primary-800 transition-colors"
-                >
+                <Link to="/tiltak" className="flex items-center gap-2 text-primary-700 hover:text-primary-800 transition-colors">
                   <Book size={18} />
                   <span>Generelle tiltak</span>
                 </Link>
               </li>
               {isAdmin && (
                 <li>
-                  <Link 
-                    to="/admin"
-                    className="flex items-center gap-2 text-primary-700 hover:text-primary-800 transition-colors"
-                  >
+                  <Link to="/admin" className="flex items-center gap-2 text-primary-700 hover:text-primary-800 transition-colors">
                     <Users size={18} />
                     <span>Brukeradministrasjon</span>
                   </Link>
                 </li>
               )}
               <li>
-                <Link 
-                  to="/prosjekter"
-                  className="flex items-center gap-2 text-primary-700 hover:text-primary-800 transition-colors"
-                >
+                <Link to="/prosjekter" className="flex items-center gap-2 text-primary-700 hover:text-primary-800 transition-colors">
                   <FolderOpen size={18} />
                   <span>Prosjektadministrasjon</span>
                 </Link>
               </li>
             </ul>
           </div>
-          
+
           {/* New project card */}
           <div className="bg-background-primary rounded-xl border border-border-muted p-6 shadow-sm flex flex-col items-center justify-center text-center">
             <div className="h-16 w-16 bg-primary-50 rounded-full flex items-center justify-center mb-4">
@@ -91,14 +80,14 @@ export default function ProjectLanding() {
               Nytt prosjekt
             </button>
           </div>
-          
+
           {/* Recent projects */}
           <div className="md:col-span-2 lg:col-span-1">
             <h2 className="text-xl font-semibold text-text-primary mb-4">Nylige prosjekter</h2>
             <div className="space-y-4">
-              {projects.map(project => (
-                <div 
-                  key={project.id} 
+              {projects.map((project) => (
+                <div
+                  key={project.id}
                   className="bg-white rounded-lg border border-neutral-200 p-4 shadow-sm hover:shadow transition-shadow"
                 >
                   <div className="flex justify-between items-start">
@@ -106,8 +95,8 @@ export default function ProjectLanding() {
                       <h3 className="font-medium text-neutral-900">{project.name}</h3>
                       <p className="text-sm text-neutral-500 mt-1">{project.description}</p>
                     </div>
-                    <Link 
-                      to={`/tiltak-prosjekt?id=${project.id}`} 
+                    <Link
+                      to={`/tiltak-prosjekt?id=${project.id}`}
                       className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
                     >
                       <span>Åpne</span>
@@ -120,14 +109,11 @@ export default function ProjectLanding() {
                       <span className="text-neutral-700">{project.progress}%</span>
                     </div>
                     <div className="w-full bg-neutral-100 rounded-full h-2">
-                      <div 
-                        className="bg-blue-500 h-2 rounded-full" 
-                        style={{ width: `${project.progress}%` }}
-                      ></div>
+                      <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${project.progress}%` }}></div>
                     </div>
                   </div>
                   <div className="mt-3 text-xs text-neutral-400">
-                    Sist oppdatert: {new Date(project.lastUpdated).toLocaleDateString('no-NO')}
+                    Sist oppdatert: {new Date(project.lastUpdated).toLocaleDateString("no-NO")}
                   </div>
                 </div>
               ))}
@@ -135,7 +121,7 @@ export default function ProjectLanding() {
           </div>
         </div>
       </section>
-      
+
       {/* Projects list section */}
       <section className="max-w-screen-xl mx-auto px-4 py-12 sm:px-6 md:px-8 border-t border-neutral-200">
         <div className="flex justify-between items-center mb-8">
@@ -151,15 +137,23 @@ export default function ProjectLanding() {
             </button>
           </div>
         </div>
-        
+
         <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-lg">
           <table className="min-w-full divide-y divide-neutral-200">
             <thead className="bg-neutral-50">
               <tr>
-                <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-neutral-900 sm:pl-6">Prosjektnavn</th>
-                <th scope="col" className="hidden px-3 py-3.5 text-left text-sm font-semibold text-neutral-900 lg:table-cell">Beskrivelse</th>
-                <th scope="col" className="hidden px-3 py-3.5 text-left text-sm font-semibold text-neutral-900 sm:table-cell">Fremdrift</th>
-                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-neutral-900">Sist oppdatert</th>
+                <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-neutral-900 sm:pl-6">
+                  Prosjektnavn
+                </th>
+                <th scope="col" className="hidden px-3 py-3.5 text-left text-sm font-semibold text-neutral-900 lg:table-cell">
+                  Beskrivelse
+                </th>
+                <th scope="col" className="hidden px-3 py-3.5 text-left text-sm font-semibold text-neutral-900 sm:table-cell">
+                  Fremdrift
+                </th>
+                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-neutral-900">
+                  Sist oppdatert
+                </th>
                 <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
                   <span className="sr-only">Åpne</span>
                 </th>
@@ -178,7 +172,9 @@ export default function ProjectLanding() {
                       <span>{project.progress}%</span>
                     </div>
                   </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-sm text-neutral-500">{new Date(project.updatedAt).toLocaleDateString('no-NO')}</td>
+                  <td className="whitespace-nowrap px-3 py-4 text-sm text-neutral-500">
+                    {new Date(project.updatedAt).toLocaleDateString("no-NO")}
+                  </td>
                   <td className="whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                     <Link to={`/tiltak-prosjekt?id=${project.id}`} className="text-blue-600 hover:text-blue-900">
                       Åpne<span className="sr-only">, {project.name}</span>

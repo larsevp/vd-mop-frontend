@@ -1,6 +1,6 @@
 import React from 'react';
 import { Plus, Copy, ArrowLeft } from 'lucide-react';
-import { getThemeClasses } from '../hooks/useTheme';
+import { getThemeClasses } from "@/hooks/useTheme";
 
 
 

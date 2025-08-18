@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getEnheter } from '../../api/endpoints';
-import { getThemeClasses } from '../../hooks/useTheme';
+import { getEnheter } from "@/api/endpoints";
+import { getThemeClasses } from "@/hooks/useTheme";
 import { ArrowLeft } from 'lucide-react';
 
 /**

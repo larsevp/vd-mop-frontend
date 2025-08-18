@@ -1,13 +1,13 @@
-import React from 'react';
-import { useLocation } from 'react-router-dom';
-import RowForm from './RowForm';
-import { getModelConfig } from '../../config/modelConfigs';
+import React from "react";
+import { useLocation } from "react-router-dom";
+import RowForm from "./RowForm";
+import { getModelConfig } from "../../modelConfigs";
 
 export default function RowNew() {
   const location = useLocation();
   const modelType = location.state?.modelType;
   const config = getModelConfig(modelType);
-  
+
   if (!config) {
     return <div className="p-8">Error: Model configuration not found for {modelType}</div>;
   }

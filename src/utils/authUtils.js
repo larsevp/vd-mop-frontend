@@ -1,4 +1,4 @@
-import { useUserStore } from '../stores/userStore';
+import { useUserStore } from "@/stores/userStore";
 import { getMsalInstance } from '../utils/msalUtils';
 
 // Helper to get current user info (supports both MSAL and manual login)

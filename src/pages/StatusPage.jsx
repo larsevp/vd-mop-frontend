@@ -1,15 +1,15 @@
-import React from 'react';
-import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useIsAuthenticated, useMsal, UnauthenticatedTemplate } from '@azure/msal-react';
-import { loginRequest, signupRequest } from '../msalConfig';
-import { AlertCircle, LogIn, AlertTriangle } from 'lucide-react';
-import { useLogout } from '../hooks/useLogout';
-import { useUserStore } from '../stores/userStore';
-import { getReturnUrl } from '../utils/msalUtils';
-import { handleLogin, handleSignup, handleLogout } from '../utils/authFlows';
-import { getMsalInstance } from '../utils/msalUtils';
-import { getStatusPageContent, shouldShowSignupButton, shouldShowReloadButton } from '../utils/statusPageUtils';
+import React from "react";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useIsAuthenticated, useMsal, UnauthenticatedTemplate } from "@azure/msal-react";
+import { loginRequest, signupRequest } from "../msalConfig";
+import { AlertCircle, LogIn, AlertTriangle } from "lucide-react";
+import { useLogout } from "@/hooks/useLogout";
+import { useUserStore } from "@/stores/userStore";
+import { getReturnUrl } from "../utils/msalUtils";
+import { handleLogin, handleSignup, handleLogout } from "../utils/authFlows";
+import { getMsalInstance } from "../utils/msalUtils";
+import { getStatusPageContent, shouldShowSignupButton, shouldShowReloadButton } from "../utils/statusPageUtils";
 
 /**
  * Unified status page component that handles:
@@ -18,58 +18,70 @@ import { getStatusPageContent, shouldShowSignupButton, shouldShowReloadButton } 
  * - Authentication sync errors
  * - General error states
  */
-export default function StatusPage({ 
-  type = 'login', // 'login', 'error', 'sync-error'
+export default function StatusPage({
+  type = "login", // 'login', 'error', 'sync-error'
   error = null,
   title = null,
   description = null,
   showLoginButton = true,
   showLogoutButton = false,
   showRefreshButton = false,
-  showBackButton = false
+  showBackButton = false,
 }) {
-  console.log('StatusPage: Rendering with props:', { type, error, title, description, showLoginButton, showLogoutButton, showRefreshButton, showBackButton });
- 
+  console.log("StatusPage: Rendering with props:", {
+    type,
+    error,
+    title,
+    description,
+    showLoginButton,
+    showLogoutButton,
+    showRefreshButton,
+    showBackButton,
+  });
+
   // Use safer hooks that don't depend on MSAL state
   const isAuthenticated = useIsAuthenticated();
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useLogout();
   const { user } = useUserStore();
-  
+
   // Local state
   const [loginError, setLoginError] = useState(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isSigningUp, setIsSigningUp] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  
+
   // Get MSAL instance safely - only when needed
   const getMsalData = () => {
     try {
       const { instance, accounts } = useMsal();
       return { instance, accounts, available: true };
     } catch (error) {
-      console.warn('MSAL not available, using fallback instance');
-      return { 
-        instance: getMsalInstance(), 
-        accounts: [], 
-        available: false 
+      console.warn("MSAL not available, using fallback instance");
+      return {
+        instance: getMsalInstance(),
+        accounts: [],
+        available: false,
       };
     }
   };
 
   // Error handling
   useEffect(() => {
-    if (error) { setLoginError(error); return; }
+    if (error) {
+      setLoginError(error);
+      return;
+    }
     const urlParams = new URLSearchParams(location.search);
-    const urlError = urlParams.get('error');
-    const errorDescription = urlParams.get('error_description');
-    if (urlError) setLoginError(errorDescription || 'Innlogging mislyktes. Vennligst prøv igjen.');
+    const urlError = urlParams.get("error");
+    const errorDescription = urlParams.get("error_description");
+    if (urlError) setLoginError(errorDescription || "Innlogging mislyktes. Vennligst prøv igjen.");
   }, [error, location]);
 
   // Auto-redirect if already authenticated (for login type) - but avoid during login process
   useEffect(() => {
-    if (type === 'login' && isAuthenticated && !isLoggingIn && !isSigningUp) {
+    if (type === "login" && isAuthenticated && !isLoggingIn && !isSigningUp) {
       const returnUrl = getReturnUrl(location);
       navigate(returnUrl, { replace: true });
     }
@@ -121,14 +133,16 @@ export default function StatusPage({
         <div className="bg-white rounded-xl shadow-lg border border-neutral-200 p-8">
           <div className="text-center mb-6">
             <div className={`w-16 h-16 ${content.iconBg} rounded-full flex items-center justify-center mx-auto mb-4`}>
-              {content.iconType === 'AlertTriangle' ? <AlertTriangle className="w-8 h-8 text-red-600" /> : content.iconType === 'LogIn' && !hasError ? <LogIn className="w-8 h-8 text-blue-600" /> : <AlertCircle className="w-8 h-8 text-red-600" />}
+              {content.iconType === "AlertTriangle" ? (
+                <AlertTriangle className="w-8 h-8 text-red-600" />
+              ) : content.iconType === "LogIn" && !hasError ? (
+                <LogIn className="w-8 h-8 text-blue-600" />
+              ) : (
+                <AlertCircle className="w-8 h-8 text-red-600" />
+              )}
             </div>
-            <h2 className="text-2xl font-semibold text-neutral-900 mb-2">
-              {content.title}
-            </h2>
-            <p className="text-neutral-600">
-              {content.description}
-            </p>
+            <h2 className="text-2xl font-semibold text-neutral-900 mb-2">{content.title}</h2>
+            <p className="text-neutral-600">{content.description}</p>
           </div>
 
           {/* Error Message */}
@@ -136,9 +150,7 @@ export default function StatusPage({
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
               <AlertCircle size={20} className="text-red-600 flex-shrink-0 mt-0.5" />
               <div className="flex-grow">
-                <h3 className="text-sm font-medium text-red-800">
-                  {type === 'login' ? 'Innloggingsfeil' : 'Feil'}
-                </h3>
+                <h3 className="text-sm font-medium text-red-800">{type === "login" ? "Innloggingsfeil" : "Feil"}</h3>
                 <p className="text-sm text-red-700 mt-1">{hasError}</p>
               </div>
             </div>
@@ -148,7 +160,7 @@ export default function StatusPage({
           <div className="space-y-3">
             {showLoginButton && !showLogoutButton && (
               <>
-                {type === 'login' ? (
+                {type === "login" ? (
                   <UnauthenticatedTemplate>
                     <button
                       onClick={onLogin}

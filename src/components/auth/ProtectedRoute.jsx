@@ -1,5 +1,5 @@
 import React from 'react';
-import { useUserStore } from '../../stores/store';
+import { useUserStore } from "@/stores/store";
 import { Navigate, Outlet } from 'react-router-dom';
 
 const ProtectedRoute = () => {

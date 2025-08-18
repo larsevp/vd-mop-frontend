@@ -1,5 +1,5 @@
 import React from 'react';
-import { getThemeClasses } from '../../hooks/useTheme';
+import { getThemeClasses } from "@/hooks/useTheme";
 
 /**
  * NumberInput component with better UX and validation

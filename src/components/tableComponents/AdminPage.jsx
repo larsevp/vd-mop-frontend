@@ -1,5 +1,5 @@
-import React from 'react';
-import PageTitleSection from '../ui/PageTitleSection';
+import React from "react";
+import { PageTitleSection } from "@/components/ui";
 
 export default function AdminPage({
   title,
@@ -11,7 +11,7 @@ export default function AdminPage({
   onBack,
   showBackButton = false,
   backButtonLabel,
-  children
+  children,
 }) {
   return (
     <div className="bg-white min-h-screen">

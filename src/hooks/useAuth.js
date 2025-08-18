@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useUserStore } from '../stores/userStore';
+import { useUserStore } from "@/stores/userStore";
 import { useMsal } from '@azure/msal-react';
 import { extractUserFromMsalAccount } from '../utils/authUtils';
 import { setGlobalAuthErrorHandler } from '../queryClient';
