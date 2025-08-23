@@ -1,6 +1,6 @@
 import React from "react";
 import { RowList, AdminPage } from "@/components/tableComponents/";
-import { getModelConfig } from "../../modelConfigs";
+import { getModelConfig } from "@/modelConfigs";
 import { useNavigate } from "react-router-dom";
 
 export default function Emneadministrasjon() {
@@ -22,10 +22,10 @@ export default function Emneadministrasjon() {
   }
   return (
     <AdminPage
-      title="Emneadministrasjon"
-      description="Administrer emner"
-      listTitle="Emner"
-      newButtonLabel="Nytt emne"
+      title={config.title}
+      description={config.desc}
+      listTitle={config.title}
+      newButtonLabel={config.newButtonLabelText}
       onNew={handleNew}
       onBack={handleBack}
       showBackButton={true}

@@ -47,6 +47,7 @@ export default function RowEdit() {
           fields={config.fields}
           row={row}
           modelPrintName={config.modelPrintName}
+          modelName={modelType}
           queryKey={config.queryKey}
           updateFn={config.updateFn}
           onSuccess={() => navigate(-1)}

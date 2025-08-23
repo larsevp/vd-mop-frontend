@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { LogOut } from "lucide-react";
 import { useLogout } from "@/hooks/useLogout";
-import { getThemeClasses } from "@/hooks/useTheme";
 
 export default function LogoutButton({ className = "", variant = "default", children, redirectTo }) {
   const { logout } = useLogout();
@@ -20,18 +19,17 @@ export default function LogoutButton({ className = "", variant = "default", chil
 
   // Default button styles based on variant
   const getButtonStyles = () => {
-    const baseStyles =
-      "flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
+    const baseStyles = "btn";
 
     switch (variant) {
       case "primary":
-        return `${baseStyles} ${getThemeClasses.button.error}`;
+        return `${baseStyles} btn-error`;
       case "secondary":
-        return `${baseStyles} ${getThemeClasses.button.secondary}`;
+        return `${baseStyles} btn-secondary`;
       case "ghost":
         return `${baseStyles} text-text-muted hover:bg-background-muted`;
       default:
-        return `${baseStyles} ${getThemeClasses.button.error}`;
+        return `${baseStyles} btn-error`;
     }
   };
 

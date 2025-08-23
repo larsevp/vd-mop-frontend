@@ -7,20 +7,38 @@ import {
   getVurderingById,
 } from "@/api/endpoints";
 
-export const vurderingModel = {
+export const vurdering = {
   queryKey: ["vurderinger"],
   queryFn: getPaginatedVurdering,
   getByIdFn: getVurderingById,
   createFn: createVurdering,
   updateFn: updateVurdering,
   deleteFn: deleteVurdering,
+  title: "Vurderingsflagg",
+  desc: "Definer hvilke flagg som kan settes tilknyttet vurdering av krav / tiltak",
   modelPrintName: "vurdering",
+  newButtonLabelText: "Nytt vurderingsflagg",
   fields: [
     {
       name: "navn",
       label: "Navn",
       type: "text",
       required: true,
+    },
+    {
+      name: "icon",
+      label: "Ikon",
+      type: "string",
+      required: true,
+      field_info: "Lucid ikoner navnet",
+    },
+    {
+      name: "color",
+      label: "Farge",
+      type: "string",
+      required: true,
+      placeholder: "Fargen som skal brukes",
+      field_info: "Fargen som skal brukes #hex",
     },
     {
       name: "sortIt",

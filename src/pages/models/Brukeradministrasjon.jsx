@@ -1,11 +1,11 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { RowList, AdminPage } from "@/components/tableComponents";
-import { getModelConfig } from "../../modelConfigs";
-
+import { getModelConfig } from "@/modelConfigs";
+import { user } from "@/modelConfigs/models/user";
 export default function Brukeradministrasjon() {
   const navigate = useNavigate();
-  const config = getModelConfig("users");
+  const config = user; //getModelConfig("users");
 
   function handleEdit(user) {
     navigate(`/admin/${user.id}/rediger`, {
@@ -24,10 +24,10 @@ export default function Brukeradministrasjon() {
 
   return (
     <AdminPage
-      title="Brukeradministrasjon"
-      description="Administrer brukere, opprett nye og rediger eksisterende brukere"
-      listTitle="Brukerliste"
-      newButtonLabel="Ny bruker"
+      title={config.title}
+      description={config.desc}
+      listTitle={config.title}
+      newButtonLabel={config.newButtonLabelText}
       onNew={handleNew}
       onBack={handleBack}
       showBackButton={true}

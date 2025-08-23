@@ -4,7 +4,6 @@ import { ArrowRight, FolderOpen, Plus, Book, Users } from "lucide-react";
 import { getProsjekter } from "@/api/endpoints";
 import { useQuery } from "@tanstack/react-query";
 import { useUserStore } from "@/stores/userStore";
-import { getThemeClasses } from "@/hooks/useTheme";
 import { SimpleCard } from "@/components/ui";
 export default function ProjectLanding() {
   const { user } = useUserStore();
@@ -76,7 +75,7 @@ export default function ProjectLanding() {
             </div>
             <h2 className="text-lg font-semibold text-text-primary mb-2">Opprett nytt prosjekt</h2>
             <p className="text-text-muted mb-6">Start et nytt prosjekt med predefinerte tiltak</p>
-            <button className={`${getThemeClasses.button.primary} rounded-lg px-5 py-2.5 font-medium shadow-sm transition-all`}>
+            <button className="btn btn-primary rounded-lg px-5 py-2.5 font-medium shadow-sm transition-all">
               Nytt prosjekt
             </button>
           </div>

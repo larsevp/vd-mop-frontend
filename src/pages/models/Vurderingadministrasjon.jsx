@@ -8,12 +8,12 @@ export default function Vurderingadministrasjon() {
   const config = getModelConfig("vurderinger");
 
   function handleEdit(row) {
-    navigate(`/vurderinger/${row.id}/rediger`, {
+    navigate(`/vurdering/${row.id}/rediger`, {
       state: { modelType: "vurderinger" },
     });
   }
   function handleNew() {
-    navigate("/vurderinger/ny", {
+    navigate("/vurdering/ny", {
       state: { modelType: "vurderinger" },
     });
   }
@@ -22,10 +22,10 @@ export default function Vurderingadministrasjon() {
   }
   return (
     <AdminPage
-      title="Vurdering administrasjon"
-      description="Administrer vurderinger"
-      listTitle="Vurderinger"
-      newButtonLabel="Ny vurdering"
+      title={config.title}
+      description={config.desc}
+      listTitle={config.title}
+      newButtonLabel={config.newButtonLabelText}
       onNew={handleNew}
       onBack={handleBack}
       showBackButton={true}

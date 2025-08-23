@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import TiltakCard from "@/components/tiltak/TiltakCard";
 import { ChevronDown, ChevronUp, Tag } from "lucide-react";
-import { getThemeClasses } from "@/hooks/useTheme";
 
 function TemaSection({ tema, tiltakList = [], type, ...cardProps }) {
   const [open, setOpen] = useState(true);

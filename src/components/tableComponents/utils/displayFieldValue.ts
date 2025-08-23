@@ -1,9 +1,19 @@
+import { booleanToJaNei } from "../../../utils/booleanParser";
+
 // Define the enum for the 'from' parameter
 export enum FieldSource {
   LIST = "LIST",
   EDIT = "EDIT",
   CREATE = "CREATE",
 }
+
+// Translation mappings for enum fields
+const kravStatusTranslations: { [key: string]: string } = {
+  draft: "Kladd",
+  baseline: "Gjeldende versjon",
+  changed: "Endret",
+  deprecated: "Utgår",
+};
 
 export const displayFieldValue = (row: any, field: any, from: FieldSource | null = null, queryKey: any[] | null = null): string => {
   // If the field has a computed property, evaluate it and return the result
@@ -71,6 +81,45 @@ export const displayFieldValue = (row: any, field: any, from: FieldSource | null
     }
   }
 
+  // Handle kravStatus enum translation
+  if (field.name === "kravStatus") {
+    if (value && kravStatusTranslations[value]) {
+      return kravStatusTranslations[value];
+    } else if (value) {
+      return value; // Fallback to raw value if no translation found
+    } else {
+      return "Ingen status";
+    }
+  }
+
+  // Handle statusId specially - show the related status name if available
+  if (field.name === "statusId") {
+    if (row.status && row.status.navn) {
+      // If there's an icon, we could prefix it as text for simple display
+      // For React components, use displayFieldValueWithIcon instead
+      return row.status.icon
+        ? `${row.status.navn}` // Keep text-only for basic display
+        : row.status.navn;
+    } else if (value) {
+      return `Status ID: ${value}`;
+    } else {
+      return "Ingen status";
+    }
+  }
+
+  // Handle vurderingId specially - show the related vurdering title if available
+  if (field.name === "vurderingId") {
+    if (row.vurdering && row.vurdering.tittel) {
+      return row.vurdering.icon
+        ? `${row.vurdering.tittel}` // Keep text-only for basic display
+        : row.vurdering.tittel;
+    } else if (value) {
+      return `Vurdering ID: ${value}`;
+    } else {
+      return "Ingen vurdering";
+    }
+  }
+
   // Handle parentId specially - show the related parent name if available
   if (field.name === "parentId") {
     if (row.parent && row.parent.navn) {
@@ -80,6 +129,11 @@ export const displayFieldValue = (row: any, field: any, from: FieldSource | null
     } else {
       return "Ingen parent";
     }
+  }
+
+  // Handle boolean fields with type "bool"
+  if (field.type === "bool") {
+    return booleanToJaNei(value, "Ikke angitt");
   }
 
   // Default: return the raw value, or 'N/A' if null/undefined

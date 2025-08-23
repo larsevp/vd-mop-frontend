@@ -24,10 +24,10 @@ export default function Prosjektadministrasjon() {
 
   return (
     <AdminPage
-      title="Prosjektadministrasjon"
-      description="Administrer prosjekter, opprett nye og rediger eksisterende prosjekter"
-      listTitle="Prosjektliste"
-      newButtonLabel="Nytt prosjekt"
+      title={config.title}
+      description={config.desc}
+      listTitle={config.title}
+      newButtonLabel={config.newButtonLabelText}
       onNew={handleNew}
       onBack={handleBack}
       showBackButton={true}

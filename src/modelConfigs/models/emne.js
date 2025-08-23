@@ -1,13 +1,16 @@
 import { getEmner, deleteEmne, createEmne, updateEmne, getPaginatedEmne, getEmneById } from "@/api/endpoints";
 
-export const emneModel = {
+export const emne = {
   queryKey: ["emner"],
   queryFn: getPaginatedEmne,
   getByIdFn: getEmneById,
   createFn: createEmne,
   updateFn: updateEmne,
   deleteFn: deleteEmne,
-  modelPrintName: "emne",
+  title: "Emner",
+  desc: "Legg til eller fjern emner som kan tilknyttes krav eller tiltak",
+  modelPrintName: "Emne",
+  newButtonLabelText: "Nytt emne",
   fields: [
     {
       name: "tittel",

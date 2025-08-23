@@ -1,11 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Trash, Search, ArrowUpDown, ArrowUp, ArrowDown, X } from "lucide-react";
-import { getThemeClasses } from "@/hooks/useTheme";
-import { displayFieldValue } from "./utils/displayFieldValue";
+import { DisplayValueResolver } from "./displayValues/DisplayValueResolver";
 import { useEffect, useState, useRef } from "react";
 import { TablePagination, SkeletonLoader } from "@/components/ui";
+import HorizontalScrollableContainer from "@/components/ui/layout/horizontal-scrollable-container";
 import Swal from "sweetalert2";
-import theme from "../../config/theme";
 
 export default function RowList({ fields, onEdit, queryKey, queryFn, deleteFn, loadingText = "Laster data..." }) {
   const queryClient = useQueryClient();
@@ -98,8 +97,8 @@ export default function RowList({ fields, onEdit, queryKey, queryFn, deleteFn, l
   };
 
   const handleDelete = (id) => {
-    const confirmButtonColor = theme.colors.primary[500];
-    const cancelButtonColor = theme.colors.error[500];
+    const confirmButtonColor = "#3b82f6"; // primary-500 from tailwind.config.js
+    const cancelButtonColor = "#ef4444"; // error-500 from tailwind.config.js
 
     Swal.fire({
       title: "Er du sikker?",
@@ -108,10 +107,11 @@ export default function RowList({ fields, onEdit, queryKey, queryFn, deleteFn, l
       confirmButtonColor,
       cancelButtonColor,
       confirmButtonText: "Ja",
+      cancelButtonText: "Nei",
     }).then((result) => {
       if (result.isConfirmed) {
         mutation.mutate(id);
-        Swal.fire("Slettet!", "Elementet ditt har blitt slettet.", "success");
+        //Swal.fire("Slettet!", "Elementet ditt har blitt slettet.", "success");
       }
     });
   };
@@ -176,76 +176,77 @@ export default function RowList({ fields, onEdit, queryKey, queryFn, deleteFn, l
         </button>
       </div>
 
-      <table className="min-w-full divide-y divide-neutral-200">
-        <thead className="bg-neutral-50">
-          <tr>
-            {fields
-              .filter((f) => !f.hiddenIndex)
-              .map((f) => (
-                <th
-                  key={f.name}
-                  className="py-2 px-3 text-left text-sm font-semibold text-neutral-900 cursor-pointer hover:bg-neutral-100"
-                  onClick={() => handleSort(f.name)}
-                >
-                  <div className="flex items-center gap-2">
-                    {f.label}
-                    {getSortIcon(f.name)}
-                  </div>
-                </th>
-              ))}
-            <th className="py-2 px-3 text-right text-sm font-semibold text-text-primary">Handlinger</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border-muted bg-background-primary">
-          {data.items.map((row) => (
-            <tr key={row.id} className="hover:bg-background-muted h-[60px]">
+      <HorizontalScrollableContainer fadeColor="from-white" dependencies={[data.items]} className="mb-4">
+        <table className="min-w-full divide-y divide-neutral-200">
+          <thead className="bg-neutral-50">
+            <tr>
               {fields
                 .filter((f) => !f.hiddenIndex)
                 .map((f) => (
-                  <td key={f.name} className="py-2 px-3 text-sm text-text-primary">
-                    {displayFieldValue(row, f, "LIST", queryKey)}
-                  </td>
-                ))}
-              <td className="py-2 px-3 text-right">
-                <div className="flex gap-2 justify-end">
-                  <button
-                    className={`inline-flex items-center justify-center w-8 h-8 ${getThemeClasses.button.secondary} rounded-md border transition-all shadow-sm hover:shadow`}
-                    onClick={() => onEdit(row)}
-                    title="Rediger"
+                  <th
+                    key={f.name}
+                    className="py-2 px-3 text-left text-sm font-semibold text-neutral-900 cursor-pointer hover:bg-neutral-100"
+                    onClick={() => handleSort(f.name)}
                   >
-                    <Pencil size={16} />
-                  </button>
-                  {deleteFn && (
-                    <button
-                      className={`inline-flex items-center justify-center w-8 h-8 bg-background-muted text-error-600 hover:bg-error-50 hover:text-error-700 rounded-md border border-border-muted hover:border-error-300 transition-all shadow-sm hover:shadow`}
-                      onClick={() => handleDelete(row.id)}
-                      title="Slett"
-                    >
-                      <Trash size={16} />
-                    </button>
-                  )}
-                </div>
-              </td>
+                    <div className="flex items-center gap-2">
+                      {f.label}
+                      {getSortIcon(f.name)}
+                    </div>
+                  </th>
+                ))}
+              <th className="py-2 px-3 text-right text-sm font-semibold text-text-primary">Handlinger</th>
             </tr>
-          ))}
-          {/* Add empty rows to maintain consistent height */}
-          {emptyRowsCount > 0 &&
-            Array.from({ length: emptyRowsCount }).map((_, index) => (
-              <tr key={`empty-${index}`} className="h-[60px] border-none">
+          </thead>
+          <tbody className="divide-y divide-border-muted bg-background-primary">
+            {data.items.map((row) => (
+              <tr key={row.id} className="hover:bg-background-muted h-[60px]">
                 {fields
                   .filter((f) => !f.hiddenIndex)
-                  .map((f) => (
-                    <td key={f.name} className="py-2 px-3 text-sm text-text-primary border-none">
-                      <div className="h-5"></div>
-                    </td>
-                  ))}
-                <td className="py-2 px-3 text-right border-none">
-                  <div className="h-5"></div>
+                  .map((f) => {
+                    const modelName = Array.isArray(queryKey) && queryKey.length > 0 ? queryKey[0] : null;
+                    return (
+                      <td key={f.name} className="py-2 px-3 text-sm text-text-primary">
+                        {DisplayValueResolver.getDisplayComponent(row, f, "LIST", modelName, queryKey)}
+                      </td>
+                    );
+                  })}
+                <td className="py-2 px-3 text-right">
+                  <div className="flex gap-2 justify-end">
+                    <button className="btn btn-secondary w-8 h-8 p-0 shadow-sm hover:shadow" onClick={() => onEdit(row)} title="Rediger">
+                      <Pencil size={16} />
+                    </button>
+                    {deleteFn && (
+                      <button
+                        className={`inline-flex items-center justify-center w-8 h-8 bg-background-muted text-error-600 hover:bg-error-50 hover:text-error-700 rounded-md border border-border-muted hover:border-error-300 transition-all shadow-sm hover:shadow`}
+                        onClick={() => handleDelete(row.id)}
+                        title="Slett"
+                      >
+                        <Trash size={16} />
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
-        </tbody>
-      </table>
+            {/* Add empty rows to maintain consistent height */}
+            {emptyRowsCount > 0 &&
+              Array.from({ length: emptyRowsCount }).map((_, index) => (
+                <tr key={`empty-${index}`} className="h-[60px] border-none">
+                  {fields
+                    .filter((f) => !f.hiddenIndex)
+                    .map((f) => (
+                      <td key={f.name} className="py-2 px-3 text-sm text-text-primary border-none">
+                        <div className="h-5"></div>
+                      </td>
+                    ))}
+                  <td className="py-2 px-3 text-right border-none">
+                    <div className="h-5"></div>
+                  </td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </HorizontalScrollableContainer>
 
       {/* Additional Pagination Controls */}
       <TablePagination

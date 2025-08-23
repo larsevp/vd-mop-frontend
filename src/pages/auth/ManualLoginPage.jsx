@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { AlertCircle, LogIn, Eye, EyeOff } from "lucide-react";
 import { useUserStore } from "@/stores/userStore";
 import { manualLogin } from "@/api/auth";
-import { getThemeClasses } from "@/hooks/useTheme";
 
 export default function ManualLoginPage() {
   const [email, setEmail] = useState("");
@@ -89,7 +88,7 @@ export default function ManualLoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className={getThemeClasses.input.base}
+                className="input-base input-default"
                 placeholder="din@epost.no"
                 disabled={isLoggingIn}
               />

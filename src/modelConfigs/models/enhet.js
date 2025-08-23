@@ -1,13 +1,16 @@
 import { getEnheter, deleteEnhet, createEnhet, updateEnhet, getPaginatedEnhet, getEnhetById } from "@/api/endpoints";
 
-export const enhetModel = {
+export const enhet = {
   queryKey: ["enheter"],
   queryFn: getPaginatedEnhet,
   getByIdFn: getEnhetById,
   createFn: createEnhet,
   updateFn: updateEnhet,
   deleteFn: deleteEnhet,
-  modelPrintName: "Organisasjonstilhørlighet",
+  title: "Enheter",
+  desc: "Legg til eller fjern organisasjonsenheter",
+  modelPrintName: "Organisasjonsstruktur", //Rediger XX, etc
+  newButtonLabelText: "Ny organisasjonsenhet",
   fields: [
     { name: "navn", label: "Navn", type: "text", required: true },
     { name: "beskrivelse", label: "Beskrivelse", type: "text", required: false },

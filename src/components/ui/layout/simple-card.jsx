@@ -1,5 +1,4 @@
 import React from "react";
-import { getThemeClasses } from "@/hooks/useTheme";
 
 export default function ({
   title = "Simple Card",

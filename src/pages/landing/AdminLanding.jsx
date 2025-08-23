@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Users, Building2, Activity, Star, Package } from "lucide-react";
 import { useUserStore } from "@/stores/userStore";
-import { getThemeClasses } from "@/hooks/useTheme";
+import { getModelConfig } from "@/modelConfigs";
 
 export default function AdminLanding() {
   const { user } = useUserStore();
@@ -10,37 +10,50 @@ export default function AdminLanding() {
 
   const adminCards = [
     {
-      title: "Brukeradministrasjon",
-      description: "Administrer brukere og roller i systemet",
+      config: getModelConfig("users"),
       link: "/admin",
       icon: Users,
       color: "from-blue-500 to-blue-600",
     },
     {
-      title: "Enhetsadministrasjon",
-      description: "Administrer organisasjonsenheter og hierarkier",
+      config: getModelConfig("enheter"),
       link: "/enheter",
       icon: Building2,
       color: "from-green-500 to-green-600",
     },
     {
-      title: "Statusadministrasjon",
-      description: "Administrer statuser og prosjektfremgang",
+      config: getModelConfig("status"),
       link: "/status",
       icon: Activity,
       color: "from-orange-500 to-orange-600",
     },
     {
-      title: "Vurderingadministrasjon",
-      description: "Administrer vurderinger og tilbakemeldinger",
+      config: getModelConfig("vurderinger"),
       link: "/vurderinger",
       icon: Star,
       color: "from-purple-500 to-purple-600",
     },
     {
-      title: "Kravpakker administrasjon",
-      description: "Administrer kravpakker og relaterte data",
+      config: getModelConfig("kravpakker"),
       link: "/kravpakker",
+      icon: Package,
+      color: "from-indigo-500 to-indigo-600",
+    },
+    {
+      config: getModelConfig("kravreferansetyper"),
+      link: "/kravreferansetyper",
+      icon: Package,
+      color: "from-indigo-500 to-indigo-600",
+    },
+    {
+      config: getModelConfig("lover"),
+      link: "/lover",
+      icon: Package,
+      color: "from-indigo-500 to-indigo-600",
+    },
+    {
+      config: getModelConfig("krav"),
+      link: "/Krav",
       icon: Package,
       color: "from-indigo-500 to-indigo-600",
     },
@@ -65,15 +78,15 @@ export default function AdminLanding() {
             {adminCards.map((card) => {
               const IconComponent = card.icon;
               return (
-                <Link key={card.title} to={card.link} className="group block transform transition-all duration-200 hover:scale-105">
-                  <div className={`${getThemeClasses.card.base} rounded-xl p-6 h-full transition-all duration-200 group-hover:shadow-xl`}>
+                <Link key={card.config.title} to={card.link} className="group block transform transition-all duration-200 hover:scale-105">
+                  <div className="card-base card-hover rounded-xl p-6 h-full transition-all duration-200 group-hover:shadow-xl">
                     <div className={`inline-flex p-3 rounded-xl bg-gradient-to-r ${card.color} text-white mb-4 shadow-md`}>
                       <IconComponent size={24} />
                     </div>
-                    <h3 className={`text-lg font-bold ${getThemeClasses.text.primary} mb-2 group-hover:text-primary-700 transition-colors`}>
-                      {card.title}
+                    <h3 className="text-lg font-bold text-text-primary mb-2 group-hover:text-primary-700 transition-colors">
+                      {card.config.title}
                     </h3>
-                    <p className={`${getThemeClasses.text.secondary} text-sm leading-relaxed`}>{card.description}</p>
+                    <p className="text-text-secondary text-sm leading-relaxed">{card.config.desc}</p>
                     <div className="flex items-center mt-4 text-primary-600 font-medium text-sm">
                       <span>Åpne administrasjon</span>
                       <svg className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" fill="currentColor" viewBox="0 0 20 20">

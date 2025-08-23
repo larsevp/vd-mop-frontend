@@ -2,7 +2,6 @@ import React from "react";
 import { getProsjekter } from "@/api/endpoints";
 import { useQuery } from "@tanstack/react-query";
 import { useUserStore } from "@/stores/userStore";
-import { getThemeClasses } from "@/hooks/useTheme";
 import { useNavigate } from "react-router-dom";
 import { SimpleCard } from "@/components/ui";
 import ProjectLandingTable from "@/components/parts/LandingPage/ProjectLandingTable";
@@ -116,7 +115,7 @@ export default function LandingPage() {
             subtitle="Lag et nytt prosjekt og fyll det med tiltak"
             content={
               <button
-                className={`${getThemeClasses.button.primary} rounded-lg px-5 py-2.5 font-medium shadow-sm transition-all`}
+                className="btn btn-primary rounded-lg px-5 py-2.5 font-medium shadow-sm transition-all"
                 onClick={() => newProject()}
               >
                 Nytt prosjekt

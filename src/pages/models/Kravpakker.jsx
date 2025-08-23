@@ -22,10 +22,10 @@ export default function Kravpakkeradministrasjon() {
   }
   return (
     <AdminPage
-      title="Kravpakker"
-      description="Her kan man definere forskjellige kravpakker, hvor man kan knytte krav opp til kravpakker"
-      listTitle="Kravpakker"
-      newButtonLabel="Ny kravpakke"
+      title={config.title}
+      description={config.desc}
+      listTitle={config.title}
+      newButtonLabel={config.newButtonLabelText}
       onNew={handleNew}
       onBack={handleBack}
       showBackButton={true}

@@ -19,6 +19,7 @@ export default function RowNew() {
         <RowForm
           fields={config.fields}
           modelPrintName={config.modelPrintName}
+          modelName={modelType}
           createFn={config.createFn}
           queryKey={config.queryKey}
           onSuccess={() => window.history.back()}

@@ -1,13 +1,16 @@
 import { getProsjekter, deleteProsjekt, createProsjekt, updateProsjekt, getPaginatedProsjekt, getProsjektById } from "@/api/endpoints";
 
-export const prosjektModel = {
+export const prosjekt = {
   queryKey: ["prosjekter"],
   queryFn: getPaginatedProsjekt,
   getByIdFn: getProsjektById,
   createFn: createProsjekt,
   updateFn: updateProsjekt,
   deleteFn: deleteProsjekt,
+  title: "Prosjekter",
+  desc: "Opprett prosjekter",
   modelPrintName: "Prosjekt",
+  newButtonLabelText: "Nytt prosjekt",
   fields: [
     { name: "id", label: "ID", type: "number", hiddenIndex: true, hiddenEdit: true, hiddenCreate: true },
     {

@@ -4,7 +4,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useMsal } from "@azure/msal-react";
 import { useUserStore } from "@/stores/userStore";
 import { LogoutButton } from "@/components/ui";
-import { getThemeClasses } from "@/hooks/useTheme";
 
 export default function HeaderNav({ showBackButton = false }) {
   const user = useUserStore((state) => state.user);

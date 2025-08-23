@@ -1,13 +1,16 @@
 import { getStatus, deleteStatus, createStatus, updateStatus, getPaginatedStatus, getStatusById } from "@/api/endpoints";
 
-export const statusModel = {
+export const status = {
   queryKey: ["status"],
   queryFn: getPaginatedStatus,
   getByIdFn: getStatusById,
   createFn: createStatus,
   updateFn: updateStatus,
   deleteFn: deleteStatus,
+  title: "Statusflagg",
+  desc: "Definer statusflagg bruker kan sette på krav / tiltak",
   modelPrintName: "status",
+  newButtonLabelText: "Nytt statusflagg",
   fields: [
     {
       name: "navn",
@@ -20,6 +23,21 @@ export const statusModel = {
       label: "Rekkefølge",
       type: "number",
       required: true,
+    },
+    {
+      name: "icon",
+      label: "Ikon",
+      type: "string",
+      required: true,
+      field_info: "Navn fra Lucide",
+    },
+    {
+      name: "color",
+      label: "Farge",
+      type: "string",
+      required: true,
+      placeholder: "Fargen som skal brukes",
+      field_info: "Fargen som skal brukes #hex",
     },
     {
       name: "enhetId",

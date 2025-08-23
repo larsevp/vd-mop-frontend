@@ -14,6 +14,9 @@ import Vurderingadministrasjon from "@/pages/models/Vurderingadministrasjon";
 import Statusadministrasjon from "@/pages/models/Statusadministrasjon";
 import Kravpakkeradministrasjon from "@/pages/models/Kravpakker";
 import AdminLanding from "@/pages/landing/AdminLanding";
+import Kravreferansetype from "@/pages/models/KravreferanseType";
+import Lov from "@/pages/models/Lov";
+import Krav from "@/pages/models/Krav";
 
 export default function AuthenticatedRoutes() {
   return (
@@ -60,6 +63,15 @@ export default function AuthenticatedRoutes() {
         <Route path="/kravpakker" element={<Kravpakkeradministrasjon />} />
         <Route path="/kravpakker/ny" element={<RowNew />} />
         <Route path="/kravpakker/:id/rediger" element={<RowEdit />} />
+        <Route path="/kravreferansetyper" element={<Kravreferansetype />} />
+        <Route path="/kravreferansetype/ny" element={<RowNew />} />
+        <Route path="/kravreferansetype/:id/rediger" element={<RowEdit />} />
+        <Route path="/lover" element={<Lov />} />
+        <Route path="/lover/ny" element={<RowNew />} />
+        <Route path="/lover/:id/rediger" element={<RowEdit />} />
+        <Route path="/krav" element={<Krav />} />
+        <Route path="/krav/ny" element={<RowNew />} />
+        <Route path="/krav/:id/rediger" element={<RowEdit />} />
         {/* Redirect any other route (including /login) to home when authenticated */}
         <Route path="*" element={<LandingPage />} />
       </Route>

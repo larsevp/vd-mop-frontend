@@ -1,32 +1,35 @@
-// Re-export all model configurations
-export { userModel } from "./models/user";
-export { prosjektModel } from "./models/prosjekt";
-export { enhetModel } from "./models/enhet";
-export { emneModel } from "./models/emne";
-export { statusModel } from "./models/status";
-export { vurderingModel } from "./models/vurdering";
-export { kravpakkerModel } from "./models/kravpakker";
+// Dynamic model config access for generic components
+/* PLOP_IMPORT_MODELS */
+import { krav } from "./models/krav";
+import { lov } from "./models/lov";
+import { user } from "./models/user";
+import { prosjekt } from "./models/prosjekt";
+import { enhet } from "./models/enhet";
+import { emne } from "./models/emne";
+import { status } from "./models/status";
+import { vurdering } from "./models/vurdering";
+import { kravpakker } from "./models/kravpakker";
+import { kravreferansetype } from "./models/kravreferansetype";
 
-// Create modelConfigs object for backward compatibility
-import { userModel } from "./models/user";
-import { prosjektModel } from "./models/prosjekt";
-import { enhetModel } from "./models/enhet";
-import { emneModel } from "./models/emne";
-import { statusModel } from "./models/status";
-import { vurderingModel } from "./models/vurdering";
-import { kravpakkerModel } from "./models/kravpakker";
-
+// Object mapping for dynamic lookup
 export const modelConfigs = {
-  users: userModel,
-  prosjekter: prosjektModel,
-  enheter: enhetModel,
-  emner: emneModel,
-  status: statusModel,
-  vurderinger: vurderingModel,
-  kravpakker: kravpakkerModel,
+  /* PLOP_MODEL_MAPPINGS */
+  krav: krav,
+  lover: lov,
+  users: user,
+  prosjekter: prosjekt,
+  enheter: enhet,
+  emner: emne,
+  status: status,
+  vurderinger: vurdering,
+  kravpakker: kravpakker,
+  kravreferansetyper: kravreferansetype,
 };
 
-// Helper function to get config by model type
+// Helper function for dynamic model config access
 export function getModelConfig(modelType) {
+  if (!Object.hasOwn(modelConfigs, modelType)) {
+    throw new Error(`[getModelConfig function error] Model type "${modelType}" does not exist in modelConfigs.`);
+  }
   return modelConfigs[modelType];
 }

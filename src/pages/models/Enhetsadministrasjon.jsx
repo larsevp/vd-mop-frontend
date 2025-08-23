@@ -22,10 +22,10 @@ export default function Enhetsadministrasjon() {
   }
   return (
     <AdminPage
-      title="Enhetsadministrasjon"
-      description="Administrer organisasjonsenheter"
-      listTitle="Organisasjonsenheter"
-      newButtonLabel="Ny enhet"
+      title={config.title}
+      description={config.desc}
+      listTitle={config.title}
+      newButtonLabel={config.newButtonLabelText}
       onNew={handleNew}
       onBack={handleBack}
       showBackButton={true}

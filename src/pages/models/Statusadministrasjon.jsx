@@ -22,10 +22,10 @@ export default function Statusadministrasjon() {
   }
   return (
     <AdminPage
-      title="Status-administrasjon"
-      description="Administrer status"
-      listTitle="Status"
-      newButtonLabel="Ny status"
+      title={config.title}
+      description={config.desc}
+      listTitle={config.title}
+      newButtonLabel={config.newButtonLabelText}
       onNew={handleNew}
       onBack={handleBack}
       showBackButton={true}

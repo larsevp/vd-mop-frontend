@@ -7,14 +7,17 @@ import {
   getKravpakkerById,
 } from "@/api/endpoints";
 
-export const kravpakkerModel = {
+export const kravpakker = {
   queryKey: ["kravpakker"],
   queryFn: getPaginatedKravpakker,
   getByIdFn: getKravpakkerById,
   createFn: createKravpakker,
   updateFn: updateKravpakker,
   deleteFn: deleteKravpakker,
-  modelPrintName: "kravpakker",
+  title: "Kravpakker", //tittel på rowIndex og kort
+  desc: "Definer navn på kravpakker som kan knyttes opp mot forskjellige krav",
+  modelPrintName: "Kravpakke", //entall
+  newButtonLabelText: "Ny kravpakke",
   fields: [
     {
       name: "tittel",

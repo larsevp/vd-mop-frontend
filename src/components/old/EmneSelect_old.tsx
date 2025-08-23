@@ -1,0 +1,400 @@
+import React from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getEmner } from "../../../api/endpoints/models/emne";
+import { Check, ChevronsUpDown, X } from "lucide-react";
+import { cn } from "@/lib/utils";
+// Removed cmdk components to have full control over mouse/keyboard interactions
+import { Input } from "@/components/ui/primitives/input";
+import EntityCheckboxGroup from "./EntityCheckboxGroup";
+
+interface Emne {
+  id: number;
+  navn: string;
+}
+
+interface EmneSelectProps {
+  name?: string;
+  label?: string;
+  value?: number | null;
+  onChange: (event: { target: { name?: string; value: number | null; type: string } }) => void;
+  placeholder?: string;
+  required?: boolean;
+  disabled?: boolean;
+  className?: string;
+  allowEmpty?: boolean;
+  emptyLabel?: string;
+}
+
+interface EmneCheckboxGroupProps {
+  label?: string;
+  selectedValues: number[];
+  onChange: (values: number[]) => void;
+  disabled?: boolean;
+  className?: string;
+  layout?: "vertical" | "horizontal" | "grid";
+  columns?: number;
+}
+
+export function EmneSelectOld({
+  name,
+  label = "Emne",
+  value,
+  onChange,
+  placeholder = "Søk eller velg emne...",
+  required = false,
+  disabled = false,
+  allowEmpty = true,
+  emptyLabel = "Ingen emne",
+  className = "",
+}: EmneSelectProps) {
+  const listboxId = React.useId();
+  const [open, setOpen] = React.useState(false);
+  const [searchValue, setSearchValue] = React.useState("");
+  const [isFocused, setIsFocused] = React.useState(false);
+  const [highlightedIndex, setHighlightedIndex] = React.useState(-1);
+  const [lastInteractionType, setLastInteractionType] = React.useState<"mouse" | "keyboard" | null>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const selectedItemRef = React.useRef<HTMLDivElement>(null);
+  const highlightedItemRef = React.useRef<HTMLDivElement>(null);
+
+  // Build stable option ids for aria-activedescendant
+  const getOptionId = React.useCallback(
+    (index: number) => {
+      return `${listboxId}-option-${index}`;
+    },
+    [listboxId]
+  );
+
+  const {
+    data: emneList = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["emner"],
+    queryFn: getEmner,
+    select: (response: any): Emne[] => {
+      const data = Array.isArray(response) ? response : response.data || [];
+      return data.sort((a: Emne, b: Emne) => {
+        const aNavn = a.navn || "";
+        const bNavn = b.navn || "";
+        return aNavn.localeCompare(bNavn);
+      });
+    },
+  });
+
+  const selectedEmne = emneList.find((emne) => emne.id === value);
+
+  // Filter emne list based on search value
+  const filteredEmneList = React.useMemo(() => {
+    if (!searchValue.trim()) return emneList;
+    return emneList.filter((emne) => (emne.navn || `Emne ${emne.id}`).toLowerCase().includes(searchValue.toLowerCase()));
+  }, [emneList, searchValue]);
+
+  // Get the index of the currently selected item in the filtered list
+  const getSelectedItemIndex = React.useCallback(() => {
+    if (value === null && allowEmpty) return 0;
+    if (value === null) return -1;
+
+    const emneIndex = filteredEmneList.findIndex((emne) => emne.id === value);
+    return emneIndex >= 0 ? (allowEmpty ? emneIndex + 1 : emneIndex) : -1;
+  }, [value, allowEmpty, filteredEmneList]);
+
+  // Get the currently active index (just use highlightedIndex for keyboard navigation)
+  const getActiveIndex = React.useCallback(() => {
+    return highlightedIndex;
+  }, [highlightedIndex]);
+
+  // Close dropdown when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false);
+        setIsFocused(false);
+        setSearchValue("");
+      }
+    };
+
+    // Always listen for clicks, not just when open
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []); // Empty dependency array so it's always active
+
+  // Scroll to selected item and highlight it when dropdown opens
+  React.useEffect(() => {
+    if (open && !searchValue) {
+      const selectedIndex = getSelectedItemIndex();
+      if (selectedIndex >= 0) {
+        setHighlightedIndex(selectedIndex);
+        setLastInteractionType("keyboard");
+        // Small delay to ensure the dropdown is rendered
+        setTimeout(() => {
+          selectedItemRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+          });
+        }, 100);
+      }
+    }
+  }, [open, searchValue, getSelectedItemIndex]);
+
+  // Scroll highlighted item into view during keyboard navigation
+  React.useEffect(() => {
+    if (highlightedIndex >= 0 && highlightedItemRef.current) {
+      highlightedItemRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    }
+  }, [highlightedIndex]);
+
+  // Handle keyboard navigation
+  React.useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!open) return;
+
+      // Get the available options (empty option + filtered list)
+      const availableOptions = [];
+      if (allowEmpty) availableOptions.push("empty");
+      availableOptions.push(...filteredEmneList.map((emne) => emne.id.toString()));
+
+      switch (event.key) {
+        case "Escape":
+          event.preventDefault();
+          setOpen(false);
+          setSearchValue("");
+          setIsFocused(false);
+          setHighlightedIndex(-1);
+          inputRef.current?.blur();
+          break;
+
+        case "ArrowDown":
+          event.preventDefault();
+          setLastInteractionType("keyboard");
+          setHighlightedIndex((prev) => {
+            // If no item is highlighted, start from the top
+            if (prev < 0) return 0;
+            // Move to next item or wrap to beginning
+            return prev < availableOptions.length - 1 ? prev + 1 : 0;
+          });
+          break;
+
+        case "ArrowUp":
+          event.preventDefault();
+          setLastInteractionType("keyboard");
+          setHighlightedIndex((prev) => {
+            // If no item is highlighted, start from the bottom
+            if (prev < 0) return availableOptions.length - 1;
+            // Move to previous item or wrap to end
+            return prev > 0 ? prev - 1 : availableOptions.length - 1;
+          });
+          break;
+
+        case "Enter":
+          event.preventDefault();
+          if (highlightedIndex >= 0 && highlightedIndex < availableOptions.length) {
+            handleSelect(availableOptions[highlightedIndex]);
+          } else if (filteredEmneList.length === 1) {
+            // Auto-select if there's only one match
+            handleSelect(filteredEmneList[0].id.toString());
+          }
+          break;
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open, highlightedIndex, filteredEmneList, allowEmpty, getSelectedItemIndex]);
+
+  // Reset state when search changes
+  React.useEffect(() => {
+    setHighlightedIndex(-1);
+    setLastInteractionType(null);
+  }, [searchValue]);
+
+  // Mouse interaction handlers
+  const handleMouseEnter = (index: number) => {
+    setLastInteractionType("mouse");
+    setHighlightedIndex(index);
+  };
+
+  const handleDropdownMouseLeave = () => {
+    if (lastInteractionType === "mouse") {
+      setHighlightedIndex(-1);
+    }
+  };
+  // Auto-select when there's only one match
+  React.useEffect(() => {
+    if (searchValue.trim() && filteredEmneList.length === 1 && open) {
+      setHighlightedIndex(allowEmpty ? 1 : 0); // Highlight the single result immediately
+    }
+  }, [searchValue, filteredEmneList, allowEmpty, open]);
+
+  const handleSelect = (selectedValue: string) => {
+    const numericValue = selectedValue === "empty" ? null : parseInt(selectedValue, 10);
+    onChange({
+      target: {
+        name,
+        value: numericValue,
+        type: "select",
+      },
+    });
+    setOpen(false);
+    setSearchValue("");
+    setHighlightedIndex(-1);
+    setLastInteractionType(null);
+    inputRef.current?.blur();
+  };
+
+  // Render individual dropdown item
+  const renderDropdownItem = (item: { id: string; label: string; isSelected: boolean }, index: number) => {
+    const isActive = getActiveIndex() === index;
+    return (
+      <div
+        key={item.id}
+        ref={(el) => {
+          if (item.isSelected) selectedItemRef.current = el;
+          if (isActive) highlightedItemRef.current = el;
+        }}
+        onClick={() => handleSelect(item.id)}
+        onMouseEnter={() => handleMouseEnter(index)}
+        id={getOptionId(index)}
+        role="option"
+        aria-selected={isActive}
+        className={cn(
+          "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none",
+          isActive && "bg-accent text-accent-foreground"
+        )}
+      >
+        <Check className={cn("mr-2 h-4 w-4", item.isSelected ? "opacity-100" : "opacity-0")} />
+        <span className={cn("flex-1", isActive ? "text-accent-foreground" : "text-foreground")}>{item.label}</span>
+      </div>
+    );
+  };
+
+  return (
+    <div className={className} ref={containerRef}>
+      {label && (
+        <label className="block text-sm font-medium text-foreground mb-2">
+          {label}
+          {required && <span className="text-destructive ml-1">*</span>}
+        </label>
+      )}
+
+      <div className="relative">
+        <div className="relative">
+          <Input
+            ref={inputRef}
+            type="text"
+            role="combobox"
+            aria-expanded={open}
+            aria-controls={open ? listboxId : undefined}
+            aria-activedescendant={highlightedIndex >= 0 ? getOptionId(highlightedIndex) : undefined}
+            aria-autocomplete="list"
+            className={cn("w-full pr-10", className)}
+            placeholder={isLoading ? "Laster emner..." : placeholder}
+            value={
+              isFocused || searchValue
+                ? searchValue
+                : selectedEmne
+                ? selectedEmne.navn || `Emne ${selectedEmne.id}`
+                : value === null && allowEmpty
+                ? emptyLabel
+                : ""
+            }
+            onChange={(e) => {
+              setSearchValue(e.target.value);
+              if (!open) setOpen(true);
+            }}
+            onFocus={() => {
+              setIsFocused(true);
+              setOpen(true);
+            }}
+            onBlur={(e) => {
+              // Delay the blur to allow clicking on dropdown items
+              setTimeout(() => {
+                setIsFocused(false);
+                // Only close if the new focus target is not within our container
+                if (!containerRef.current?.contains(document.activeElement)) {
+                  setOpen(false);
+                  setSearchValue("");
+                }
+              }, 150);
+            }}
+            disabled={isLoading || disabled}
+          />
+          <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+            {selectedEmne && !searchValue && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSelect("empty");
+                  setSearchValue("");
+                }}
+                className="h-4 w-4 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </div>
+        </div>
+
+        {open && (
+          <div
+            className="absolute z-50 w-full mt-2 rounded-md border bg-popover p-0 text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+            onMouseLeave={handleDropdownMouseLeave}
+          >
+            <div className="rounded-md bg-popover">
+              <div id={listboxId} role="listbox" className="max-h-[200px] min-h-[100px] overflow-y-auto overflow-x-hidden p-1">
+                {filteredEmneList.length === 0 ? (
+                  <div className="py-6 text-center text-sm text-muted-foreground">Ingen emner funnet.</div>
+                ) : (
+                  <>
+                    {allowEmpty && renderDropdownItem({ id: "empty", label: emptyLabel, isSelected: value === null }, 0)}
+                    {filteredEmneList.map((emne, index) => {
+                      const itemIndex = allowEmpty ? index + 1 : index;
+                      return renderDropdownItem(
+                        {
+                          id: emne.id.toString(),
+                          label: emne.navn || `Emne ${emne.id}`,
+                          isSelected: value === emne.id,
+                        },
+                        itemIndex
+                      );
+                    })}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {error && (
+        <p className="mt-2 text-sm text-destructive">Feil ved lasting av emner: {error instanceof Error ? error.message : String(error)}</p>
+      )}
+    </div>
+  );
+}
+
+export function EmneCheckboxGroup({ label = "Emne", layout = "vertical", ...props }: EmneCheckboxGroupProps) {
+  return (
+    <EntityCheckboxGroup
+      {...props}
+      label={label}
+      queryKey={["emner"]}
+      queryFn={getEmner}
+      displayField="navn"
+      sortField="navn"
+      layout={layout}
+    />
+  );
+}

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { createTiltak } from "@/api/endpoints";
-import { getThemeClasses } from "@/hooks/useTheme";
 
 export default function TiltakForm({ onSuccess }) {
   const [tittel, setTittel] = useState('');
@@ -31,7 +30,7 @@ export default function TiltakForm({ onSuccess }) {
         value={beskrivelse}
         onChange={(e) => setBeskrivelse(e.target.value)}
       />
-      <button className={`${getThemeClasses.button.primary} px-4 py-2`}>Opprett</button>
+      <button className="btn btn-primary">Opprett</button>
     </form>
   );
 }
