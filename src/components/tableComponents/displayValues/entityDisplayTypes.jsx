@@ -2,6 +2,7 @@
 // These are GLOBAL FALLBACKS - model-specific overrides take priority
 import React from "react";
 import { IconWithText } from "../../ui/DynamicIcon";
+import { getPriorityLabel } from "../../ui/form/PrioritetSelect";
 
 export const ENTITY_DISPLAY_TYPES = {
   // Generic foreign key pattern fallbacks
@@ -117,6 +118,12 @@ export const ENTITY_DISPLAY_TYPES = {
       const displayValue = "Ingen oppdateringer";
       return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
     }
+  },
+
+  // Priority display (translates numbers to user-friendly labels)
+  prioritet: (row, field, context) => {
+    const displayValue = getPriorityLabel(row[field.name]);
+    return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
   },
 
   // Kravreferansetype relationships (generic fallback)

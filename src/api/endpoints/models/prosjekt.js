@@ -9,3 +9,4 @@ export const deleteProsjekt = (id) => API.delete(`/prosjekt/${id}`);
 export const getPaginatedProsjekt = (page = 1, pageSize = 10, search = "", sortBy = "", sortOrder = "asc") =>
   getPaginatedData("/prosjekt", page, pageSize, search, sortBy, sortOrder);
 export const getProsjektById = (id) => API.get(`/prosjekt/${id}`);
+export const getProsjekterSimple = () => API.get("/prosjekt/simple");

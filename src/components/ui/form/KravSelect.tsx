@@ -1,5 +1,5 @@
 import React from "react";
-import { getKrav } from "../../../api/endpoints/models/krav";
+import { getKravSimple } from "../../../api/endpoints/models/krav";
 import { ComboBox, ComboBoxOption } from "./ComboBox";
 import { useQuery } from "@tanstack/react-query";
 
@@ -42,8 +42,9 @@ export function KravSelect({
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["krav"],
-    queryFn: getKrav,
+    queryKey: ["krav", "multiselect", excludeId], // More specific key to prevent conflicts
+    queryFn: getKravSimple,
+    staleTime: 5 * 60 * 1000, // 5 minutes - data is considered fresh for 5 minutes
     select: (response: any): Krav[] => {
       const data = Array.isArray(response) ? response : response.data || [];
 

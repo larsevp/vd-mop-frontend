@@ -12,7 +12,7 @@ Defines fundamental field types that work across all models:
 ### `entityTypes.jsx`
 Defines entity selection components that can be used across models:
 - `statusselect`, `vurderingselect`, `emneselect`, `enhetselect`
-- `kravreferansetypeselect`, `kravselect`, `kravstatusselect`
+- `kravreferansetypeselect`, `prioritetselect`, `kravselect`, `kravstatusselect`
 - `parentselect` (for hierarchical relationships)
 
 ### `modelSpecific.jsx`

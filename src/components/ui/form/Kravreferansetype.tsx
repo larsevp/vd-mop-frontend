@@ -1,5 +1,5 @@
 import React from "react";
-import { getKravreferanseTyper } from "@/api/endpoints/models/kravreferansetype";
+import { getKravreferanseTyperSimple as getKravreferanseTyper } from "@/api/endpoints/models/kravreferansetype";
 import { EntitySelect } from "./EntitySelect";
 import EntityCheckboxGroup from "./EntityCheckboxGroup";
 

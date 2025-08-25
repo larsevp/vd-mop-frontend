@@ -58,6 +58,16 @@ export class FieldResolver {
         if (!Array.isArray(value) || value.length === 0) {
           return `${field.label} er påkrevet`;
         }
+      } else if (field.type === "richtext") {
+        // Richtext validation - check if content is empty (ignoring empty HTML tags)
+        const textContent = value?.replace(/<[^>]*>/g, "").trim();
+        if (!textContent) {
+          return `${field.label} er påkrevet`;
+        }
+      } else if (field.type === "fileupload") {
+        // File upload fields are never required in the traditional sense
+        // since files are stored separately and linked via scoped relationships
+        return null;
       } else if (value === null || value === undefined || value === "") {
         return `${field.label} er påkrevet`;
       } else if (field.type === "select" && field.options) {
@@ -110,6 +120,21 @@ export class FieldResolver {
       return [];
     }
 
+    // Handle richtext fields
+    if (field.type === "richtext") {
+      if (editing && row && row[field.name] !== undefined) {
+        return row[field.name];
+      }
+      return "";
+    }
+
+    // Handle fileupload fields
+    if (field.type === "fileupload") {
+      // File upload fields don't have a traditional form value
+      // Files are managed separately via the FileUpload component
+      return null;
+    }
+
     // Handle default fields
     if (editing && row && row[field.name] !== undefined) {
       return row[field.name];
@@ -137,7 +162,25 @@ export class FieldResolver {
       return field.options[0]?.value || "";
     }
 
+    if (field.type === "richtext") {
+      return "";
+    }
+
+    if (field.type === "fileupload") {
+      return null;
+    }
+
     return "";
+  }
+
+  /**
+   * Check if a field should be excluded from form submission
+   * @param {Object} field - Field configuration
+   * @returns {boolean} - Whether to exclude the field
+   */
+  static shouldExcludeFromSubmission(field) {
+    // File upload fields are handled separately and shouldn't be included in form data
+    return field.type === "fileupload";
   }
 
   static getAllFieldTypes() {

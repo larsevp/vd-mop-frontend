@@ -66,3 +66,26 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* TipTap Editor Styles */
+@layer components {
+  /* Loading placeholder for image uploads */
+  img[data-uploading="true"] {
+    @apply opacity-75 animate-pulse border-2 border-dashed border-muted-foreground/30;
+    filter: grayscale(0.3);
+  }
+  
+  /* Image resize styles */
+  .ProseMirror img {
+    @apply rounded-md border border-border/20;
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .ProseMirror img:hover {
+    @apply border-border/60;
+  }
+  
+  .ProseMirror img.ProseMirror-selectednode {
+    @apply ring-2 ring-primary ring-offset-2 ring-offset-background;
+  }
+}

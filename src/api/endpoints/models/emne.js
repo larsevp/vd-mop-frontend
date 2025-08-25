@@ -9,3 +9,4 @@ export const deleteEmne = (id) => API.delete(`/emne/${id}`);
 export const getPaginatedEmne = (page = 1, pageSize = 10, search = "", sortBy = "", sortOrder = "asc") =>
   getPaginatedData("/emne", page, pageSize, search, sortBy, sortOrder);
 export const getEmneById = (id) => API.get(`/emne/${id}`);
+export const getEmnerSimple = () => API.get("/emne/simple");

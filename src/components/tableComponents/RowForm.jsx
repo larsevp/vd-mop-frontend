@@ -2,6 +2,8 @@ import React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FieldResolver } from "./fieldTypes/fieldResolver.jsx";
 import { InfoIcon } from "../ui/InfoIcon.jsx";
+import { Toast } from "../ui/editor/components/Toast.jsx";
+import Swal from "sweetalert2";
 
 // Error display component
 const ErrorDisplay = ({ error }) => {
@@ -30,7 +32,7 @@ const FieldRenderer = ({ field, value, onChange, error, form, row, modelName }) 
 
   if (componentHandlesOwnLabel) {
     // Component handles its own label (like model-specific field names such as Krav/Enhet parentId)
-    return <Component field={field} value={value} onChange={onChange} error={error} form={form} row={row} />;
+    return <Component field={field} value={value} onChange={onChange} error={error} form={form} row={row} modelName={modelName} />;
   }
 
   // RowForm handles the label for ALL other field types (basic + entity selects)
@@ -41,7 +43,7 @@ const FieldRenderer = ({ field, value, onChange, error, form, row, modelName }) 
         {field.required && <span className="text-error-500 ml-1">*</span>}
         <InfoIcon info={field.field_info} />
       </label>
-      <Component field={field} value={value} onChange={onChange} error={error} form={form} row={row} />
+      <Component field={field} value={value} onChange={onChange} error={error} form={form} row={row} modelName={modelName} />
     </div>
   );
 };
@@ -68,6 +70,7 @@ export default function RowForm({
   const [form, setForm] = React.useState(initialForm);
   const [errors, setErrors] = React.useState({});
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [toast, setToast] = React.useState({ show: false, message: "", type: "info" });
   const queryClient = useQueryClient();
 
   const createMutation = useMutation({
@@ -89,6 +92,14 @@ export default function RowForm({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
       if (onSuccess) onSuccess();
+    },
+    onError: (error) => {
+      console.error("Update failed:", error);
+      setToast({
+        show: true,
+        message: `Feil ved oppdatering: ${error?.response?.data?.message || error.message || "Ukjent feil"}`,
+        type: "error",
+      });
     },
   });
 
@@ -116,25 +127,161 @@ export default function RowForm({
     });
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return {
+      isValid: Object.keys(newErrors).length === 0,
+      errors: newErrors,
+    };
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    if (!validateForm()) return;
+
+    const validationResult = validateForm();
+    if (!validationResult.isValid) {
+      // Create a user-friendly error message with field names and their errors
+      const errorFields = Object.keys(validationResult.errors).filter((key) => validationResult.errors[key]);
+
+      if (errorFields.length > 0) {
+        const errorList = errorFields
+          .map((field) => {
+            const fieldConfig = fields.find((f) => f.name === field);
+            const fieldLabel = fieldConfig ? fieldConfig.label : field;
+            const fieldError = validationResult.errors[field];
+            return `• ${fieldLabel}: ${fieldError}`;
+          })
+          .join("<br>");
+
+        Swal.fire({
+          icon: "error",
+          title: "Skjemafeil",
+          html: `Vennligst rett følgende feil:<br><br>${errorList}`,
+          confirmButtonText: "OK",
+          confirmButtonColor: "#ef4444",
+          showClass: {
+            popup: "",
+            backdrop: "",
+            icon: "",
+          },
+          hideClass: {
+            popup: "",
+            backdrop: "",
+            icon: "",
+          },
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Skjemafeil",
+          text: "Det er feil i skjemaet som må rettes før lagring.",
+          confirmButtonText: "OK",
+          confirmButtonColor: "#ef4444",
+          showClass: {
+            popup: "",
+            backdrop: "",
+            icon: "",
+          },
+          hideClass: {
+            popup: "",
+            backdrop: "",
+            icon: "",
+          },
+        });
+      }
+      return;
+    }
 
     setIsSubmitting(true);
 
-    if (editing) {
-      updateMutation.mutate(
-        { ...form, id: row.id },
-        {
+    try {
+      console.log("🔄 Frontend: Checking for localStorage images to upload...");
+
+      // Show initial upload status
+      setToast({
+        show: true,
+        message: "Forbereder lagring...",
+        type: "info",
+        persistent: true,
+      });
+
+      // Import the localStorage utility
+      const { prepareTempImagesForUpload } = await import("@/utils/tempImageStorage");
+      const { uploadImage } = await import("@/api/endpoints");
+
+      // Upload all localStorage images and replace URLs in form data
+      const updatedForm = await prepareTempImagesForUpload(form, uploadImage, (message, type) => {
+        setToast({ show: true, message, type, persistent: true });
+      });
+
+      console.log("✅ Frontend: All localStorage images uploaded successfully");
+
+      // Update the form state with the new URLs so user sees uploaded images
+      setForm(updatedForm);
+
+      // Show saving status
+      setToast({
+        show: true,
+        message: editing ? "Oppdaterer..." : "Lagrer...",
+        type: "info",
+        persistent: true,
+      });
+
+      if (editing) {
+        const updateData = { ...updatedForm, id: row.id };
+        updateMutation.mutate(updateData, {
           onSettled: () => setIsSubmitting(false),
-        }
-      );
-    } else {
-      createMutation.mutate(form, {
-        onSettled: () => setIsSubmitting(false),
+          onSuccess: () => {
+            setToast({
+              show: true,
+              message: `${modelPrintName} ble oppdatert!`,
+              type: "success",
+              persistent: false,
+            });
+          },
+          onError: (error) => {
+            setToast({
+              show: true,
+              message: `Feil ved oppdatering: ${error?.response?.data?.message || error.message}`,
+              type: "error",
+              persistent: false,
+            });
+          },
+        });
+      } else {
+        createMutation.mutate(updatedForm, {
+          onSettled: () => setIsSubmitting(false),
+          onSuccess: () => {
+            setToast({
+              show: true,
+              message: `${modelPrintName} ble opprettet!`,
+              type: "success",
+              persistent: false,
+            });
+          },
+          onError: (error) => {
+            setToast({
+              show: true,
+              message: `Feil ved opprettelse: ${error?.response?.data?.message || error.message}`,
+              type: "error",
+              persistent: false,
+            });
+          },
+        });
+      }
+    } catch (error) {
+      console.error("❌ Frontend: Failed to upload localStorage images:", error);
+      setIsSubmitting(false);
+
+      let errorMessage = "Feil ved opplasting av bilder";
+      if (error.message.includes("Upload failed")) {
+        errorMessage = "Kunne ikke laste opp bilder. Prøv igjen.";
+      } else if (error.message) {
+        errorMessage += `: ${error.message}`;
+      }
+
+      setToast({
+        show: true,
+        message: errorMessage,
+        type: "error",
       });
     }
   }
@@ -184,6 +331,14 @@ export default function RowForm({
           )}
         </div>
       </form>
+      <Toast
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        persistent={toast.persistent}
+        centered={isSubmitting || toast.persistent}
+        onClose={() => setToast((prev) => ({ ...prev, show: false }))}
+      />
     </div>
   );
 }

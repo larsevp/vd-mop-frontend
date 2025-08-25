@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
+import { useQuery } from "@tanstack/react-query";
 import MultiSelect from "./MultiSelect";
 
 interface Option {
@@ -33,37 +34,40 @@ export function GenericMultiSelect({
   emptyMessage = "Ingen elementer funnet.",
   loadingMessage = "Laster...",
 }: GenericMultiSelectProps) {
-  const [options, setOptions] = useState<Option[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Create a unique query key based on the API endpoint function name and field config
+  const queryKey = ["multiselect", apiEndpoint.name || "unknown", valueField, labelField];
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const response = await apiEndpoint();
-
-        // Transform the data to the expected format
-        const transformedOptions = response.data.map((item: any) => ({
-          value: item[valueField],
-          label: item[labelField] || `Item ${item[valueField]}`,
-        }));
-
-        setOptions(transformedOptions);
-      } catch (error) {
-        console.error("Error fetching data for multiselect:", error);
-        setOptions([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [apiEndpoint, valueField, labelField]);
+  const {
+    data: options = [],
+    isLoading: loading,
+    error,
+  } = useQuery({
+    queryKey,
+    queryFn: apiEndpoint,
+    staleTime: 1000, // 1 second - fresh for 1 second
+    select: (response: any): Option[] => {
+      // Transform the data to the expected format
+      const data = response?.data || response || [];
+      return data.map((item: any) => ({
+        value: item[valueField],
+        label: item[labelField] || `Item ${item[valueField]}`,
+      }));
+    },
+  });
 
   if (loading) {
     return (
       <div className="flex items-center justify-center p-4 border rounded-md">
         <span className="text-sm text-muted-foreground">{loadingMessage}</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    console.error("Error fetching data for multiselect:", error);
+    return (
+      <div className="flex items-center justify-center p-4 border rounded-md border-red-200">
+        <span className="text-sm text-red-600">Feil ved lasting av data</span>
       </div>
     );
   }

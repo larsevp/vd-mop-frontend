@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect } from "react";
 import { useUserStore } from "@/stores/userStore";
 
 /**
@@ -7,23 +7,25 @@ import { useUserStore } from "@/stores/userStore";
  */
 export default function UserInitializer({ children }) {
   const { user, fetchUserInfo } = useUserStore();
-  
+
   useEffect(() => {
-    // Only fetch user info for SSO users who don't have role data yet
-    // Manual login users already have complete user data from login response
-    const shouldFetchUserInfo = user && !user.isManualLogin && !user.rolle;
-    
+    // Fetch user info for:
+    // 1. SSO users who don't have role data yet
+    // 2. Manual login users who don't have enhetId yet
+    const shouldFetchUserInfo = user && ((!user.isManualLogin && !user.rolle) || (user.isManualLogin && !user.enhetId));
+
     if (shouldFetchUserInfo) {
-      //console.log('UserInitializer: Fetching user info for SSO user');
+      //console.log('UserInitializer: Fetching user info');
       fetchUserInfo();
     } else {
       /*console.log('UserInitializer: Skipping user info fetch', {
         hasUser: !!user,
         isManualLogin: user?.isManualLogin,
-        hasRole: !!user?.rolle
+        hasRole: !!user?.rolle,
+        hasEnhetId: !!user?.enhetId
       });*/
     }
-  }, [user?.isManualLogin, user?.rolle, fetchUserInfo]);
+  }, [user?.isManualLogin, user?.rolle, user?.enhetId, fetchUserInfo]);
 
   // Always render children - user info fetching happens in background
   return children;

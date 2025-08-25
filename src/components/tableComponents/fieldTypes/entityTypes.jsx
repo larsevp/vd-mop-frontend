@@ -4,13 +4,14 @@ import { StatusSelect } from "../../ui/form/StatusSelect";
 import { VurderingSelect } from "../../ui/form/VurderingSelect";
 import { EmneSelect } from "../../ui/form/EmneSelect";
 import { KravreferansetypeSelect } from "../../ui/form/Kravreferansetype";
+import { PrioritetSelect } from "../../ui/form/PrioritetSelect";
 import { KravSelect } from "../../ui/form/KravSelect";
 import { KravStatusSelect } from "../../ui/form/EnumSelect";
 import EnhetSelect from "../EnhetSelect";
 import GenericMultiSelect from "../../ui/form/GenericMultiSelect";
 
 // Import API endpoints for entity-specific multiselects
-import { getLover, getKravpakker } from "@/api/endpoints";
+import { getLoverSimple as getLover, getKravpakkerSimple as getKravpakker } from "@/api/endpoints";
 
 // Configuration mapping for multiselect entities
 export const MULTISELECT_ENTITY_CONFIG = {
@@ -85,6 +86,17 @@ export const ENTITY_FIELD_TYPES = {
   // Model-specific entity selects
   kravreferansetypeselect: ({ field, value, onChange, error }) => (
     <KravreferansetypeSelect
+      name={field.name}
+      value={value}
+      onChange={onChange}
+      label={field.label}
+      required={field.required}
+      placeholder={field.placeholder}
+    />
+  ),
+
+  prioritetselect: ({ field, value, onChange, error }) => (
+    <PrioritetSelect
       name={field.name}
       value={value}
       onChange={onChange}

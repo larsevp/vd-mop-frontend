@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Users, Building2, Activity, Star, Package } from "lucide-react";
+import { Users, Building2, Activity, Star, Package, FileText, Briefcase, Link2, Scale, CheckSquare, FolderOpen } from "lucide-react";
 import { useUserStore } from "@/stores/userStore";
 import { getModelConfig } from "@/modelConfigs";
 
@@ -42,20 +42,35 @@ export default function AdminLanding() {
     {
       config: getModelConfig("kravreferansetyper"),
       link: "/kravreferansetyper",
-      icon: Package,
-      color: "from-indigo-500 to-indigo-600",
+      icon: Link2,
+      color: "from-cyan-500 to-cyan-600",
     },
     {
       config: getModelConfig("lover"),
       link: "/lover",
-      icon: Package,
-      color: "from-indigo-500 to-indigo-600",
+      icon: Scale,
+      color: "from-amber-500 to-amber-600",
     },
     {
       config: getModelConfig("krav"),
-      link: "/Krav",
-      icon: Package,
-      color: "from-indigo-500 to-indigo-600",
+      link: "/krav",
+      icon: CheckSquare,
+      color: "from-red-500 to-red-600",
+    },
+    {
+      config: {
+        title: "Krav Workspace",
+        desc: "Modern kravhåndtering med kortvisning, avanserte søkefilter og sømløs filhåndtering"
+      },
+      link: "/krav-workspace",
+      icon: Briefcase,
+      color: "from-blue-500 to-indigo-600",
+    },
+    {
+      config: getModelConfig("files"),
+      link: "/Files",
+      icon: FolderOpen,
+      color: "from-slate-500 to-slate-600",
     },
   ];
 

@@ -4,6 +4,7 @@
 import React from "react";
 import { KravSelect } from "../../ui/form/KravSelect";
 import ParentSelectField from "../ParentSelectField";
+import { TiptapEditor } from "../../ui/editor/TiptapEditor";
 
 export const MODEL_SPECIFIC_FIELDS = {
   // Krav model specific field configurations
@@ -30,6 +31,7 @@ export const MODEL_SPECIFIC_FIELDS = {
           emptyLabel="Ingen tilhørlighet"
         />
       ),
+
     },
   },
 

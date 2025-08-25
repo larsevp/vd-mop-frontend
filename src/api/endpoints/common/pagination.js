@@ -8,9 +8,10 @@ import { API } from "../../index";
  * @param {string} search - Search query (default: "")
  * @param {string} sortBy - Sort field (default: "")
  * @param {string} sortOrder - Sort order (default: "asc")
+ * @param {Object} config - Additional axios config (headers, etc.)
  * @returns {Promise} API response
  */
-export const getPaginatedData = (endpoint, page = 1, pageSize = 10, search = "", sortBy = "", sortOrder = "asc") => {
+export const getPaginatedData = (endpoint, page = 1, pageSize = 10, search = "", sortBy = "", sortOrder = "asc", config = {}) => {
   const params = new URLSearchParams({
     page: page.toString(),
     pageSize: pageSize.toString(),
@@ -18,5 +19,6 @@ export const getPaginatedData = (endpoint, page = 1, pageSize = 10, search = "",
     ...(sortBy && { sortBy }),
     ...(sortOrder && { sortOrder }),
   });
-  return API.get(`${endpoint}/paginated?${params}`);
+
+  return API.get(`${endpoint}/paginated?${params}`, config);
 };

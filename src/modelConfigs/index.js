@@ -1,5 +1,6 @@
 // Dynamic model config access for generic components
 /* PLOP_IMPORT_MODELS */
+import { files } from "./models/files";
 import { krav } from "./models/krav";
 import { lov } from "./models/lov";
 import { user } from "./models/user";
@@ -14,6 +15,7 @@ import { kravreferansetype } from "./models/kravreferansetype";
 // Object mapping for dynamic lookup
 export const modelConfigs = {
   /* PLOP_MODEL_MAPPINGS */
+  files: files,
   krav: krav,
   lover: lov,
   users: user,

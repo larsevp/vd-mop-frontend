@@ -1,6 +1,6 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getEmner } from "../../../api/endpoints/models/emne";
+import { getEmnerSimple as getEmner } from "../../../api/endpoints/models/emne";
 import { ComboBox, ComboBoxOption } from "./ComboBox";
 import EntityCheckboxGroup from "./EntityCheckboxGroup";
 import { IconWithText } from "@/components/ui/DynamicIcon";

@@ -1,12 +1,13 @@
 import { displayFieldValue } from "./displayFieldValue";
 import { IconWithText } from "../../ui/DynamicIcon";
 import { booleanToJaNei } from "../../../utils/booleanParser";
+import { ExpandableRichText } from "../displayValues/ExpandableRichText";
 
 /**
  * Displays field value with icon support for React components
  * For simple text display, use displayFieldValue instead
  */
-export const displayFieldValueWithIcon = (field: any, row: any) => {
+export const displayFieldValueWithIcon_old = (field: any, row: any) => {
   // Handle statusId with icon
   if (field.name === "statusId") {
     if (row.status && row.status.navn) {

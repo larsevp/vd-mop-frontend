@@ -3,6 +3,7 @@ import { getPaginatedData } from "../common/pagination";
 
 // Enhet API endpoints
 export const getEnheter = () => API.get("/enhet");
+export const getEnheterSimple = () => API.get("/enhet/simple");
 export const createEnhet = (enhet) => API.post("/enhet", enhet);
 export const updateEnhet = (enhet) => API.put(`/enhet/${enhet.id}`, enhet);
 export const deleteEnhet = (id) => API.delete(`/enhet/${id}`);

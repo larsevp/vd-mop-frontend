@@ -1,5 +1,5 @@
 import React from "react";
-import { getStatus } from "../../../api/endpoints/models/status";
+import { getStatusSimple as getStatus } from "../../../api/endpoints/models/status";
 import { EntitySelect } from "./EntitySelect";
 import EntityCheckboxGroup from "./EntityCheckboxGroup";
 

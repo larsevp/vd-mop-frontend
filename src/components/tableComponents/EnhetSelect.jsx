@@ -1,6 +1,6 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getEnheter } from "@/api/endpoints";
+import { getEnheter, getEnheterSimple } from "@/api/endpoints";
 import { ComboBox } from "@/components/ui/form/ComboBox";
 import { Check, Folder, FolderOpen, File, Dot } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -21,7 +21,7 @@ export default function EnhetSelect({ name, value, onChange, label, required = f
     error,
   } = useQuery({
     queryKey: ["enheter"],
-    queryFn: getEnheter,
+    queryFn: getEnheterSimple,
     select: (response) => {
       // Handle both direct array and response.data patterns
       const data = Array.isArray(response) ? response : response.data || [];

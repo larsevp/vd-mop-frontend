@@ -1,6 +1,8 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
+import { AdminRoute } from "@/components/auth";
+import { adminRoutes } from "./AdminRoutes";
 import LandingPage from "@/pages/landing/LandingPage";
 import TiltaksoversiktGenerelle from "@/pages/TiltaksoversiktGenerelle";
 import TiltaksoversiktProsjekt from "@/pages/TiltaksoversiktProsjekt";
@@ -17,6 +19,8 @@ import AdminLanding from "@/pages/landing/AdminLanding";
 import Kravreferansetype from "@/pages/models/KravreferanseType";
 import Lov from "@/pages/models/Lov";
 import Krav from "@/pages/models/Krav";
+import Files from "@/pages/models/Files";
+import { KravWorkspace } from "@/pages/Krav";
 
 export default function AuthenticatedRoutes() {
   return (
@@ -72,6 +76,9 @@ export default function AuthenticatedRoutes() {
         <Route path="/krav" element={<Krav />} />
         <Route path="/krav/ny" element={<RowNew />} />
         <Route path="/krav/:id/rediger" element={<RowEdit />} />
+        <Route path="/krav-workspace" element={<KravWorkspace />} />
+        {/* Admin routes */}
+        {adminRoutes}
         {/* Redirect any other route (including /login) to home when authenticated */}
         <Route path="*" element={<LandingPage />} />
       </Route>

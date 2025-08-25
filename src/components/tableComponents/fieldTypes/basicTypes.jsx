@@ -2,6 +2,8 @@
 import React from "react";
 import { BooleanSelect } from "@/components/ui/form/BooleanSelect";
 import NumberInput from "../NumberInput";
+import { TiptapEditor } from "@/components/ui/editor/TiptapEditor";
+import { FileUpload } from "@/components/forms";
 
 export const BASIC_FIELD_TYPES = {
   text: ({ field, value, onChange, error }) => (
@@ -117,4 +119,74 @@ export const BASIC_FIELD_TYPES = {
       required={field.required}
     />
   ),
+
+  richtext: ({ field, value, onChange, error }) => {
+    const handleEditorChange = (html) => {
+      // Create a synthetic event to match the expected onChange signature
+      const syntheticEvent = {
+        target: {
+          name: field.name,
+          value: html,
+          type: "richtext",
+        },
+      };
+      onChange(syntheticEvent);
+    };
+
+    return (
+      <TiptapEditor
+        value={value || ""}
+        onChange={handleEditorChange}
+        placeholder={field.placeholder || "Start typing..."}
+        error={!!error}
+        disabled={field.disabled}
+        uploadUrl={field.uploadUrl} // Future backend integration
+      />
+    );
+  },
+
+  basicrichtext: ({ field, value, onChange, error }) => {
+    const handleEditorChange = (html) => {
+      const syntheticEvent = {
+        target: {
+          name: field.name,
+          value: html,
+          type: "basicrichtext",
+        },
+      };
+      onChange(syntheticEvent);
+    };
+
+    return (
+      <TiptapEditor
+        value={value || ""}
+        onChange={handleEditorChange}
+        placeholder={field.placeholder || "Skriv beskrivelse..."}
+        error={!!error}
+        disabled={field.disabled}
+        basic={true}
+      />
+    );
+  },
+
+  fileupload: ({ field, value, onChange, error, row, modelName }) => {
+    return (
+      <FileUpload
+        modelType={modelName}
+        modelId={row?.id}
+        label={field.label}
+        onFilesChange={() => {
+          // Trigger a form refresh if needed
+          const syntheticEvent = {
+            target: {
+              name: field.name,
+              value: Date.now(), // Just trigger a change to refresh
+              type: "fileupload",
+            },
+          };
+          onChange && onChange(syntheticEvent);
+        }}
+      />
+    );
+  },
 };

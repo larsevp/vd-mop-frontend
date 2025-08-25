@@ -1,9 +1,20 @@
 // Generated model config for Krav
-import { getKrav, deleteKrav, createKrav, updateKrav, getPaginatedKrav, getKravById } from "@/api/endpoints";
+import {
+  getKrav,
+  deleteKrav,
+  createKrav,
+  updateKrav,
+  getPaginatedKrav,
+  getPaginatedKravAll,
+  getPaginatedKravGroupedByEmne,
+  getKravById,
+} from "@/api/endpoints";
 
 export const krav = {
   queryKey: ["krav"],
   queryFn: getPaginatedKrav,
+  queryFnAll: getPaginatedKravAll, // Get all fields including "informasjon"
+  queryFnGroupedByEmne: getPaginatedKravGroupedByEmne, // Get Krav grouped by Emne
   getByIdFn: getKravById,
   createFn: createKrav,
   updateFn: updateKrav,
@@ -18,7 +29,7 @@ export const krav = {
       name: "kravUID",
       label: "Krav UID",
       type: "text",
-      required: false,
+      required: true,
       disabled: true,
       field_info: "Unik identifikator for kravet (genereres automatisk som GK + ID)",
       show_in_list: true,
@@ -34,16 +45,44 @@ export const krav = {
     {
       name: "beskrivelse",
       label: "Beskrivelse",
-      type: "text",
+      type: "basicrichtext",
       required: true,
-      field_info: "Detaljert beskrivelse av kravet. Forklar hva som skal oppnås og eventuelle begrensninger.",
+      placeholder: "Beskriv kravet i detalj...",
+      field_info: "Detaljert beskrivelse av kravet med grunnleggende formatering (fet, kursiv, understreking, overskrifter).",
+      hiddenIndex: true,
     },
     {
       name: "informasjon",
       label: "Informasjon",
+      type: "richtext",
+      required: false,
+      placeholder: "Legg til detaljert informasjon om kravet...",
+      field_info: "Rik tekst med støtte for formatering, lenker, tabeller og bilder. Lim inn bilder direkte fra utklippstavlen.",
+      suppressIndex: true, // Don't include this rich text field in index/list views
+      hiddenIndex: true,
+    },
+    {
+      name: "beskrivelseSnippet",
+      label: "Beskrivelse",
       type: "text",
       required: false,
+      suppressIndex: false, // Don't include this rich text field in index/list views
+      hiddenCreate: true,
+      hiddenEdit: true,
+      truncate: 20,
     },
+    {
+      name: "informasjonSnippet",
+      label: "Informasjon",
+      type: "text",
+      required: false,
+      suppressIndex: false, // Don't include this rich text field in index/list views
+      hiddenCreate: true,
+      hiddenEdit: true,
+      truncate: 20,
+    },
+    //BeskrivelsePlain, informasjonPlain, BeskrivelseSnippet, InformasjonSnippet
+
     {
       name: "kravreferansetypeId",
       label: "KravreferansetypeID",
@@ -61,14 +100,15 @@ export const krav = {
       name: "obligatorisk",
       label: "Obligatorisk",
       type: "bool",
-      required: true,
+      required: false,
       default: false,
     },
     {
       name: "prioritet",
       label: "Prioritet",
-      type: "number",
+      type: "prioritetselect",
       required: false,
+      defaultValue: 15,
     },
     {
       name: "givenOrder",
@@ -129,6 +169,7 @@ export const krav = {
       type: "number",
       required: false,
       type: "enhetselect",
+      defaultValue: "USER_ENHET_ID", // Special marker for user's enhetId
     },
     {
       name: "createdBy",
@@ -157,6 +198,7 @@ export const krav = {
       entityType: "lov",
       required: false,
       field_info: "Velg hvilke lover og forskrifter som gjelder for dette kravet",
+      suppressIndex: true, // Don't include this many-to-many relationship in index views
     },
     {
       name: "kravpakker",
@@ -165,6 +207,16 @@ export const krav = {
       entityType: "kravpakker",
       required: false,
       field_info: "Velg hvilke kravpakker (f.eks. BREEAM NOR) dette kravet tilhører",
+      suppressIndex: true, // Don't include this many-to-many relationship in index views
+    },
+    {
+      name: "files",
+      label: "Vedlegg",
+      type: "fileupload",
+      required: false,
+      field_info: "Last opp dokumenter, bilder eller andre filer knyttet til dette kravet",
+      hiddenIndex: true, // Don't show in list view
+      suppressIndex: true, // Don't include in index views
     },
   ],
 };

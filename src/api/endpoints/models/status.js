@@ -9,3 +9,4 @@ export const deleteStatus = (id) => API.delete(`/status/${id}`);
 export const getPaginatedStatus = (page = 1, pageSize = 10, search = "", sortBy = "", sortOrder = "asc") =>
   getPaginatedData("/status", page, pageSize, search, sortBy, sortOrder);
 export const getStatusById = (id) => API.get(`/status/${id}`);
+export const getStatusSimple = () => API.get("/status/simple");

@@ -9,3 +9,4 @@ export const deleteLov = (id) => API.delete(`lov/${id}`);
 export const getPaginatedLov = (page = 1, pageSize = 10, search = "", sortBy = "", sortOrder = "asc") =>
   getPaginatedData("/lov", page, pageSize, search, sortBy, sortOrder);
 export const getLovById = (id) => API.get(`/lov/${id}`);
+export const getLoverSimple = () => API.get("/lov/simple");

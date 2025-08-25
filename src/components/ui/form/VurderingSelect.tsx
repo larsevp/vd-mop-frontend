@@ -1,5 +1,5 @@
 import React from "react";
-import { getVurderinger } from "../../../api/endpoints/models/vurdering";
+import { getVurderingerSimple as getVurderinger } from "../../../api/endpoints/models/vurdering";
 import { EntitySelect } from "./EntitySelect";
 import EntityCheckboxGroup from "./EntityCheckboxGroup";
 

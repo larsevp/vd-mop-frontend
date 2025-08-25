@@ -1,6 +1,6 @@
 // Model-specific display value handlers and overrides
+// Only include truly unique customizations here - common patterns should use entityDisplayTypes and basicDisplayTypes
 import React, { useState } from "react";
-import { IconWithText } from "../../ui/DynamicIcon";
 import { Badge } from "../../ui/primitives/badge";
 import { Button } from "../../ui/primitives/button";
 
@@ -59,7 +59,7 @@ const InlineMultiSelect = ({ items, emptyText = "None selected", fieldName = "ti
   );
 };
 
-// Enum translations
+// Enum translations for krav status
 const kravStatusTranslations = {
   draft: "Kladd",
   baseline: "Gjeldende versjon",
@@ -68,15 +68,15 @@ const kravStatusTranslations = {
 };
 
 export const MODEL_SPECIFIC_DISPLAY = {
-  // Model-specific field name overrides
+  // Only truly unique model-specific customizations
+
   enheter: {
     fieldNames: {
-      // Special handling for hierarchical display with level indentation
+      // Hierarchical display with level indentation (unique to enheter)
       navn: (row, field, context) => {
         const value = row[field.name];
         if (!value) {
-          const displayValue = "N/A";
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
+          return context.format === "REACT" ? <span>N/A</span> : "N/A";
         }
 
         // Handle hierarchical indentation for LIST context
@@ -91,429 +91,93 @@ export const MODEL_SPECIFIC_DISPLAY = {
     },
   },
 
-  // Krav model specific handling
   krav: {
     fieldNames: {
-      // Special enum handling for kravStatus
+      // Enum translation for kravStatus (unique business logic)
       kravStatus: (row, field, context) => {
         const value = row[field.name];
-        if (value && kravStatusTranslations[value]) {
-          const displayValue = kravStatusTranslations[value];
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else if (value) {
-          const displayValue = value; // Fallback to raw value
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else {
-          const displayValue = "Ingen status";
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        }
+        const displayValue = value && kravStatusTranslations[value] ? kravStatusTranslations[value] : value || "N/A";
+        return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
       },
 
-      // Kravreferansetype relationships for krav model
-      kravreferansetypeId: (row, field, context) => {
-        if (row.kravreferansetype && (row.kravreferansetype.navn || row.kravreferansetype.tittel)) {
-          const displayValue = row.kravreferansetype.navn || row.kravreferansetype.tittel;
-          if (context.format === "REACT" && row.kravreferansetype.icon) {
-            return <IconWithText iconName={row.kravreferansetype.icon} text={displayValue} iconColor={row.kravreferansetype.color} />;
-          }
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else if (row.kravreferanseType && (row.kravreferanseType.navn || row.kravreferanseType.tittel)) {
-          // Try alternative naming convention
-          const displayValue = row.kravreferanseType.navn || row.kravreferanseType.tittel;
-          if (context.format === "REACT" && row.kravreferanseType.icon) {
-            return <IconWithText iconName={row.kravreferanseType.icon} text={displayValue} iconColor={row.kravreferanseType.color} />;
-          }
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else if (row[field.name]) {
-          const displayValue = `Kravreferansetype ID: ${row[field.name]}`;
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else {
-          const displayValue = "Ingen kravreferansetype";
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        }
-      },
-
-      // Emne relationships for krav model
-      emneId: (row, field, context) => {
-        //console.log(row.emne);
-        if (row.emne && row.emne.tittel) {
-          const displayValue = row.emne.tittel;
-          if (context.format === "REACT" && row.emne.icon) {
-            return <IconWithText iconName={row.emne.icon} text={displayValue} iconColor={row.emne.color} />;
-          }
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else if (row[field.name]) {
-          const displayValue = `Emne ID: ${row[field.name]}`;
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else {
-          const displayValue = "Ingen emne";
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        }
-      },
-
-      // Status relationships for krav model
-      statusId: (row, field, context) => {
-        if (row.status && row.status.navn) {
-          const displayValue = row.status.navn;
-          if (context.format === "REACT" && row.status.icon) {
-            return <IconWithText iconName={row.status.icon} text={displayValue} iconColor={row.status.color} />;
-          }
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else if (row[field.name]) {
-          const displayValue = `Status ID: ${row[field.name]}`;
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else {
-          const displayValue = "Ingen status";
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        }
-      },
-
-      // Vurdering relationships for krav model
-      vurderingId: (row, field, context) => {
-        if (row.vurdering && (row.vurdering.tittel || row.vurdering.navn)) {
-          const displayValue = row.vurdering.tittel || row.vurdering.navn;
-          if (context.format === "REACT" && row.vurdering.icon) {
-            return <IconWithText iconName={row.vurdering.icon} text={displayValue} iconColor={row.vurdering.color} />;
-          }
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else if (row[field.name]) {
-          const displayValue = `Vurdering ID: ${row[field.name]}`;
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else {
-          const displayValue = "Ingen vurdering";
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        }
-      },
-
-      // Parent relationships for krav model (hierarchical)
-      parentId: (row, field, context) => {
-        if (row.parent && row.parent.tittel) {
-          // Truncate parent krav title to 15 characters for krav model
-          const fullTitle = row.parent.tittel;
-          const truncatedTitle = fullTitle.length > 15 ? fullTitle.substring(0, 15) + "..." : fullTitle;
-          const displayValue = truncatedTitle;
-
-          if (context.format === "REACT" && row.parent.icon) {
-            return <IconWithText iconName={row.parent.icon} text={displayValue} iconColor={row.parent.color} />;
-          }
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else if (row[field.name]) {
-          const displayValue = `Parent ID: ${row[field.name]}`;
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else {
-          const displayValue = "Ingen parent";
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        }
-      },
-
-      // Enhet relationships for krav model
-      enhetId: (row, field, context) => {
-        if (row.enhet && row.enhet.navn) {
-          const displayValue = row.enhet.navn;
-          if (context.format === "REACT" && row.enhet.icon) {
-            return <IconWithText iconName={row.enhet.icon} text={displayValue} iconColor={row.enhet.color} />;
-          }
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else if (row[field.name]) {
-          const displayValue = `Enhet ID: ${row[field.name]}`;
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else {
-          const displayValue = "Ingen enhet";
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        }
-      },
-
-      // User relationships for krav model
-      createdBy: (row, field, context) => {
-        if (row.creator && row.creator.navn) {
-          const displayValue = row.creator.navn;
-          if (context.format === "REACT" && row.creator.icon) {
-            return <IconWithText iconName={row.creator.icon} text={displayValue} iconColor={row.creator.color} />;
-          }
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else if (row[field.name]) {
-          const displayValue = `User ID: ${row[field.name]}`;
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else {
-          const displayValue = "System";
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        }
-      },
-
-      updatedBy: (row, field, context) => {
-        if (row.updater && row.updater.navn) {
-          const displayValue = row.updater.navn;
-          if (context.format === "REACT" && row.updater.icon) {
-            return <IconWithText iconName={row.updater.icon} text={displayValue} iconColor={row.updater.color} />;
-          }
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else if (row[field.name]) {
-          const displayValue = `User ID: ${row[field.name]}`;
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else {
-          const displayValue = "Ingen oppdateringer";
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        }
-      },
-
-      // Many-to-many relationships for krav model
-      lover: (row, field, context) => {
-        if (context.format === "REACT") {
-          return <InlineMultiSelect items={row.lover} emptyText="-" fieldName="tittel" />;
-        } else {
-          // For non-React contexts (exports, etc.)
-          if (row.lover && Array.isArray(row.lover) && row.lover.length > 0) {
-            return row.lover.map((lov) => lov.tittel).join(", ");
-          }
-          return "-";
-        }
-      },
-
+      // Multi-select relationships with special formatting (unique to krav)
       kravpakker: (row, field, context) => {
         if (context.format === "REACT") {
-          return <InlineMultiSelect items={row.kravpakker} emptyText="-" fieldName="tittel" />;
-        } else {
-          // For non-React contexts (exports, etc.)
-          if (row.kravpakker && Array.isArray(row.kravpakker) && row.kravpakker.length > 0) {
-            return row.kravpakker.map((pakke) => pakke.tittel).join(", ");
-          }
-          return "-";
+          return <InlineMultiSelect items={row.kravpakker} emptyText="Ingen kravpakker" fieldName="tittel" />;
         }
-      },
-    },
-
-    // Field type overrides can be added here if needed
-    fieldTypes: {
-      // Example: If we want special handling for all enum types in krav model
-      // enum: (row, field, context) => { ... }
-    },
-  },
-
-  // Add other model-specific configurations here
-  prosjekt: {
-    fieldNames: {
-      // Enhet relationships for prosjekt model
-      enhetId: (row, field, context) => {
-        if (row.enhet && row.enhet.navn) {
-          const displayValue = row.enhet.navn;
-          if (context.format === "REACT" && row.enhet.icon) {
-            return <IconWithText iconName={row.enhet.icon} text={displayValue} iconColor={row.enhet.color} />;
-          }
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else if (row[field.name]) {
-          const displayValue = `Enhet ID: ${row[field.name]}`;
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else {
-          const displayValue = "Ingen enhet";
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
+        if (row.kravpakker && row.kravpakker.length > 0) {
+          return row.kravpakker.map((k) => k.tittel || k.navn).join(", ");
         }
+        return "Ingen kravpakker";
       },
 
-      // User relationships for prosjekt model
-      createdBy: (row, field, context) => {
-        if (row.creator && row.creator.navn) {
-          const displayValue = row.creator.navn;
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else if (row[field.name]) {
-          const displayValue = `User ID: ${row[field.name]}`;
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else {
-          const displayValue = "System";
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
+      lover: (row, field, context) => {
+        if (context.format === "REACT") {
+          return <InlineMultiSelect items={row.lover} emptyText="Ingen lover" fieldName="tittel" />;
         }
-      },
-
-      updatedBy: (row, field, context) => {
-        if (row.updater && row.updater.navn) {
-          const displayValue = row.updater.navn;
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else if (row[field.name]) {
-          const displayValue = `User ID: ${row[field.name]}`;
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else {
-          const displayValue = "Ingen oppdateringer";
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
+        if (row.lover && row.lover.length > 0) {
+          return row.lover.map((l) => l.tittel || l.navn).join(", ");
         }
+        return "Ingen lover";
       },
     },
   },
 
-  status: {
-    // Example: Enhanced status display with better icon handling
+  files: {
     fieldNames: {
-      navn: (row, field, context) => {
-        const value = row[field.name];
-        if (!value) {
-          const displayValue = "N/A";
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
+      // File access with fresh signed URLs (unique to files)
+      digitalOceanUrl: (row, field, context) => {
+        if (context.format === "REACT") {
+          return (
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs"
+              onClick={async () => {
+                try {
+                  const { getFileSignedUrl } = await import("../../../api/endpoints/models/files");
+                  const response = await getFileSignedUrl(row.id);
+                  window.open(response.data.url, "_blank");
+                } catch (error) {
+                  console.error("Error getting signed URL:", error);
+                  alert("Kunne ikke åpne filen");
+                }
+              }}
+            >
+              Åpne fil
+            </Button>
+          );
         }
-
-        // Enhanced status display with icon
-        if (context.format === "REACT" && row.icon) {
-          return <IconWithText iconName={row.icon} text={value} iconColor={row.color} />;
-        }
-
-        return context.format === "REACT" ? <span>{value}</span> : value;
-      },
-    },
-  },
-
-  vurdering: {
-    // Example: Special handling for vurdering tittel
-    fieldNames: {
-      tittel: (row, field, context) => {
-        const value = row[field.name];
-        if (!value) {
-          const displayValue = "N/A";
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        }
-
-        // Enhanced vurdering display with icon
-        if (context.format === "REACT" && row.icon) {
-          return <IconWithText iconName={row.icon} text={value} iconColor={row.color} />;
-        }
-
-        return context.format === "REACT" ? <span>{value}</span> : value;
+        return "Åpne fil";
       },
 
-      navn: (row, field, context) => {
-        const value = row[field.name];
-        if (!value) {
-          const displayValue = "N/A";
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
+      fileName: (row, field, context) => {
+        const displayValue = row[field.name] || "Ukjent fil";
+        if (context.format === "REACT") {
+          return (
+            <div className="flex items-center gap-2">
+              <span>{displayValue}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs h-6 px-2"
+                onClick={async () => {
+                  try {
+                    const { getFileSignedUrl } = await import("../../../api/endpoints/models/files");
+                    const response = await getFileSignedUrl(row.id);
+                    window.open(response.data.url, "_blank");
+                  } catch (error) {
+                    console.error("Error getting signed URL:", error);
+                    alert("Kunne ikke åpne filen");
+                  }
+                }}
+              >
+                Åpne
+              </Button>
+            </div>
+          );
         }
-
-        // Enhanced vurdering display with icon
-        if (context.format === "REACT" && row.icon) {
-          return <IconWithText iconName={row.icon} text={value} iconColor={row.color} />;
-        }
-
-        return context.format === "REACT" ? <span>{value}</span> : value;
-      },
-    },
-  },
-
-  emne: {
-    fieldNames: {
-      // Enhanced emne display with icon
-      tittel: (row, field, context) => {
-        const value = row[field.name];
-        if (!value) {
-          const displayValue = "N/A";
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        }
-
-        // Enhanced emne display with icon
-        if (context.format === "REACT" && row.icon) {
-          return <IconWithText iconName={row.icon} text={value} iconColor={row.color} />;
-        }
-
-        return context.format === "REACT" ? <span>{value}</span> : value;
-      },
-
-      // Standard foreign key relationships for emne
-      enhetId: (row, field, context) => {
-        if (row.enhet && row.enhet.navn) {
-          const displayValue = row.enhet.navn;
-          if (context.format === "REACT" && row.enhet.icon) {
-            return <IconWithText iconName={row.enhet.icon} text={displayValue} iconColor={row.enhet.color} />;
-          }
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else if (row[field.name]) {
-          const displayValue = `Enhet ID: ${row[field.name]}`;
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else {
-          const displayValue = "Ingen enhet";
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        }
-      },
-
-      createdBy: (row, field, context) => {
-        if (row.creator && row.creator.navn) {
-          const displayValue = row.creator.navn;
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else if (row[field.name]) {
-          const displayValue = `User ID: ${row[field.name]}`;
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else {
-          const displayValue = "System";
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        }
-      },
-
-      updatedBy: (row, field, context) => {
-        if (row.updater && row.updater.navn) {
-          const displayValue = row.updater.navn;
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else if (row[field.name]) {
-          const displayValue = `User ID: ${row[field.name]}`;
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else {
-          const displayValue = "Ingen oppdateringer";
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        }
-      },
-    },
-  },
-
-  kravreferansetype: {
-    fieldNames: {
-      tittel: (row, field, context) => {
-        const value = row[field.name];
-        if (!value) {
-          const displayValue = "N/A";
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        }
-
-        // Enhanced kravreferansetype display with icon
-        if (context.format === "REACT" && row.icon) {
-          return <IconWithText iconName={row.icon} text={value} iconColor={row.color} />;
-        }
-
-        return context.format === "REACT" ? <span>{value}</span> : value;
-      },
-
-      // Standard foreign key relationships for kravreferansetype
-      enhetId: (row, field, context) => {
-        if (row.enhet && row.enhet.navn) {
-          const displayValue = row.enhet.navn;
-          if (context.format === "REACT" && row.enhet.icon) {
-            return <IconWithText iconName={row.enhet.icon} text={displayValue} iconColor={row.enhet.color} />;
-          }
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else if (row[field.name]) {
-          const displayValue = `Enhet ID: ${row[field.name]}`;
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else {
-          const displayValue = "Ingen enhet";
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        }
-      },
-
-      createdBy: (row, field, context) => {
-        if (row.creator && row.creator.navn) {
-          const displayValue = row.creator.navn;
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else if (row[field.name]) {
-          const displayValue = `User ID: ${row[field.name]}`;
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else {
-          const displayValue = "System";
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        }
-      },
-
-      updatedBy: (row, field, context) => {
-        if (row.updater && row.updater.navn) {
-          const displayValue = row.updater.navn;
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else if (row[field.name]) {
-          const displayValue = `User ID: ${row[field.name]}`;
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        } else {
-          const displayValue = "Ingen oppdateringer";
-          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-        }
+        return displayValue;
       },
     },
   },

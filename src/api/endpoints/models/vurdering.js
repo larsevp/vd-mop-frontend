@@ -9,3 +9,4 @@ export const deleteVurdering = (id) => API.delete(`/vurdering/${id}`);
 export const getPaginatedVurdering = (page = 1, pageSize = 10, search = "", sortBy = "", sortOrder = "asc") =>
   getPaginatedData("/vurdering", page, pageSize, search, sortBy, sortOrder);
 export const getVurderingById = (id) => API.get(`/vurdering/${id}`);
+export const getVurderingerSimple = () => API.get("/vurdering/simple");

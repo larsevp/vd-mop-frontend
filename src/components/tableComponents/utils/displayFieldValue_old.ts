@@ -15,7 +15,7 @@ const kravStatusTranslations: { [key: string]: string } = {
   deprecated: "Utgår",
 };
 
-export const displayFieldValue = (row: any, field: any, from: FieldSource | null = null, queryKey: any[] | null = null): string => {
+export const displayFieldValue_old = (row: any, field: any, from: FieldSource | null = null, queryKey: any[] | null = null): string => {
   // If the field has a computed property, evaluate it and return the result
   if (field.computed) {
     try {
@@ -134,6 +134,21 @@ export const displayFieldValue = (row: any, field: any, from: FieldSource | null
   // Handle boolean fields with type "bool"
   if (field.type === "bool") {
     return booleanToJaNei(value, "Ikke angitt");
+  }
+
+  // Handle richtext fields - strip HTML and truncate for display
+  if (field.type === "richtext") {
+    if (!value) return "Ingen innhold";
+
+    // Strip HTML tags and get plain text
+    const textContent = value.replace(/<[^>]*>/g, "").trim();
+
+    // Truncate for list view
+    if (from === FieldSource.LIST) {
+      return textContent.length > 100 ? textContent.substring(0, 97) + "..." : textContent || "Ingen innhold";
+    }
+
+    return textContent || "Ingen innhold";
   }
 
   // Default: return the raw value, or 'N/A' if null/undefined
