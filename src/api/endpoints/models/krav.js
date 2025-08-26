@@ -6,6 +6,8 @@ import { getPaginatedData } from "@/api/endpoints/common/pagination";
 const KRAV_FIELD_EXCLUSION = {
   index: ["informasjon"], // Suppress heavy fields in list views
   edit: [], // Include all fields in edit views
+  simple: ["beskrivelsePlain"],
+  //beskrivelsePlain
 };
 // Select only fields to return from Krav (used for multiselect) || utgår faktisk,- begynner med simple things instead
 const KRAV_FIELD_FILTER = {
@@ -44,10 +46,16 @@ export const getKrav = (config = {}) => {
   const updatedConfig = addKravFieldExclusion("index", config);
   return API.get("/krav", updatedConfig);
 };
-export const getKravSimple = () => API.get("/krav/simple");
+export const getKravSimple = () => API.get("/krav/simple", addKravFieldExclusion("simple"));
 export const createKrav = (kravData) => API.post("krav", kravData);
 
 export const updateKrav = (kravData) => API.put(`krav/${kravData.id}`, kravData);
+
+export const updateKravMerknad = (kravId, merknader) => API.patch(`krav/${kravId}/merknad`, { merknader });
+
+export const updateKravStatus = (kravId, statusId) => API.patch(`krav/${kravId}/status`, { statusId });
+
+export const updateKravVurdering = (kravId, vurderingId) => API.patch(`krav/${kravId}/vurdering`, { vurderingId });
 
 export const deleteKrav = (id) => API.delete(`krav/${id}`);
 

@@ -88,6 +88,10 @@ export const krav = {
       label: "KravreferansetypeID",
       type: "kravreferansetypeselect",
       required: false,
+      hideViewKrav: false, // Show in KravDetailDisplay view mode
+      hideEditKrav: false, // Show in KravDetailDisplay edit mode
+      hideCreateKrav: false, // Show in KravDetailDisplay create mode
+      hideIndexKrav: true, // Hide in KravCard/list view
     },
     {
       name: "kravreferanse",
@@ -95,6 +99,10 @@ export const krav = {
       type: "text",
       placeholder: "Hvor kommer kravet fra?",
       required: false,
+      hideViewKrav: false, // Show in KravDetailDisplay view mode
+      hideEditKrav: false, // Show in KravDetailDisplay edit mode
+      hideCreateKrav: false, // Show in KravDetailDisplay create mode
+      hideIndexKrav: true, // Hide in KravCard/list view
     },
     {
       name: "obligatorisk",
@@ -129,6 +137,10 @@ export const krav = {
       label: "Versjon",
       type: "text",
       required: true,
+      hideViewKrav: true, // Hide in KravDetailDisplay view mode (less important)
+      hideEditKrav: false, // Show in KravDetailDisplay edit mode
+      hideCreateKrav: false, // Show in KravDetailDisplay create mode
+      hideIndexKrav: true, // Hide in KravCard/list view
     },
     {
       name: "kravStatus",

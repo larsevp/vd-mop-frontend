@@ -6,12 +6,13 @@ import { EmneSelect } from "../../ui/form/EmneSelect";
 import { KravreferansetypeSelect } from "../../ui/form/Kravreferansetype";
 import { PrioritetSelect } from "../../ui/form/PrioritetSelect";
 import { KravSelect } from "../../ui/form/KravSelect";
+import { TiltakSelect } from "../../ui/form/TiltakSelect";
 import { KravStatusSelect } from "../../ui/form/EnumSelect";
 import EnhetSelect from "../EnhetSelect";
 import GenericMultiSelect from "../../ui/form/GenericMultiSelect";
 
 // Import API endpoints for entity-specific multiselects
-import { getLoverSimple as getLover, getKravpakkerSimple as getKravpakker } from "@/api/endpoints";
+import { getLoverSimple as getLover, getKravpakkerSimple as getKravpakker, getKravSimple as getKrav } from "@/api/endpoints";
 
 // Configuration mapping for multiselect entities
 export const MULTISELECT_ENTITY_CONFIG = {
@@ -34,6 +35,20 @@ export const MULTISELECT_ENTITY_CONFIG = {
     emptyMessage: "Ingen kravpakker funnet.",
     loadingMessage: "Laster kravpakker...",
     relationshipField: "kravpakker", // Field name in row data for relationships
+  },
+  krav: {
+    apiEndpoint: getKrav,
+    valueField: "id",
+    labelField: "tittel", // Will be overridden by custom formatter
+    placeholder: "Velg krav...",
+    searchPlaceholder: "Søk etter krav...",
+    emptyMessage: "Ingen krav funnet.",
+    loadingMessage: "Laster krav...",
+    relationshipField: "krav", // Field name in row data for relationships
+    // Custom label formatter that includes kravUID
+    customLabelFormatter: (item) => `${item.kravUID} - ${item.tittel}`,
+    // Use the plain text snippet for description/tooltip
+    descriptionField: "beskrivelseSnippet",
   },
 };
 
@@ -118,6 +133,18 @@ export const ENTITY_FIELD_TYPES = {
     />
   ),
 
+  tiltakselect: ({ field, value, onChange, error, row }) => (
+    <TiltakSelect
+      name={field.name}
+      value={value}
+      onChange={onChange}
+      label={field.label}
+      required={field.required}
+      placeholder={field.placeholder}
+      excludeId={row?.id}
+    />
+  ),
+
   kravstatusselect: ({ field, value, onChange, error }) => (
     <KravStatusSelect name={field.name} value={value} onChange={onChange} label={field.label} required={field.required} />
   ),
@@ -149,6 +176,8 @@ export const ENTITY_FIELD_TYPES = {
         apiEndpoint={config.apiEndpoint}
         valueField={config.valueField}
         labelField={config.labelField}
+        customLabelFormatter={config.customLabelFormatter}
+        descriptionField={config.descriptionField}
         placeholder={field.placeholder || config.placeholder}
         searchPlaceholder={config.searchPlaceholder}
         emptyMessage={config.emptyMessage}

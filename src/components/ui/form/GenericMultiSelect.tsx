@@ -5,6 +5,7 @@ import MultiSelect from "./MultiSelect";
 interface Option {
   value: string | number;
   label: string;
+  description?: string; // Optional description for tooltips/hover
 }
 
 interface GenericMultiSelectProps {
@@ -19,6 +20,8 @@ interface GenericMultiSelectProps {
   searchPlaceholder?: string;
   emptyMessage?: string;
   loadingMessage?: string;
+  customLabelFormatter?: (item: any) => string; // Custom function to format labels
+  descriptionField?: string; // Field to use for description/tooltip
 }
 
 export function GenericMultiSelect({
@@ -33,6 +36,8 @@ export function GenericMultiSelect({
   searchPlaceholder = "Søk...",
   emptyMessage = "Ingen elementer funnet.",
   loadingMessage = "Laster...",
+  customLabelFormatter,
+  descriptionField,
 }: GenericMultiSelectProps) {
   // Create a unique query key based on the API endpoint function name and field config
   const queryKey = ["multiselect", apiEndpoint.name || "unknown", valueField, labelField];
@@ -48,10 +53,19 @@ export function GenericMultiSelect({
     select: (response: any): Option[] => {
       // Transform the data to the expected format
       const data = response?.data || response || [];
-      return data.map((item: any) => ({
-        value: item[valueField],
-        label: item[labelField] || `Item ${item[valueField]}`,
-      }));
+      return data.map((item: any) => {
+        // Use custom label formatter if provided, otherwise use the labelField
+        const label = customLabelFormatter ? customLabelFormatter(item) : item[labelField] || `Item ${item[valueField]}`;
+
+        // Include description if descriptionField is specified
+        const description = descriptionField && item[descriptionField] ? item[descriptionField] : undefined;
+
+        return {
+          value: item[valueField],
+          label,
+          description,
+        };
+      });
     },
   });
 

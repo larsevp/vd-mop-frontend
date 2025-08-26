@@ -181,4 +181,25 @@ export const MODEL_SPECIFIC_DISPLAY = {
       },
     },
   },
+
+  tiltak: {
+    fieldNames: {
+      // Parent tiltak relationship (specific to tiltak hierarchy)
+      parentId: (row, field, context) => {
+        if (row.parent && row.parent.tittel) {
+          const displayValue = row.parent.tittel;
+          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
+        } else if (row.parent && row.parent.tiltakUID) {
+          const displayValue = row.parent.tiltakUID;
+          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
+        } else if (row[field.name]) {
+          const displayValue = `Tiltak ID: ${row[field.name]}`;
+          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
+        } else {
+          const displayValue = "Ingen overordnet tiltak";
+          return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
+        }
+      },
+    },
+  },
 };

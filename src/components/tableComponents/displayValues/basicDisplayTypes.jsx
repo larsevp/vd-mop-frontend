@@ -22,9 +22,23 @@ export const BASIC_DISPLAY_TYPES = {
     //console.log(field);
     const value = row[field.name];
     let displayValue = value !== null && value !== undefined ? value : "N/A";
+
+    // Handle objects by trying to extract a meaningful display value
+    if (typeof displayValue === "object" && displayValue !== null) {
+      // Try common name fields for objects
+      displayValue =
+        displayValue.tittel ||
+        displayValue.navn ||
+        displayValue.name ||
+        displayValue.kravUID ||
+        displayValue.tiltakUID ||
+        displayValue.id ||
+        JSON.stringify(displayValue);
+    }
+
     const { truncate } = field;
 
-    if (truncate && typeof truncate === "number" && displayValue.length > truncate) {
+    if (truncate && typeof truncate === "number" && typeof displayValue === "string" && displayValue.length > truncate) {
       displayValue = `${displayValue.substring(0, truncate)}...`;
     }
 

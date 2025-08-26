@@ -19,6 +19,7 @@ import AdminLanding from "@/pages/landing/AdminLanding";
 import Kravreferansetype from "@/pages/models/KravreferanseType";
 import Lov from "@/pages/models/Lov";
 import Krav from "@/pages/models/Krav";
+import Tiltak from "@/pages/models/Tiltak";
 import Files from "@/pages/models/Files";
 import { KravWorkspace } from "@/pages/Krav";
 
@@ -29,7 +30,7 @@ export default function AuthenticatedRoutes() {
       <Route element={<MainLayout />}>
         <Route path="/" element={<LandingPage />} />
         <Route
-          path="/tiltak"
+          path="/tiltakgenerell"
           element={
             <div className="pb-20 max-w-screen-xl mx-auto">
               <TiltaksoversiktGenerelle />
@@ -76,6 +77,9 @@ export default function AuthenticatedRoutes() {
         <Route path="/krav" element={<Krav />} />
         <Route path="/krav/ny" element={<RowNew />} />
         <Route path="/krav/:id/rediger" element={<RowEdit />} />
+        <Route path="/tiltak" element={<Tiltak />} />
+        <Route path="/tiltak/ny" element={<RowNew />} />
+        <Route path="/tiltak/:id/rediger" element={<RowEdit />} />
         <Route path="/krav-workspace" element={<KravWorkspace />} />
         {/* Admin routes */}
         {adminRoutes}

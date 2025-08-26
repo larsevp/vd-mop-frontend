@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/primitives/badge";
 interface Option {
   value: string | number;
   label: string;
+  description?: string; // Optional description for tooltips
 }
 
 interface MultiSelectProps {
@@ -107,14 +108,14 @@ export function MultiSelect({
             <CommandGroup className="max-h-64 overflow-auto">
               {filteredOptions.map((option) => {
                 const isSelected = selectedValues.includes(option.value);
-                return (
+                const optionContent = (
                   <CommandItem
                     key={option.value}
                     value={option.label}
                     onSelect={() => handleSelect(option.value)}
                     className="cursor-pointer"
                   >
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 w-full">
                       <div
                         className={cn(
                           "flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
@@ -123,10 +124,19 @@ export function MultiSelect({
                       >
                         <Check className="h-3 w-3" />
                       </div>
-                      <span>{option.label}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm">{option.label}</div>
+                        {option.description && (
+                          <div className="text-xs text-muted-foreground truncate mt-0.5">
+                            {option.description.length > 60 ? `${option.description.substring(0, 60)}...` : option.description}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </CommandItem>
                 );
+
+                return optionContent;
               })}
             </CommandGroup>
           </Command>

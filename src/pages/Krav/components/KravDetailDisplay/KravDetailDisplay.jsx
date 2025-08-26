@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { FileText, AlertTriangle, Building2, Users, ChevronDown } from "lucide-react";
+import { FileText, AlertTriangle, Building2, Users, ChevronDown, MessageSquare } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { useUserStore } from "@/stores/userStore";
 
@@ -67,9 +67,10 @@ const KravDetailDisplay = ({
 
   const [expandedSections, setExpandedSections] = useState({
     informasjon: true,
+    merknader: true,
+    juridisk: true, // Show legal section by default since it's now prominent
     alleDetaljer: false, // Closed by default
     organisasjon: false,
-    juridisk: false,
     relasjoner: false,
     files: true,
     underkrav: true,
@@ -79,7 +80,7 @@ const KravDetailDisplay = ({
   const childKrav = kravData?.children || [];
 
   // List of sections that are inside "alle detaljer"
-  const alleDetaljerSubSections = ["organisasjon", "relasjoner", "juridisk", "underkrav", "files", "metadata"];
+  const alleDetaljerSubSections = ["organisasjon", "relasjoner", "underkrav", "files", "metadata"];
 
   const toggleSection = (section) => {
     if (section === "alleDetaljer") {
@@ -222,6 +223,41 @@ const KravDetailDisplay = ({
           </div>
         </InfoSection>
 
+        {/* Merknader */}
+        <InfoSection
+          title="Merknader"
+          icon={MessageSquare}
+          collapsible={true}
+          section="merknader"
+          isExpanded={expandedSections.merknader}
+          onToggle={toggleSection}
+        >
+          <div className="space-y-4">
+            <KravUnifiedField
+              field={getField("merknader")}
+              value={isEditing ? form.merknader : kravData?.merknader}
+              data={kravData}
+              mode={mode}
+              onChange={(value) => handleFieldChange("merknader", value)}
+              error={errors.merknader}
+              form={form}
+            />
+          </div>
+        </InfoSection>
+
+        {/* Legal Foundation - Moved above "All Details" */}
+        <LegalSection
+          krav={kravData || {}}
+          expandedSections={expandedSections}
+          onToggleSection={toggleSection}
+          mode={mode}
+          form={form}
+          isEditing={isEditing}
+          errors={errors}
+          getField={getField}
+          handleFieldChange={handleFieldChange}
+        />
+
         {/* All Additional Details - Collapsible Wrapper */}
         <InfoSection
           title="Alle detaljer"
@@ -294,18 +330,6 @@ const KravDetailDisplay = ({
               </div>
             </InfoSection>
 
-            {/* Legal Foundation */}
-            <LegalSection
-              krav={kravData || {}}
-              expandedSections={expandedSections}
-              onToggleSection={toggleSection}
-              mode={mode}
-              form={form}
-              isEditing={isEditing}
-              errors={errors}
-              getField={getField}
-              handleFieldChange={handleFieldChange}
-            />
 
             {/* Hierarchy */}
             <HierarchySection

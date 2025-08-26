@@ -58,9 +58,15 @@ export default function AdminLanding() {
       color: "from-red-500 to-red-600",
     },
     {
+      config: getModelConfig("tiltak"),
+      link: "/tiltak",
+      icon: CheckSquare,
+      color: "from-red-500 to-red-600",
+    },
+    {
       config: {
         title: "Krav Workspace",
-        desc: "Modern kravhåndtering med kortvisning, avanserte søkefilter og sømløs filhåndtering"
+        desc: "Modern kravhåndtering med kortvisning, avanserte søkefilter og sømløs filhåndtering",
       },
       link: "/krav-workspace",
       icon: Briefcase,

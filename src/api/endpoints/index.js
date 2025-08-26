@@ -13,6 +13,7 @@ export * from "./models/kravreferansetype";
 export * from "./models/files";
 export * from "./models/krav";
 export * from "./models/lov";
+export * from "./models/tiltak";
 
 // Re-export common utilities
 export * from "./common/pagination";

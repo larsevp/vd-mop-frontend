@@ -23,8 +23,15 @@ const KravCardController = ({
   onEdit,
   onDelete,
   onSave,
+  onMerknadUpdate,
+  onStatusChange,
+  onVurderingChange,
+  onPrioritetChange,
   onNavigateToKrav,
   showMerknader = false,
+  showStatus = false,
+  showVurdering = false,
+  showPrioritet = false,
   filesCount = 0,
   childrenCount = 0,
   parentKrav = null,
@@ -91,8 +98,14 @@ const KravCardController = ({
         onEdit={(krav) => onExpand(krav, "edit")}
         onDelete={onDelete}
         onView={(krav) => onExpand(krav, "view")}
-        onSave={onSave}
+        onMerknadUpdate={onMerknadUpdate}
+        onStatusChange={onStatusChange}
+        onVurderingChange={onVurderingChange}
+        onPrioritetChange={onPrioritetChange}
         showMerknader={showMerknader}
+        showStatus={showStatus}
+        showVurdering={showVurdering}
+        showPrioritet={showPrioritet}
         filesCount={filesCount}
         childrenCount={childrenCount}
         parentKrav={parentKrav}
@@ -149,7 +162,7 @@ const KravCardController = ({
       </div>
 
       {/* Expanded content */}
-      <div className="max-h-[80vh] overflow-y-auto">
+      <div className=" overflow-y-auto">
         <KravDetailDisplay
           krav={krav}
           mode={expandedMode}

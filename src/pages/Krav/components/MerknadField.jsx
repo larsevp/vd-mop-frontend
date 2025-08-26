@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { MessageSquare, Edit3, Check, X } from "lucide-react";
+import { updateKravMerknad } from "@/api/endpoints";
 
 /**
  * MerknadField component for displaying and directly editing merknad
@@ -7,7 +8,7 @@ import { MessageSquare, Edit3, Check, X } from "lucide-react";
  */
 const MerknadField = ({ 
   krav, 
-  onSave, 
+  onMerknadUpdate, 
   className = "" 
 }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -21,6 +22,11 @@ const MerknadField = ({
       inputRef.current.select();
     }
   }, [isEditing]);
+
+  // Sync local state when krav prop changes (e.g., from parent updates)
+  useEffect(() => {
+    setValue(krav.merknader || "");
+  }, [krav.merknader]);
 
   const handleEdit = (e) => {
     e.stopPropagation(); // Prevent card click
@@ -39,7 +45,25 @@ const MerknadField = ({
     setLoading(true);
     
     try {
-      await onSave({ ...krav, merknader: value.trim() });
+      // Check if krav has a valid ID
+      if (!krav?.id) {
+        console.error("Cannot save merknad: krav ID is missing");
+        setValue(krav.merknader || "");
+        setIsEditing(false);
+        return;
+      }
+
+      // Use the specific merknad update endpoint
+      const response = await updateKravMerknad(krav.id, value.trim());
+      
+      // Update the krav object locally so the display shows the new value
+      krav.merknader = value.trim();
+      
+      // Notify parent of the merknad update for local state sync
+      if (onMerknadUpdate) {
+        onMerknadUpdate(krav.id, value.trim());
+      }
+      
       setIsEditing(false);
     } catch (error) {
       console.error("Error saving merknad:", error);
@@ -59,15 +83,18 @@ const MerknadField = ({
     }
   };
 
-  // Don't render if no merknad and not editing
-  if (!krav.merknader && !isEditing) {
+  // Don't render if no valid krav ID (e.g., create-new placeholder)
+  if (!krav?.id || krav.id === "create-new") {
     return null;
   }
+
+  // Show "Add merknad" button if no merknad and not editing
+  const hasContent = krav.merknader && krav.merknader.trim();
 
   return (
     <div className={`${className}`} onClick={(e) => e.stopPropagation()}>
       {isEditing ? (
-        <div className="border-l-4 border-blue-300 bg-blue-50/30 rounded-r-lg p-3">
+        <div className="border border-blue-200 bg-blue-50/30 rounded-lg p-3">
           <div className="flex items-start gap-2 mb-2">
             <MessageSquare className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
             <textarea
@@ -103,9 +130,9 @@ const MerknadField = ({
             </button>
           </div>
         </div>
-      ) : (
+      ) : hasContent ? (
         <div 
-          className="border-l-4 border-slate-300 bg-slate-50/50 rounded-r-lg p-3 cursor-pointer hover:border-slate-400 hover:bg-slate-50 transition-all group"
+          className="border border-slate-200 bg-slate-50/30 rounded-lg p-3 cursor-pointer hover:border-slate-300 hover:bg-slate-50/60 transition-all group"
           onClick={handleEdit}
           title="Klikk for å redigere merknad"
         >
@@ -117,6 +144,18 @@ const MerknadField = ({
               </p>
             </div>
             <Edit3 className="h-3 w-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity mt-0.5 flex-shrink-0" />
+          </div>
+        </div>
+      ) : (
+        <div 
+          className="border border-slate-200 bg-slate-50/30 rounded-md px-2 py-1.5 cursor-pointer hover:border-slate-300 hover:bg-slate-50/60 transition-all group"
+          onClick={handleEdit}
+          title="Klikk for å legge til merknad"
+        >
+          <div className="flex items-center gap-2">
+            <MessageSquare className="h-3 w-3 text-slate-400 flex-shrink-0" />
+            <span className="text-xs text-slate-500 group-hover:text-slate-600">Legg til merknad</span>
+            <Edit3 className="h-2.5 w-2.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
           </div>
         </div>
       )}

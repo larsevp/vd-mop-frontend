@@ -1,5 +1,6 @@
 import { Calendar } from "lucide-react";
 import InfoSection from "../InfoSection.jsx";
+import { shouldRenderKravField } from "@/utils/kravFieldVisibility.js";
 
 /**
  * Section displaying metadata (creation, update info) for Krav

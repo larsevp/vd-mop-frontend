@@ -11,7 +11,7 @@ import { status } from "./models/status";
 import { vurdering } from "./models/vurdering";
 import { kravpakker } from "./models/kravpakker";
 import { kravreferansetype } from "./models/kravreferansetype";
-
+import { tiltak } from "./models/tiltak";
 // Object mapping for dynamic lookup
 export const modelConfigs = {
   /* PLOP_MODEL_MAPPINGS */
@@ -26,6 +26,7 @@ export const modelConfigs = {
   vurderinger: vurdering,
   kravpakker: kravpakker,
   kravreferansetyper: kravreferansetype,
+  tiltak: tiltak,
 };
 
 // Helper function for dynamic model config access

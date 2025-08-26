@@ -4,9 +4,76 @@ import { Edit, Trash2, FileText, CheckCircle, AlertCircle, Clock, Paperclip, Git
 import { getFilesByModel } from "@/api/endpoints/models/files";
 import { krav as kravConfig } from "@/modelConfigs/models/krav.js";
 import MerknadField from "./components/MerknadField";
+import EntityDropdown from "./components/EntityDropdown";
+import PrioritetDropdown from "./components/PrioritetDropdown";
 
-const KravCard = ({ krav, onEdit, onDelete, onView, onSave, showMerknader = false, filesCount = 0, childrenCount = 0, parentKrav = null }) => {
-  // Remove individual API calls - data should be passed from parent
+const KravCard = ({ 
+  krav, 
+  onEdit, 
+  onDelete, 
+  onView, 
+  onMerknadUpdate, 
+  onStatusChange,
+  onVurderingChange,
+  onPrioritetChange,
+  showMerknader = false, 
+  showStatus = false,
+  showVurdering = false,
+  showPrioritet = false,
+  filesCount = 0, 
+  childrenCount = 0, 
+  parentKrav = null 
+}) => {
+  // Loading states for individual dropdowns
+  const [statusLoading, setStatusLoading] = useState(false);
+  const [vurderingLoading, setVurderingLoading] = useState(false);
+  const [prioritetLoading, setPrioritetLoading] = useState(false);
+
+  // Handlers with loading states
+  const handleStatusChange = async (newValue) => {
+    // Check if krav has a valid ID
+    if (!krav?.id || krav.id === "create-new") {
+      console.error("Cannot change status: krav ID is missing or invalid");
+      return;
+    }
+
+    setStatusLoading(true);
+    try {
+      await onStatusChange?.(krav.id, newValue);
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+
+  const handleVurderingChange = async (newValue) => {
+    // Check if krav has a valid ID
+    if (!krav?.id || krav.id === "create-new") {
+      console.error("Cannot change vurdering: krav ID is missing or invalid");
+      return;
+    }
+
+    setVurderingLoading(true);
+    try {
+      await onVurderingChange?.(krav.id, newValue);
+    } finally {
+      setVurderingLoading(false);
+    }
+  };
+
+  const handlePrioritetChange = async (newValue) => {
+    // Check if krav has a valid ID
+    if (!krav?.id || krav.id === "create-new") {
+      console.error("Cannot change prioritet: krav ID is missing or invalid");
+      return;
+    }
+
+    setPrioritetLoading(true);
+    try {
+      await onPrioritetChange?.(krav.id, newValue);
+    } finally {
+      setPrioritetLoading(false);
+    }
+  };
 
   const getPriorityDisplay = (prioritet) => {
     if (!prioritet) return { text: "Lav", color: "bg-gray-100 text-gray-600" };
@@ -47,8 +114,7 @@ const KravCard = ({ krav, onEdit, onDelete, onView, onSave, showMerknader = fals
               {krav.kravUID || `GK${krav.id}`}
             </span>
             <h3
-              className="font-semibold text-gray-900 text-xl leading-tight cursor-pointer hover:text-blue-600 transition-colors flex-1 group-hover:text-blue-700"
-              onClick={() => onView?.(krav)}
+              className="font-semibold text-gray-900 text-xl leading-tight flex-1 group-hover:text-blue-700 transition-colors"
               title={krav.tittel}
             >
               {krav.tittel || "Uten tittel"}
@@ -77,7 +143,7 @@ const KravCard = ({ krav, onEdit, onDelete, onView, onSave, showMerknader = fals
             <div className="pl-1">
               <MerknadField 
                 krav={krav} 
-                onSave={onSave}
+                onMerknadUpdate={onMerknadUpdate}
                 className="mt-3"
               />
             </div>
@@ -86,9 +152,41 @@ const KravCard = ({ krav, onEdit, onDelete, onView, onSave, showMerknader = fals
 
         {/* Right sidebar - Status, badges, and actions */}
         <div className="flex flex-col items-end gap-3 flex-shrink-0 min-w-[140px]">
-          {/* Badges container - organized in rows */}
+          {/* Actionable Controls Row - All dropdowns grouped together */}
           <div className="flex flex-wrap items-center gap-2 justify-end">
-            {/* Status badge */}
+            {/* Status Dropdown */}
+            {showStatus && krav?.id && krav.id !== "create-new" && (
+              <EntityDropdown
+                type="status"
+                value={krav.statusId}
+                onChange={handleStatusChange}
+                loading={statusLoading}
+              />
+            )}
+
+            {/* Vurdering Dropdown */}
+            {showVurdering && krav?.id && krav.id !== "create-new" && (
+              <EntityDropdown
+                type="vurdering"
+                value={krav.vurderingId}
+                onChange={handleVurderingChange}
+                loading={vurderingLoading}
+              />
+            )}
+
+            {/* Priority Dropdown */}
+            {showPrioritet && krav?.id && krav.id !== "create-new" && (
+              <PrioritetDropdown
+                value={krav.prioritet}
+                onChange={handlePrioritetChange}
+                loading={prioritetLoading}
+              />
+            )}
+          </div>
+
+          {/* Status and Info badges row */}
+          <div className="flex flex-wrap items-center gap-2 justify-end">
+            {/* Obligatorisk/Valgfritt status badge */}
             {krav.obligatorisk ? (
               <span className="text-xs text-red-700 font-semibold flex items-center gap-1.5 px-3 py-1.5 bg-red-50 rounded-lg border border-red-100">
                 <AlertCircle size={14} />
@@ -101,16 +199,6 @@ const KravCard = ({ krav, onEdit, onDelete, onView, onSave, showMerknader = fals
               </span>
             )}
 
-            {/* Priority badge */}
-            {krav.prioritet && (
-              <span className={`text-xs font-semibold px-2.5 py-1.5 rounded-lg border ${getPriorityDisplay(krav.prioritet).color}`}>
-                {getPriorityDisplay(krav.prioritet).text}
-              </span>
-            )}
-          </div>
-
-          {/* Secondary badges row */}
-          <div className="flex flex-wrap items-center gap-2 justify-end">
             {krav.parentId && (
               <span
                 className="text-xs bg-indigo-50 text-indigo-700 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 font-medium border border-indigo-100"

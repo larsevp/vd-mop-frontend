@@ -15,7 +15,7 @@ interface PrioritetSelectProps {
 }
 
 // Priority mapping: label -> number
-const PRIORITY_OPTIONS = [
+export const PRIORITY_OPTIONS = [
   { value: 15, label: "Lav" },
   { value: 25, label: "Middels" }, // Default value from schema
   { value: 35, label: "Høy" },

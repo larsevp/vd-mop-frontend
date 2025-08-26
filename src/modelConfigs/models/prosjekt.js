@@ -25,7 +25,27 @@ export const prosjekt = {
       placeholder: "Skriv inn prosjektnummer",
     },
     { name: "navn", label: "Navn", required: true, type: "text", hiddenIndex: false, hiddenEdit: false, hiddenCreate: false },
-    { name: "beskrivelse", label: "Beskrivelse", type: "text", hiddenIndex: false, hiddenEdit: false, hiddenCreate: false },
+    //{ name: "beskrivelse", label: "Beskrivelse", type: "text", hiddenIndex: false, hiddenEdit: false, hiddenCreate: false },
+    {
+      name: "beskrivelse",
+      label: "Beskrivelse",
+      type: "richtext",
+      required: false,
+      placeholder: "Legg til informasjon om prosjektet",
+      field_info: "Rik tekst med støtte for formatering, lenker, tabeller og bilder. Lim inn bilder direkte fra utklippstavlen.",
+      suppressIndex: true, // Don't include this rich text field in index/list views
+      hiddenIndex: true,
+    },
+    {
+      name: "beskrivelseSnippet",
+      label: "Beskrivelse",
+      type: "text",
+      required: false,
+      suppressIndex: false, // Don't include this rich text field in index/list views
+      hiddenCreate: true,
+      hiddenEdit: true,
+      truncate: 20,
+    },
     {
       name: "enhetId",
       label: "Enhet",

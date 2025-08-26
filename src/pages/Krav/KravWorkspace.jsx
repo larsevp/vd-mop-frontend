@@ -1,7 +1,8 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/primitives/button";
 import { Plus, FileText, CheckCircle, Clock, ChevronDown, ChevronRight } from "lucide-react";
 import * as LucideIcons from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Model config
 import { krav as kravConfig } from "@/modelConfigs/models/krav.js";
@@ -17,6 +18,7 @@ import KravFilters from "./components/KravFilters";
 import KravCardController from "./components/KravCardController";
 import ViewOptionsMenu from "./components/ViewOptionsMenu";
 import { Toast } from "@/components/ui/editor/components/Toast.jsx";
+import { updateKravStatus, updateKravVurdering, updateKrav } from "@/api/endpoints";
 
 /**
  * Refactored KravWorkspace with proper separation of concerns
@@ -26,6 +28,8 @@ import { Toast } from "@/components/ui/editor/components/Toast.jsx";
  * - Cleaner code organization
  */
 const KravWorkspace = () => {
+  const queryClient = useQueryClient();
+
   // Helper function to render Lucide icons dynamically
   const renderLucideIcon = useCallback((iconName, size = 20) => {
     if (!iconName) return null;
@@ -50,8 +54,14 @@ const KravWorkspace = () => {
   const [sortOrder, setSortOrder] = useState("desc");
   const [filterBy, setFilterBy] = useState("all");
   const [viewMode, setViewMode] = useState("grid");
-  const [groupByEmne, setGroupByEmne] = useState(true); // New: toggle for grouping by Emne
-  const [showMerknader, setShowMerknader] = useState(false); // New: toggle for showing merknader
+  const [groupByEmne, setGroupByEmne] = useState(() => {
+    const saved = localStorage.getItem("krav-groupByEmne");
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  const [showMerknader, setShowMerknader] = useState(() => {
+    const saved = localStorage.getItem("krav-showMerknader");
+    return saved !== null ? JSON.parse(saved) : false;
+  });
   const [collapsedGroups, setCollapsedGroups] = useState(new Set()); // Track collapsed groups
   const [toast, setToast] = useState({ show: false, message: "", type: "info" });
 
@@ -61,6 +71,15 @@ const KravWorkspace = () => {
 
   // User store
   const { user } = useUserStore();
+
+  // Save preferences to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem("krav-groupByEmne", JSON.stringify(groupByEmne));
+  }, [groupByEmne]);
+
+  useEffect(() => {
+    localStorage.setItem("krav-showMerknader", JSON.stringify(showMerknader));
+  }, [showMerknader]);
 
   // Data and actions hooks
   const { items, stats, isLoading, error, isFetching, totalPages } = useKravData({
@@ -79,6 +98,108 @@ const KravWorkspace = () => {
   }, []);
 
   const { confirmDelete, handleSave } = useKravActions(showToast, showToast);
+
+  // Handler for merknad-only updates
+  const handleMerknadUpdate = useCallback((kravId, newMerknader) => {
+    // Update the local cache/state to reflect the merknad change
+    // This ensures the UI shows the updated value immediately
+
+    // If we have an active krav that matches, update it
+    setActiveKrav((prev) => {
+      if (prev && prev.id === kravId) {
+        return { ...prev, merknader: newMerknader };
+      }
+      return prev;
+    });
+
+    // Note: The items list from useKravData will be updated on next refresh
+    // For immediate UI updates, we rely on the krav object mutation in MerknadField
+  }, []);
+
+  // Handler for status updates
+  const handleStatusChange = useCallback(
+    async (kravId, newStatusId) => {
+      try {
+        // Use dedicated status update endpoint
+        await updateKravStatus(kravId, newStatusId);
+
+        // Update local state - find and update the krav in items array
+        setActiveKrav((prev) => {
+          if (prev && prev.id === kravId) {
+            return { ...prev, statusId: newStatusId };
+          }
+          return prev;
+        });
+
+        // Invalidate queries to trigger refetch and update UI
+        queryClient.invalidateQueries(["krav"]);
+        queryClient.invalidateQueries(["krav", kravId]);
+
+        showToast("Status oppdatert", "success");
+      } catch (error) {
+        console.error("Error updating status:", error);
+        showToast("Kunne ikke oppdatere status", "error");
+      }
+    },
+    [showToast, queryClient]
+  );
+
+  // Handler for vurdering updates
+  const handleVurderingChange = useCallback(
+    async (kravId, newVurderingId) => {
+      try {
+        // Use dedicated vurdering update endpoint
+        await updateKravVurdering(kravId, newVurderingId);
+
+        // Update local state
+        setActiveKrav((prev) => {
+          if (prev && prev.id === kravId) {
+            return { ...prev, vurderingId: newVurderingId };
+          }
+          return prev;
+        });
+
+        // Invalidate queries to trigger refetch and update UI
+        queryClient.invalidateQueries(["krav"]);
+        queryClient.invalidateQueries(["krav", kravId]);
+
+        showToast("Vurdering oppdatert", "success");
+      } catch (error) {
+        console.error("Error updating vurdering:", error);
+        showToast("Kunne ikke oppdatere vurdering", "error");
+      }
+    },
+    [showToast, queryClient]
+  );
+
+  // Handler for prioritet updates
+  // Handler for prioritet updates
+  const handlePrioritetChange = useCallback(
+    async (kravId, newPrioritet) => {
+      try {
+        // Use general update endpoint for prioritet
+        await updateKrav({ id: kravId, prioritet: newPrioritet });
+
+        // Update local state
+        setActiveKrav((prev) => {
+          if (prev && prev.id === kravId) {
+            return { ...prev, prioritet: newPrioritet };
+          }
+          return prev;
+        });
+
+        // Invalidate queries to trigger refetch and update UI
+        queryClient.invalidateQueries(["krav"]);
+        queryClient.invalidateQueries(["krav", kravId]);
+
+        showToast("Prioritet oppdatert", "success");
+      } catch (error) {
+        console.error("Error updating prioritet:", error);
+        showToast("Kunne ikke oppdatere prioritet", "error");
+      }
+    },
+    [showToast, queryClient]
+  );
 
   // Group krav by Emne for structured display
   const groupedKrav = useMemo(() => {
@@ -110,20 +231,28 @@ const KravWorkspace = () => {
   }, []);
 
   // Card expansion handlers
-  const handleExpandCard = useCallback((krav, mode = "view") => {
-    setExpandedCards((prev) => {
-      const newMap = new Map(prev);
-      if (newMap.has(krav.id) && newMap.get(krav.id) === mode) {
-        // If already expanded in same mode, collapse it
-        newMap.delete(krav.id);
-      } else {
-        // Expand in specified mode
-        newMap.set(krav.id, mode);
-      }
-      return newMap;
-    });
-    setActiveKrav(krav);
-  }, []);
+  const handleExpandCard = useCallback(
+    (krav, mode = "view") => {
+      setExpandedCards((prev) => {
+        const newMap = new Map(prev);
+        if (newMap.has(krav.id) && newMap.get(krav.id) === mode) {
+          // If already expanded in same mode, collapse it
+          newMap.delete(krav.id);
+          // If we're collapsing and this was the active krav, clear it
+          setActiveKrav((current) => (current?.id === krav.id ? null : current));
+        } else {
+          // Expand in specified mode
+          newMap.set(krav.id, mode);
+          // Only set as active if it's not just a view expansion or if no active krav exists
+          if (mode === "edit" || mode === "create" || !activeKrav) {
+            setActiveKrav(krav);
+          }
+        }
+        return newMap;
+      });
+    },
+    [activeKrav]
+  );
 
   const handleCollapseCard = useCallback((kravId) => {
     setExpandedCards((prev) => {
@@ -131,6 +260,8 @@ const KravWorkspace = () => {
       newMap.delete(kravId);
       return newMap;
     });
+    // If we're collapsing the active krav, clear it
+    setActiveKrav((current) => (current?.id === kravId ? null : current));
   }, []);
 
   const handleCreateNewKrav = useCallback(() => {
@@ -313,8 +444,15 @@ const KravWorkspace = () => {
               onEdit={() => {}}
               onDelete={() => {}}
               onSave={handleSaveKrav}
+              onMerknadUpdate={handleMerknadUpdate}
+              onStatusChange={handleStatusChange}
+              onVurderingChange={handleVurderingChange}
+              onPrioritetChange={handlePrioritetChange}
               onNavigateToKrav={handleViewById}
               showMerknader={showMerknader}
+              showStatus={true}
+              showVurdering={true}
+              showPrioritet={true}
               filesCount={0}
               childrenCount={0}
               parentKrav={null}
@@ -401,8 +539,15 @@ const KravWorkspace = () => {
                             onEdit={(krav) => handleExpandCard(krav, "edit")}
                             onDelete={confirmDelete}
                             onSave={handleSaveKrav}
+                            onMerknadUpdate={handleMerknadUpdate}
+                            onStatusChange={handleStatusChange}
+                            onVurderingChange={handleVurderingChange}
+                            onPrioritetChange={handlePrioritetChange}
                             onNavigateToKrav={handleViewById}
                             showMerknader={showMerknader}
+                            showStatus={true}
+                            showVurdering={true}
+                            showPrioritet={true}
                             filesCount={krav.filesCount}
                             childrenCount={krav.childrenCount}
                             parentKrav={krav.parentKrav}
@@ -428,8 +573,15 @@ const KravWorkspace = () => {
                   onEdit={(krav) => handleExpandCard(krav, "edit")}
                   onDelete={confirmDelete}
                   onSave={handleSaveKrav}
+                  onMerknadUpdate={handleMerknadUpdate}
+                  onStatusChange={handleStatusChange}
+                  onVurderingChange={handleVurderingChange}
+                  onPrioritetChange={handlePrioritetChange}
                   onNavigateToKrav={handleViewById}
                   showMerknader={showMerknader}
+                  showStatus={true}
+                  showVurdering={true}
+                  showPrioritet={true}
                   filesCount={krav.filesCount}
                   childrenCount={krav.childrenCount}
                   parentKrav={krav.parentKrav}

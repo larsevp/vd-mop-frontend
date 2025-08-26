@@ -78,19 +78,24 @@ export const ENTITY_DISPLAY_TYPES = {
 
   // Parent relationships (generic fallback for hierarchical structures)
   parentId: (row, field, context) => {
-    if (row.parent && row.parent.navn) {
-      const displayValue = row.parent.navn;
-      if (context.format === "REACT" && row.parent.icon) {
-        return <IconWithText iconName={row.parent.icon} text={displayValue} iconColor={row.parent.color} />;
+    if (row.parent) {
+      // Try different common name fields
+      const displayValue = row.parent.tittel || row.parent.navn || row.parent.name || row.parent.tiltakUID || row.parent.kravUID;
+      if (displayValue) {
+        if (context.format === "REACT" && row.parent.icon) {
+          return <IconWithText iconName={row.parent.icon} text={displayValue} iconColor={row.parent.color} />;
+        }
+        return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
       }
-      return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-    } else if (row[field.name]) {
+    }
+
+    if (row[field.name]) {
       const displayValue = `Parent ID: ${row[field.name]}`;
       return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
-    } else {
-      const displayValue = "Ingen parent";
-      return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
     }
+
+    const displayValue = "Ingen parent";
+    return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
   },
 
   // User relationships (generic fallback)

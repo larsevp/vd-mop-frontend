@@ -9,3 +9,4 @@ export { StatusSelect, StatusCheckboxGroup } from "./StatusSelect";
 export { VurderingSelect, VurderingCheckboxGroup } from "./VurderingSelect";
 export { EmneSelect } from "./EmneSelect";
 export { KravSelect } from "./KravSelect";
+export { TiltakSelect } from "./TiltakSelect";
