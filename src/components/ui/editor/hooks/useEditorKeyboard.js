@@ -19,17 +19,25 @@ export const createKeyboardHandler = (editor, disabled = false) => {
       return true;
     }
 
-    // Handle Tab key for proper indentation
+    // Handle Tab key for proper indentation and table navigation
     if (event.key === "Tab" && !disabled) {
       if (editor) {
+        const isInTable = editor.isActive("table");
         const isInList = editor.isActive("listItem");
         const hasContent = !editor.isEmpty;
-        const shouldHandleTab = isInList || (hasContent && editor.isFocused);
+        const shouldHandleTab = isInTable || isInList || (hasContent && editor.isFocused);
 
         if (shouldHandleTab) {
           event.preventDefault();
 
-          if (event.shiftKey) {
+          if (isInTable) {
+            // In table: Tab moves to next cell, Shift+Tab moves to previous cell
+            if (event.shiftKey) {
+              editor.chain().focus().goToPreviousCell().run();
+            } else {
+              editor.chain().focus().goToNextCell().run();
+            }
+          } else if (event.shiftKey) {
             // Shift+Tab: outdent or lift list item
             if (isInList) {
               editor.chain().focus().liftListItem("listItem").run();

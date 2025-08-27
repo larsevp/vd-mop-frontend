@@ -15,6 +15,7 @@ export class FieldResolver {
   static getFieldComponent(field, modelName) {
     const modelConfig = MODEL_SPECIFIC_FIELDS[modelName];
 
+
     // 1. Check for model-specific field name override
     if (modelConfig?.fieldNames?.[field.name]) {
       return modelConfig.fieldNames[field.name];
@@ -96,7 +97,12 @@ export class FieldResolver {
         return field.default;
       }
       if (editing && row && row[field.name] !== undefined) {
-        return row[field.name];
+        // Convert string booleans to actual booleans
+        const value = row[field.name];
+        if (typeof value === 'string') {
+          return value === 'true' || value === '1';
+        }
+        return Boolean(value);
       }
       return null;
     }

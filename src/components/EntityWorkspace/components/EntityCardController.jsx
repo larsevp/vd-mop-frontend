@@ -1,21 +1,20 @@
 import React, { useEffect, useCallback } from "react";
-import KravCard from "../KravCard.jsx";
-import KravDetailDisplay from "./KravDetailDisplay";
-import { krav as kravConfig } from "@/modelConfigs/models/krav.js";
+import EntityCard from "./EntityCard";
 
 /**
- * Controller component that decides whether to display a compact KravCard
- * or an expanded KravDetailDisplay based on the expansion state.
- *
- * This keeps both KravCard and KravDetailDisplay focused on their specific
- * responsibilities while providing a clean interface for the parent component.
- *
+ * Generic controller component that decides whether to display a compact EntityCard
+ * or an expanded detail view based on the expansion state.
+ * 
+ * Based on KravCardController but made generic for any entity type.
+ * 
  * Keyboard shortcuts:
  * - E: Enter edit mode (when in view mode)
  * - ESC: Exit edit mode (go to view) or collapse card (when in view mode)
  */
-const KravCardController = ({
-  krav,
+const EntityCardController = ({
+  entity,
+  modelConfig,
+  entityType,
   isExpanded = false,
   expandedMode = "view", // 'view', 'edit', or 'create'
   onExpand,
@@ -27,14 +26,15 @@ const KravCardController = ({
   onStatusChange,
   onVurderingChange,
   onPrioritetChange,
-  onNavigateToKrav,
+  onNavigateToEntity,
   showMerknader = false,
   showStatus = false,
   showVurdering = false,
   showPrioritet = false,
   filesCount = 0,
   childrenCount = 0,
-  parentKrav = null,
+  parentEntity = null,
+  renderIcon,
 }) => {
   // Keyboard shortcuts handler
   const handleKeyDown = useCallback(
@@ -46,7 +46,9 @@ const KravCardController = ({
       const activeElement = document.activeElement;
       const isTyping =
         activeElement &&
-        (activeElement.tagName === "INPUT" || activeElement.tagName === "TEXTAREA" || activeElement.contentEditable === "true");
+        (activeElement.tagName === "INPUT" || 
+         activeElement.tagName === "TEXTAREA" || 
+         activeElement.contentEditable === "true");
 
       if (isTyping) return;
 
@@ -55,7 +57,7 @@ const KravCardController = ({
           // Enter edit mode (only if currently in view mode)
           if (expandedMode === "view") {
             event.preventDefault();
-            onExpand(krav, "edit");
+            onExpand(entity, "edit");
           }
           break;
         case "escape":
@@ -64,20 +66,20 @@ const KravCardController = ({
             event.preventDefault();
             if (expandedMode === "create") {
               // For create mode, collapse completely
-              onCollapse(krav?.id);
+              onCollapse(entity?.id);
             } else {
               // For edit mode, go back to view
-              onExpand(krav, "view");
+              onExpand(entity, "view");
             }
           } else if (expandedMode === "view") {
             // In view mode, collapse the card
             event.preventDefault();
-            onCollapse(krav?.id);
+            onCollapse(entity?.id);
           }
           break;
       }
     },
-    [isExpanded, expandedMode, onExpand, onCollapse, krav]
+    [isExpanded, expandedMode, onExpand, onCollapse, entity]
   );
 
   // Add keyboard event listeners when expanded
@@ -93,11 +95,13 @@ const KravCardController = ({
   // If not expanded, show the compact card
   if (!isExpanded) {
     return (
-      <KravCard
-        krav={krav}
-        onEdit={(krav) => onExpand(krav, "edit")}
+      <EntityCard
+        entity={entity}
+        modelConfig={modelConfig}
+        entityType={entityType}
+        onEdit={(entity) => onExpand(entity, "edit")}
         onDelete={onDelete}
-        onView={(krav) => onExpand(krav, "view")}
+        onView={(entity) => onExpand(entity, "view")}
         onMerknadUpdate={onMerknadUpdate}
         onStatusChange={onStatusChange}
         onVurderingChange={onVurderingChange}
@@ -108,41 +112,49 @@ const KravCardController = ({
         showPrioritet={showPrioritet}
         filesCount={filesCount}
         childrenCount={childrenCount}
-        parentKrav={parentKrav}
+        parentEntity={parentEntity}
+        renderIcon={renderIcon}
       />
     );
   }
 
-  // If expanded, show the detailed view
+  // If expanded, show the detailed view (placeholder for now)
+  // TODO: Implement generic EntityDetailDisplay component
   return (
     <div className="bg-white rounded-xl border border-blue-200 shadow-lg overflow-hidden">
       {/* Header with collapse button */}
       <div className="flex items-center justify-between p-4 bg-blue-50 border-b border-blue-200">
         <div
           className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity flex-1"
-          onClick={() => onCollapse(krav?.id)}
+          onClick={() => onCollapse(entity?.id)}
           title="Klikk for å lukke"
         >
           {expandedMode !== "create" && (
             <span className="text-sm font-mono text-blue-600 bg-blue-100 px-3 py-1.5 rounded-lg font-medium border border-blue-200">
-              {krav?.kravUID || `GK${krav?.id}`}
+              {entity?.kravUID || entity?.tiltakUID || `${entityType.toUpperCase()}${entity?.id}`}
             </span>
           )}
           <h3 className="font-semibold text-gray-900 text-lg">
-            {expandedMode === "create" ? "Opprett nytt krav" : krav?.tittel || "Uten tittel"}
+            {expandedMode === "create" 
+              ? `Opprett ny ${entityType}` 
+              : entity?.tittel || entity?.navn || "Uten tittel"}
           </h3>
           {(expandedMode === "edit" || expandedMode === "create") && (
-            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded ml-2">ESC for å avbryte</span>
+            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded ml-2">
+              ESC for å avbryte
+            </span>
           )}
           {expandedMode === "view" && (
-            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded ml-2">E for å redigere • ESC for å lukke</span>
+            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded ml-2">
+              E for å redigere • ESC for å lukke
+            </span>
           )}
         </div>
 
         <div className="flex items-center gap-2">
           {expandedMode === "view" && (
             <button
-              onClick={() => onExpand(krav, "edit")}
+              onClick={() => onExpand(entity, "edit")}
               className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               title="Rediger (Trykk 'E')"
             >
@@ -150,7 +162,7 @@ const KravCardController = ({
             </button>
           )}
           <button
-            onClick={() => onCollapse(krav?.id)}
+            onClick={() => onCollapse(entity?.id)}
             className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
             title="Lukk (Trykk 'ESC')"
           >
@@ -161,33 +173,20 @@ const KravCardController = ({
         </div>
       </div>
 
-      {/* Expanded content */}
-      <div className=" overflow-y-auto">
-        <KravDetailDisplay
-          krav={krav}
-          mode={expandedMode}
-          onEdit={(krav) => onExpand(krav, "edit")}
-          onSave={(savedKrav) => {
-            onSave(savedKrav);
-            // After save, switch to view mode
-            onExpand(savedKrav, "view");
-          }}
-          onCancel={() => {
-            if (expandedMode === "create") {
-              // If creating, collapse completely
-              onCollapse(krav?.id);
-            } else {
-              // If editing, go back to view mode
-              onExpand(krav, "view");
-            }
-          }}
-          onNavigateToKrav={onNavigateToKrav}
-          modelConfig={kravConfig}
-          isInlineExpanded={true} // Flag to indicate this is inline, not modal
-        />
+      {/* Expanded content - Placeholder for now */}
+      <div className="p-6">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <h4 className="font-semibold text-yellow-800 mb-2">🚧 Expanded Entity View - Under Construction</h4>
+          <p className="text-yellow-700 text-sm">
+            Expanded {entityType} view for "{entity?.tittel || entity?.navn || 'Unnamed'}" (Mode: {expandedMode})
+          </p>
+          <p className="text-yellow-600 text-xs mt-2">
+            This will show the full entity details with inline editing capabilities.
+          </p>
+        </div>
       </div>
     </div>
   );
 };
 
-export default KravCardController;
+export default EntityCardController;

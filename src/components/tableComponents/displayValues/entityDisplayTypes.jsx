@@ -133,11 +133,17 @@ export const ENTITY_DISPLAY_TYPES = {
 
   // Kravreferansetype relationships (generic fallback)
   kravreferansetypeId: (row, field, context) => {
-    if (row.kravreferansetype && (row.kravreferansetype.navn || row.kravreferansetype.tittel)) {
-      const displayValue = row.kravreferansetype.navn || row.kravreferansetype.tittel;
-      if (context.format === "REACT" && row.kravreferansetype.icon) {
-        return <IconWithText iconName={row.kravreferansetype.icon} text={displayValue} iconColor={row.kravreferansetype.color} />;
+    // Check both camelCase (from backend JSON) and lowercase field names
+    const kravreferansetype = row.kravreferanseType || row.kravreferansetype;
+
+    if (kravreferansetype && (kravreferansetype.navn || kravreferansetype.tittel)) {
+      const displayValue = kravreferansetype.navn || kravreferansetype.tittel;
+      
+      // Only use IconWithText if we actually have an icon
+      if (context.format === "REACT" && kravreferansetype.icon) {
+        return <IconWithText iconName={kravreferansetype.icon} text={displayValue} iconColor={kravreferansetype.color} />;
       }
+      // Return plain text/span for cases without icon
       return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
     } else if (row[field.name]) {
       const displayValue = `Kravreferansetype ID: ${row[field.name]}`;

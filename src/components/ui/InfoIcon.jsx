@@ -4,14 +4,23 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 
 export function InfoIcon({ info }) {
   if (!info) return null;
+  
 
   return (
     <Dialog>
       <DialogTrigger asChild>
         <button
           type="button"
-          className="text-blue-400 hover:text-blue-600 transition-colors duration-200 p-0.5 rounded-full hover:bg-blue-50 ml-1.5"
+          className="text-blue-400 hover:text-blue-600 transition-colors duration-200 p-0.5 rounded-full hover:bg-blue-50 ml-1.5 relative z-10"
           aria-label="Vis feltinformasjon"
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent parent click handlers
+            e.nativeEvent?.stopImmediatePropagation?.(); // Stop native event propagation if available
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation(); // Prevent mousedown propagation too
+            e.nativeEvent?.stopImmediatePropagation?.();
+          }}
         >
           <Info size={14} />
         </button>

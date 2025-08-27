@@ -23,12 +23,194 @@ export const tiltak = {
   title: "Tiltak",
   desc: "Beskrivelse av tiltak...",
   newButtonLabel: "Nytt tiltak",
+
+  // EntityWorkspace configuration - Controls how the tiltak data is displayed and managed in the workspace
+  workspace: {
+    enabled: true, // Enable the EntityWorkspace component for this model
+    layout: "split", // Layout type: "split" = sidebar + main content, "full" = full-width view
+    groupBy: "emne", // Group tiltak records by their "emne" (subject/topic) relationship
+
+    // Layout configuration - Controls the visual layout and proportions
+    layoutConfig: {
+      listWidth: "40%", // Width of the list pane in split view (default: 35%)
+      enableKeyboardNav: true, // Enable keyboard navigation (default: true)
+    },
+
+    // Feature toggles - Controls which workspace features are available
+    features: {
+      grouping: true, // Enable grouping functionality (group records by specified field)
+      search: true, // Enable search functionality across tiltak records
+      filters: true, // Enable filter controls (status, priority, etc.)
+    },
+
+    // UI display preferences - Controls which UI elements are shown
+    ui: {
+      showHierarchy: false,
+      showMerknader: false,
+      showStatus: false,
+      showVurdering: false,
+      showPrioritet: false,
+      showObligatorisk: true,
+      showRelations: true,
+    },
+    // Fields to display in card view - These fields appear prominently on each tiltak card
+    cardFields: ["tiltakUID", "tittel", "beskrivelse", "obligatorisk"],
+
+    // EntityDetailPane-specific form configuration - Controls the detail view when clicking on a tiltak
+    detailForm: {
+      // Workspace-level field hiding - Controls which fields are hidden in different contexts
+      // These arrays contain field names that should be hidden in specific contexts
+      workspaceHiddenIndex: [
+        "givenOrder",
+        "updatedBy",
+        "createdBy",
+        "tiltakUID",
+        "beskrivelseSnippet",
+        "implementasjonSnippet",
+        "tilbakemeldingSnippet",
+        "vurderingId",
+        "statusId",
+        "prioritet",
+      ], // Fields to hide in view mode (when not editing)
+      workspaceHiddenEdit: [
+        "tiltakUID",
+        "updatedBy",
+        "createdBy",
+        "givenOrder",
+        "beskrivelseSnippet",
+        "implementasjonSnippet",
+        "tilbakemeldingSnippet",
+        "vurderingId",
+        "statusId",
+        "prioritet",
+      ], // Fields to hide when editing existing records
+      workspaceHiddenCreate: [
+        "tiltakUID",
+        "updatedBy",
+        "createdBy",
+        "givenOrder",
+        "beskrivelseSnippet",
+        "implementasjonSnippet",
+        "tilbakemeldingSnippet",
+        "vurderingId",
+        "statusId",
+        "prioritet",
+      ], // Fields to hide when creating new records
+
+      // Section organization - Organizes form fields into collapsible sections
+      sections: {
+        info: {
+          title: "Grunnleggende informasjon", // Tittel vises ikke på info!!
+          defaultExpanded: true, // This section starts expanded
+        },
+        status: {
+          title: "Status og vurdering", // "Status and Assessment" section
+          defaultExpanded: true, // This section starts expanded
+        },
+        implementation: {
+          title: "Implementasjon og tilbakemelding", // "Implementation and Feedback" section
+          defaultExpanded: false, // This section starts collapsed
+        },
+        references: {
+          title: "Referanser", // "References" section
+          defaultExpanded: false, // This section starts collapsed
+        },
+        admin: {
+          title: "Administrative detaljer", // "Administrative Details" section
+          defaultExpanded: false, // This section starts collapsed
+        },
+        metadata: {
+          title: "Metadata", // "Metadata" section (created/updated info)
+          defaultExpanded: false, // This section starts collapsed
+        },
+        annet: {
+          title: "", // No title for this section
+          defaultExpanded: true, // This section starts expanded
+          noTitle: true,
+        },
+      },
+
+      // Field customization for detail view - Override default field behavior in detail form
+      fieldOverrides: {
+        // Basic info - organized into logical sections
+        beskrivelse: {
+          section: "info", // Primary content description
+          order: 2,
+        },
+        emneId: {
+          section: "info", // Reference value
+          order: 3,
+        },
+        merknad: {
+          section: "info", // Administrative notes
+          order: 4,
+        },
+
+        // Status-related fields (commented out in original - keeping same pattern)
+        /*
+        statusId: {
+          section: "status", // Current progress status
+          order: 6,
+          row: "status-row", // Same row as vurdering
+        },
+        vurderingId: {
+          section: "status", // Status and assessment tracking
+          order: 7,
+          row: "status-row", // Group with other status-related fields
+        },
+        prioritet: {
+          section: "status", // Priority level for task management
+          order: 8,
+          row: "status-row", // Same row as vurdering and status
+        },
+        */
+
+        // Implementation details - separate section for execution information
+        implementasjon: {
+          section: "annet", // How the task is carried out
+          order: 5,
+        },
+        tilbakemelding: {
+          section: "annet", // Feedback and results
+          order: 6,
+        },
+
+        // Reference and relationship information
+        parentId: {
+          section: "references", // Parent relationship
+          order: 8,
+          row: "reference-row", // Group with reference fields
+        },
+        krav: {
+          section: "references", // Related requirements
+          order: 8,
+          row: "reference-row-2", // Separate row for multiselect
+        },
+
+        // Administrative information - context and requirements
+        obligatorisk: {
+          section: "admin", // Task requirements
+          order: 11,
+          row: "admin-row", // Group with administrative flags
+        },
+        enhetId: {
+          section: "admin", // Organizational assignment
+          order: 11,
+          row: "admin-row", // Same row as obligatorisk
+        },
+        givenOrder: {
+          section: "admin", // Ordering information
+          order: 12,
+        },
+      },
+    },
+  },
   fields: [
     {
       name: "tiltakUID",
       label: "Tiltak UID",
       type: "text",
-      required: true,
+      required: false,
       disabled: true,
       field_info: "Unik identifikator for tiltaket (genereres automatisk som GT + ID)",
       show_in_list: true,
@@ -45,7 +227,7 @@ export const tiltak = {
       name: "beskrivelse",
       label: "Beskrivelse",
       type: "basicrichtext",
-      required: false,
+      required: true,
       placeholder: "Beskriv tiltaket i detalj...",
       field_info: "Detaljert beskrivelse av tiltaket med grunnleggende formatering (fet, kursiv, understreking, overskrifter).",
       hiddenIndex: true,

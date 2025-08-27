@@ -1,9 +1,9 @@
 // Main component
-export { default as KravWorkspace } from "./KravWorkspace";
+export { default as KravWorkspace } from "./old/KravWorkspace";
 
 // Core components
-export { default as KravMasterView } from "./KravMasterView"; // New unified component
-export { default as KravCard } from "./KravCard";
+export { default as KravMasterView } from "./old/KravMasterView"; // New unified component
+export { default as KravCard } from "./old/KravCard";
 
 // Sub-components
 export { default as KravSearchBar } from "./components/KravSearchBar";

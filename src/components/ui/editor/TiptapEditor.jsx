@@ -17,6 +17,7 @@ export const TiptapEditor = ({
   basic = false, // If true, only shows B, I, U and H1/H2 buttons - no images, tables, links
 }) => {
   const [toast, setToast] = useState({ show: false, message: "", type: "info" });
+  const [isFocused, setIsFocused] = useState(false);
 
   const showToast = useCallback((message, type = "info") => {
     setToast({ show: true, message, type });
@@ -57,6 +58,45 @@ export const TiptapEditor = ({
       editor.commands.setContent(value || "");
     }
   }, [editor, value]);
+
+  // Handle focus/blur events with delay to prevent toolbar hiding when clicking toolbar buttons
+  React.useEffect(() => {
+    if (editor) {
+      let blurTimeout;
+      
+      const handleFocus = () => {
+        if (blurTimeout) {
+          clearTimeout(blurTimeout);
+          blurTimeout = null;
+        }
+        setIsFocused(true);
+      };
+      
+      const handleBlur = (event) => {
+        // Delay hiding the toolbar to allow toolbar button clicks to be processed
+        blurTimeout = setTimeout(() => {
+          // Check if focus moved to a toolbar element
+          const activeElement = document.activeElement;
+          const toolbarElement = activeElement?.closest('.tiptap-toolbar');
+          
+          if (!toolbarElement) {
+            setIsFocused(false);
+          }
+        }, 150); // Small delay to allow toolbar interactions
+      };
+
+      editor.on('focus', handleFocus);
+      editor.on('blur', handleBlur);
+
+      return () => {
+        if (blurTimeout) {
+          clearTimeout(blurTimeout);
+        }
+        editor.off('focus', handleFocus);
+        editor.off('blur', handleBlur);
+      };
+    }
+  }, [editor]);
 
   return (
     <div
@@ -105,7 +145,11 @@ export const TiptapEditor = ({
         }}
       />
 
-      <TiptapToolbar editor={editor} onAddLink={handleAddLink} uploadUrl={uploadUrl} onShowToast={showToast} basic={basic} />
+      {isFocused && (
+        <div className="tiptap-toolbar">
+          <TiptapToolbar editor={editor} onAddLink={handleAddLink} uploadUrl={uploadUrl} onShowToast={showToast} basic={basic} />
+        </div>
+      )}
       <div className="min-h-[120px] max-h-[600px] overflow-y-auto">
         <EditorContent editor={editor} />
         {editor && editor.isActive("table") && <TableInlineControls editor={editor} />}

@@ -1,6 +1,19 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Users, Building2, Activity, Star, Package, FileText, Briefcase, Link2, Scale, CheckSquare, FolderOpen } from "lucide-react";
+import {
+  Users,
+  Building2,
+  Building,
+  Activity,
+  Star,
+  Package,
+  FileText,
+  Briefcase,
+  Link2,
+  Scale,
+  CheckSquare,
+  FolderOpen,
+} from "lucide-react";
 import { useUserStore } from "@/stores/userStore";
 import { getModelConfig } from "@/modelConfigs";
 
@@ -19,6 +32,12 @@ export default function AdminLanding() {
       config: getModelConfig("enheter"),
       link: "/enheter",
       icon: Building2,
+      color: "from-green-500 to-green-600",
+    },
+    {
+      config: getModelConfig("prosjekter"),
+      link: "/prosjekter",
+      icon: Building,
       color: "from-green-500 to-green-600",
     },
     {
@@ -71,6 +90,15 @@ export default function AdminLanding() {
       link: "/krav-workspace",
       icon: Briefcase,
       color: "from-blue-500 to-indigo-600",
+    },
+    {
+      config: {
+        title: "Tiltak Workspace",
+        desc: "Modern tiltakshåndtering med kortvisning, avanserte søkefilter og sømløs filhåndtering",
+      },
+      link: "/tiltak-workspace",
+      icon: Briefcase,
+      color: "from-green-500 to-green-600",
     },
     {
       config: getModelConfig("files"),

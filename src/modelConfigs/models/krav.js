@@ -22,14 +22,213 @@ export const krav = {
   modelPrintName: "krav",
   title: "Krav",
   desc: "beskrivelse ...",
-  modelPrintName: "krav",
-  newButtonLabel: "Ny krav",
+  newButtonLabel: "Nytt krav",
+
+  // EntityWorkspace configuration
+  workspace: {
+    enabled: true,
+    layout: "split", // Use new clean split view layout
+    groupBy: "emne",
+
+    // Layout configuration - Controls the visual layout and proportions
+    layoutConfig: {
+      listWidth: "35%", // Width of the list pane in split view (default: 35%)
+      enableKeyboardNav: true, // Enable keyboard navigation (default: true)
+    },
+
+    features: {
+      grouping: true,
+      hierarchy: true,
+      inlineEdit: true,
+      search: true,
+      filters: true,
+      bulkActions: false,
+    },
+    /// Clear the specific viewOptions for krav
+    //localStorage.removeItem('krav-viewOptions');
+
+    // Then refresh the page
+    ui: {
+      showHierarchy: false,
+      showMerknader: false,
+      showStatus: false,
+      showVurdering: false,
+      showPrioritet: false,
+      showObligatorisk: true,
+      showRelations: true,
+    },
+    cardFields: ["kravUID", "tittel", "beskrivelse", "obligatorisk"],
+    relationships: ["files", "tiltak", "lover", "kravpakker"],
+
+    // Detail form configuration - Controls how fields are organized and displayed in the detail pane
+    detailForm: {
+      // Workspace-level field hiding - Controls which fields are hidden in different contexts
+      // These arrays contain field names that should be hidden in specific contexts
+      workspaceHiddenIndex: [
+        "versjon",
+        "updatedBy",
+        "createdBy",
+        "kravStatus",
+        "givenOrder",
+        "kravUID",
+        "beskrivelseSnippet",
+        "informasjonSnippet",
+        "vurderingId",
+        "statusId",
+        "prioritet",
+      ], // Fields to hide in view mode (when not editing)
+      workspaceHiddenEdit: [
+        "kravUID",
+        "updatedBy",
+        "createdBy",
+        "versjon",
+        "kravStatus",
+        "givenOrder",
+        "beskrivelseSnippet",
+        "informasjonSnippet",
+        "vurderingId",
+        "statusId",
+        "prioritet",
+      ], // Fields to hide when editing existing records
+      workspaceHiddenCreate: [
+        "kravUID",
+        "updatedBy",
+        "createdBy",
+        "versjon",
+        "kravStatus",
+        "givenOrder",
+        "beskrivelseSnippet",
+        "informasjonSnippet",
+        "vurderingId",
+        "statusId",
+        "prioritet",
+      ], // Fields to hide when creating new records
+
+      // Section organization - Organizes form fields into collapsible sections
+      sections: {
+        info: {
+          title: "Grunnleggende informasjon", // Tittel vises ikke på info!!
+          defaultExpanded: true, // This section starts expanded
+        },
+        status: {
+          title: "Status og vurdering", // "Status and Assessment" section
+          defaultExpanded: true, // This section starts expanded
+        },
+        details: {
+          title: "Detaljert informasjon", // "Detailed Information" section
+          defaultExpanded: false, // This section starts collapsed
+        },
+        references: {
+          title: "Referanser", // "References and Versioning" section
+          defaultExpanded: false, // This section starts collapsed
+        },
+        admin: {
+          title: "Administrative detaljer", // "Administrative Details" section
+          defaultExpanded: false, // This section starts collapsed
+        },
+        metadata: {
+          title: "Metadata", // "Metadata" section (created/updated info)
+          defaultExpanded: false, // This section starts collapsed
+        },
+        annet: {
+          title: "", // "Metadata" section (created/updated info)
+          defaultExpanded: true, // This section starts collapsed
+          noTitle: true,
+        },
+      },
+
+      // Field customization for detail view - Override default field behavior in detail form
+      fieldOverrides: {
+        // Basic info - organized into logical sections
+        beskrivelse: {
+          section: "info", // Primary content description
+          order: 2,
+        },
+        merknader: {
+          section: "info", // Administrative notes
+          order: 3,
+        },
+        kravreferanse: {
+          section: "info", // Reference value
+          order: 3,
+          row: "main-row",
+        },
+        emneId: {
+          section: "info", // Reference value
+          order: 4,
+          row: "main-row",
+        },
+        /*
+        statusId: {
+          section: "status", // Current progress status
+          order: 6,
+          row: "status-row", // Same row as vurdering
+        },
+
+        // Status-related fields on same row for compact layout
+        vurderingId: {
+          section: "status", // Status and assessment tracking
+          order: 7,
+          row: "status-row", // Group with other status-related fields
+        },
+
+        prioritet: {
+          section: "status", // Priority level for requirement management
+          order: 8,
+          row: "status-row", // Same row as vurdering and status
+        },
+        */
+
+        // Reference and versioning information
+        kravreferansetypeId: {
+          section: "references", // Reference type
+          order: 8,
+          row: "reference-row", // Group with reference fields
+        },
+        lover: {
+          section: "references", // Reference value
+          order: 8,
+          row: "reference-row", // Same row as reference type
+        },
+        kravpakker: {
+          section: "references", // Reference value
+          order: 8,
+          row: "reference-row", // Same row as reference type
+        },
+        // Administrative information - context and requirements
+        parentId: {
+          section: "references", // Task requirements
+          order: 11,
+          row: "reference-row-2", // Group with administrative flags
+        },
+        // Administrative information - context and requirements
+        obligatorisk: {
+          section: "admin", // Task requirements
+          order: 11,
+          row: "admin-row", // Group with administrative flags
+        },
+        // Administrative information - context and requirements
+        enhetId: {
+          section: "admin", // Task requirements
+          order: 11,
+          row: "admin-row", // Group with administrative flags
+        },
+
+        // Detailed information - separate section for additional content
+        informasjon: {
+          section: "annet", // Additional detailed information
+          order: 5,
+        },
+      },
+    },
+  },
+  newButtonLabel: "Nytt krav",
   fields: [
     {
       name: "kravUID",
       label: "Krav UID",
       type: "text",
-      required: true,
+      required: false,
       disabled: true,
       field_info: "Unik identifikator for kravet (genereres automatisk som GK + ID)",
       show_in_list: true,
@@ -85,7 +284,7 @@ export const krav = {
 
     {
       name: "kravreferansetypeId",
-      label: "KravreferansetypeID",
+      label: "Type krav",
       type: "kravreferansetypeselect",
       required: false,
       hideViewKrav: false, // Show in KravDetailDisplay view mode
@@ -126,7 +325,7 @@ export const krav = {
     },
     {
       name: "parentId",
-      label: "ParentId",
+      label: "Underkrav av:",
       type: "kravselect",
       required: false,
       field_info:
@@ -136,7 +335,7 @@ export const krav = {
       name: "versjon",
       label: "Versjon",
       type: "text",
-      required: true,
+      required: false,
       hideViewKrav: true, // Hide in KravDetailDisplay view mode (less important)
       hideEditKrav: false, // Show in KravDetailDisplay edit mode
       hideCreateKrav: false, // Show in KravDetailDisplay create mode
@@ -170,14 +369,14 @@ export const krav = {
     },
     {
       name: "emneId",
-      label: "EmneId",
+      label: "Overordnet emne",
       type: "number",
       required: true,
       type: "emneselect",
     },
     {
       name: "enhetId",
-      label: "EnhetId",
+      label: "Organisasjonstilhørlighet",
       type: "number",
       required: false,
       type: "enhetselect",

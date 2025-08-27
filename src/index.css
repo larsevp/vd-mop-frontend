@@ -88,4 +88,11 @@
   .ProseMirror img.ProseMirror-selectednode {
     @apply ring-2 ring-primary ring-offset-2 ring-offset-background;
   }
+  
+  /* Let tables use natural width based on content */
+  .ProseMirror table {
+    table-layout: auto;
+    width: auto;
+    min-width: 200px;
+  }
 }

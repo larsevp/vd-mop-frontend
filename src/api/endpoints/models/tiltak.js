@@ -100,3 +100,16 @@ export const addProsjektKravToTiltak = (tiltakId, prosjektKravIds) => {
 export const removeProsjektKravFromTiltak = (tiltakId, prosjektKravIds) => {
   return API.delete(`/tiltak/${tiltakId}/prosjekt-krav`, { data: { prosjektKravIds } });
 };
+
+// Specific field update endpoints for better UX
+export const updateTiltakStatus = (id, statusId) => {
+  return API.patch(`/tiltak/${id}/status`, { statusId });
+};
+
+export const updateTiltakVurdering = (id, vurderingId) => {
+  return API.patch(`/tiltak/${id}/vurdering`, { vurderingId });
+};
+
+export const updateTiltakMerknad = (id, merknad) => {
+  return API.patch(`/tiltak/${id}/merknad`, { merknad });
+};

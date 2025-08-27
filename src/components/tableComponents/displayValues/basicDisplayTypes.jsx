@@ -113,8 +113,9 @@ export const BASIC_DISPLAY_TYPES = {
     }
 
     if (context.format === "REACT") {
-      // Use ExpandableRichText for React display in lists
-      return <ExpandableRichText content={value} maxLength={100} />;
+      // Use ExpandableRichText for React display, but don't collapse in detail views
+      const maxLength = context.source === "DETAIL" ? Infinity : 100;
+      return <ExpandableRichText content={value} maxLength={maxLength} />;
     }
 
     // For string format, strip HTML tags and return plain text
@@ -129,9 +130,27 @@ export const BASIC_DISPLAY_TYPES = {
 
   // File upload field display
   fileupload: (row, field, context) => {
+    const files = row[field.name] || [];
+    const hasFiles = Array.isArray(files) && files.length > 0;
+    
     if (context.format === "REACT") {
-      return <span className="text-sm text-gray-500">Se filer i redigeringsvisning</span>;
+      if (hasFiles) {
+        return (
+          <div className="text-sm">
+            <div className="text-gray-700 font-medium mb-1">{files.length} fil{files.length !== 1 ? 'er' : ''} lastet opp:</div>
+            <div className="space-y-1">
+              {files.map((file, index) => (
+                <div key={index} className="text-blue-600 hover:text-blue-800 cursor-pointer">
+                  {file.originalName || file.filename || `Fil ${index + 1}`}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
+      return <span className="text-sm text-gray-500">Ingen filer lastet opp. Trykk på rediger for å laste opp filer.</span>;
     }
-    return "Filer";
+    
+    return hasFiles ? `${files.length} fil${files.length !== 1 ? 'er' : ''}` : "Ingen filer";
   },
 };

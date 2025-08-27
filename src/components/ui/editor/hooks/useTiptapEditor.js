@@ -92,7 +92,7 @@ export const useTiptapEditor = ({
             Table.configure({
               resizable: true,
               HTMLAttributes: {
-                class: "border-collapse border border-border w-full my-4",
+                class: "border-collapse border border-border my-4",
               },
             }),
             TableRow,

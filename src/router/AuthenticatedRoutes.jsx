@@ -21,7 +21,8 @@ import Lov from "@/pages/models/Lov";
 import Krav from "@/pages/models/Krav";
 import Tiltak from "@/pages/models/Tiltak";
 import Files from "@/pages/models/Files";
-import { KravWorkspace } from "@/pages/Krav";
+import NewKravWorkspace from "@/pages/KravTiltak/Krav/NewKravWorkspace";
+import NewTiltakWorkspace from "@/pages/KravTiltak/Tiltak/NewTiltakWorkspace";
 
 export default function AuthenticatedRoutes() {
   return (
@@ -80,7 +81,10 @@ export default function AuthenticatedRoutes() {
         <Route path="/tiltak" element={<Tiltak />} />
         <Route path="/tiltak/ny" element={<RowNew />} />
         <Route path="/tiltak/:id/rediger" element={<RowEdit />} />
-        <Route path="/krav-workspace" element={<KravWorkspace />} />
+        <Route path="/krav-workspace" element={<NewKravWorkspace />} />
+        <Route path="/krav-workspace/:entityId" element={<NewKravWorkspace />} />
+        <Route path="/tiltak-workspace" element={<NewTiltakWorkspace />} />
+        <Route path="/tiltak-workspace/:entityId" element={<NewTiltakWorkspace />} />
         {/* Admin routes */}
         {adminRoutes}
         {/* Redirect any other route (including /login) to home when authenticated */}
