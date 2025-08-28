@@ -1,6 +1,6 @@
 // Main exports for KravTiltak module
-export { default as KravWorkspace } from "./Krav/old/KravWorkspace.jsx";
-export { default as TiltakWorkspace } from "./Tiltak/TiltakWorkspace.jsx";
+//export { default as KravWorkspace } from "./Old/Krav_old/old/KravWorkspace.jsx";
+//export { default as TiltakWorkspace } from "./Old/Tiltak_old/Old/TiltakWorkspace.jsx";
 
 // Shared components
 export { default as UnifiedField } from "./shared/UnifiedField.jsx";

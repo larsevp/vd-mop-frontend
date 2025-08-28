@@ -84,6 +84,18 @@ export default function AdminLanding() {
       color: "from-red-500 to-red-600",
     },
     {
+      config: getModelConfig("prosjektKrav"),
+      link: "/prosjekt-krav",
+      icon: CheckSquare,
+      color: "from-orange-500 to-orange-600",
+    },
+    {
+      config: getModelConfig("prosjektTiltak"),
+      link: "/prosjekt-tiltak",
+      icon: CheckSquare,
+      color: "from-teal-500 to-teal-600",
+    },
+    {
       config: {
         title: "Krav Workspace",
         desc: "Modern kravhåndtering med kortvisning, avanserte søkefilter og sømløs filhåndtering",
@@ -109,6 +121,33 @@ export default function AdminLanding() {
       link: "/combined-workspace",
       icon: Layers,
       color: "from-violet-500 to-purple-600",
+    },
+    {
+      config: {
+        title: "Prosjekt Krav Workspace",
+        desc: "Modern håndtering av prosjektspesifikke krav med kortvisning, avanserte søkefilter og sømløs filhåndtering",
+      },
+      link: "/prosjekt-krav-workspace",
+      icon: Briefcase,
+      color: "from-orange-500 to-orange-600",
+    },
+    {
+      config: {
+        title: "Prosjekt Tiltak Workspace",
+        desc: "Modern håndtering av prosjektspesifikke tiltak med kortvisning, avanserte søkefilter og sømløs filhåndtering",
+      },
+      link: "/prosjekt-tiltak-workspace",
+      icon: Briefcase,
+      color: "from-teal-500 to-teal-600",
+    },
+    {
+      config: {
+        title: "Prosjekt Krav & Tiltak Combined",
+        desc: "Unified view av prosjektspesifikke krav og tiltak med hierarkiske forhold og kryssreferanser",
+      },
+      link: "/prosjekt-combined-workspace",
+      icon: Layers,
+      color: "from-emerald-500 to-emerald-600",
     },
     {
       config: getModelConfig("files"),

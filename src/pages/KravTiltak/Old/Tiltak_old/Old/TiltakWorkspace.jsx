@@ -8,22 +8,22 @@ import { useQueryClient } from "@tanstack/react-query";
 import { tiltak as tiltakConfig } from "@/modelConfigs/models/tiltak.js";
 
 // Custom hooks
-import { useTiltakData } from "./hooks/useTiltakData";
-import { useTiltakActions } from "./hooks/useTiltakActions";
+import { useTiltakData } from "../hooks/useTiltakData";
+import { useTiltakActions } from "../hooks/useTiltakActions";
 import { useUserStore } from "@/stores/userStore";
 
 // Components
 import TiltakSearchBar from "./components/TiltakSearchBar";
 import TiltakFilters from "./components/TiltakFilters";
 import TiltakCardController from "./components/TiltakCardController";
-import ViewOptionsMenu from "../shared/ViewOptionsMenu";
+import ViewOptionsMenu from "../../../shared/ViewOptionsMenu";
 import { Toast } from "@/components/ui/editor/components/Toast.jsx";
 import { updateTiltakStatus, updateTiltakVurdering, updateTiltak } from "@/api/endpoints";
 
 /**
  * TiltakWorkspace with proper separation of concerns
  * - Custom hooks for data and actions
- * - Smaller, focused components  
+ * - Smaller, focused components
  * - Better state management
  * - Cleaner code organization
  * - Reuses shared components where possible
@@ -101,7 +101,7 @@ const TiltakWorkspace = () => {
     groupByEmne,
     isLoading,
     error: error?.message,
-    stats
+    stats,
   });
 
   const showToast = useCallback((message, type) => {

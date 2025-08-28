@@ -20,10 +20,15 @@ import Kravreferansetype from "@/pages/models/KravreferanseType";
 import Lov from "@/pages/models/Lov";
 import Krav from "@/pages/models/Krav";
 import Tiltak from "@/pages/models/Tiltak";
+import ProsjektKrav from "@/pages/models/ProsjektKrav";
+import ProsjektTiltak from "@/pages/models/ProsjektTiltak";
 import Files from "@/pages/models/Files";
-import NewKravWorkspace from "@/pages/KravTiltak/Krav/NewKravWorkspace";
-import NewTiltakWorkspace from "@/pages/KravTiltak/Tiltak/NewTiltakWorkspace";
-import CombinedEntities from "@/pages/CombinedEntities";
+import NewKravWorkspace from "@/pages/KravTiltak/NewKravWorkspace";
+import NewTiltakWorkspace from "@/pages/KravTiltak/NewTiltakWorkspace";
+import ProsjektKravWorkspace from "@/pages/KravTiltak/ProsjektKravWorkspace";
+import ProsjektTiltakWorkspace from "@/pages/KravTiltak/ProsjektTiltakWorkspace";
+import ProsjektCombinedWorkspace from "@/pages/KravTiltak/ProsjektCombinedWorkspace";
+import CombinedEntities from "@/pages/KravTiltak/CombinedEntities";
 
 export default function AuthenticatedRoutes() {
   return (
@@ -83,12 +88,24 @@ export default function AuthenticatedRoutes() {
         <Route path="/tiltak" element={<Tiltak />} />
         <Route path="/tiltak/ny" element={<RowNew />} />
         <Route path="/tiltak/:id/rediger" element={<RowEdit />} />
+        <Route path="/prosjekt-krav" element={<ProsjektKrav />} />
+        <Route path="/prosjekt-krav/ny" element={<RowNew />} />
+        <Route path="/prosjekt-krav/:id/rediger" element={<RowEdit />} />
+        <Route path="/prosjekt-tiltak" element={<ProsjektTiltak />} />
+        <Route path="/prosjekt-tiltak/ny" element={<RowNew />} />
+        <Route path="/prosjekt-tiltak/:id/rediger" element={<RowEdit />} />
         <Route path="/krav-workspace" element={<NewKravWorkspace />} />
         <Route path="/krav-workspace/:entityId" element={<NewKravWorkspace />} />
         <Route path="/tiltak-workspace" element={<NewTiltakWorkspace />} />
         <Route path="/tiltak-workspace/:entityId" element={<NewTiltakWorkspace />} />
         <Route path="/combined-workspace" element={<CombinedEntities />} />
         <Route path="/combined-workspace/:entityId" element={<CombinedEntities />} />
+        <Route path="/prosjekt-krav-workspace" element={<ProsjektKravWorkspace />} />
+        <Route path="/prosjekt-krav-workspace/:entityId" element={<ProsjektKravWorkspace />} />
+        <Route path="/prosjekt-tiltak-workspace" element={<ProsjektTiltakWorkspace />} />
+        <Route path="/prosjekt-tiltak-workspace/:entityId" element={<ProsjektTiltakWorkspace />} />
+        <Route path="/prosjekt-combined-workspace" element={<ProsjektCombinedWorkspace />} />
+        <Route path="/prosjekt-combined-workspace/:entityId" element={<ProsjektCombinedWorkspace />} />
         {/* Admin routes */}
         {adminRoutes}
         {/* Redirect any other route (including /login) to home when authenticated */}

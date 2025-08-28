@@ -92,11 +92,25 @@ export const useEntityWorkspaceActions = (modelConfig, entityType, showSuccessTo
   };
 
   const handleUpdate = (id, data) => {
-    updateMutation.mutate({ id, data });
+    // Combine id and data into a single object for the API call
+    const updateData = { ...data, id };
+    updateMutation.mutate(updateData);
   };
 
   const handleDelete = (id) => {
     deleteMutation.mutate(id);
+  };
+
+  // Combined save handler for EntityDetailPane - handles both create and update
+  const handleSave = (data, isUpdate = false) => {
+    if (isUpdate) {
+      // For updates, extract ID from data and call update
+      const { id, ...updateData } = data;
+      handleUpdate(id, updateData);
+    } else {
+      // For creates, pass data directly to create
+      handleCreate(data);
+    }
   };
 
   return {
@@ -109,6 +123,7 @@ export const useEntityWorkspaceActions = (modelConfig, entityType, showSuccessTo
     handleCreate,
     handleUpdate,
     handleDelete,
+    handleSave,
 
     // Loading states
     isCreating: createMutation.isPending,
