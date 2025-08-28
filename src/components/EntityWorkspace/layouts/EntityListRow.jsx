@@ -37,7 +37,16 @@ const EntityListRow = ({
 
   const title = entity[titleField] || "Uten tittel";
   const uid = uidField ? entity[uidField] : `${entityType.toUpperCase()}${entity.id}`;
-  const description = descField ? entity[`${descField}Snippet`] || entity[descField] : "";
+
+  // Improved description resolution - try snippet first, then full field
+  let description = "";
+  if (descField) {
+    description = entity[`${descField}Snippet`] || entity[descField] || "";
+  }
+  // Fallback to common snippet field names if descField isn't found
+  if (!description) {
+    description = entity.beskrivelseSnippet || entity.beskrivelse || entity.descriptionSnippet || entity.description || "";
+  }
 
   // Status display helpers
   const getStatusDisplay = () => {
@@ -108,9 +117,24 @@ const EntityListRow = ({
   const handleClick = (e) => {
     e.preventDefault(); // Prevent default anchor behavior
     e.stopPropagation(); // Stop event bubbling
-    // console.log('EntityListRow DEBUG - clicked entity:', entity);
+    // EntityListRow DEBUG - clicked entity: entity
     onClick();
   };
+
+  // Check if this entity should be indented - logic depends on the view context
+  const isCombinedView = entityType === "combinedEntities" || entityType === "combined";
+
+  let shouldIndent = false;
+
+  if (isCombinedView) {
+    // Combined view: only indent tiltak that are displayed under a krav
+    shouldIndent = entity._displayedUnderKrav === true;
+  } else {
+    // Regular views: use traditional indentation rules
+    const hasKravConnections = entity.entityType === "tiltak" && entity.krav && entity.krav.length > 0;
+    const hasParent = entity.parentId;
+    shouldIndent = hasKravConnections || hasParent;
+  }
 
   return (
     <div
@@ -118,14 +142,9 @@ const EntityListRow = ({
       onMouseEnter={onFocus}
       onMouseLeave={() => onFocus && onFocus(-1)} // Clear focus when mouse leaves (use -1 to indicate no focus)
       className={`
-        relative px-4 py-3 cursor-pointer transition-all duration-150
-        ${
-          isSelected
-            ? "bg-blue-50 text-blue-900"
-            : isFocused
-            ? "bg-gray-50"
-            : "hover:bg-gray-50"
-        }
+        relative cursor-pointer transition-all duration-150
+        ${shouldIndent ? "pl-8 pr-4 py-3 ml-4 border-l-2 border-green-200" : "px-4 py-3"}
+        ${isSelected ? "bg-blue-50 text-blue-900" : isFocused ? "bg-gray-50" : "hover:bg-gray-50"}
       `}
     >
       {/* Parent reference for child elements */}
@@ -137,8 +156,23 @@ const EntityListRow = ({
         </div>
       )}
 
-      {/* Line 1: Code + Title + Status indicators */}
+      {/* Line 1: Type indicator + Code + Title + Status indicators */}
       <div className="flex items-center gap-2 mb-1">
+        {/* Entity type indicator for combined views */}
+        {entity.entityType && (
+          <span
+            className={`text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${
+              entity.entityType === "krav"
+                ? "bg-blue-100 text-blue-700"
+                : entity.entityType === "tiltak"
+                ? "bg-green-100 text-green-700"
+                : "bg-gray-100 text-gray-700"
+            }`}
+          >
+            {entity.entityType === "krav" ? "KRAV" : entity.entityType === "tiltak" ? "TILTAK" : entity.entityType.toUpperCase()}
+          </span>
+        )}
+
         {uidField && <span className="text-xs font-mono text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded flex-shrink-0">[{uid}]</span>}
         <span className="font-medium text-gray-900 truncate flex-1">{title}</span>
 
@@ -173,11 +207,11 @@ const EntityListRow = ({
               {entity.childrenCount || entity.children?.length} under{entityType}
             </span>
           )}
-          {viewOptions.showRelations && entity.krav?.length > 0 && entityType === "tiltak" && (
-            <span>Tilknyttet {entity.krav.length} krav</span>
+          {viewOptions.showRelations && entity.krav?.length > 0 && (entity.entityType === "tiltak" || entityType === "tiltak") && (
+            <span className="text-blue-600 font-medium">→ {entity.krav.length} krav</span>
           )}
-          {viewOptions.showRelations && entity.tiltak?.length > 0 && entityType === "krav" && (
-            <span>Tiltknyttet {entity.tiltak.length} tiltak</span>
+          {viewOptions.showRelations && entity.tiltak?.length > 0 && (entity.entityType === "krav" || entityType === "krav") && (
+            <span className="text-green-600 font-medium">→ {entity.tiltak.length} tiltak</span>
           )}
         </div>
         <div className="flex items-center gap-1">{entity.createdBy && <span></span>}</div>

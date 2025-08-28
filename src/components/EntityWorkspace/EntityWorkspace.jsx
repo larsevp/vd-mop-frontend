@@ -10,6 +10,7 @@ import { useEntityWorkspaceActions } from "./hooks/useEntityWorkspaceActions";
 import { useUserStore } from "@/stores/userStore";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
+import { modelConfigs } from "@/modelConfigs";
 // Generic components
 import { SearchBar, HeaderSearchBar, EntityFilters, ViewOptionsMenu } from "./shared";
 import EntityCardList from "./components/EntityCardList";
@@ -58,6 +59,87 @@ const EntityWorkspace = ({ modelConfig, entityType, workspaceConfig = {} }) => {
     [modelConfig.workspace, workspaceConfig]
   );
 
+  // Action permissions resolver - controls what actions are available across the entire workspace
+  const actionPermissions = useMemo(() => {
+    const permissions = {
+      canEdit: true,
+      canDelete: true,
+      canCreate: true,
+      canBulkActions: false,
+      editButtonText: "Rediger",
+      createButtonText: modelConfig.newButtonLabel || `Nytt ${entityType}`,
+      deleteConfirmText: (entity) => `Er du sikker på at du vil slette "${entity?.tittel || entity?.navn || 'denne oppføringen'}"?`,
+      
+      // Dynamic resolver for individual entities (used in combined views)
+      resolveForEntity: (entity) => {
+        const entityPermissions = { ...permissions };
+        
+        // For combined views, resolve permissions per entity type
+        if (entityType === 'combinedEntities' || entityType === 'combined') {
+          // In combined view, disable creating since it's ambiguous which type to create
+          entityPermissions.canCreate = false;
+          
+          // For specific entity types within combined view, editing is allowed since we know the specific type
+          if (entity?.entityType) {
+            const targetModelName = entity.entityType === 'krav' ? 'krav' : 
+                                   entity.entityType === 'tiltak' ? 'tiltak' : null;
+            
+            if (targetModelName && modelConfigs[targetModelName]) {
+              const targetConfig = modelConfigs[targetModelName];
+              // Allow editing - we know the specific entity type
+              entityPermissions.canEdit = targetConfig.workspace?.features?.inlineEdit !== false;
+              entityPermissions.editButtonText = `Rediger ${targetConfig.title || entity.entityType}`;
+              entityPermissions.deleteConfirmText = (e) => `Er du sikker på at du vil slette "${e?.tittel || e?.navn || 'denne oppføringen'}"?`;
+            }
+          }
+        }
+
+        // Check workspace features
+        if (config.features?.inlineEdit === false) {
+          entityPermissions.canEdit = false;
+        }
+        
+        if (config.features?.bulkActions === false) {
+          entityPermissions.canBulkActions = false;
+        }
+
+        // Check if model is read-only
+        if (modelConfig.readOnly) {
+          entityPermissions.canEdit = false;
+          entityPermissions.canDelete = false;
+          entityPermissions.canCreate = false;
+        }
+
+        return entityPermissions;
+      }
+    };
+
+    // Apply workspace-level restrictions
+    if (config.features?.inlineEdit === false) {
+      permissions.canEdit = false;
+    }
+    
+    if (config.features?.bulkActions === false) {
+      permissions.canBulkActions = false;
+    }
+
+    // For combined views, disable creating at workspace level
+    if (entityType === 'combinedEntities' || entityType === 'combined') {
+      permissions.canCreate = false;
+    }
+
+    // Check if model is read-only
+    if (modelConfig.readOnly) {
+      permissions.canEdit = false;
+      permissions.canDelete = false;
+      permissions.canCreate = false;
+    }
+
+    // Action permissions: entityType, permissions
+
+    return permissions;
+  }, [entityType, config, modelConfig]);
+
   // Helper function to render Lucide icons dynamically
   const renderLucideIcon = useCallback((iconName, size = 20) => {
     if (!iconName) return null;
@@ -88,12 +170,28 @@ const EntityWorkspace = ({ modelConfig, entityType, workspaceConfig = {} }) => {
 
   // Group and display options
   const [groupByEmne, setGroupByEmne] = useState(() => {
-    const saved = localStorage.getItem(`${entityType}-groupByEmne`);
-    return saved !== null ? JSON.parse(saved) : config.features.grouping;
+    try {
+      const saved = localStorage.getItem(`${entityType}-groupByEmne`);
+      if (!saved || saved === "undefined" || saved === "null") {
+        return config.features?.grouping || true;
+      }
+      return JSON.parse(saved);
+    } catch (error) {
+      console.warn("Failed to parse groupByEmne from localStorage:", error);
+      return config.features?.grouping || true;
+    }
   });
   const [showMerknader, setShowMerknader] = useState(() => {
-    const saved = localStorage.getItem(`${entityType}-showMerknader`);
-    return saved !== null ? JSON.parse(saved) : config.ui.showMerknader;
+    try {
+      const saved = localStorage.getItem(`${entityType}-showMerknader`);
+      if (!saved || saved === "undefined" || saved === "null") {
+        return config.ui?.showMerknader || false;
+      }
+      return JSON.parse(saved);
+    } catch (error) {
+      console.warn("Failed to parse showMerknader from localStorage:", error);
+      return config.ui?.showMerknader || false;
+    }
   });
   const [collapsedGroups, setCollapsedGroups] = useState(new Set());
   const [toast, setToast] = useState({ show: false, message: "", type: "info" });
@@ -188,7 +286,7 @@ const EntityWorkspace = ({ modelConfig, entityType, workspaceConfig = {} }) => {
             vurderingValue = item.vurdering;
           } else if (typeof item.vurdering === "object" && item.vurdering !== null) {
             // Debug: log the structure of vurdering objects
-            //console.log("Vurdering object structure:", item.vurdering, "Keys:", Object.keys(item.vurdering));
+            // Vurdering object structure: item.vurdering, Keys: Object.keys(item.vurdering)
             // Try common property names for vurdering objects
             vurderingValue =
               item.vurdering.navn ||
@@ -342,10 +440,12 @@ const EntityWorkspace = ({ modelConfig, entityType, workspaceConfig = {} }) => {
                 />
               )}
 
-              <Button onClick={handleCreateNew} size="default" className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                {modelConfig.newButtonLabel || `Nytt ${entityType}`}
-              </Button>
+              {actionPermissions.canCreate && (
+                <Button onClick={handleCreateNew} size="default" className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  {actionPermissions.createButtonText}
+                </Button>
+              )}
             </div>
           </div>
         ) : (
@@ -372,10 +472,12 @@ const EntityWorkspace = ({ modelConfig, entityType, workspaceConfig = {} }) => {
                   )}
                 </div>
               </div>
-              <Button onClick={handleCreateNew} className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                {modelConfig.newButtonLabel || `Nytt ${entityType}`}
-              </Button>
+              {actionPermissions.canCreate && (
+                <Button onClick={handleCreateNew} className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  {actionPermissions.createButtonText}
+                </Button>
+              )}
             </div>
           </div>
         )}
@@ -434,6 +536,7 @@ const EntityWorkspace = ({ modelConfig, entityType, workspaceConfig = {} }) => {
               modelConfig={modelConfig}
               entityType={entityType}
               config={config}
+              actionPermissions={actionPermissions}
               searchQuery={searchQuery}
               filterBy={filterBy}
               sortBy={sortBy}
@@ -462,6 +565,7 @@ const EntityWorkspace = ({ modelConfig, entityType, workspaceConfig = {} }) => {
               modelConfig={modelConfig}
               entityType={entityType}
               config={config}
+              actionPermissions={actionPermissions}
               groupByEmne={groupByEmne}
               collapsedGroups={collapsedGroups}
               expandedCards={expandedCards}

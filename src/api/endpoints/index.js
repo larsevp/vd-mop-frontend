@@ -14,6 +14,7 @@ export * from "./models/files";
 export * from "./models/krav";
 export * from "./models/lov";
 export * from "./models/tiltak";
+export * from "./models/combinedEntities";
 
 // Re-export common utilities
 export * from "./common/pagination";

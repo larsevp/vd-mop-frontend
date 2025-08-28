@@ -89,8 +89,25 @@ export default function RowForm({
 
   const updateMutation = useMutation({
     mutationFn: updateFn,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey });
+    onSuccess: (updatedData) => {
+      // Import optimistic update utility
+      import("@/components/EntityWorkspace/utils/optimisticUpdates.js")
+        .then(({ handleOptimisticEntityUpdate }) => {
+          // Handle optimistic updates with the enhanced utility
+          handleOptimisticEntityUpdate({
+            queryClient,
+            queryKey,
+            updatedData,
+            originalData: row,
+            entityType: modelName || "unknown",
+          });
+        })
+        .catch((error) => {
+          console.warn("Could not apply optimistic updates:", error);
+          // Fallback to simple invalidation
+          queryClient.invalidateQueries({ queryKey });
+        });
+
       if (onSuccess) onSuccess();
     },
     onError: (error) => {

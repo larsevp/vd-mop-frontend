@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Edit, X, ChevronDown, ChevronRight, Save, RotateCcw, Trash2, ExternalLink, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import EntityDetailForm from "../shared/EntityDetailForm";
 import { FieldResolver } from "../../tableComponents/fieldTypes/fieldResolver.jsx";
+import { modelConfigs } from "@/modelConfigs";
 
 /**
  * Clean, minimal detail pane for selected entity
@@ -16,6 +18,92 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
   // Check if this is a new entity being created
   const isNewEntity = entity?.id === "create-new";
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  // Dynamically resolve the correct model config for combined entities
+  const resolvedModelConfig = useMemo(() => {
+    if (entity?.entityType && entity.entityType !== entityType) {
+      // This is a combined entity with a different type - resolve the correct config
+      const targetModelName = entity.entityType === "krav" ? "krav" : entity.entityType === "tiltak" ? "tiltak" : null;
+
+      // EntityDetailPane - Resolving config for combined entity: entityType, originalEntityType, targetModelName, hasTargetConfig
+
+      if (targetModelName && modelConfigs[targetModelName]) {
+        return modelConfigs[targetModelName];
+      }
+    }
+    // Fall back to the provided modelConfig
+    return modelConfig;
+  }, [entity, modelConfig, entityType]);
+
+  // Use the entity's actual type for field operations
+  const resolvedEntityType = entity?.entityType || entityType;
+
+  // Also resolve the workspace config
+  const resolvedConfig = useMemo(() => {
+    if (entity?.entityType && entity.entityType !== entityType) {
+      // Use the resolved model config's workspace settings
+      return {
+        ...config,
+        ...resolvedModelConfig.workspace,
+        detailForm: resolvedModelConfig.workspace?.detailForm || config.detailForm || {},
+      };
+    }
+    return config;
+  }, [entity, config, resolvedModelConfig, entityType]);
+
+  // Get display field names early (needed by actionPermissions)
+  const titleField =
+    resolvedModelConfig.workspace?.cardFields?.find((f) => f === "tittel" || f === "title" || f === "navn" || f === "name") || "tittel";
+
+  const uidField = resolvedModelConfig.workspace?.cardFields?.find((f) => f.toLowerCase().includes("uid"));
+
+  // Action permissions resolver - controls what actions are available
+  const actionPermissions = useMemo(() => {
+    const permissions = {
+      canEdit: true,
+      canDelete: true,
+      canCreate: true,
+      editButtonText: "Rediger",
+      createButtonText: `Nytt ${resolvedEntityType}`,
+      deleteConfirmText: `Er du sikker på at du vil slette "${entity?.[titleField] || "denne oppføringen"}"?`,
+    };
+
+    // For combined views, check if editing/creating is disabled
+    if (entityType === "combinedEntities" || entityType === "combined") {
+      // In combined view, we might want to disable creating since it's ambiguous
+      permissions.canCreate = false;
+
+      // For specific entity types within combined view, check their individual capabilities
+      if (entity?.entityType) {
+        const targetModelName = entity.entityType === "krav" ? "krav" : entity.entityType === "tiltak" ? "tiltak" : null;
+
+        if (targetModelName && modelConfigs[targetModelName]) {
+          const targetConfig = modelConfigs[targetModelName];
+          // Check if the target model allows editing
+          permissions.canEdit = targetConfig.workspace?.features?.inlineEdit !== false;
+          permissions.editButtonText = `Rediger ${targetConfig.title || entity.entityType}`;
+          permissions.deleteConfirmText = `Er du sikker på at du vil slette "${entity?.[titleField] || "denne oppføringen"}"?`;
+        }
+      }
+    }
+
+    // Check workspace features
+    if (resolvedConfig.features?.inlineEdit === false) {
+      permissions.canEdit = false;
+    }
+
+    // Check if entity is read-only based on model config
+    if (resolvedModelConfig.readOnly) {
+      permissions.canEdit = false;
+      permissions.canDelete = false;
+      permissions.canCreate = false;
+    }
+
+    // EntityDetailPane - Action permissions: entityType, resolvedEntityType, entityEntityType, permissions
+
+    return permissions;
+  }, [entity, entityType, resolvedEntityType, resolvedConfig, resolvedModelConfig, titleField]);
 
   const [isEditing, setIsEditing] = useState(isNewEntity);
   const [editData, setEditData] = useState({});
@@ -32,7 +120,7 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
 
       // Initialize only with fields that can be edited (not hidden, computed, or relationship fields)
       const initialData = {};
-      modelConfig.fields.forEach((field) => {
+      resolvedModelConfig.fields.forEach((field) => {
         // Exclude fields that shouldn't be sent to backend:
         // - Hidden fields (hiddenEdit, hiddenCreate)
         // - Virtual/computed fields (snippet fields, etc.)
@@ -46,23 +134,18 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
 
         if (!isHidden && !isVirtual && !isRelationship && !isSystemField && field.name !== "id") {
           // Use FieldResolver to get proper initial values including defaults
-          initialData[field.name] = FieldResolver.initializeFieldValue(field, entity, !isNewEntity, entityType);
+          initialData[field.name] = FieldResolver.initializeFieldValue(field, entity, !isNewEntity, resolvedEntityType);
         }
       });
       setEditData(initialData);
       setHasChanges(false);
       setErrors({});
     }
-  }, [entity, modelConfig]);
+  }, [entity, resolvedModelConfig, resolvedEntityType]);
 
   // Get display values
-  const titleField =
-    modelConfig.workspace?.cardFields?.find((f) => f === "tittel" || f === "title" || f === "navn" || f === "name") || "tittel";
-
-  const uidField = modelConfig.workspace?.cardFields?.find((f) => f.toLowerCase().includes("uid"));
-
   const title = entity[titleField] || "Uten tittel";
-  const uid = uidField ? entity[uidField] : `${entityType.toUpperCase()}${entity.id}`;
+  const uid = uidField ? entity[uidField] : `${resolvedEntityType.toUpperCase()}${entity.id}`;
 
   const handleFieldChange = (fieldName, value) => {
     setEditData((prev) => ({ ...prev, [fieldName]: value }));
@@ -76,11 +159,11 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
 
   const validateForm = () => {
     const newErrors = {};
-    const visibleFields = modelConfig.fields.filter((f) => !f.hiddenEdit);
+    const visibleFields = resolvedModelConfig.fields.filter((f) => !f.hiddenEdit);
 
     visibleFields.forEach((field) => {
       const value = editData[field.name];
-      const error = FieldResolver.validateField(field, value, entityType);
+      const error = FieldResolver.validateField(field, value, resolvedEntityType);
 
       if (error) {
         newErrors[field.name] = error;
@@ -99,14 +182,69 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
       // Follow RowForm pattern but adapt for our API
       const isUpdate = entity && entity.id && !isNewEntity;
 
-      if (isUpdate) {
-        // For updates: API needs id for URL path, so include it
-        // But the backend validates only the body, so we pass the id separately
-        const saveData = { ...editData, id: entity.id };
-        await onSave(saveData, isUpdate);
+      // Filter editData to only include fields that should be sent to backend
+      // Apply the same filtering logic used during initialization
+      const filteredData = {};
+      resolvedModelConfig.fields.forEach((field) => {
+        // Exclude fields that shouldn't be sent to backend:
+        // - Hidden fields (hiddenEdit, hiddenCreate)
+        // - Virtual/computed fields (snippet fields, etc.)
+        // - Some relationship fields (files, favorittTiltak, children, parent) but NOT krav (which backend handles)
+        // - System fields (id, timestamps, audit fields)
+        const isHidden = isUpdate ? field.hiddenEdit : field.hiddenCreate;
+        const isVirtual = field.name.includes("Snippet") || field.name.includes("Plain");
+        const isExcludedRelationship = ["files", "favorittTiltak", "favorittAvBrukere", "children", "parent"].includes(field.name);
+        const isSystemField = ["id", "createdAt", "updatedAt", "createdBy", "updatedBy"].includes(field.name);
+
+        if (!isHidden && !isVirtual && !isExcludedRelationship && !isSystemField && editData.hasOwnProperty(field.name)) {
+          filteredData[field.name] = editData[field.name];
+        }
+      });
+
+      // [DEBUG] Filtered data for update/create: filteredData
+
+      // For combined views, use the correct model config's update function directly
+      if (entity?.entityType && entity.entityType !== entityType && resolvedModelConfig.updateFn) {
+        // Use the resolved model config's update function for combined entities
+        if (isUpdate) {
+          const saveData = { ...filteredData, id: entity.id };
+          await resolvedModelConfig.updateFn(saveData);
+
+          // Manually invalidate caches for combined view updates since we bypass useEntityWorkspaceActions
+          const actualEntityType = entity.entityType; // "tiltak" or "krav"
+          queryClient.invalidateQueries({
+            queryKey: [actualEntityType, "workspace"],
+            exact: false,
+          });
+          queryClient.invalidateQueries({
+            queryKey: ["combined", "workspace"],
+            exact: false,
+          });
+        } else {
+          await resolvedModelConfig.createFn(filteredData);
+
+          // Manually invalidate caches for combined view creates
+          const actualEntityType = entity.entityType; // "tiltak" or "krav"
+          queryClient.invalidateQueries({
+            queryKey: [actualEntityType, "workspace"],
+            exact: false,
+          });
+          queryClient.invalidateQueries({
+            queryKey: ["combined", "workspace"],
+            exact: false,
+          });
+        }
       } else {
-        // For creates: just the form data
-        await onSave(editData, isUpdate);
+        // Use the standard onSave handler for regular views
+        if (isUpdate) {
+          // For updates: API needs id for URL path, so include it
+          // But the backend validates only the body, so we pass the id separately
+          const saveData = { ...filteredData, id: entity.id };
+          await onSave(saveData, isUpdate);
+        } else {
+          // For creates: just the form data
+          await onSave(filteredData, isUpdate);
+        }
       }
 
       // Update local entity data with the saved changes for immediate display
@@ -122,7 +260,7 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
   const handleCancel = () => {
     // Reset to original entity values
     const resetData = {};
-    modelConfig.fields.forEach((field) => {
+    resolvedModelConfig.fields.forEach((field) => {
       resetData[field.name] = entity[field.name] || "";
     });
     setEditData(resetData);
@@ -132,7 +270,7 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
   };
 
   const handleDelete = () => {
-    if (window.confirm(`Er du sikker på at du vil slette "${title}"?`)) {
+    if (window.confirm(actionPermissions.deleteConfirmText)) {
       onDelete(entity);
       onClose(); // Close detail pane after delete
     }
@@ -154,7 +292,7 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
       switch (e.key) {
         case "e":
         case "E":
-          if (!isEditing) {
+          if (!isEditing && actionPermissions.canEdit) {
             e.preventDefault();
             setIsEditing(true);
           }
@@ -170,7 +308,7 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isEditing, handleCancel]);
+  }, [isEditing, handleCancel, actionPermissions.canEdit]);
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -258,13 +396,13 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
         <div className="px-6 py-6">
           <EntityDetailForm
             entity={entity}
-            modelConfig={modelConfig}
-            modelName={entityType}
+            modelConfig={resolvedModelConfig}
+            modelName={resolvedEntityType}
             isEditing={isEditing}
             onFieldChange={handleFieldChange}
             formData={editData}
             errors={errors}
-            detailConfig={config.detailForm || {}}
+            detailConfig={resolvedConfig.detailForm || {}}
             excludeFields={[titleField]} // Hide title field since it's in the header
           />
         </div>

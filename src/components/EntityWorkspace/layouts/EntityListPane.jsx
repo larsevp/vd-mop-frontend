@@ -78,17 +78,18 @@ const EntityListPane = ({
   const allItems = useMemo(() => {
     const flattened = [];
     groupedItems.forEach((group) => {
-      const groupItems = group[entityType] || group.tiltak || group.krav || [];
+      const groupItems = group[entityType] || group.entities || group.tiltak || group.krav || [];
       flattened.push(...groupItems);
     });
     return flattened;
   }, [groupedItems, entityType]);
 
-  // Create a mapping from entity ID to flat index for consistent focus
+  // Create a mapping from entity unique ID to flat index for consistent focus
   const entityIndexMap = useMemo(() => {
     const map = new Map();
     allItems.forEach((item, index) => {
-      map.set(item.id, index);
+      const uniqueId = item.entityType ? `${item.entityType}-${item.id}` : item.id;
+      map.set(uniqueId, index);
     });
     return map;
   }, [allItems]);
@@ -191,7 +192,7 @@ const EntityListPane = ({
           groupedItems.map((group, groupIndex) => {
             const groupKey = `${entityType}-group-${group.emne?.id || "no-emne"}-${groupIndex}`;
             const isCollapsed = collapsedGroups.has(groupKey);
-            const groupItems = group[entityType] || group.tiltak || group.krav || [];
+            const groupItems = group[entityType] || group.entities || group.tiltak || group.krav || [];
 
             return (
               <div key={groupKey}>
@@ -226,18 +227,34 @@ const EntityListPane = ({
                 {/* Group items */}
                 {!isCollapsed &&
                   groupItems.map((entity, index) => {
-                    const globalIndex = entityIndexMap.get(entity.id) ?? -1;
-                    const entityKey = entity.id || `${entityType}-${index}-${group.emne?.id || "no-emne"}`;
+                    const entityUniqueId = entity.entityType ? `${entity.entityType}-${entity.id}` : entity.id;
+                    const globalIndex = entityIndexMap.get(entityUniqueId) ?? -1;
+
+                    // Generate unique key for combined views considering relationship context
+                    let entityKey;
+                    if ((entityType === "combined" || entityType === "combinedEntities") && entity._relatedToKrav) {
+                      // For tiltak displayed under krav in combined view, include the relationship
+                      entityKey = `${entity.entityType || entityType}-${entity.id || index}-${group.emne?.id || "no-emne"}-krav-${
+                        entity._relatedToKrav
+                      }`;
+                    } else {
+                      // Standard key generation for regular views or non-related entities
+                      entityKey = `${entity.entityType || entityType}-${entity.id || index}-${group.emne?.id || "no-emne"}`;
+                    }
+
                     return (
                       <EntityListRow
                         key={entityKey}
                         entity={entity}
                         modelConfig={modelConfig}
                         entityType={entityType}
-                        isSelected={entity.id?.toString() === selectedEntityId?.toString()}
+                        isSelected={(() => {
+                          const entityUniqueId = entity.entityType ? `${entity.entityType}-${entity.id}` : entity.id?.toString();
+                          return entityUniqueId === selectedEntityId?.toString();
+                        })()}
                         isFocused={globalIndex === focusedIndex}
                         onClick={() => onEntitySelect(entity)}
-                        onFocus={(index) => setFocusedIndex(typeof index === 'number' ? index : globalIndex)}
+                        onFocus={(index) => setFocusedIndex(typeof index === "number" ? index : globalIndex)}
                         renderIcon={renderIcon}
                         viewOptions={viewOptions}
                       />

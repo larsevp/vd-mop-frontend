@@ -23,6 +23,7 @@ import Tiltak from "@/pages/models/Tiltak";
 import Files from "@/pages/models/Files";
 import NewKravWorkspace from "@/pages/KravTiltak/Krav/NewKravWorkspace";
 import NewTiltakWorkspace from "@/pages/KravTiltak/Tiltak/NewTiltakWorkspace";
+import CombinedEntities from "@/pages/CombinedEntities";
 
 export default function AuthenticatedRoutes() {
   return (
@@ -54,6 +55,7 @@ export default function AuthenticatedRoutes() {
         <Route path="/prosjekter" element={<Prosjektadministrasjon />} />
         <Route path="/prosjekter/ny" element={<RowNew />} />
         <Route path="/prosjekter/:id/rediger" element={<RowEdit />} />
+        <Route path="/prosjekt/:prosjektId" element={<ProjectLanding />} />
         <Route path="/enheter" element={<Enhetsadministrasjon />} />
         <Route path="/enheter/ny" element={<RowNew />} />
         <Route path="/enheter/:id/rediger" element={<RowEdit />} />
@@ -85,6 +87,8 @@ export default function AuthenticatedRoutes() {
         <Route path="/krav-workspace/:entityId" element={<NewKravWorkspace />} />
         <Route path="/tiltak-workspace" element={<NewTiltakWorkspace />} />
         <Route path="/tiltak-workspace/:entityId" element={<NewTiltakWorkspace />} />
+        <Route path="/combined-workspace" element={<CombinedEntities />} />
+        <Route path="/combined-workspace/:entityId" element={<CombinedEntities />} />
         {/* Admin routes */}
         {adminRoutes}
         {/* Redirect any other route (including /login) to home when authenticated */}

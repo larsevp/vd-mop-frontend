@@ -36,7 +36,7 @@ const RecentProjectList = ({ items = [] }: RecentProjectListProps) => {
             <React.Fragment key={item.id}>
               {index > 0 && <Separator className="my-2" />}
               <a
-                href={"string" + item.id}
+                href={`/prosjekt/${item.id}`}
                 className="grid items-center gap-2 px-4 py-5 md:grid-cols-[3fr_1fr] hover:bg-neutral-50 rounded-lg transition cursor-pointer"
               >
                 {/* Name Column */}

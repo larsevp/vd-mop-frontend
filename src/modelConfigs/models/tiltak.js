@@ -137,9 +137,15 @@ export const tiltak = {
           section: "info", // Primary content description
           order: 2,
         },
+        krav: {
+          section: "info", // Related requirements
+          order: 3,
+          row: "emne-row", // Separate row for multiselect
+        },
         emneId: {
           section: "info", // Reference value
-          order: 3,
+          order: 4,
+          row: "emne-row",
         },
         merknad: {
           section: "info", // Administrative notes
@@ -180,11 +186,6 @@ export const tiltak = {
           section: "references", // Parent relationship
           order: 8,
           row: "reference-row", // Group with reference fields
-        },
-        krav: {
-          section: "references", // Related requirements
-          order: 8,
-          row: "reference-row-2", // Separate row for multiselect
         },
 
         // Administrative information - context and requirements
@@ -366,7 +367,7 @@ export const tiltak = {
     },
     {
       name: "krav",
-      label: "Krav",
+      label: "Tilknyttet krav",
       type: "multiselect",
       entityType: "krav",
       required: false,

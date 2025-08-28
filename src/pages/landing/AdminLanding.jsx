@@ -13,6 +13,7 @@ import {
   Scale,
   CheckSquare,
   FolderOpen,
+  Layers,
 } from "lucide-react";
 import { useUserStore } from "@/stores/userStore";
 import { getModelConfig } from "@/modelConfigs";
@@ -99,6 +100,15 @@ export default function AdminLanding() {
       link: "/tiltak-workspace",
       icon: Briefcase,
       color: "from-green-500 to-green-600",
+    },
+    {
+      config: {
+        title: "Krav & Tiltak Combined",
+        desc: "Unified view av krav og tiltak med hierarkiske forhold og kryssreferanser",
+      },
+      link: "/combined-workspace",
+      icon: Layers,
+      color: "from-violet-500 to-purple-600",
     },
     {
       config: getModelConfig("files"),

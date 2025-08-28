@@ -1,0 +1,110 @@
+// API endpoints for combined Krav/Tiltak entities
+import { API } from "@/api";
+
+/**
+ * Get paginated combined view - matches EntityWorkspace expected format
+ * EntityWorkspace expects a function that accepts (page, pageSize, search, sortBy, sortOrder)
+ * Uses the dedicated grouped route like Krav service
+ */
+export const getPaginatedCombinedEntities = (page = 1, pageSize = 50, search = "", sortBy = "", sortOrder = "asc") => {
+  // Build query parameters
+  const queryParams = new URLSearchParams({
+    page: page.toString(),
+    pageSize: pageSize.toString(),
+    search,
+    sortBy,
+    sortOrder,
+    // Default view options for grouped route
+    primaryView: "krav-first",
+    showHierarchy: "true",
+    showCrossRelations: "true", 
+    includeChildren: "true",
+    includeRelated: "true",
+  });
+
+  // Use the dedicated grouped route like Krav service
+  return API.get(`/combined-entities/grouped-by-emne?${queryParams}`);
+};
+
+/**
+ * Advanced version that accepts custom options
+ */
+export const getPaginatedCombinedEntitiesWithOptions = async (params = {}) => {
+  const {
+    page = 1,
+    pageSize = 50,
+    search = "",
+    sortBy = "",
+    sortOrder = "asc",
+    options = {}
+  } = params;
+
+  // Build query parameters
+  const queryParams = new URLSearchParams({
+    page: page.toString(),
+    pageSize: pageSize.toString(),
+    search,
+    sortBy,
+    sortOrder,
+    // View options
+    primaryView: options.primaryView || "krav-first",
+    showHierarchy: (options.showHierarchy !== false).toString(),
+    showCrossRelations: (options.showCrossRelations !== false).toString(),
+    includeChildren: (options.includeChildren !== false).toString(),
+    includeRelated: (options.includeRelated !== false).toString(),
+    groupByEmne: (options.groupByEmne === true).toString(),
+  });
+
+  const response = await API.get(`/combined-entities?${queryParams}`);
+  return response.data;
+};
+
+/**
+ * Get combined view with Krav-first hierarchy (convenience method)
+ */
+export const getCombinedEntitiesKravFirst = async (params = {}) => {
+  return getPaginatedCombinedEntities({
+    ...params,
+    options: {
+      ...params.options,
+      primaryView: "krav-first"
+    }
+  });
+};
+
+/**
+ * Get combined view with Tiltak-first hierarchy (convenience method)
+ */
+export const getCombinedEntitiesTiltakFirst = async (params = {}) => {
+  return getPaginatedCombinedEntities({
+    ...params,
+    options: {
+      ...params.options,
+      primaryView: "tiltak-first"
+    }
+  });
+};
+
+/**
+ * Get combined view grouped by Emne (convenience method)
+ */
+export const getCombinedEntitiesGroupedByEmne = async (params = {}) => {
+  return getPaginatedCombinedEntities({
+    ...params,
+    options: {
+      ...params.options,
+      groupByEmne: true
+    }
+  });
+};
+
+/**
+ * Combined entity service object for use with CombinedEntityWorkspace
+ */
+export const combinedEntityService = {
+  getPaginatedCombinedView: getPaginatedCombinedEntities,
+  getPaginatedCombinedViewWithOptions: getPaginatedCombinedEntitiesWithOptions,
+  getKravFirst: getCombinedEntitiesKravFirst,
+  getTiltakFirst: getCombinedEntitiesTiltakFirst,
+  getGroupedByEmne: getCombinedEntitiesGroupedByEmne,
+};

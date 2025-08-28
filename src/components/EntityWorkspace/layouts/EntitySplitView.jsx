@@ -47,8 +47,7 @@ const EntitySplitView = ({
   const params = useParams();
 
   // Debug logging (can be removed in production)
-  // console.log('EntitySplitView DEBUG - params:', params);
-  // console.log('EntitySplitView DEBUG - entityType:', entityType);
+  // EntitySplitView DEBUG - params, entityType
 
   // Selected entity state - synced with URL
   const [selectedEntityId, setSelectedEntityId] = useState(params.entityId || null);
@@ -90,11 +89,11 @@ const EntitySplitView = ({
 
     // Check if we have grouped data (items contain emne and entity arrays)
     const firstItem = items[0];
-    if (firstItem.emne && (firstItem[entityType] || firstItem.krav || firstItem.tiltak)) {
+    if (firstItem.emne && (firstItem[entityType] || firstItem.entities || firstItem.krav || firstItem.tiltak)) {
       // Flatten grouped data
       const flattened = [];
       items.forEach((group) => {
-        const entities = group[entityType] || group.krav || group.tiltak || [];
+        const entities = group[entityType] || group.entities || group.krav || group.tiltak || [];
         entities.forEach((entity) => {
           // Attach emne info for display
           entity.emne = group.emne;
@@ -110,13 +109,13 @@ const EntitySplitView = ({
 
   // Determine which entity to display
   // Priority: activeEntity (external) > selectedEntity (from URL/internal state)
-  const displayEntity = activeEntity || flatItems.find((item) => item.id?.toString() === selectedEntityId?.toString());
+  const displayEntity = activeEntity || flatItems.find((item) => {
+    const itemUniqueId = item.entityType ? `${item.entityType}-${item.id}` : item.id?.toString();
+    return itemUniqueId === selectedEntityId?.toString();
+  });
 
   // Debug logging (can be removed in production)
-  // console.log('EntitySplitView DEBUG - flatItems:', flatItems);
-  // console.log('EntitySplitView DEBUG - selectedEntityId:', selectedEntityId);
-  // console.log('EntitySplitView DEBUG - activeEntity:', activeEntity);
-  // console.log('EntitySplitView DEBUG - displayEntity:', displayEntity);
+  // EntitySplitView DEBUG - flatItems, selectedEntityId, activeEntity, displayEntity
 
   // Update URL when selection changes (but not if it came from URL)
   useEffect(() => {
@@ -124,7 +123,7 @@ const EntitySplitView = ({
     const expectedPath = selectedEntityId ? `/${entityType}-workspace/${selectedEntityId}` : `/${entityType}-workspace`;
 
     if (currentPath !== expectedPath) {
-      // console.log('EntitySplitView DEBUG - navigating to:', expectedPath);
+      // EntitySplitView DEBUG - navigating to: expectedPath
       navigate(expectedPath, {
         replace: true,
         preventScrollReset: true, // Prevent scroll to top on navigation
@@ -136,14 +135,16 @@ const EntitySplitView = ({
   useEffect(() => {
     const urlEntityId = params.entityId || null;
     if (urlEntityId !== selectedEntityId) {
-      // console.log('EntitySplitView DEBUG - URL changed, updating selection:', urlEntityId);
+      // EntitySplitView DEBUG - URL changed, updating selection: urlEntityId
       setSelectedEntityId(urlEntityId);
     }
   }, [params.entityId]); // Remove selectedEntityId dependency to prevent loop
 
   const handleEntitySelect = (entity) => {
-    // console.log('EntitySplitView DEBUG - entity selected:', entity);
-    setSelectedEntityId(entity.id);
+    // EntitySplitView DEBUG - entity selected: entity
+    // Use compound ID for combined views to avoid conflicts
+    const uniqueId = entity.entityType ? `${entity.entityType}-${entity.id}` : entity.id;
+    setSelectedEntityId(uniqueId);
   };
 
   const handleEntityDeselect = () => {

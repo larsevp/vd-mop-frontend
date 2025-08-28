@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
 import {
   Table,
   TableBody,
@@ -13,9 +15,13 @@ import {
 } from "@/components/ui";
 import { useReactTable, getCoreRowModel, getFilteredRowModel, ColumnFiltersState, flexRender } from "@tanstack/react-table";
 // @ts-ignore - JavaScript file without type declarations
-import { getPaginatedProsjekt } from "@/api/endpoints";
+import { getPaginatedProsjekt, getProsjektById, setLastVisitedProject } from "@/api/endpoints";
+import { useUserStore, useProjectStore } from "@/stores/userStore";
 
 export default function ProjectLandingTable() {
+  const navigate = useNavigate();
+  const { user } = useUserStore();
+  const { setCurrentProject } = useProjectStore();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
   const [page, setPage] = useState(1);
@@ -23,6 +29,45 @@ export default function ProjectLandingTable() {
   const [data, setData] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
   const [expandedPages, setExpandedPages] = useState(false);
+
+  // Mutation for updating last visited project
+  const updateLastVisitedMutation = useMutation({
+    mutationFn: setLastVisitedProject,
+    onError: (error) => {
+      console.error("Failed to update last visited project:", error);
+    },
+  });
+
+  const handleProjectOpen = async (project: any) => {
+    try {
+      // Fetch full project details and store in global state
+      const projectDetails = await getProsjektById(project.id);
+      const fullProject = projectDetails.data || projectDetails;
+
+      // Set current project in global store
+      setCurrentProject(fullProject);
+
+      // Try to update last visited project (non-blocking)
+      try {
+        await updateLastVisitedMutation.mutateAsync({
+          userId: user?.id,
+          projectId: project.id, // Try 'projectId' instead of 'prosjektId'
+          visitedAt: new Date().toISOString(),
+        });
+      } catch (lastVisitedError) {
+        console.warn("Failed to update last visited project (non-critical):", lastVisitedError);
+      }
+
+      // Navigate to project landing page
+      navigate(`/prosjekt/${project.id}`);
+    } catch (error) {
+      console.error("Failed to open project:", error);
+
+      // At minimum, set the basic project info we have
+      setCurrentProject(project);
+      navigate(`/prosjekt/${project.id}`);
+    }
+  };
 
   // Fetch paginated data
   React.useEffect(() => {
@@ -48,16 +93,24 @@ export default function ProjectLandingTable() {
       header: "Prosjektnavn",
     },
     {
-      accessorKey: "beskrivelse",
+      accessorKey: "beskrivelseSnippet",
       header: "Beskrivelse",
+      cell: ({ row }: { row: any }) => {
+        const text = row.original.beskrivelseSnippet || "";
+        return text.length > 20 ? text.slice(0, 20) + "..." : text;
+      },
     },
     {
       accessorKey: "actions",
       header: "",
       cell: ({ row }: { row: any }) => (
-        <a className="text-blue-600 hover:text-blue-900 hover:underline font-semibold" href={`/projects/${row.original.id}`}>
+        <button
+          className="text-blue-600 hover:text-blue-900 hover:underline font-semibold"
+          onClick={() => handleProjectOpen(row.original)}
+          disabled={updateLastVisitedMutation.isLoading}
+        >
           Åpne
-        </a>
+        </button>
       ),
     },
   ];

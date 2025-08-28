@@ -11,7 +11,20 @@ export const useEntityWorkspaceActions = (modelConfig, entityType, showSuccessTo
   const createMutation = useMutation({
     mutationFn: modelConfig.createFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([entityType]);
+      // Ultra-specific cache invalidation - only invalidate workspace queries for this entity type
+      queryClient.invalidateQueries({
+        queryKey: [entityType, "workspace", "paginated"],
+        exact: false,
+      });
+
+      // For tiltak and krav, also invalidate combined entities cache with correct entity type
+      if (entityType === "tiltak" || entityType === "krav") {
+        queryClient.invalidateQueries({
+          queryKey: ["combinedEntities", "workspace", "paginated"],
+          exact: false,
+        });
+      }
+
       showSuccessToast(`${modelConfig.title || entityType} opprettet`);
     },
     onError: (error) => {
@@ -24,7 +37,20 @@ export const useEntityWorkspaceActions = (modelConfig, entityType, showSuccessTo
   const updateMutation = useMutation({
     mutationFn: modelConfig.updateFn,
     onSuccess: (data) => {
-      queryClient.invalidateQueries([entityType]);
+      // Ultra-specific cache invalidation - only invalidate workspace queries for this entity type
+      queryClient.invalidateQueries({
+        queryKey: [entityType, "workspace", "paginated"],
+        exact: false,
+      });
+
+      // For tiltak and krav, also invalidate combined entities cache with correct entity type
+      if (entityType === "tiltak" || entityType === "krav") {
+        queryClient.invalidateQueries({
+          queryKey: ["combinedEntities", "workspace", "paginated"],
+          exact: false,
+        });
+      }
+
       // Update specific entity cache
       queryClient.setQueryData([entityType, data.id], data);
       showSuccessToast(`${modelConfig.title || entityType} oppdatert`);
@@ -39,7 +65,20 @@ export const useEntityWorkspaceActions = (modelConfig, entityType, showSuccessTo
   const deleteMutation = useMutation({
     mutationFn: modelConfig.deleteFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([entityType]);
+      // Ultra-specific cache invalidation - only invalidate workspace queries for this entity type
+      queryClient.invalidateQueries({
+        queryKey: [entityType, "workspace", "paginated"],
+        exact: false,
+      });
+
+      // For tiltak and krav, also invalidate combined entities cache with correct entity type
+      if (entityType === "tiltak" || entityType === "krav") {
+        queryClient.invalidateQueries({
+          queryKey: ["combinedEntities", "workspace", "paginated"],
+          exact: false,
+        });
+      }
+
       showSuccessToast(`${modelConfig.title || entityType} slettet`);
     },
     onError: (error) => {
@@ -48,40 +87,42 @@ export const useEntityWorkspaceActions = (modelConfig, entityType, showSuccessTo
     },
   });
 
-  // Save handler (create or update)
-  const handleSave = async (data, isUpdate = false) => {
-    try {
-      if (isUpdate) {
-        const result = await updateMutation.mutateAsync(data);
-        return result;
-      } else {
-        const result = await createMutation.mutateAsync(data);
-        return result;
-      }
-    } catch (error) {
-      throw error;
-    }
+  const handleCreate = (data) => {
+    createMutation.mutate(data);
   };
 
-  // Delete confirmation handler
-  const confirmDelete = async (entity) => {
-    const entityName = modelConfig.title?.toLowerCase() || entityType;
-    const displayName = entity.tittel || entity.navn || `${entityName} ${entity.id}`;
-    
-    if (window.confirm(`Er du sikker på at du vil slette ${entityName} "${displayName}"?`)) {
-      try {
-        await deleteMutation.mutateAsync(entity.id);
-      } catch (error) {
-        // Error already handled in mutation
-      }
-    }
+  const handleUpdate = (id, data) => {
+    updateMutation.mutate({ id, data });
+  };
+
+  const handleDelete = (id) => {
+    deleteMutation.mutate(id);
   };
 
   return {
-    handleSave,
-    confirmDelete,
-    isCreating: createMutation.isLoading,
-    isUpdating: updateMutation.isLoading,
-    isDeleting: deleteMutation.isLoading,
+    // Mutation objects
+    createMutation,
+    updateMutation,
+    deleteMutation,
+
+    // Handler functions
+    handleCreate,
+    handleUpdate,
+    handleDelete,
+
+    // Loading states
+    isCreating: createMutation.isPending,
+    isUpdating: updateMutation.isPending,
+    isDeleting: deleteMutation.isPending,
+
+    // Combined loading state
+    isLoading: createMutation.isPending || updateMutation.isPending || deleteMutation.isPending,
+
+    // Error states
+    createError: createMutation.error,
+    updateError: updateMutation.error,
+    deleteError: deleteMutation.error,
   };
 };
+
+export default useEntityWorkspaceActions;

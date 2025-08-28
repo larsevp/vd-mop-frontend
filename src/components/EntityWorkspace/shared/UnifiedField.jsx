@@ -17,6 +17,7 @@ import { ExpandableRichText } from "@/components/tableComponents/displayValues/E
  * @param {Object} props.form - Form object reference
  * @param {string} props.modelName - Model name (e.g., "krav", "tiltak")
  * @param {string} props.className - Additional CSS classes
+ * @param {Object} props.displayResolver - Custom display resolver (defaults to DisplayValueResolver)
  */
 const UnifiedField = ({ 
   field, 
@@ -27,7 +28,8 @@ const UnifiedField = ({
   error, 
   form, 
   modelName, 
-  className = "" 
+  className = "",
+  displayResolver = DisplayValueResolver
 }) => {
   const isEditing = mode === "edit" || mode === "create";
 
@@ -87,8 +89,8 @@ const UnifiedField = ({
     );
   }
 
-  // Use DisplayValueResolver for other field types in view mode
-  const displayValue = DisplayValueResolver.getDisplayComponent(data, field, "REACT", modelName);
+  // Use the provided display resolver (or default DisplayValueResolver) for other field types in view mode
+  const displayValue = displayResolver.getDisplayComponent(data, field, "REACT", modelName);
 
   return (
     <div className={`space-y-1 ${className}`}>

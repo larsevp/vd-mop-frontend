@@ -46,13 +46,12 @@ export const useEntityWorkspaceData = ({
   } = useQuery({
     queryKey,
     queryFn: () => queryFunction(page, pageSize, searchQuery, sortBy, sortOrder),
-    staleTime: 30 * 1000, // 30 seconds - conservative caching
+    staleTime: 5 * 60 * 1000, // 5 minutes - reduce unnecessary refetches
     keepPreviousData: true, // Keep showing old data while fetching new
   });
 
   // Process data consistently
   const processedData = useMemo(() => {
-
     if (!rawData) return { items: [], stats: {}, totalPages: 0 };
 
     // Extract data from axios response if needed
@@ -136,6 +135,9 @@ export const useEntityWorkspaceData = ({
           const newGroup = { ...group };
           if (group[entityType]) {
             newGroup[entityType] = filterItems(group[entityType]);
+          } else if (group.entities) {
+            // Support for combined entities with "entities" property
+            newGroup.entities = filterItems(group.entities);
           } else if (group.krav) {
             // Legacy support for krav
             newGroup.krav = filterItems(group.krav);
@@ -170,6 +172,9 @@ export const useEntityWorkspaceData = ({
           const newGroup = { ...group };
           if (group[entityType]) {
             newGroup[entityType] = mainFilterItems(group[entityType]);
+          } else if (group.entities) {
+            // Support for combined entities with "entities" property
+            newGroup.entities = mainFilterItems(group.entities);
           } else if (group.krav) {
             newGroup.krav = mainFilterItems(group.krav);
           } else if (group.tiltak) {
@@ -182,7 +187,6 @@ export const useEntityWorkspaceData = ({
         items = mainFilterItems(items);
       }
     }
-
 
     const totalPages = responseData.totalPages || Math.ceil(total / pageSize);
 
@@ -199,6 +203,9 @@ export const useEntityWorkspaceData = ({
         items.forEach((group) => {
           if (group[entityType]) {
             obligatoriskCount += group[entityType].filter((item) => item.obligatorisk).length;
+          } else if (group.entities) {
+            // Support for combined entities with "entities" property
+            obligatoriskCount += group.entities.filter((item) => item.obligatorisk).length;
           } else if (group.krav) {
             // Legacy support for krav
             obligatoriskCount += group.krav.filter((item) => item.obligatorisk).length;

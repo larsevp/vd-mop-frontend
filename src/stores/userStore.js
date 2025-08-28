@@ -77,9 +77,27 @@ export const useUserStore = create(
 );
 
 // Project store: not persisted, always fresh from backend
-export const useProjectStore = create((set) => ({
-  projects: [],
-  setProjects: (projects) => set({ projects }),
-  addProject: (project) => set((state) => ({ projects: [...state.projects, project] })),
-  clearProjects: () => set({ projects: [] }),
-}));
+export const useProjectStore = create(
+  persist(
+    (set, get) => ({
+      projects: [],
+      currentProject: null,
+      
+      setProjects: (projects) => set({ projects }),
+      addProject: (project) => set((state) => ({ projects: [...state.projects, project] })),
+      clearProjects: () => set({ projects: [] }),
+      
+      // Current project management
+      setCurrentProject: (project) => set({ currentProject: project }),
+      clearCurrentProject: () => set({ currentProject: null }),
+      getCurrentProject: () => get().currentProject,
+    }),
+    {
+      name: "project-storage",
+      // Only persist currentProject, not the full projects list
+      partialize: (state) => ({
+        currentProject: state.currentProject,
+      }),
+    }
+  )
+);

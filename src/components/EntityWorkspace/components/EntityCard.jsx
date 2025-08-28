@@ -49,12 +49,7 @@ const EntityCard = ({
 
   // Debug logging for parent data
   if (entity.parentId && entity.parent) {
-    console.log("Entity with parent:", {
-      entityId: entity.id,
-      parentId: entity.parentId,
-      parent: entity.parent,
-      entityType,
-    });
+    // Entity with parent: entityId, parentId, parent, entityType
   }
 
   // Handlers with loading states
@@ -110,10 +105,23 @@ const EntityCard = ({
     return text.substring(0, maxLength) + "...";
   };
 
+  // Check if this entity should be indented - logic depends on the view context
+  const isCombinedView = entityType === "combinedEntities" || entityType === "combined";
+
+  let shouldIndent = false;
+
+  if (isCombinedView) {
+    // Combined view: only indent tiltak that are displayed under a krav
+    shouldIndent = entity._displayedUnderKrav === true;
+  } else {
+    // Regular views: use traditional indentation rules
+    shouldIndent = entity.parentId;
+  }
+
   return (
     <div
       className={`bg-white rounded-xl border hover:border-blue-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group cursor-pointer relative ${
-        entity.parentId
+        shouldIndent
           ? "border-l-4 border-l-blue-400 border-neutral-200 ml-6" // Add left margin for visual indentation
           : "border-neutral-200"
       }`}
@@ -123,7 +131,7 @@ const EntityCard = ({
       <div className="absolute inset-0 bg-gradient-to-r from-blue-50/0 to-blue-50/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
       {/* Hierarchical connection line for child elements */}
-      {entity.parentId && <div className="absolute -left-6 top-8 w-4 h-px bg-blue-300"></div>}
+      {shouldIndent && <div className="absolute -left-6 top-8 w-4 h-px bg-blue-300"></div>}
 
       <div className="p-6 flex gap-6 relative">
         {/* Main content area - Title, UID, and Description */}

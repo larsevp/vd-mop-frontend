@@ -165,7 +165,7 @@ const EntityCardList = ({
             const isCollapsed = collapsedGroups.has(groupKey);
 
             // Get entities from the group - check multiple possible property names
-            const entities = group[entityType] || group.krav || group.tiltak || [];
+            const entities = group[entityType] || group.entities || group.krav || group.tiltak || [];
 
             return (
               <div
@@ -211,34 +211,46 @@ const EntityCardList = ({
                 {/* Entity Cards - Collapsible */}
                 {!isCollapsed && (
                   <div className="p-6 space-y-4">
-                    {entities.map((entity) => (
-                      <EntityCardController
-                        key={entity.id}
-                        entity={entity}
-                        modelConfig={modelConfig}
-                        entityType={entityType}
-                        isExpanded={expandedCards.has(entity.id)}
-                        expandedMode={expandedCards.get(entity.id) || "view"}
-                        onExpand={handleExpandCard}
-                        onCollapse={handleCollapseCard}
-                        onEdit={(entity) => handleExpandCard(entity, "edit")}
-                        onDelete={onDelete}
-                        onSave={handleSaveEntity}
-                        onMerknadUpdate={() => {}} // TODO: Implement merknad updates
-                        onStatusChange={() => {}} // TODO: Implement status changes
-                        onVurderingChange={() => {}} // TODO: Implement vurdering changes
-                        onPrioritetChange={() => {}} // TODO: Implement prioritet changes
-                        onNavigateToEntity={() => {}} // TODO: Implement navigation
-                        showMerknader={showMerknader}
-                        showStatus={config.ui.showStatus}
-                        showVurdering={config.ui.showVurdering}
-                        showPrioritet={config.ui.showPrioritet}
-                        filesCount={entity.filesCount || 0}
-                        childrenCount={entity.childrenCount || 0}
-                        parentEntity={entity.parent || null}
-                        renderIcon={renderIcon}
-                      />
-                    ))}
+                    {entities.map((entity, entityIndex) => {
+                      // Generate unique key for combined views considering relationship context
+                      let entityKey;
+                      if ((entityType === "combined" || entityType === "combinedEntities") && entity._relatedToKrav) {
+                        // For tiltak displayed under krav in combined view, include the relationship
+                        entityKey = `${entity.entityType || entityType}-${entity.id}-krav-${entity._relatedToKrav}`;
+                      } else {
+                        // Standard key generation for regular views or non-related entities
+                        entityKey = `${entity.entityType || entityType}-${entity.id}`;
+                      }
+
+                      return (
+                        <EntityCardController
+                          key={entityKey}
+                          entity={entity}
+                          modelConfig={modelConfig}
+                          entityType={entityType}
+                          isExpanded={expandedCards.has(entity.id)}
+                          expandedMode={expandedCards.get(entity.id) || "view"}
+                          onExpand={handleExpandCard}
+                          onCollapse={handleCollapseCard}
+                          onEdit={(entity) => handleExpandCard(entity, "edit")}
+                          onDelete={onDelete}
+                          onSave={handleSaveEntity}
+                          onMerknadUpdate={() => {}} // TODO: Implement merknad updates
+                          onStatusChange={() => {}} // TODO: Implement status changes
+                          onVurderingChange={() => {}} // TODO: Implement vurdering changes
+                          onPrioritetChange={() => {}} // TODO: Implement prioritet changes
+                          onNavigateToEntity={() => {}} // TODO: Implement navigation
+                          showMerknader={showMerknader}
+                          showStatus={config.ui.showStatus}
+                          showVurdering={config.ui.showVurdering}
+                          showPrioritet={config.ui.showPrioritet}
+                          filesCount={entity.filesCount || 0}
+                          childrenCount={entity.childrenCount || 0}
+                          parentEntity={entity.parent || null}
+                          renderIcon={renderIcon}
+                        />
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -248,34 +260,46 @@ const EntityCardList = ({
       ) : (
         // Flat view - show all entities as individual cards
         <div className="space-y-4">
-          {items.map((entity) => (
-            <EntityCardController
-              key={entity.id}
-              entity={entity}
-              modelConfig={modelConfig}
-              entityType={entityType}
-              isExpanded={expandedCards.has(entity.id)}
-              expandedMode={expandedCards.get(entity.id) || "view"}
-              onExpand={handleExpandCard}
-              onCollapse={handleCollapseCard}
-              onEdit={(entity) => handleExpandCard(entity, "edit")}
-              onDelete={onDelete}
-              onSave={handleSaveEntity}
-              onMerknadUpdate={() => {}} // TODO: Implement merknad updates
-              onStatusChange={() => {}} // TODO: Implement status changes
-              onVurderingChange={() => {}} // TODO: Implement vurdering changes
-              onPrioritetChange={() => {}} // TODO: Implement prioritet changes
-              onNavigateToEntity={() => {}} // TODO: Implement navigation
-              showMerknader={showMerknader}
-              showStatus={config.ui.showStatus}
-              showVurdering={config.ui.showVurdering}
-              showPrioritet={config.ui.showPrioritet}
-              filesCount={entity.filesCount || 0}
-              childrenCount={entity.childrenCount || 0}
-              parentEntity={entity.parent || null}
-              renderIcon={renderIcon}
-            />
-          ))}
+          {items.map((entity, entityIndex) => {
+            // Generate unique key for combined views considering relationship context
+            let entityKey;
+            if ((entityType === "combined" || entityType === "combinedEntities") && entity._relatedToKrav) {
+              // For tiltak displayed under krav in combined view, include the relationship
+              entityKey = `${entity.entityType || entityType}-${entity.id}-krav-${entity._relatedToKrav}`;
+            } else {
+              // Standard key generation for regular views or non-related entities
+              entityKey = `${entity.entityType || entityType}-${entity.id}`;
+            }
+
+            return (
+              <EntityCardController
+                key={entityKey}
+                entity={entity}
+                modelConfig={modelConfig}
+                entityType={entityType}
+                isExpanded={expandedCards.has(entity.id)}
+                expandedMode={expandedCards.get(entity.id) || "view"}
+                onExpand={handleExpandCard}
+                onCollapse={handleCollapseCard}
+                onEdit={(entity) => handleExpandCard(entity, "edit")}
+                onDelete={onDelete}
+                onSave={handleSaveEntity}
+                onMerknadUpdate={() => {}} // TODO: Implement merknad updates
+                onStatusChange={() => {}} // TODO: Implement status changes
+                onVurderingChange={() => {}} // TODO: Implement vurdering changes
+                onPrioritetChange={() => {}} // TODO: Implement prioritet changes
+                onNavigateToEntity={() => {}} // TODO: Implement navigation
+                showMerknader={showMerknader}
+                showStatus={config.ui.showStatus}
+                showVurdering={config.ui.showVurdering}
+                showPrioritet={config.ui.showPrioritet}
+                filesCount={entity.filesCount || 0}
+                childrenCount={entity.childrenCount || 0}
+                parentEntity={entity.parent || null}
+                renderIcon={renderIcon}
+              />
+            );
+          })}
         </div>
       )}
     </div>
