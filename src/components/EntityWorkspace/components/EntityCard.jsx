@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/primitives/button";
 import { Edit, Trash2, AlertCircle, Clock, Paperclip, GitBranch, ArrowUp } from "lucide-react";
 import { MerknadField } from "../shared";
+import { EntityTypeResolver } from "../services/EntityTypeResolver";
 
 /**
  * Generic EntityCard component that can render any entity type
@@ -32,15 +33,20 @@ const EntityCard = ({
   const [vurderingLoading, setVurderingLoading] = useState(false);
   const [prioritetLoading, setPrioritetLoading] = useState(false);
 
-  // Get entity display fields from model config
+  // For combined views, use entity-specific model config if entity has entityType
+  const effectiveModelConfig = entity.entityType && entity.entityType !== entityType 
+    ? EntityTypeResolver.resolveModelConfig(entity.entityType)
+    : modelConfig;
+
+  // Get entity display fields from effective model config
   const titleField =
-    modelConfig.workspace?.cardFields?.find((f) => f === "tittel" || f === "title" || f === "navn" || f === "name") || "tittel";
+    effectiveModelConfig.workspace?.cardFields?.find((f) => f === "tittel" || f === "title" || f === "navn" || f === "name") || "tittel";
 
-  const uidField = modelConfig.workspace?.cardFields?.find((f) => f.toLowerCase().includes("uid") || f === "id");
+  const uidField = effectiveModelConfig.workspace?.cardFields?.find((f) => f.toLowerCase().includes("uid") || f === "id");
 
-  const descField = modelConfig.workspace?.cardFields?.find(
+  const descField = effectiveModelConfig.workspace?.cardFields?.find(
     (f) => f.toLowerCase().includes("beskrivelse") || f.toLowerCase().includes("description")
-  );
+  ) || "beskrivelse"; // Fallback for combined views
 
   // Get display values
   const title = entity[titleField] || "Uten tittel";

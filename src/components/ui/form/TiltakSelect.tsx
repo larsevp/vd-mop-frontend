@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { getTiltakSimple } from "../../../api/endpoints/models/tiltak";
 import { ComboBox, ComboBoxOption } from "./ComboBox";
 import { useQuery } from "@tanstack/react-query";
@@ -72,16 +72,16 @@ export function TiltakSelect({
       });
 
       // Sort by ID for consistent ordering
-      const sortedData = filteredData.sort((a: Tiltak, b: Tiltak) => a.id - b.id);
-      
-      // Notify parent component that data is loaded
-      if (onDataLoaded) {
-        onDataLoaded(sortedData);
-      }
-      
-      return sortedData;
+      return filteredData.sort((a: Tiltak, b: Tiltak) => a.id - b.id);
     },
   });
+
+  // Notify parent component that data is loaded (outside of render)
+  useEffect(() => {
+    if (onDataLoaded && tiltakList.length > 0) {
+      onDataLoaded(tiltakList);
+    }
+  }, [tiltakList, onDataLoaded]);
 
   const handleValueChange = (event: { target: { name?: string; value: string | null; type: string } }) => {
     const numericValue = event.target.value === null ? null : parseInt(event.target.value, 10);

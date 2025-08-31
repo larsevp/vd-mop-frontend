@@ -26,6 +26,13 @@ const EntityListRow = ({
     showRelations: true,
   },
 }) => {
+  // Helper function to truncate text - defined early so it can be used throughout
+  const truncateText = (text, maxLength = 60) => {
+    if (!text) return "";
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + "..";
+  };
+
   // Check if this is a combined view
   const isCombinedView = entityType === "combinedEntities" || entityType === "combined" || entityType === "prosjekt-combined";
 
@@ -93,6 +100,11 @@ const EntityListRow = ({
       entity.descriptionSnippet ||
       extractTextFromTipTap(entity.description) ||
       "";
+  }
+
+  // Ensure snippet fields are properly truncated (they might be long)
+  if (description && (entity.beskrivelseSnippet || entity.descriptionSnippet)) {
+    description = truncateText(description);
   }
 
   // Helper function to extract text from TipTap JSON
@@ -173,12 +185,6 @@ const EntityListRow = ({
       );
     }
     return null;
-  };
-
-  const truncateText = (text, maxLength = 140) => {
-    if (!text) return "";
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + "...";
   };
 
   const handleClick = (e) => {

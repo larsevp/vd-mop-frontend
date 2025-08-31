@@ -197,6 +197,7 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
     }
 
     try {
+
       // Follow RowForm pattern but adapt for our API
       const isUpdate = entity && entity.id && !isNewEntity;
 

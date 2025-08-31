@@ -194,7 +194,11 @@ export class EntityTypeResolver {
   }
 
   static _createFallbackConfig(entityType) {
-    console.warn(`Creating fallback config for unknown entity type: ${entityType}`);
+    console.warn(`Creating fallback config for unknown entity type: ${entityType}`, {
+      entityType,
+      availableConfigs: Object.keys(modelConfigs),
+      stackTrace: new Error().stack
+    });
 
     return {
       title: this._capitalize(entityType),
@@ -242,6 +246,13 @@ export class EntityTypeResolver {
   static _supportsBulkActions(entityType) {
     const bulkActionTypes = ["krav", "tiltak"];
     return bulkActionTypes.includes(entityType);
+  }
+
+  static _supportsGroupByEmne(entityType) {
+    // Map any entity type (kebab-case, camelCase) to normalized form and check if it supports grouping
+    const normalizedType = entityType.toLowerCase().replace(/-/g, '');
+    const groupableTypes = ["krav", "tiltak", "prosjektkrav", "prosjekttiltak"];
+    return groupableTypes.includes(normalizedType);
   }
 }
 

@@ -57,7 +57,7 @@ export const getTiltakById = (id, config = {}) => {
 
 export const createTiltak = (tiltakData) => API.post("/tiltak", tiltakData);
 
-export const updateTiltak = (tiltakData) => API.put(`/tiltak/${tiltakData.id}`, tiltakData);
+export const updateTiltak = (id, tiltakData) => API.put(`/tiltak/${id}`, tiltakData);
 
 export const deleteTiltak = (id) => API.delete(`/tiltak/${id}`);
 

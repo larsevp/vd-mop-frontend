@@ -101,7 +101,7 @@ export const CombinedEntityWorkspace = ({ combinedEntityService, entityType = "c
       customContext={{
         isCombinedView: true,
         entityTypes: entityType === "prosjekt-combined" 
-          ? ["prosjektkrav", "prosjekttiltak"] // Project entities
+          ? ["prosjekt-krav", "prosjekt-tiltak"] // Project entities
           : ["krav", "tiltak"], // General entities
         ...props.customContext,
       }}

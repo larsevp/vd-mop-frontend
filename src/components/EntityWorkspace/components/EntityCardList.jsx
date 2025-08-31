@@ -1,7 +1,8 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/primitives/button";
 import { Plus, Settings, ChevronDown, ChevronRight, FileText } from "lucide-react";
 import EntityCardController from "./EntityCardController";
+import { EntityFilterService } from "@/components/EntityWorkspace/services/EntityFilterService";
 
 /**
  * Generic EntityCardList component
@@ -29,16 +30,6 @@ const EntityCardList = ({
   renderIcon,
   user,
 }) => {
-  // Debug logging for ProsjektKrav
-  if (entityType === 'prosjekt-krav') {
-    console.log('🔍 EntityCardList received data:', { 
-      entityType,
-      itemsLength: Array.isArray(items) ? items.length : 'not array',
-      groupByEmne,
-      firstItem: Array.isArray(items) && items[0] ? Object.keys(items[0]) : 'none',
-      items: items
-    });
-  }
   // Card expansion handlers
   const handleExpandCard = useCallback(
     (entity, mode = "view") => {
@@ -175,7 +166,9 @@ const EntityCardList = ({
             const isCollapsed = collapsedGroups.has(groupKey);
 
             // Get entities from the group - check multiple possible property names
-            const entities = group[entityType] || group.entities || group.krav || group.tiltak || [];
+            // Use EntityFilterService's existing name resolver to avoid inconsistencies
+            const mappedEntityType = EntityFilterService._getGroupedDataPropertyName(entityType);
+            const entities = group[mappedEntityType] || group[entityType] || group.entities || group.krav || group.tiltak || [];
 
             return (
               <div

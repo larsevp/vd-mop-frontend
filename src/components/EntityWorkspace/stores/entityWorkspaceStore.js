@@ -1,345 +1,458 @@
 /**
- * EntityWorkspace Zustand Store - Centralized state for krav, tiltak, prosjektKrav, prosjektTiltak
+ * EntityWorkspace Zustand Store - Centralized state management
+ * Integrates real backend data fetching with optimistic updates
  */
 
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { ConfigProcessor } from '@/components/EntityWorkspace/services/ConfigProcessor';
+import { EntityTypeResolver } from '@/components/EntityWorkspace/services/EntityTypeResolver';
 import { EntityFilterService } from '@/components/EntityWorkspace/services/EntityFilterService';
-import { regroupByEmne } from '@/components/EntityWorkspace/utils/optimisticUpdates';
+import { handleOptimisticEntityUpdate, sortItemsByEmne } from '@/components/EntityWorkspace/utils/optimisticUpdates';
 
 const useEntityWorkspaceStore = create(
   devtools(
     (set, get) => ({
-      // Current entity configuration
+      // Current workspace configuration
       currentEntityType: null,
-      processedConfig: null,
+      modelConfig: null,
       workspaceConfig: {},
       
       // Data state
-      entities: [],
       selectedEntity: null,
-      filteredEntities: [],
-      groupedEntities: new Map(),
-      groupByEmne: false,
       
-      // UI state
-      isLoading: false,
-      isEditing: false,
-      viewMode: 'split', // 'split', 'grid', 'table'
+      // UI state - mirrors useEntityState
+      searchInput: '',
+      searchQuery: '',
+      filterBy: 'all',
+      sortBy: 'id',
+      sortOrder: 'asc',
+      viewMode: 'split',
+      groupByEmne: true,
+      showMerknader: false,
       
-      // Search and filters
-      searchTerm: '',
-      activeFilters: {},
-      sortConfig: { field: 'id', direction: 'desc' },
+      // Pagination
+      page: 1,
+      pageSize: 50,
+      
+      // Advanced filters
+      additionalFilters: {},
+      
+      // Toast notifications
+      toast: {
+        show: false,
+        message: '',
+        type: 'success'
+      },
+      
+      // Expanded state
+      expandedCards: new Set(),
+      collapsedGroups: new Set(),
+      activeEntity: null,
       
       // Error state
       error: null,
 
       // Actions
-      initializeWorkspace: (entityType, modelConfig, workspaceConfig) => {
-        try {
-          const config = ConfigProcessor.processConfig(entityType);
-          set({ 
-            currentEntityType: entityType,
-            processedConfig: config,
-            workspaceConfig: workspaceConfig,
-            viewMode: config.workspace?.layout || 'split',
-            groupByEmne: entityType === 'krav' || entityType === 'prosjektKrav',
-            error: null 
+      initializeWorkspace: (entityType, modelConfig, workspaceConfig = {}) => {
+        // Debug project entities
+        const isProjectEntity = entityType.includes('prosjekt') || entityType.includes('project');
+        if (isProjectEntity) {
+          console.log('🏗️ Initializing PROJECT entity workspace:', {
+            entityType,
+            modelConfig: modelConfig?.title,
+            workspaceConfig: workspaceConfig?.layout,
+            supportsGroupByEmne: EntityTypeResolver._supportsGroupByEmne(entityType)
           });
-          
-          // Load sample data for demonstration
-          get().loadSampleData(entityType);
-        } catch (error) {
-          set({ error: error.message });
         }
-      },
-
-      // Load sample data for development/testing
-      loadSampleData: (entityType) => {
-        set({ isLoading: true });
         
-        // Simulate API delay
-        setTimeout(() => {
-          const sampleData = get().generateSampleData(entityType);
-          set({ 
-            entities: sampleData,
-            isLoading: false 
-          });
-          get().applyFiltersAndGrouping();
-        }, 500);
+        set({ 
+          currentEntityType: entityType,
+          modelConfig: modelConfig,
+          workspaceConfig: workspaceConfig,
+          viewMode: workspaceConfig.layout || 'split',
+          groupByEmne: EntityTypeResolver._supportsGroupByEmne(entityType),
+          error: null,
+          // Reset filters when switching entity types
+          filterBy: 'all',
+          additionalFilters: {},
+          searchInput: '',
+          searchQuery: '',
+          page: 1
+        });
       },
-
-      // Generate sample data based on entity type
-      generateSampleData: (entityType) => {
-        if (entityType === 'krav' || entityType === 'prosjektKrav') {
-          return [
-            {
-              id: 1,
-              kravUID: 'K001',
-              tittel: 'Støykrav for utendørsområder',
-              beskrivelse: 'Grenseverdier for støy i utendørsområder må ikke overskrides',
-              obligatorisk: true,
-              status: { navn: 'Aktiv', id: 1 },
-              vurdering: { navn: 'Høy', id: 1 },
-              emne: { id: 1, tittel: 'Støy', icon: 'volume-2', color: '#ff6b35' },
-              prioritet: 1,
-              updatedAt: '2024-01-15T10:30:00Z'
-            },
-            {
-              id: 2,
-              kravUID: 'K002', 
-              tittel: 'Luftkvalitetskrav',
-              beskrivelse: 'Luftkvaliteten skal oppfylle nasjonale standarder',
-              obligatorisk: true,
-              status: { navn: 'Under vurdering', id: 2 },
-              vurdering: { navn: 'Medium', id: 2 },
-              emne: { id: 2, tittel: 'Luft', icon: 'wind', color: '#4ecdc4' },
-              prioritet: 2,
-              updatedAt: '2024-01-14T15:45:00Z'
-            },
-            {
-              id: 3,
-              kravUID: 'K003',
-              tittel: 'Vannkvalitetskontroll',
-              beskrivelse: 'Regelmessig kontroll av vannkvalitet',
-              obligatorisk: false,
-              status: { navn: 'Inaktiv', id: 3 },
-              vurdering: { navn: 'Lav', id: 3 },
-              emne: { id: 3, tittel: 'Vann', icon: 'droplets', color: '#45b7d1' },
-              prioritet: 3,
-              updatedAt: '2024-01-13T09:20:00Z'
-            }
-          ];
-        } else if (entityType === 'tiltak' || entityType === 'prosjektTiltak') {
-          return [
-            {
-              id: 1,
-              tiltakUID: 'T001',
-              navn: 'Støyskjerm langs E6',
-              beskrivelse: 'Installering av støyskjerm for å redusere trafikktøy',
-              status: { navn: 'Planlagt', id: 1 },
-              vurdering: { navn: 'Høy', id: 1 },
-              prioritet: 1,
-              updatedAt: '2024-01-15T14:20:00Z'
-            },
-            {
-              id: 2,
-              tiltakUID: 'T002',
-              navn: 'Luftkvalitetsmåling',
-              beskrivelse: 'Etablering av målestasjoner for luftkvalitet',
-              status: { navn: 'Under utførelse', id: 2 },
-              vurdering: { navn: 'Medium', id: 2 },
-              prioritet: 2,
-              updatedAt: '2024-01-14T11:30:00Z'
-            }
-          ];
-        }
-        return [];
-      },
-
-      setEntityType: (entityType) => {
-        try {
-          const config = ConfigProcessor.processConfig(entityType);
-          set({ 
-            currentEntityType: entityType,
-            processedConfig: config,
-            viewMode: config.workspace?.layout || 'split',
-            groupByEmne: entityType === 'krav' || entityType === 'prosjektKrav',
-            error: null 
-          });
-        } catch (error) {
-          set({ error: error.message });
-        }
-      },
-
-      setEntities: (entities) => {
-        set({ entities });
-        get().applyFiltersAndGrouping();
-      },
-
-      setSelectedEntity: (entity) => set({ selectedEntity: entity }),
-
-      setIsLoading: (isLoading) => set({ isLoading }),
-
-      setIsEditing: (isEditing) => set({ isEditing }),
-
-      setViewMode: (viewMode) => set({ viewMode }),
-
-      setSearchTerm: (searchTerm) => {
-        set({ searchTerm });
-        get().applyFiltersAndGrouping();
-      },
-
-      setActiveFilters: (activeFilters) => {
-        set({ activeFilters });
-        get().applyFiltersAndGrouping();
-      },
-
-      setSortConfig: (sortConfig) => {
-        set({ sortConfig });
-        get().applySorting();
-      },
-
-      setError: (error) => set({ error }),
 
       clearError: () => set({ error: null }),
-
-      // Apply filters, search, and grouping
-      applyFiltersAndGrouping: () => {
-        const { entities, searchTerm, activeFilters, currentEntityType, groupByEmne, sortConfig } = get();
-        
-        // Use EntityFilterService for consistent filtering
-        let filtered = EntityFilterService.applyFilters(entities, {
-          ...activeFilters,
-          searchTerm
-        }, currentEntityType, groupByEmne);
-
-        // Apply sorting
-        const sorted = [...filtered].sort((a, b) => {
-          const aVal = a[sortConfig.field];
-          const bVal = b[sortConfig.field];
-          
-          if (aVal === bVal) return 0;
-          
-          const comparison = aVal < bVal ? -1 : 1;
-          return sortConfig.direction === 'asc' ? comparison : -comparison;
+      
+      reset: () => {
+        set({
+          currentEntityType: null,
+          modelConfig: null,
+          workspaceConfig: {},
+          selectedEntity: null,
+          searchInput: '',
+          searchQuery: '',
+          filterBy: 'all',
+          additionalFilters: {},
+          page: 1,
+          error: null
         });
-
-        // Handle grouping for krav/prosjektKrav
-        if (groupByEmne && currentEntityType && (currentEntityType === 'krav' || currentEntityType === 'prosjektKrav')) {
-          const grouped = regroupByEmne(sorted, currentEntityType);
-          const groupedMap = new Map();
-          
-          grouped.forEach(group => {
-            const emneId = group.emne?.id || 'no-emne';
-            groupedMap.set(emneId, group[currentEntityType] || []);
-          });
-
-          set({ 
-            filteredEntities: sorted,
-            groupedEntities: groupedMap 
-          });
-        } else {
-          set({ 
-            filteredEntities: sorted,
-            groupedEntities: new Map() 
-          });
-        }
       },
 
-      // Legacy method for compatibility
-      applyFilters: () => get().applyFiltersAndGrouping(),
-      applySorting: () => get().applyFiltersAndGrouping(),
-
-      // Reset all filters
-      resetFilters: () => {
+      // UI State Actions (from useEntityState)
+      setSearchInput: (searchInput) => set({ searchInput }),
+      
+      handleSearchInputChange: (value) => set({ searchInput: value }),
+      
+      handleSearch: () => {
+        const { searchInput } = get();
+        set({ searchQuery: searchInput, page: 1 });
+      },
+      
+      handleClearSearch: () => {
         set({ 
-          searchTerm: '',
-          activeFilters: {}
+          searchInput: '', 
+          searchQuery: '', 
+          page: 1 
         });
-        get().applyFiltersAndGrouping();
       },
 
-      // Create new entity
-      createEntity: async (entityData) => {
-        const { processedConfig } = get();
-        if (!processedConfig) return;
-
-        set({ isLoading: true, error: null });
-        
-        try {
-          const apiFunctions = ConfigProcessor.getAPIFunctions(processedConfig);
-          const newEntity = await apiFunctions.createFn(entityData);
-          
-          const { entities } = get();
-          set({ entities: [...entities, newEntity] });
-          get().applyFiltersAndGrouping();
-          
-          return newEntity;
-        } catch (error) {
-          set({ error: error.message });
-          throw error;
-        } finally {
-          set({ isLoading: false });
-        }
+      handleFilterChange: (filterBy) => {
+        set({ filterBy, page: 1 });
       },
 
-      // Update entity
-      updateEntity: async (id, entityData) => {
-        const { processedConfig } = get();
-        if (!processedConfig) return;
-
-        set({ isLoading: true, error: null });
-        
-        try {
-          const apiFunctions = ConfigProcessor.getAPIFunctions(processedConfig);
-          const updatedEntity = await apiFunctions.updateFn(id, entityData);
-          
-          const { entities } = get();
-          const updatedEntities = entities.map(entity => 
-            entity.id === id ? updatedEntity : entity
-          );
-          set({ entities: updatedEntities });
-          get().applyFiltersAndGrouping();
-          
-          return updatedEntity;
-        } catch (error) {
-          set({ error: error.message });
-          throw error;
-        } finally {
-          set({ isLoading: false });
-        }
+      handleSortChange: (sortBy) => {
+        set({ sortBy, page: 1 });
       },
 
-      // Delete entity
-      deleteEntity: async (id) => {
-        const { processedConfig } = get();
-        if (!processedConfig) return;
+      handleSortOrderChange: (sortOrder) => {
+        set({ sortOrder, page: 1 });
+      },
 
-        set({ isLoading: true, error: null });
+      handleAdditionalFiltersChange: (additionalFilters) => {
+        set({ additionalFilters, page: 1 });
+      },
+
+      setViewMode: (viewMode) => set({ viewMode }),
+      setGroupByEmne: (groupByEmne) => set({ groupByEmne }),
+      setShowMerknader: (showMerknader) => set({ showMerknader }),
+      setPage: (page) => set({ page }),
+      setActiveEntity: (activeEntity) => set({ activeEntity }),
+      setSelectedEntity: (selectedEntity) => set({ selectedEntity }),
+
+      // Toast actions
+      showToast: (message, type = 'success') => {
+        set({
+          toast: {
+            show: true,
+            message,
+            type
+          }
+        });
         
-        try {
-          const apiFunctions = ConfigProcessor.getAPIFunctions(processedConfig);
-          await apiFunctions.deleteFn(id);
-          
-          const { entities, selectedEntity } = get();
-          const filteredEntities = entities.filter(entity => entity.id !== id);
-          
-          set({ 
-            entities: filteredEntities,
-            selectedEntity: selectedEntity?.id === id ? null : selectedEntity
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+          set({
+            toast: {
+              show: false,
+              message: '',
+              type: 'success'
+            }
           });
-          get().applyFiltersAndGrouping();
+        }, 5000);
+      },
+
+      hideToast: () => {
+        set({
+          toast: {
+            show: false,
+            message: '',
+            type: 'success'
+          }
+        });
+      },
+
+      // Expanded state actions
+      setExpandedCards: (expandedCards) => set({ expandedCards }),
+      
+      toggleGroupCollapse: (groupKey) => {
+        const { collapsedGroups } = get();
+        const newCollapsedGroups = new Set(collapsedGroups);
+        
+        if (newCollapsedGroups.has(groupKey)) {
+          newCollapsedGroups.delete(groupKey);
+        } else {
+          newCollapsedGroups.add(groupKey);
+        }
+        
+        set({ collapsedGroups: newCollapsedGroups });
+      },
+
+      // Create new entity handler (from useEntityState)
+      handleCreateNew: (user) => {
+        const { currentEntityType, modelConfig } = get();
+        
+        if (!currentEntityType || !modelConfig) return;
+
+        // Create new entity template
+        const newEntity = {
+          id: 'create-new',
+          isNew: true,
+          // Add default fields based on entity type
+          ...(currentEntityType === 'krav' || currentEntityType === 'prosjektKrav' 
+            ? { tittel: '', beskrivelse: '', obligatorisk: false }
+            : { navn: '', beskrivelse: '' }
+          ),
+          // Add user context
+          createdBy: user?.id,
+          createdAt: new Date().toISOString(),
+        };
+
+        set({ 
+          selectedEntity: newEntity,
+          activeEntity: newEntity.id 
+        });
+      },
+
+      // Entity action handlers (integrated from useEntityActions)
+      handleSave: async (entityData, { queryClient, onSuccess, onError }) => {
+        const { currentEntityType, modelConfig } = get();
+        
+        console.log('🔧 Zustand handleSave called:', {
+          currentEntityType,
+          entityDataId: entityData?.id,
+          entityDataKeys: Object.keys(entityData || {}),
+          entityData: entityData
+        });
+        
+        try {
+          const apiConfig = EntityTypeResolver.resolveApiConfig(currentEntityType, modelConfig);
+          const isNewEntity = entityData.id === 'create-new' || entityData.isNew;
           
+          console.log('🔧 Save operation details:', {
+            isNewEntity,
+            apiConfigUpdateFn: typeof apiConfig.updateFn,
+            apiConfigCreateFn: typeof apiConfig.createFn
+          });
+          
+          let result;
+          if (isNewEntity) {
+            // Create new entity
+            const { id, isNew, ...createData } = entityData;
+            result = await apiConfig.createFn(createData);
+          } else {
+            // Update existing entity
+            result = await apiConfig.updateFn(entityData.id, entityData);
+          }
+
+          // Handle optimistic updates if needed
+          if (!isNewEntity && result) {
+            const queryKey = [currentEntityType, "workspace", "paginated"];
+            handleOptimisticEntityUpdate({
+              queryClient,
+              queryKey,
+              updatedData: result.data || result,
+              originalData: entityData,
+              entityType: currentEntityType
+            });
+          }
+
+          // Invalidate relevant caches
+          queryClient.invalidateQueries({
+            queryKey: [currentEntityType, "workspace"],
+            exact: false,
+          });
+
+          // For krav/tiltak, also invalidate combined entities
+          if (['tiltak', 'krav', 'prosjektKrav', 'prosjektTiltak'].includes(currentEntityType)) {
+            queryClient.invalidateQueries({
+              queryKey: ["combinedEntities", "workspace"],
+              exact: false,
+            });
+          }
+
+          const entityDisplayName = modelConfig.title || currentEntityType;
+          const message = isNewEntity 
+            ? `${entityDisplayName} opprettet` 
+            : `${entityDisplayName} oppdatert`;
+            
+          get().showToast(message, 'success');
+          onSuccess?.(message, 'success');
+          
+          return result;
         } catch (error) {
-          set({ error: error.message });
+          console.error(`Error saving ${currentEntityType}:`, error);
+          const message = `Feil ved lagring av ${modelConfig.title || currentEntityType}`;
+          get().showToast(message, 'error');
+          onError?.(message, 'error');
           throw error;
-        } finally {
-          set({ isLoading: false });
         }
       },
 
-      // Reset store
-      reset: () => set({
-        currentEntityType: null,
-        processedConfig: null,
-        workspaceConfig: {},
-        entities: [],
-        selectedEntity: null,
-        filteredEntities: [],
-        groupedEntities: new Map(),
-        groupByEmne: false,
-        isLoading: false,
-        isEditing: false,
-        searchTerm: '',
-        activeFilters: {},
-        sortConfig: { field: 'id', direction: 'desc' },
-        error: null
-      })
+      // Filtering methods (integrated from useEntityFiltering)
+      applyFilters: (items) => {
+        const { currentEntityType, filterBy, additionalFilters, groupByEmne } = get();
+        
+        if (!items || items.length === 0) return items;
+        
+        const combinedFilters = {
+          filterBy,
+          ...additionalFilters
+        };
+        
+        return EntityFilterService.applyFilters(
+          items, 
+          combinedFilters, 
+          currentEntityType, 
+          groupByEmne
+        );
+      },
+      
+      getFilteringInfo: (items) => {
+        const { currentEntityType, filterBy, additionalFilters, groupByEmne } = get();
+        
+        // Debug project entities specifically
+        const isProjectEntity = currentEntityType?.includes('prosjekt') || currentEntityType?.includes('project');
+        if (isProjectEntity) {
+          console.log('🔍 PROJECT entity filtering:', {
+            currentEntityType,
+            itemsLength: items?.length,
+            itemsType: Array.isArray(items) ? 'array' : typeof items,
+            groupByEmne,
+            firstItem: items?.[0],
+            firstItemKeys: items?.[0] ? Object.keys(items[0]) : [],
+            allItems: items // Log all items to see the structure
+          });
+        }
+        
+        if (!items || items.length === 0) {
+          if (isProjectEntity) {
+            console.log('⚠️ PROJECT entity has NO DATA - returning empty result');
+          }
+          return {
+            filteredItems: items || [],
+            filteredStats: { total: 0, obligatorisk: 0, optional: 0 },
+            availableStatuses: [],
+            availableVurderinger: [],
+            availableEmner: [],
+            availablePriorities: [],
+            hasActiveFilters: false,
+            activeFilterCount: 0
+          };
+        }
+
+        const combinedFilters = {
+          filterBy,
+          ...additionalFilters
+        };
+
+        // Apply filters
+        let filteredItems = EntityFilterService.applyFilters(
+          items, 
+          combinedFilters, 
+          currentEntityType, 
+          groupByEmne
+        );
+
+        // Debug project entity filtering results
+        if (isProjectEntity) {
+          console.log('🔍 PROJECT entity AFTER filtering:', {
+            originalCount: items?.length,
+            filteredCount: filteredItems?.length,
+            combinedFilters,
+            filteredItems: filteredItems
+          });
+        }
+
+        // Note: Backend should handle sorting via sortBy parameter in useEntityData
+        // Only apply client-side sorting for specific cases where backend sorting is insufficient
+        // Most sorting issues are caused by interfering with backend sorting, so we rely on that primarily
+
+        // Calculate stats
+        const filteredStats = EntityFilterService.calculateStats(
+          filteredItems, 
+          currentEntityType, 
+          groupByEmne
+        );
+
+        // Extract available filter options
+        const availableFilters = EntityFilterService.extractAvailableFilters(items, currentEntityType);
+
+        // Check if filters are active
+        const hasActiveFilters = Object.keys(combinedFilters).some(key => {
+          const value = combinedFilters[key];
+          return value && value !== 'all' && value !== '';
+        });
+
+        const activeFilterCount = Object.entries(combinedFilters).filter(([key, value]) => {
+          return value && value !== 'all' && value !== '';
+        }).length;
+
+        const result = {
+          filteredItems,
+          filteredStats,
+          availableStatuses: availableFilters.statuses,
+          availableVurderinger: availableFilters.vurderinger,
+          availableEmner: availableFilters.emner,
+          availablePriorities: availableFilters.priorities,
+          hasActiveFilters,
+          activeFilterCount,
+          combinedFilters
+        };
+
+        // Debug project entity final result
+        if (isProjectEntity) {
+          console.log('🔍 PROJECT entity FINAL RESULT:', {
+            filteredItemsCount: result.filteredItems?.length,
+            filteredStats: result.filteredStats,
+            hasActiveFilters: result.hasActiveFilters,
+            result
+          });
+        }
+
+        return result;
+      },
+
+      handleDelete: async (entity, { queryClient, onSuccess, onError }) => {
+        const { currentEntityType, modelConfig } = get();
+        
+        try {
+          const apiConfig = EntityTypeResolver.resolveApiConfig(currentEntityType, modelConfig);
+          await apiConfig.deleteFn(entity.id);
+
+          // Invalidate caches
+          queryClient.invalidateQueries({
+            queryKey: [currentEntityType, "workspace"],
+            exact: false,
+          });
+
+          if (['tiltak', 'krav', 'prosjektKrav', 'prosjektTiltak'].includes(currentEntityType)) {
+            queryClient.invalidateQueries({
+              queryKey: ["combinedEntities", "workspace"],
+              exact: false,
+            });
+          }
+
+          // Clear selected entity if it was deleted
+          const { selectedEntity } = get();
+          if (selectedEntity?.id === entity.id) {
+            set({ selectedEntity: null, activeEntity: null });
+          }
+
+          const message = `${modelConfig.title || currentEntityType} slettet`;
+          get().showToast(message, 'success');
+          onSuccess?.(message, 'success');
+        } catch (error) {
+          console.error(`Error deleting ${currentEntityType}:`, error);
+          const message = `Feil ved sletting av ${modelConfig.title || currentEntityType}`;
+          get().showToast(message, 'error');
+          onError?.(message, 'error');
+          throw error;
+        }
+      }
     }),
-    { name: 'entity-workspace-store' }
+    {
+      name: 'entity-workspace-store',
+    }
   )
 );
 
