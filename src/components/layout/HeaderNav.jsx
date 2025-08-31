@@ -3,7 +3,7 @@ import { List, Briefcase, Home, ArrowLeft, Users } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useMsal } from "@azure/msal-react";
 import { useUserStore } from "@/stores/userStore";
-import { LogoutButton } from "@/components/ui";
+import { UserProjectMenu } from "./UserProjectMenu";
 
 export default function HeaderNav({ showBackButton = false }) {
   const user = useUserStore((state) => state.user);
@@ -82,22 +82,9 @@ export default function HeaderNav({ showBackButton = false }) {
                 )}
               </ul>
             </nav>
-            {/* Show user name and logout button if logged in */}
+            {/* Modern User & Project Menu */}
             {(user || (accounts && accounts.length > 0)) && (
-              <div className="flex items-center gap-3 ml-4 p-2 rounded-lg bg-gray-50/50 border border-gray-200/50">
-                {/* Display name from either manual login or MSAL */}
-                {(user?.name || user?.navn) && (
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-xs font-medium text-blue-700">
-                        {(user?.name || user?.navn)?.charAt(0)?.toUpperCase() || "?"}
-                      </span>
-                    </div>
-                    <span className="text-sm font-medium text-gray-700 hidden sm:inline">{user?.name || user?.navn}</span>
-                  </div>
-                )}
-                <LogoutButton variant="ghost" className="hover:scale-105 transition-transform" />
-              </div>
+              <UserProjectMenu />
             )}
           </div>
         </div>

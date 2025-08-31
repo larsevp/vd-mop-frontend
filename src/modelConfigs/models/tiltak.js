@@ -147,6 +147,12 @@ export const tiltak = {
           order: 4,
           row: "emne-row",
         },
+        parentId: {
+          section: "info", // Parent relationship
+          order: 4,
+          row: "emne-row", // Group with reference fields
+        },
+
         merknad: {
           section: "info", // Administrative notes
           order: 4,
@@ -182,11 +188,6 @@ export const tiltak = {
         },
 
         // Reference and relationship information
-        parentId: {
-          section: "references", // Parent relationship
-          order: 8,
-          row: "reference-row", // Group with reference fields
-        },
 
         // Administrative information - context and requirements
         obligatorisk: {

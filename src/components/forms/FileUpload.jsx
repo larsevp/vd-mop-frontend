@@ -67,7 +67,7 @@ const FileUpload = ({
 
   // Load existing files for this model
   useEffect(() => {
-    if (modelId && modelType) {
+    if (modelId && modelType && modelId !== "create-new") {
       loadFiles();
     } else {
       setLoading(false);

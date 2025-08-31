@@ -68,13 +68,17 @@ const ErrorDisplay = ({ error }) => {
 const FieldRenderer = ({ field, value, onChange, error, form, entity, modelName, isEditing }) => {
   const Component = FieldResolver.getFieldComponent(field, modelName);
 
+  // Derive entityType from modelName for inheritance context
+  const entityType = modelName === 'prosjektTiltak' ? 'prosjektTiltak' : 
+                     modelName === 'tiltak' ? 'tiltak' : 
+                     modelName;
 
   // Check if the component handles its own label
   const componentHandlesOwnLabel = modelName && FieldResolver.getModelSpecificFields(modelName).fieldNames?.[field.name];
 
   if (componentHandlesOwnLabel) {
     // Component handles its own label
-    return <Component field={field} value={value} onChange={onChange} error={error} form={form} row={entity} modelName={modelName} />;
+    return <Component field={field} value={value} onChange={onChange} error={error} form={form} row={entity} modelName={modelName} entityType={entityType} />;
   }
 
   // For view mode, render value differently
@@ -88,7 +92,7 @@ const FieldRenderer = ({ field, value, onChange, error, form, entity, modelName,
     );
 
     return (
-      <div className="mb-6">
+      <div className="mb-6" key={`${entity?.id}-${field.name}`}>
         <div className="flex items-center gap-1 mb-2">
           <label className="block text-sm font-medium text-gray-700">
             {field.label}
@@ -96,7 +100,7 @@ const FieldRenderer = ({ field, value, onChange, error, form, entity, modelName,
           </label>
           <InfoIcon info={field.field_info} />
         </div>
-        <div className="text-gray-900">{displayValue}</div>
+        <div className="text-gray-900" key={`${entity?.id}-${field.name}-value`}>{displayValue}</div>
       </div>
     );
   }
@@ -114,7 +118,7 @@ const FieldRenderer = ({ field, value, onChange, error, form, entity, modelName,
       {/* Add error boundary for Component rendering */}
       {(() => {
         try {
-          return <Component field={field} value={value} onChange={onChange} error={error} form={form} row={entity} modelName={modelName} />;
+          return <Component field={field} value={value} onChange={onChange} error={error} form={form} row={entity} modelName={modelName} entityType={entityType} />;
         } catch (renderError) {
           if (field.name === 'kravreferansetypeId') {
             console.error('🔍 kravreferansetypeId Component render error:', renderError);

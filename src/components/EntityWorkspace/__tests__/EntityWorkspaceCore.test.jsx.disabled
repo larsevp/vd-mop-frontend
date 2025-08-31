@@ -1,0 +1,460 @@
+import React from 'react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { BrowserRouter } from 'react-router-dom';
+import EntityWorkspaceCore from '../EntityWorkspaceCore';
+
+// Mock all the hooks
+jest.mock('../hooks/useEntityData');
+jest.mock('../hooks/useEntityState');
+jest.mock('../hooks/useEntityFiltering');
+jest.mock('../hooks/useEntityActions');
+jest.mock('../hooks/useEntityPermissions');
+jest.mock('../services/EntityTypeResolver');
+jest.mock('@/stores/userStore');
+
+import { useEntityData } from '../hooks/useEntityData';
+import { useEntityState } from '../hooks/useEntityState';
+import { useEntityFiltering } from '../hooks/useEntityFiltering';
+import { useEntityActions } from '../hooks/useEntityActions';
+import { useEntityPermissions } from '../hooks/useEntityPermissions';
+import { EntityTypeResolver } from '../services/EntityTypeResolver';
+import { useUserStore } from '@/stores/userStore';
+
+// Mock shared components
+jest.mock('../shared', () => ({
+  SearchBar: ({ onSearch, searchInput, onSearchInputChange }) => (
+    <div>
+      <input 
+        value={searchInput} 
+        onChange={(e) => onSearchInputChange(e.target.value)}
+        placeholder="Search..."
+      />
+      <button onClick={onSearch}>Search</button>
+    </div>
+  ),
+  HeaderSearchBar: ({ onSearch, searchInput, onSearchInputChange }) => (
+    <div>
+      <input 
+        value={searchInput} 
+        onChange={(e) => onSearchInputChange(e.target.value)}
+        placeholder="Header Search..."
+      />
+      <button onClick={onSearch}>Search</button>
+    </div>
+  ),
+  EntityFilters: () => <div>Entity Filters</div>,
+  ViewOptionsMenu: () => <div>View Options</div>
+}));
+
+jest.mock('../components/EntityCardList', () => ({ items, onCreateNew }) => (
+  <div>
+    <div>Card List with {items?.length || 0} items</div>
+    <button onClick={onCreateNew}>Create New Card</button>
+  </div>
+));
+
+jest.mock('../layouts/EntitySplitView', () => ({ items, onCreateNew }) => (
+  <div>
+    <div>Split View with {items?.length || 0} items</div>
+    <button onClick={onCreateNew}>Create New Split</button>
+  </div>
+));
+
+describe('EntityWorkspaceCore', () => {
+  let queryClient;
+  
+  const mockUser = {
+    id: 1,
+    navn: 'Test User',
+    enhetId: 1
+  };
+
+  const mockModelConfig = {
+    title: 'Test Entity',
+    workspace: {
+      features: {
+        grouping: true,
+        search: true,
+        filters: true
+      }
+    }
+  };
+
+  const mockEntityData = {
+    items: [
+      { id: 1, tittel: 'Test Item 1' },
+      { id: 2, tittel: 'Test Item 2' }
+    ],
+    stats: { total: 2, obligatorisk: 1, optional: 1 },
+    isLoading: false,
+    isFetching: false,
+    isError: false,
+    hasData: true,
+    isEmpty: false
+  };
+
+  const mockState = {
+    page: 1,
+    pageSize: 50,
+    searchQuery: '',
+    searchInput: '',
+    sortBy: 'updatedAt',
+    sortOrder: 'desc',
+    filterBy: 'all',
+    additionalFilters: {},
+    groupByEmne: true,
+    showMerknader: false,
+    collapsedGroups: new Set(),
+    expandedCards: new Map(),
+    activeEntity: null,
+    toast: { show: false, message: '', type: 'info' },
+    handleSearch: jest.fn(),
+    handleClearSearch: jest.fn(),
+    handleSearchInputChange: jest.fn(),
+    handleFilterChange: jest.fn(),
+    handleAdditionalFiltersChange: jest.fn(),
+    handleSortChange: jest.fn(),
+    handleSortOrderChange: jest.fn(),
+    toggleGroupCollapse: jest.fn(),
+    setExpandedCards: jest.fn(),
+    setActiveEntity: jest.fn(),
+    handleCreateNew: jest.fn(),
+    showToast: jest.fn(),
+    hideToast: jest.fn(),
+    setGroupByEmne: jest.fn(),
+    setShowMerknader: jest.fn(),
+    setViewMode: jest.fn()
+  };
+
+  const mockFiltering = {
+    filteredItems: mockEntityData.items,
+    filteredStats: mockEntityData.stats,
+    availableStatuses: ['Aktiv', 'Inaktiv'],
+    availableVurderinger: ['Høy', 'Lav'],
+    hasActiveFilters: false,
+    activeFilterCount: 0
+  };
+
+  const mockActions = {
+    handleSave: jest.fn(),
+    handleDelete: jest.fn(),
+    handleCreate: jest.fn(),
+    handleUpdate: jest.fn(),
+    isLoading: false,
+    canCreate: true,
+    canUpdate: true,
+    canDelete: true
+  };
+
+  const mockPermissions = {
+    canCreate: true,
+    canEdit: true,
+    canDelete: true,
+    createButtonText: 'Nytt Test Entity',
+    editButtonText: 'Rediger',
+    workspacePermissions: {},
+    resolveEntityPermissions: jest.fn()
+  };
+
+  beforeEach(() => {
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false }
+      }
+    });
+
+    // Setup mock implementations
+    useUserStore.mockReturnValue({ user: mockUser });
+    EntityTypeResolver.resolveModelConfig.mockReturnValue(mockModelConfig);
+    EntityTypeResolver.getDisplayName.mockReturnValue('Test Entity');
+    useEntityData.mockReturnValue(mockEntityData);
+    useEntityState.mockReturnValue(mockState);
+    useEntityFiltering.mockReturnValue(mockFiltering);
+    useEntityActions.mockReturnValue(mockActions);
+    useEntityPermissions.mockReturnValue(mockPermissions);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const renderComponent = (props = {}) => {
+    const defaultProps = {
+      modelConfig: mockModelConfig,
+      entityType: 'krav',
+      workspaceConfig: {}
+    };
+
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <EntityWorkspaceCore {...defaultProps} {...props} />
+        </BrowserRouter>
+      </QueryClientProvider>
+    );
+  };
+
+  describe('Component Rendering', () => {
+    it('should render successfully with default props', () => {
+      renderComponent();
+      
+      expect(screen.getByText('Test Entityhåndtering')).toBeInTheDocument();
+      expect(screen.getByText('Card List with 2 items')).toBeInTheDocument();
+    });
+
+    it('should render loading state when data is loading', () => {
+      useEntityData.mockReturnValue({
+        ...mockEntityData,
+        isLoading: true,
+        hasData: false
+      });
+
+      renderComponent();
+      
+      expect(screen.getByText('Laster test entity...')).toBeInTheDocument();
+      expect(screen.getByRole('progressbar', { hidden: true })).toBeInTheDocument();
+    });
+
+    it('should render error state when data loading fails', () => {
+      useEntityData.mockReturnValue({
+        ...mockEntityData,
+        isError: true,
+        hasData: false,
+        error: new Error('Failed to load')
+      });
+
+      renderComponent();
+      
+      expect(screen.getByText('Feil ved lasting av test entity')).toBeInTheDocument();
+      expect(screen.getByText('Prøv igjen')).toBeInTheDocument();
+    });
+
+    it('should render split view when layout is split', () => {
+      const splitConfig = {
+        ...mockModelConfig,
+        workspace: {
+          ...mockModelConfig.workspace,
+          layout: 'split'
+        }
+      };
+
+      renderComponent({ 
+        modelConfig: splitConfig,
+        workspaceConfig: { layout: 'split' }
+      });
+      
+      expect(screen.getByText('Split View with 2 items')).toBeInTheDocument();
+      expect(screen.getByText('Tilbake')).toBeInTheDocument();
+    });
+  });
+
+  describe('Search Functionality', () => {
+    it('should handle search input and execution', () => {
+      renderComponent();
+      
+      const searchInput = screen.getByPlaceholderText('Search...');
+      const searchButton = screen.getByText('Search');
+      
+      fireEvent.change(searchInput, { target: { value: 'test search' } });
+      expect(mockState.handleSearchInputChange).toHaveBeenCalledWith('test search');
+      
+      fireEvent.click(searchButton);
+      expect(mockState.handleSearch).toHaveBeenCalled();
+    });
+
+    it('should not render search when feature is disabled', () => {
+      const configWithoutSearch = {
+        ...mockModelConfig,
+        workspace: {
+          ...mockModelConfig.workspace,
+          features: { ...mockModelConfig.workspace.features, search: false }
+        }
+      };
+
+      renderComponent({ modelConfig: configWithoutSearch });
+      
+      expect(screen.queryByPlaceholderText('Search...')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Create New Functionality', () => {
+    it('should render create button when user has permission', () => {
+      renderComponent();
+      
+      const createButton = screen.getByText('Nytt Test Entity');
+      expect(createButton).toBeInTheDocument();
+    });
+
+    it('should not render create button when user lacks permission', () => {
+      useEntityPermissions.mockReturnValue({
+        ...mockPermissions,
+        canCreate: false
+      });
+
+      renderComponent();
+      
+      expect(screen.queryByText('Nytt Test Entity')).not.toBeInTheDocument();
+    });
+
+    it('should handle create new entity', () => {
+      renderComponent();
+      
+      const createButton = screen.getByText('Nytt Test Entity');
+      fireEvent.click(createButton);
+      
+      expect(mockState.handleCreateNew).toHaveBeenCalledWith(mockUser);
+    });
+  });
+
+  describe('Statistics Display', () => {
+    it('should display entity statistics correctly', () => {
+      renderComponent();
+      
+      expect(screen.getByText('2 test entity totalt')).toBeInTheDocument();
+      expect(screen.getByText('1 obligatoriske')).toBeInTheDocument();
+      expect(screen.getByText('1 valgfrie')).toBeInTheDocument();
+    });
+
+    it('should display filtered statistics', () => {
+      useEntityFiltering.mockReturnValue({
+        ...mockFiltering,
+        filteredStats: { total: 1, obligatorisk: 1, optional: 0 },
+        hasActiveFilters: true,
+        activeFilterCount: 2
+      });
+
+      renderComponent();
+      
+      expect(screen.getByText(/med 2 filter/)).toBeInTheDocument();
+    });
+  });
+
+  describe('Hook Integration', () => {
+    it('should call all hooks with correct parameters', () => {
+      renderComponent();
+      
+      expect(useEntityData).toHaveBeenCalledWith({
+        entityType: 'krav',
+        modelConfig: mockModelConfig,
+        page: 1,
+        pageSize: 50,
+        searchQuery: '',
+        sortBy: 'updatedAt',
+        sortOrder: 'desc',
+        groupByEmne: true
+      });
+
+      expect(useEntityState).toHaveBeenCalledWith({
+        entityType: 'krav',
+        initialConfig: expect.objectContaining({
+          groupByEmne: true,
+          sortBy: 'updatedAt',
+          sortOrder: 'desc'
+        })
+      });
+
+      expect(useEntityFiltering).toHaveBeenCalledWith({
+        items: mockEntityData.items,
+        entityType: 'krav',
+        groupByEmne: true,
+        filters: { filterBy: 'all' },
+        additionalFilters: {}
+      });
+
+      expect(useEntityActions).toHaveBeenCalledWith({
+        entityType: 'krav',
+        modelConfig: mockModelConfig,
+        onSuccess: mockState.showToast,
+        onError: mockState.showToast
+      });
+
+      expect(useEntityPermissions).toHaveBeenCalledWith({
+        entityType: 'krav',
+        modelConfig: mockModelConfig,
+        workspaceConfig: expect.any(Object),
+        user: mockUser
+      });
+    });
+  });
+
+  describe('Toast Notifications', () => {
+    it('should render toast when visible', () => {
+      useEntityState.mockReturnValue({
+        ...mockState,
+        toast: { show: true, message: 'Test message', type: 'success' }
+      });
+
+      renderComponent();
+      
+      // Toast component should be rendered (mocked in this test)
+      expect(screen.getByText('Test message')).toBeInTheDocument();
+    });
+
+    it('should hide toast when hideToast is called', () => {
+      useEntityState.mockReturnValue({
+        ...mockState,
+        toast: { show: true, message: 'Test message', type: 'success' }
+      });
+
+      renderComponent();
+      
+      // Simulate toast close
+      fireEvent.click(screen.getByText('×')); // Assuming toast has close button
+      expect(mockState.hideToast).toHaveBeenCalled();
+    });
+  });
+
+  describe('SOLID Principles Compliance', () => {
+    it('should delegate data fetching to useEntityData hook', () => {
+      renderComponent();
+      expect(useEntityData).toHaveBeenCalled();
+    });
+
+    it('should delegate state management to useEntityState hook', () => {
+      renderComponent();
+      expect(useEntityState).toHaveBeenCalled();
+    });
+
+    it('should delegate filtering to useEntityFiltering hook', () => {
+      renderComponent();
+      expect(useEntityFiltering).toHaveBeenCalled();
+    });
+
+    it('should delegate actions to useEntityActions hook', () => {
+      renderComponent();
+      expect(useEntityActions).toHaveBeenCalled();
+    });
+
+    it('should delegate permissions to useEntityPermissions hook', () => {
+      renderComponent();
+      expect(useEntityPermissions).toHaveBeenCalled();
+    });
+
+    it('should use EntityTypeResolver for configuration resolution', () => {
+      renderComponent();
+      expect(EntityTypeResolver.resolveModelConfig).toHaveBeenCalledWith('krav');
+      expect(EntityTypeResolver.getDisplayName).toHaveBeenCalled();
+    });
+  });
+
+  describe('Configuration Merging', () => {
+    it('should merge workspace configs correctly', () => {
+      const customWorkspaceConfig = {
+        layout: 'split',
+        features: { search: false }
+      };
+
+      renderComponent({ workspaceConfig: customWorkspaceConfig });
+      
+      // Verify configuration is properly merged and passed to hooks
+      expect(useEntityState).toHaveBeenCalledWith({
+        entityType: 'krav',
+        initialConfig: expect.objectContaining({
+          groupByEmne: true // Should still inherit from model config
+        })
+      });
+    });
+  });
+});

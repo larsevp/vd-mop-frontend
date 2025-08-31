@@ -17,21 +17,7 @@ export const MODEL_SPECIFIC_FIELDS = {
 
     // Field type overrides for this model
     fieldTypes: {
-      // Override kravselect behavior for Krav model to add hierarchy prevention
-      kravselect: ({ field, value, onChange, error, row }) => (
-        <KravSelect
-          name={field.name}
-          value={value}
-          onChange={onChange}
-          label={field.label}
-          required={field.required}
-          placeholder={field.placeholder || "Underkrav av annet krav?"}
-          excludeId={row?.id}
-          allowEmpty={!field.required}
-          emptyLabel="Ingen tilhørlighet"
-        />
-      ),
-
+      // No field type overrides for krav - uses general entityTypes instead
     },
   },
 
@@ -92,6 +78,16 @@ export const MODEL_VALIDATION_RULES = {
     //   }
     //   return null;
     // },
+  },
+
+  prosjektKrav: {
+    // Custom validation for specific fields in ProsjektKrav model
+    tittel: (value) => {
+      if (value && value.length < 3) {
+        return "Tittel må være minst 3 tegn";
+      }
+      return null;
+    },
   },
 
   user: {

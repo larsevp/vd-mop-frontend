@@ -10,6 +10,7 @@ interface Emne {
   tittel: string;
   icon?: string;
   color?: string;
+  sortIt?: number;
 }
 
 interface EmneSelectProps {
@@ -56,10 +57,32 @@ export function EmneSelect({
     queryFn: getEmner,
     select: (response: any): Emne[] => {
       const data = Array.isArray(response) ? response : response.data || [];
+
+      // Sort by sortIt first, then by id as fallback (respect backend ordering)
       return data.sort((a: Emne, b: Emne) => {
-        const aNavn = a.tittel || "";
-        const bNavn = b.tittel || "";
-        return aNavn.localeCompare(bNavn);
+        const aSortIt = a.sortIt;
+        const bSortIt = b.sortIt;
+
+        // Handle null/undefined sortIt values
+        if (aSortIt === null || aSortIt === undefined) {
+          if (bSortIt === null || bSortIt === undefined) {
+            // Both null - sort by id
+            return (a.id || 0) - (b.id || 0);
+          }
+          return 1; // a is null, goes after b
+        }
+
+        if (bSortIt === null || bSortIt === undefined) {
+          return -1; // b is null, a goes before b
+        }
+
+        // Both have sortIt values
+        if (aSortIt !== bSortIt) {
+          return aSortIt - bSortIt;
+        }
+
+        // Same sortIt - sort by id as tiebreaker
+        return (a.id || 0) - (b.id || 0);
       });
     },
   });

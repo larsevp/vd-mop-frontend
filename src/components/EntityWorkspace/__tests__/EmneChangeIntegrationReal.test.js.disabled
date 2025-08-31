@@ -1,0 +1,365 @@
+/**
+ * EmneChangeIntegrationReal.test.js
+ * INTEGRATION TESTS with REAL API calls
+ * These tests will actually call the backend to detect real-world bugs
+ */
+
+import { renderHook, act, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useEntityData } from '../hooks/useEntityData';
+import { useEntityFiltering } from '../hooks/useEntityFiltering';
+import { useEntityActions } from '../hooks/useEntityActions';
+import React from 'react';
+
+// Import REAL API functions
+import { getPaginatedKravGroupedByEmne, updateKrav } from '@/api/endpoints/models/krav';
+import { getPaginatedProsjektKravGroupedByEmne, updateProsjektKrav } from '@/api/endpoints/models/prosjektKrav';
+
+// Only run these tests when INTEGRATION_TESTS env var is set
+// Run with: INTEGRATION_TESTS=true npm test -- EmneChangeIntegrationReal
+const isIntegrationTestMode = process.env.INTEGRATION_TESTS === 'true';
+
+const skipIfNotIntegrationMode = isIntegrationTestMode ? describe : describe.skip;
+
+skipIfNotIntegrationMode('Emne Change Integration Tests - REAL API', () => {
+  let queryClient;
+  let testKravId = null;
+  let testProsjektKravId = null;
+  let originalEmneId = null;
+  let newEmneId = null;
+
+  beforeAll(async () => {
+    console.log('🔥 RUNNING INTEGRATION TESTS WITH REAL API');
+    console.log('📡 Backend URL:', process.env.VITE_API_URL || 'http://localhost:3001/api');
+    
+    // Setup test data - find existing krav to use for testing
+    try {
+      const kravResponse = await getPaginatedKravGroupedByEmne(1, 10, '', 'updatedAt', 'desc');
+      const kravData = kravResponse.data;
+      
+      if (kravData.items && kravData.items.length > 0) {
+        const firstGroup = kravData.items[0];
+        if (firstGroup.krav && firstGroup.krav.length > 0) {
+          testKravId = firstGroup.krav[0].id;
+          originalEmneId = firstGroup.krav[0].emne?.id || null;
+          
+          console.log(`📋 Using test krav ID: ${testKravId}`);
+          console.log(`🎯 Original emne ID: ${originalEmneId}`);
+        }
+      }
+
+      // Find another emne to change to
+      let availableEmneIds = [];
+      kravData.items.forEach(group => {
+        if (group.emne && group.emne.id !== originalEmneId) {
+          availableEmneIds.push(group.emne.id);
+        }
+      });
+      
+      if (availableEmneIds.length > 0) {
+        newEmneId = availableEmneIds[0];
+        console.log(`🔄 Will change to emne ID: ${newEmneId}`);
+      } else {
+        console.warn('⚠️ No alternative emne found for testing');
+      }
+
+    } catch (error) {
+      console.error('❌ Failed to setup test data:', error);
+    }
+  });
+
+  beforeEach(() => {
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false, cacheTime: 0 },
+        mutations: { retry: false }
+      }
+    });
+  });
+
+  const wrapper = ({ children }) => (
+    <QueryClientProvider client={queryClient}>
+      {children}
+    </QueryClientProvider>
+  );
+
+  describe('Real Krav Emne Change Flow', () => {
+    it('should maintain krav visibility when emne changes (REAL API)', async () => {
+      if (!testKravId || !newEmneId) {
+        console.warn('⏭️ Skipping test - insufficient test data');
+        return;
+      }
+
+      const modelConfig = {
+        title: 'Krav',
+        queryFnGroupedByEmne: getPaginatedKravGroupedByEmne,
+        updateFn: updateKrav,
+        workspace: { features: { grouping: true } }
+      };
+
+      // Step 1: Initial data fetch
+      console.log('📊 Step 1: Fetching initial data...');
+      const { result: dataResult } = renderHook(
+        () => useEntityData({
+          entityType: 'krav',
+          modelConfig,
+          page: 1,
+          pageSize: 50,
+          searchQuery: '',
+          sortBy: 'updatedAt',
+          sortOrder: 'desc',
+          groupByEmne: true
+        }),
+        { wrapper }
+      );
+
+      await waitFor(() => {
+        expect(dataResult.current.isLoading).toBe(false);
+      }, { timeout: 5000 });
+
+      console.log('✅ Initial data loaded:', {
+        itemCount: dataResult.current.items?.length,
+        totalCount: dataResult.current.stats?.total
+      });
+
+      // Find our test krav in the results
+      let testKrav = null;
+      let originalGroupIndex = -1;
+      
+      dataResult.current.items.forEach((group, groupIndex) => {
+        if (group.krav) {
+          const foundKrav = group.krav.find(k => k.id === testKravId);
+          if (foundKrav) {
+            testKrav = foundKrav;
+            originalGroupIndex = groupIndex;
+          }
+        }
+      });
+
+      console.log('🎯 Found test krav:', testKrav ? 'Yes' : 'No');
+      if (testKrav) {
+        console.log(`📍 Original position: Group ${originalGroupIndex}, Emne: ${testKrav.emne?.tittel}`);
+      }
+
+      expect(testKrav).toBeTruthy();
+
+      // Step 2: Setup filtering to track visibility
+      const { result: filterResult } = renderHook(
+        () => useEntityFiltering({
+          items: dataResult.current.items,
+          entityType: 'krav',
+          groupByEmne: true,
+          filters: { filterBy: 'all' },
+          additionalFilters: {}
+        })
+      );
+
+      const initialFilteredCount = filterResult.current.filteredStats.total;
+      console.log(`🔍 Initial filtered count: ${initialFilteredCount}`);
+
+      // Step 3: Update krav emne
+      console.log(`🔄 Step 3: Updating krav ${testKravId} emne to ${newEmneId}...`);
+      
+      const { result: actionsResult } = renderHook(
+        () => useEntityActions({
+          entityType: 'krav',
+          modelConfig,
+          onSuccess: (message) => console.log('✅ Success:', message),
+          onError: (message) => console.error('❌ Error:', message)
+        }),
+        { wrapper }
+      );
+
+      let updateResult;
+      await act(async () => {
+        updateResult = await actionsResult.current.handleUpdate(testKravId, {
+          emneId: newEmneId
+        });
+      });
+
+      console.log('📝 Update result:', updateResult ? 'Success' : 'Failed');
+
+      // Step 4: Refetch data and check visibility
+      console.log('🔄 Step 4: Refetching data after emne change...');
+      
+      await act(async () => {
+        await dataResult.current.refetch();
+      });
+
+      await waitFor(() => {
+        expect(dataResult.current.isFetching).toBe(false);
+      }, { timeout: 5000 });
+
+      console.log('✅ Data refetched:', {
+        itemCount: dataResult.current.items?.length,
+        totalCount: dataResult.current.stats?.total
+      });
+
+      // Find the krav again after update
+      let updatedKrav = null;
+      let newGroupIndex = -1;
+      
+      dataResult.current.items.forEach((group, groupIndex) => {
+        if (group.krav) {
+          const foundKrav = group.krav.find(k => k.id === testKravId);
+          if (foundKrav) {
+            updatedKrav = foundKrav;
+            newGroupIndex = groupIndex;
+          }
+        }
+      });
+
+      console.log('🎯 Found updated krav:', updatedKrav ? 'Yes' : 'No');
+      if (updatedKrav) {
+        console.log(`📍 New position: Group ${newGroupIndex}, Emne: ${updatedKrav.emne?.tittel}`);
+      } else {
+        console.error('🚨 BUG DETECTED: Krav disappeared after emne change!');
+        console.log('🔍 Current groups:');
+        dataResult.current.items.forEach((group, i) => {
+          console.log(`  Group ${i}: ${group.emne?.tittel} (${group.krav?.length || 0} krav)`);
+        });
+      }
+
+      // The critical assertion - krav should still be visible
+      expect(updatedKrav).toBeTruthy();
+      expect(updatedKrav.emneId).toBe(newEmneId);
+
+      // Step 5: Check filtering doesn't hide the updated entity
+      console.log('🔍 Step 5: Checking filtered results...');
+      
+      // Re-run filtering with updated data
+      const { result: updatedFilterResult } = renderHook(
+        () => useEntityFiltering({
+          items: dataResult.current.items,
+          entityType: 'krav',
+          groupByEmne: true,
+          filters: { filterBy: 'all' },
+          additionalFilters: {}
+        })
+      );
+
+      const finalFilteredCount = updatedFilterResult.current.filteredStats.total;
+      console.log(`🔍 Final filtered count: ${finalFilteredCount}`);
+
+      // The entity count should remain the same (just moved to different group)
+      expect(finalFilteredCount).toBe(initialFilteredCount);
+
+    }, 15000); // Longer timeout for real API calls
+
+    it('should detect if active filters cause entity to disappear after emne change (REAL API)', async () => {
+      if (!testKravId || !originalEmneId || !newEmneId) {
+        console.warn('⏭️ Skipping filter test - insufficient test data');
+        return;
+      }
+
+      console.log('🔍 Testing filter interaction during emne change...');
+
+      const modelConfig = {
+        title: 'Krav',
+        queryFnGroupedByEmne: getPaginatedKravGroupedByEmne,
+        updateFn: updateKrav,
+        workspace: { features: { grouping: true } }
+      };
+
+      // Fetch initial data
+      const { result: dataResult } = renderHook(
+        () => useEntityData({
+          entityType: 'krav',
+          modelConfig,
+          page: 1,
+          pageSize: 50,
+          searchQuery: '',
+          sortBy: 'updatedAt',
+          sortOrder: 'desc',
+          groupByEmne: true
+        }),
+        { wrapper }
+      );
+
+      await waitFor(() => {
+        expect(dataResult.current.isLoading).toBe(false);
+      });
+
+      // Setup filtering with specific emne filter (this might be the bug source!)
+      const { result: filterResult, rerender } = renderHook(
+        ({ additionalFilters }) => useEntityFiltering({
+          items: dataResult.current.items,
+          entityType: 'krav',
+          groupByEmne: true,
+          filters: { filterBy: 'all' },
+          additionalFilters
+        }),
+        { 
+          wrapper,
+          initialProps: { additionalFilters: {} }
+        }
+      );
+
+      // Count entities without any filters
+      const countWithoutFilters = filterResult.current.filteredStats.total;
+      console.log(`📊 Entities without filters: ${countWithoutFilters}`);
+
+      // Now apply an emne filter for the ORIGINAL emne
+      rerender({ additionalFilters: { emne: originalEmneId } });
+      
+      const countWithOriginalEmneFilter = filterResult.current.filteredStats.total;
+      console.log(`📊 Entities with original emne filter: ${countWithOriginalEmneFilter}`);
+
+      // Change the krav to new emne (but keep the filter for original emne)
+      const { result: actionsResult } = renderHook(
+        () => useEntityActions({
+          entityType: 'krav',
+          modelConfig,
+          onSuccess: () => {},
+          onError: () => {}
+        }),
+        { wrapper }
+      );
+
+      await act(async () => {
+        await actionsResult.current.handleUpdate(testKravId, {
+          emneId: newEmneId
+        });
+      });
+
+      // Refetch data
+      await act(async () => {
+        await dataResult.current.refetch();
+      });
+
+      // The bug: If filter is still set to original emne, updated entity might disappear!
+      rerender({ additionalFilters: { emne: originalEmneId } });
+      
+      const countAfterEmneChangeWithOldFilter = filterResult.current.filteredStats.total;
+      console.log(`📊 Entities after emne change with old filter: ${countAfterEmneChangeWithOldFilter}`);
+
+      if (countAfterEmneChangeWithOldFilter < countWithOriginalEmneFilter) {
+        console.log('🚨 POTENTIAL BUG: Entity count decreased when emne changed but filter remained on old emne!');
+        console.log('This suggests entities disappear when their emne changes but user has active emne filters');
+      }
+
+      // Remove filters - entity should be visible again
+      rerender({ additionalFilters: {} });
+      
+      const finalCountWithoutFilters = filterResult.current.filteredStats.total;
+      console.log(`📊 Final count without filters: ${finalCountWithoutFilters}`);
+
+      // Total count should remain the same
+      expect(finalCountWithoutFilters).toBe(countWithoutFilters);
+
+    }, 15000);
+  });
+
+  afterAll(async () => {
+    // Cleanup: Restore original emne if we changed it
+    if (testKravId && originalEmneId) {
+      try {
+        console.log(`🧹 Cleanup: Restoring krav ${testKravId} to original emne ${originalEmneId}`);
+        await updateKrav({ id: testKravId, emneId: originalEmneId });
+        console.log('✅ Cleanup completed');
+      } catch (error) {
+        console.warn('⚠️ Cleanup failed:', error.message);
+      }
+    }
+  });
+});

@@ -29,6 +29,16 @@ const EntityCardList = ({
   renderIcon,
   user,
 }) => {
+  // Debug logging for ProsjektKrav
+  if (entityType === 'prosjekt-krav') {
+    console.log('🔍 EntityCardList received data:', { 
+      entityType,
+      itemsLength: Array.isArray(items) ? items.length : 'not array',
+      groupByEmne,
+      firstItem: Array.isArray(items) && items[0] ? Object.keys(items[0]) : 'none',
+      items: items
+    });
+  }
   // Card expansion handlers
   const handleExpandCard = useCallback(
     (entity, mode = "view") => {

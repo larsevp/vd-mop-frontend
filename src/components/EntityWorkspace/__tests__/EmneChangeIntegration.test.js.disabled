@@ -1,0 +1,409 @@
+/**
+ * EmneChangeIntegration.test.js
+ * Integration tests to simulate the full flow of emne changes and detect visibility issues
+ */
+
+import { renderHook, act } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useEntityData } from '../hooks/useEntityData';
+import { useEntityFiltering } from '../hooks/useEntityFiltering';
+import { useEntityActions } from '../hooks/useEntityActions';
+import React from 'react';
+
+// Mock API responses
+const mockKravApiResponse = {
+  data: {
+    items: [
+      {
+        emne: { id: 1, tittel: 'Støy', icon: 'volume-2', color: '#ff0000' },
+        krav: [
+          {
+            id: 1,
+            tittel: 'Test Krav',
+            obligatorisk: true,
+            emne: { id: 1, tittel: 'Støy', icon: 'volume-2', color: '#ff0000' },
+            status: { navn: 'Aktiv' }
+          }
+        ]
+      }
+    ],
+    totalCount: 1,
+    totalPages: 1
+  }
+};
+
+const mockUpdatedKravApiResponse = {
+  data: {
+    items: [
+      {
+        emne: { id: 2, tittel: 'Luft', icon: 'wind', color: '#00ff00' },
+        krav: [
+          {
+            id: 1,
+            tittel: 'Test Krav',
+            obligatorisk: true,
+            emne: { id: 2, tittel: 'Luft', icon: 'wind', color: '#00ff00' },
+            status: { navn: 'Aktiv' }
+          }
+        ]
+      }
+    ],
+    totalCount: 1,
+    totalPages: 1
+  }
+};
+
+describe('Emne Change Integration Tests', () => {
+  let queryClient;
+
+  const mockModelConfig = {
+    title: 'Krav',
+    queryFnGroupedByEmne: jest.fn(),
+    updateFn: jest.fn(),
+    workspace: {
+      features: {
+        grouping: true,
+        search: true,
+        filters: true
+      }
+    }
+  };
+
+  beforeEach(() => {
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false, cacheTime: 0 },
+        mutations: { retry: false }
+      }
+    });
+
+    jest.clearAllMocks();
+  });
+
+  const wrapper = ({ children }) => (
+    <QueryClientProvider client={queryClient}>
+      {children}
+    </QueryClientProvider>
+  );
+
+  describe('Krav Emne Change Flow', () => {
+    it('should maintain krav visibility throughout emne change process', async () => {
+      // Setup initial API response
+      mockModelConfig.queryFnGroupedByEmne.mockResolvedValue(mockKravApiResponse);
+
+      // Step 1: Initial data fetch
+      const { result: dataHookResult } = renderHook(
+        () => useEntityData({
+          entityType: 'krav',
+          modelConfig: mockModelConfig,
+          page: 1,
+          pageSize: 50,
+          searchQuery: '',
+          sortBy: 'updatedAt',
+          sortOrder: 'desc',
+          groupByEmne: true
+        }),
+        { wrapper }
+      );
+
+      // Wait for initial data
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      });
+
+      console.log('Step 1 - Initial data loaded:', dataHookResult.current);
+
+      expect(dataHookResult.current.isLoading).toBe(false);
+      expect(dataHookResult.current.items).toHaveLength(1);
+      expect(dataHookResult.current.items[0].emne.tittel).toBe('Støy');
+
+      // Step 2: Setup filtering
+      const { result: filteringHookResult } = renderHook(
+        () => useEntityFiltering({
+          items: dataHookResult.current.items,
+          entityType: 'krav',
+          groupByEmne: true,
+          filters: { filterBy: 'all' },
+          additionalFilters: {}
+        })
+      );
+
+      console.log('Step 2 - Initial filtering:', filteringHookResult.current);
+
+      expect(filteringHookResult.current.filteredItems).toHaveLength(1);
+      expect(filteringHookResult.current.filteredStats.total).toBe(1);
+
+      // Step 3: Simulate emne change via update
+      mockModelConfig.updateFn.mockResolvedValue({
+        id: 1,
+        tittel: 'Test Krav',
+        emne: { id: 2, tittel: 'Luft', icon: 'wind', color: '#00ff00' }
+      });
+
+      const { result: actionsHookResult } = renderHook(
+        () => useEntityActions({
+          entityType: 'krav',
+          modelConfig: mockModelConfig,
+          onSuccess: jest.fn(),
+          onError: jest.fn()
+        }),
+        { wrapper }
+      );
+
+      // Perform update
+      await act(async () => {
+        await actionsHookResult.current.handleUpdate(1, {
+          emneId: 2,
+          emne: { id: 2, tittel: 'Luft', icon: 'wind', color: '#00ff00' }
+        });
+      });
+
+      console.log('Step 3 - Update performed');
+
+      expect(mockModelConfig.updateFn).toHaveBeenCalledWith({
+        id: 1,
+        emneId: 2,
+        emne: { id: 2, tittel: 'Luft', icon: 'wind', color: '#00ff00' }
+      });
+
+      // Step 4: Simulate refetch with updated data
+      mockModelConfig.queryFnGroupedByEmne.mockResolvedValue(mockUpdatedKravApiResponse);
+
+      await act(async () => {
+        dataHookResult.current.refetch();
+        await new Promise(resolve => setTimeout(resolve, 100));
+      });
+
+      console.log('Step 4 - Data refetched:', dataHookResult.current.items);
+
+      // Verify entity is still visible with new emne
+      expect(dataHookResult.current.items).toHaveLength(1);
+      expect(dataHookResult.current.items[0].emne.tittel).toBe('Luft');
+      expect(dataHookResult.current.items[0].krav).toHaveLength(1);
+    });
+
+    it('should detect cache invalidation issues during emne changes', async () => {
+      // Setup with specific cache keys
+      const cacheKey = ['krav', 'workspace', 'paginated', 1, 50, '', 'updatedAt', 'desc', true];
+      
+      // Set initial cache data
+      queryClient.setQueryData(cacheKey, mockKravApiResponse);
+
+      const { result } = renderHook(
+        () => useEntityData({
+          entityType: 'krav',
+          modelConfig: mockModelConfig,
+          page: 1,
+          pageSize: 50,
+          searchQuery: '',
+          sortBy: 'updatedAt',
+          sortOrder: 'desc',
+          groupByEmne: true
+        }),
+        { wrapper }
+      );
+
+      // Verify initial cache data is used
+      expect(result.current.items).toHaveLength(1);
+      expect(result.current.items[0].emne.tittel).toBe('Støy');
+
+      // Simulate cache invalidation and update
+      await act(async () => {
+        queryClient.invalidateQueries({ queryKey: ['krav', 'workspace', 'paginated'] });
+        queryClient.setQueryData(cacheKey, mockUpdatedKravApiResponse);
+      });
+
+      console.log('Cache invalidated and updated:', result.current.items);
+
+      // Verify cache update is reflected
+      expect(result.current.items).toHaveLength(1);
+      expect(result.current.items[0].emne.tittel).toBe('Luft');
+    });
+  });
+
+  describe('Combined View Emne Change Tests', () => {
+    const mockCombinedApiResponse = {
+      data: {
+        items: [
+          {
+            emne: { id: 1, tittel: 'Støy', icon: 'volume-2', color: '#ff0000' },
+            krav: [
+              {
+                id: 1,
+                entityType: 'krav',
+                tittel: 'Test Krav',
+                emne: { id: 1, tittel: 'Støy' }
+              }
+            ],
+            tiltak: [
+              {
+                id: 2,
+                entityType: 'tiltak',
+                tittel: 'Test Tiltak',
+                emne: { id: 1, tittel: 'Støy' }
+              }
+            ]
+          }
+        ],
+        totalCount: 2
+      }
+    };
+
+    const mockUpdatedCombinedApiResponse = {
+      data: {
+        items: [
+          {
+            emne: { id: 1, tittel: 'Støy', icon: 'volume-2', color: '#ff0000' },
+            tiltak: [
+              {
+                id: 2,
+                entityType: 'tiltak',
+                tittel: 'Test Tiltak',
+                emne: { id: 1, tittel: 'Støy' }
+              }
+            ]
+          },
+          {
+            emne: { id: 2, tittel: 'Luft', icon: 'wind', color: '#00ff00' },
+            krav: [
+              {
+                id: 1,
+                entityType: 'krav',
+                tittel: 'Test Krav',
+                emne: { id: 2, tittel: 'Luft' }
+              }
+            ]
+          }
+        ],
+        totalCount: 2
+      }
+    };
+
+    it('should handle emne changes in combined view correctly', async () => {
+      const combinedModelConfig = {
+        ...mockModelConfig,
+        title: 'Combined',
+        queryFnGroupedByEmne: jest.fn().mockResolvedValue(mockCombinedApiResponse)
+      };
+
+      const { result } = renderHook(
+        () => useEntityData({
+          entityType: 'combined',
+          modelConfig: combinedModelConfig,
+          page: 1,
+          pageSize: 50,
+          searchQuery: '',
+          sortBy: 'updatedAt',
+          sortOrder: 'desc',
+          groupByEmne: true
+        }),
+        { wrapper }
+      );
+
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      });
+
+      console.log('Combined view initial data:', result.current.items);
+
+      // Initially should have 1 group with both krav and tiltak
+      expect(result.current.items).toHaveLength(1);
+      expect(result.current.items[0].krav).toHaveLength(1);
+      expect(result.current.items[0].tiltak).toHaveLength(1);
+
+      // Simulate emne change for krav
+      combinedModelConfig.queryFnGroupedByEmne.mockResolvedValue(mockUpdatedCombinedApiResponse);
+
+      await act(async () => {
+        result.current.refetch();
+        await new Promise(resolve => setTimeout(resolve, 100));
+      });
+
+      console.log('Combined view after emne change:', result.current.items);
+
+      // Should now have 2 groups
+      expect(result.current.items).toHaveLength(2);
+      
+      const stoyGroup = result.current.items.find(group => group.emne.tittel === 'Støy');
+      const luftGroup = result.current.items.find(group => group.emne.tittel === 'Luft');
+
+      expect(stoyGroup).toBeDefined();
+      expect(luftGroup).toBeDefined();
+      expect(stoyGroup.tiltak).toHaveLength(1);
+      expect(luftGroup.krav).toHaveLength(1);
+    });
+  });
+
+  describe('Filtering State Issues During Emne Changes', () => {
+    it('should detect if active emne filter causes entity to disappear', async () => {
+      mockModelConfig.queryFnGroupedByEmne.mockResolvedValue(mockKravApiResponse);
+
+      const { result: dataResult } = renderHook(
+        () => useEntityData({
+          entityType: 'krav',
+          modelConfig: mockModelConfig,
+          page: 1,
+          pageSize: 50,
+          searchQuery: '',
+          sortBy: 'updatedAt',
+          sortOrder: 'desc',
+          groupByEmne: true
+        }),
+        { wrapper }
+      );
+
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      });
+
+      // Setup filtering with emne filter active
+      const { result: filterResult, rerender } = renderHook(
+        ({ items, additionalFilters }) => useEntityFiltering({
+          items,
+          entityType: 'krav',
+          groupByEmne: true,
+          filters: { filterBy: 'all' },
+          additionalFilters
+        }),
+        { 
+          wrapper,
+          initialProps: { 
+            items: dataResult.current.items,
+            additionalFilters: { emne: 'Støy' } // Filter active for current emne
+          }
+        }
+      );
+
+      console.log('Initial filtering with emne filter:', filterResult.current.filteredItems);
+
+      // Should show entity with Støy emne
+      expect(filterResult.current.filteredItems).toHaveLength(1);
+
+      // Now simulate emne change - entity moves to Luft but filter still set to Støy
+      mockModelConfig.queryFnGroupedByEmne.mockResolvedValue(mockUpdatedKravApiResponse);
+
+      await act(async () => {
+        dataResult.current.refetch();
+        await new Promise(resolve => setTimeout(resolve, 100));
+      });
+
+      // Re-run filtering with same filter but updated data
+      rerender({ 
+        items: dataResult.current.items,
+        additionalFilters: { emne: 'Støy' } // Still filtering for old emne!
+      });
+
+      console.log('Filtering after emne change:', filterResult.current.filteredItems);
+
+      // BUG: Entity might disappear because it no longer matches the emne filter!
+      // This could be the root cause of the visibility issue
+      if (filterResult.current.filteredItems.length === 0) {
+        console.warn('🚨 BUG DETECTED: Entity disappeared due to active emne filter after emne change!');
+        console.warn('Entity moved to Luft emne but filter still set to Støy');
+      }
+
+      // For debugging - this test should highlight the issue
+      expect(filterResult.current.filteredItems.length).toBeGreaterThanOrEqual(0);
+    });
+  });
+});

@@ -9,12 +9,44 @@ import {
   getPaginatedProsjektKravGroupedByEmne,
   getProsjektKravById,
 } from "@/api/endpoints";
+import { useProjectStore } from "@/stores/userStore";
+
+// Project-aware query functions that automatically include current project context
+const createProjectAwareQueryFn = (baseFn) => {
+  return (page, pageSize, search, sortBy, sortOrder) => {
+    const { currentProject } = useProjectStore.getState();
+    const projectId = currentProject?.id;
+
+    // If no valid project ID, return empty result instead of invalid query
+    if (!projectId || isNaN(Number(projectId))) {
+      console.warn("ProsjektKrav query: No valid project selected, returning empty result");
+      return Promise.resolve({
+        data: {
+          items: [],
+          count: 0,
+          totalPages: 0,
+          currentPage: page,
+        },
+      });
+    }
+
+    return baseFn(page, pageSize, search, sortBy, sortOrder, Number(projectId));
+  };
+};
 
 export const prosjektKrav = {
-  queryKey: ["prosjektKrav"],
+  queryKey: ["prosjektKrav"], // Keep simple array for admin compatibility
+
+  // Base API functions for admin pages (no project context)
   queryFn: getPaginatedProsjektKrav,
-  queryFnAll: getPaginatedProsjektKravAll, // Get all fields including "informasjon"
-  queryFnGroupedByEmne: getPaginatedProsjektKravGroupedByEmne, // Get ProsjektKrav grouped by Emne
+  queryFnAll: getPaginatedProsjektKravAll,
+  queryFnGroupedByEmne: getPaginatedProsjektKravGroupedByEmne,
+
+  // Project-aware functions for workspace (used by useEntityData)
+  queryFnWorkspace: createProjectAwareQueryFn(getPaginatedProsjektKrav),
+  queryFnAllWorkspace: createProjectAwareQueryFn(getPaginatedProsjektKravAll),
+  queryFnGroupedByEmneWorkspace: createProjectAwareQueryFn(getPaginatedProsjektKravGroupedByEmne),
+
   getByIdFn: getProsjektKravById,
   createFn: createProsjektKrav,
   updateFn: updateProsjektKrav,
@@ -46,15 +78,15 @@ export const prosjektKrav = {
     },
 
     ui: {
-      showHierarchy: false,
-      showMerknader: false,
+      showHierarchy: true,
+      showMerknader: true,
       showStatus: false,
-      showVurdering: false,
-      showPrioritet: false,
-      showObligatorisk: true,
+      showVurdering: true,
+      showPrioritet: true,
+      showObligatorisk: false,
       showRelations: true,
     },
-    cardFields: ["prosjektKravUID", "tittel", "beskrivelse", "obligatorisk"],
+    cardFields: ["kravUID", "tittel", "beskrivelse", "obligatorisk"],
     relationships: ["files", "prosjektTiltak", "lover", "kravpakker"],
 
     // Detail form configuration - Controls how fields are organized and displayed in the detail pane
@@ -67,7 +99,7 @@ export const prosjektKrav = {
         "createdBy",
         "kravStatus",
         "givenOrder",
-        "prosjektKravUID",
+        "kravUID",
         "beskrivelseSnippet",
         "informasjonSnippet",
         "vurderingId",
@@ -75,7 +107,7 @@ export const prosjektKrav = {
         "prioritet",
       ], // Fields to hide in view mode (when not editing)
       workspaceHiddenEdit: [
-        "prosjektKravUID",
+        "kravUID",
         "updatedBy",
         "createdBy",
         "versjon",
@@ -88,7 +120,7 @@ export const prosjektKrav = {
         "prioritet",
       ], // Fields to hide when editing existing records
       workspaceHiddenCreate: [
-        "prosjektKravUID",
+        "kravUID",
         "updatedBy",
         "createdBy",
         "versjon",
@@ -143,12 +175,17 @@ export const prosjektKrav = {
         },
         merknader: {
           section: "info", // Administrative notes
-          order: 3,
+          order: 2,
         },
         kravreferanse: {
           section: "info", // Reference value
           order: 3,
-          row: "main-row",
+        },
+        // Administrative information - context and requirements
+        parentId: {
+          section: "info", // Task requirements
+          order: 4,
+          row: "main-row", // Group with administrative flags
         },
         emneId: {
           section: "info", // Reference value
@@ -159,25 +196,10 @@ export const prosjektKrav = {
         // Reference and versioning information
         kravreferansetypeId: {
           section: "references", // Reference type
-          order: 8,
+          order: 4,
           row: "reference-row", // Group with reference fields
         },
-        lover: {
-          section: "references", // Reference value
-          order: 8,
-          row: "reference-row", // Same row as reference type
-        },
-        kravpakker: {
-          section: "references", // Reference value
-          order: 8,
-          row: "reference-row", // Same row as reference type
-        },
-        // Administrative information - context and requirements
-        parentId: {
-          section: "references", // Task requirements
-          order: 11,
-          row: "reference-row-2", // Group with administrative flags
-        },
+
         // Administrative information - context and requirements
         obligatorisk: {
           section: "admin", // Task requirements
@@ -202,7 +224,7 @@ export const prosjektKrav = {
   newButtonLabelText: "Nytt prosjekt krav",
   fields: [
     {
-      name: "prosjektKravUID",
+      name: "kravUID",
       label: "Prosjekt Krav UID",
       type: "text",
       required: false,
@@ -376,24 +398,6 @@ export const prosjektKrav = {
       hiddenEdit: true,
       hiddenCreate: true,
       type: "userselect",
-    },
-    {
-      name: "lover",
-      label: "Lover og forskrifter",
-      type: "multiselect",
-      entityType: "lov",
-      required: false,
-      field_info: "Velg hvilke lover og forskrifter som gjelder for dette prosjektkravet",
-      suppressIndex: true, // Don't include this many-to-many relationship in index views
-    },
-    {
-      name: "kravpakker",
-      label: "Kravpakker",
-      type: "multiselect",
-      entityType: "kravpakker",
-      required: false,
-      field_info: "Velg hvilke kravpakker (f.eks. BREEAM NOR) dette prosjektkravet tilhører",
-      suppressIndex: true, // Don't include this many-to-many relationship in index views
     },
     {
       name: "files",

@@ -159,6 +159,12 @@ export const TiptapEditor = ({
           Table editing mode • Click "Tabell ▼" for options • Ctrl+Delete to delete table
         </div>
       )}
+      
+      {isFocused && !editor?.isActive("table") && (
+        <div className="px-3 py-1.5 bg-muted/30 border-t border-border text-xs text-muted-foreground">
+          Press Esc to exit editor and continue with Tab navigation
+        </div>
+      )}
 
       <Toast show={toast.show} message={toast.message} type={toast.type} onClose={hideToast} />
     </div>

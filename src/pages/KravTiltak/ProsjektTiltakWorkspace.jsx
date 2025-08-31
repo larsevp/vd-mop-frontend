@@ -1,6 +1,9 @@
 import React from "react";
 import { EntityWorkspace } from "@/components/EntityWorkspace";
 import { prosjektTiltak as prosjektTiltakConfig } from "@/modelConfigs/models/prosjektTiltak.js";
+import { useProjectStore } from "@/stores/userStore";
+import { Link } from "react-router-dom";
+import { ArrowLeft, Building } from "lucide-react";
 
 /**
  * ProsjektTiltak Workspace using the generic EntityWorkspace component
@@ -22,9 +25,44 @@ import { prosjektTiltak as prosjektTiltakConfig } from "@/modelConfigs/models/pr
  * - Loading and error states
  */
 const ProsjektTiltakWorkspace = () => {
+  const { currentProject } = useProjectStore();
+
+  // Show message if no project is selected
+  if (!currentProject) {
+    return (
+      <div className="bg-background-primary min-h-screen">
+        <div className="max-w-screen-xl mx-auto px-4 py-12 sm:px-6 md:px-8">
+          <div className="text-center">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 max-w-md mx-auto">
+              <Building className="w-12 h-12 text-yellow-600 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-yellow-800 mb-2">Ingen prosjekt valgt</h3>
+              <p className="text-yellow-700 mb-4">
+                Du må velge et prosjekt for å se prosjektspesifikke tiltak.
+              </p>
+              <Link 
+                to="/"
+                className="inline-flex items-center text-yellow-800 hover:text-yellow-900 font-medium"
+              >
+                <ArrowLeft size={16} className="mr-2" />
+                Gå til prosjektliste
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Create dynamic title with current project info
+  const dynamicConfig = {
+    ...prosjektTiltakConfig,
+    title: `${currentProject.navn} - Tiltak`,
+    desc: `Tiltak for prosjekt: ${currentProject.prosjektnummer || currentProject.navn}`,
+  };
+
   return (
     <EntityWorkspace
-      modelConfig={prosjektTiltakConfig}
+      modelConfig={dynamicConfig}
       entityType="prosjekt-tiltak"
       // Workspace-specific configuration for project measures
       workspaceConfig={{

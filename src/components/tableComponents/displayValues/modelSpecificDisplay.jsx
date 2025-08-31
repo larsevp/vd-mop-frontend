@@ -3,6 +3,12 @@
 import React, { useState } from "react";
 import { Badge } from "../../ui/primitives/badge";
 import { Button } from "../../ui/primitives/button";
+import {
+  EnhancedParentDisplay,
+  EnhancedRelationshipListDisplay,
+  getParentDisplayString,
+  getRelationshipDisplayString,
+} from "./shared/RelationshipDisplayComponents.jsx";
 
 // Inline multi-select display with expand functionality
 const InlineMultiSelect = ({ items, emptyText = "None selected", fieldName = "tittel" }) => {
@@ -29,6 +35,7 @@ const InlineMultiSelect = ({ items, emptyText = "None selected", fieldName = "ti
         <Button
           variant="ghost"
           size="sm"
+          tabIndex={-1}
           className="h-5 px-2 text-xs text-muted-foreground hover:text-foreground"
           onClick={() => setExpanded(true)}
         >
@@ -50,6 +57,7 @@ const InlineMultiSelect = ({ items, emptyText = "None selected", fieldName = "ti
       <Button
         variant="ghost"
         size="sm"
+        tabIndex={-1}
         className="h-5 px-2 text-xs text-muted-foreground hover:text-foreground"
         onClick={() => setExpanded(false)}
       >
@@ -59,63 +67,7 @@ const InlineMultiSelect = ({ items, emptyText = "None selected", fieldName = "ti
   );
 };
 
-// Specialized component for displaying Krav relationships with UID, title, and description
-const KravListDisplay = ({ items, emptyText = "Ingen krav" }) => {
-  if (!items || !Array.isArray(items) || items.length === 0) {
-    return <span className="text-muted-foreground text-sm">{emptyText}</span>;
-  }
 
-  return (
-    <div className="space-y-2">
-      {items.map((krav, index) => (
-        <div key={krav.id || index} className="border rounded-lg p-3 bg-gray-50">
-          <div className="flex items-start gap-2">
-            <Badge variant="secondary" className="text-xs font-mono shrink-0">
-              {krav.kravUID}
-            </Badge>
-            <div className="flex-1 min-w-0">
-              <div className="font-medium text-sm text-gray-900 mb-1">{krav.tittel}</div>
-              {krav.beskrivelseSnippet && <div className="text-xs text-gray-600 line-clamp-2">{krav.beskrivelseSnippet}</div>}
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-// Reusable component for displaying parent relationships with UID and title
-const ParentEntityDisplay = ({ parent, entityType, emptyText }) => {
-  if (!parent) {
-    return <span className="text-muted-foreground text-sm">{emptyText}</span>;
-  }
-
-  // Get the UID field name based on entity type
-  const uidField = entityType === "tiltak" ? "tiltakUID" : entityType === "krav" ? "kravUID" : "id";
-  const uid = parent[uidField];
-  const title = parent.tittel || parent.navn || parent.name;
-
-  if (uid && title) {
-    return (
-      <div className="flex items-center gap-2">
-        <Badge variant="outline" className="text-xs font-mono shrink-0">
-          {uid}
-        </Badge>
-        <span className="text-sm font-medium text-gray-900">{title}</span>
-      </div>
-    );
-  } else if (title) {
-    return <span className="text-sm font-medium text-gray-900">{title}</span>;
-  } else if (uid) {
-    return (
-      <Badge variant="outline" className="text-xs font-mono">
-        {uid}
-      </Badge>
-    );
-  } else {
-    return <span className="text-muted-foreground text-sm">{emptyText}</span>;
-  }
-};
 
 // Enum translations for krav status
 const kravStatusTranslations = {
@@ -161,25 +113,9 @@ export const MODEL_SPECIFIC_DISPLAY = {
       // Parent krav relationship with enhanced display
       parentId: (row, field, context) => {
         if (context.format === "REACT") {
-          return <ParentEntityDisplay parent={row.parent} entityType="krav" emptyText="Ingen overordnet krav" />;
+          return <EnhancedParentDisplay parent={row.parent} entityType="krav" emptyText="Ingen overordnet krav" />;
         }
-
-        // For string format
-        if (row.parent) {
-          const uid = row.parent.kravUID;
-          const title = row.parent.tittel;
-          if (uid && title) {
-            return `${uid} - ${title}`;
-          } else if (title) {
-            return title;
-          } else if (uid) {
-            return uid;
-          }
-        } else if (row[field.name]) {
-          return `Krav ID: ${row[field.name]}`;
-        }
-
-        return "Ingen overordnet krav";
+        return getParentDisplayString(row.parent, "krav", row[field.name], "Ingen overordnet krav");
       },
 
       // Multi-select relationships with special formatting (unique to krav)
@@ -269,57 +205,50 @@ export const MODEL_SPECIFIC_DISPLAY = {
       // Krav multiselect relationship with detailed display
       krav: (row, field, context) => {
         if (context.format === "REACT") {
-          return <KravListDisplay items={row.krav} emptyText="Ingen krav" />;
+          return <EnhancedRelationshipListDisplay items={row.krav} entityType="krav" emptyText="Ingen krav" />;
         }
-
-        // For string format, return comma-separated list with UID and title
-        if (!row.krav || !Array.isArray(row.krav) || row.krav.length === 0) {
-          return "Ingen krav";
-        }
-
-        return row.krav.map((krav) => `${krav.kravUID} - ${krav.tittel}`).join(", ");
+        return getRelationshipDisplayString(row.krav, "krav", "Ingen krav");
       },
 
-      // Parent tiltak relationship with enhanced display (matching krav style)
+      // Parent tiltak relationship with enhanced display
       parentId: (row, field, context) => {
         if (context.format === "REACT") {
-          if (!row.parent) {
-            return <span className="text-muted-foreground text-sm">Ingen overordnet tiltak</span>;
-          }
-
-          const parent = row.parent;
-          return (
-            <div className="border rounded-lg p-3 bg-gray-50">
-              <div className="flex items-start gap-2">
-                <Badge variant="secondary" className="text-xs font-mono shrink-0">
-                  {parent.tiltakUID}
-                </Badge>
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm text-gray-900 mb-1">{parent.tittel}</div>
-                  {parent.beskrivelseSnippet && <div className="text-xs text-gray-600 line-clamp-2">{parent.beskrivelseSnippet}</div>}
-                </div>
-              </div>
-            </div>
-          );
+          return <EnhancedParentDisplay parent={row.parent} entityType="tiltak" emptyText="Ingen overordnet tiltak" />;
         }
-
-        // For string format
-        if (row.parent) {
-          const uid = row.parent.tiltakUID;
-          const title = row.parent.tittel;
-          if (uid && title) {
-            return `${uid} - ${title}`;
-          } else if (title) {
-            return title;
-          } else if (uid) {
-            return uid;
-          }
-        } else if (row[field.name]) {
-          return `Tiltak ID: ${row[field.name]}`;
-        }
-
-        return "Ingen overordnet tiltak";
+        return getParentDisplayString(row.parent, "tiltak", row[field.name], "Ingen overordnet tiltak");
       },
     },
   },
+
+  prosjektTiltak: {
+    fieldNames: {
+      // Regular krav multiselect relationship with detailed display
+      krav: (row, field, context) => {
+        console.log('prosjektTiltak krav handler called', { row, field, context });
+        if (context.format === "REACT") {
+          return <EnhancedRelationshipListDisplay items={row.krav} entityType="krav" emptyText="Ingen krav" />;
+        }
+        return getRelationshipDisplayString(row.krav, "krav", "Ingen krav");
+      },
+
+      // ProsjektKrav multiselect relationship with detailed display
+      prosjektKrav: (row, field, context) => {
+        console.log('prosjektTiltak prosjektKrav handler called', { row, field, context });
+        if (context.format === "REACT") {
+          return <EnhancedRelationshipListDisplay items={row.prosjektKrav} entityType="prosjektKrav" emptyText="Ingen prosjektkrav" />;
+        }
+        return getRelationshipDisplayString(row.prosjektKrav, "prosjektKrav", "Ingen prosjektkrav");
+      },
+
+      // Parent prosjektTiltak relationship with enhanced display
+      parentId: (row, field, context) => {
+        console.log('prosjektTiltak parentId handler called', { row, field, context });
+        if (context.format === "REACT") {
+          return <EnhancedParentDisplay parent={row.parent} entityType="prosjektTiltak" emptyText="Ingen overordnet prosjekttiltak" />;
+        }
+        return getParentDisplayString(row.parent, "prosjektTiltak", row[field.name], "Ingen overordnet prosjekttiltak");
+      },
+    },
+  },
+
 };

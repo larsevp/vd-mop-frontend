@@ -1,12 +1,22 @@
 // API endpoints for combined ProsjektKrav/ProsjektTiltak entities
 import { API } from "@/api";
+import { useProjectStore } from "@/stores/userStore";
 
 /**
  * Get paginated combined view of ProsjektKrav and ProsjektTiltak - matches EntityWorkspace expected format
  * EntityWorkspace expects a function that accepts (page, pageSize, search, sortBy, sortOrder)
- * Uses the dedicated grouped route for project entities
+ * Uses the combined-entities route with projectId parameter
  */
 export const getPaginatedCombinedProsjektEntities = (page = 1, pageSize = 50, search = "", sortBy = "", sortOrder = "asc") => {
+  // Get current project ID from store
+  const currentProject = useProjectStore.getState().currentProject;
+  const projectId = currentProject?.id;
+
+  if (!projectId) {
+    console.warn("No project selected - ProsjektCombinedWorkspace will return empty results");
+    return Promise.resolve({ data: { items: [], totalCount: 0, page, pageSize, totalPages: 0 } });
+  }
+
   // Build query parameters
   const queryParams = new URLSearchParams({
     page: page.toString(),
@@ -14,7 +24,8 @@ export const getPaginatedCombinedProsjektEntities = (page = 1, pageSize = 50, se
     search,
     sortBy,
     sortOrder,
-    // Default view options for grouped route
+    projectId: projectId.toString(),
+    // Default view options for project entities
     primaryView: "prosjektkrav-first",
     showHierarchy: "true",
     showCrossRelations: "true", 
@@ -22,8 +33,8 @@ export const getPaginatedCombinedProsjektEntities = (page = 1, pageSize = 50, se
     includeRelated: "true",
   });
 
-  // Use the existing combined entities route with project filtering
-  return API.get(`/combined-entities/grouped-by-emne?${queryParams}`);
+  // Use the dedicated project combined entities route
+  return API.get(`/combined-entities/project?${queryParams}`);
 };
 
 /**

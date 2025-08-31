@@ -9,12 +9,44 @@ import {
   getPaginatedProsjektTiltakGroupedByEmne,
   getProsjektTiltakById,
 } from "@/api/endpoints";
+import { useProjectStore } from "@/stores/userStore";
+
+// Project-aware query functions that automatically include current project context
+const createProjectAwareQueryFn = (baseFn) => {
+  return (page, pageSize, search, sortBy, sortOrder) => {
+    const { currentProject } = useProjectStore.getState();
+    const projectId = currentProject?.id;
+
+    // If no valid project ID, return empty result instead of invalid query
+    if (!projectId || isNaN(Number(projectId))) {
+      console.warn("ProsjektTiltak query: No valid project selected, returning empty result");
+      return Promise.resolve({
+        data: {
+          items: [],
+          count: 0,
+          totalPages: 0,
+          currentPage: page,
+        },
+      });
+    }
+
+    return baseFn(page, pageSize, search, sortBy, sortOrder, Number(projectId));
+  };
+};
 
 export const prosjektTiltak = {
-  queryKey: ["prosjektTiltak"],
+  queryKey: ["prosjektTiltak"], // Keep simple array for admin compatibility
+
+  // Base API functions for admin pages (no project context)
   queryFn: getPaginatedProsjektTiltak,
-  queryFnAll: getPaginatedProsjektTiltakAll, // Get all fields including rich text content
-  queryFnGroupedByEmne: getPaginatedProsjektTiltakGroupedByEmne, // Get ProsjektTiltak grouped by Emne
+  queryFnAll: getPaginatedProsjektTiltakAll,
+  queryFnGroupedByEmne: getPaginatedProsjektTiltakGroupedByEmne,
+
+  // Project-aware functions for workspace (used by useEntityData)
+  queryFnWorkspace: createProjectAwareQueryFn(getPaginatedProsjektTiltak),
+  queryFnAllWorkspace: createProjectAwareQueryFn(getPaginatedProsjektTiltakAll),
+  queryFnGroupedByEmneWorkspace: createProjectAwareQueryFn(getPaginatedProsjektTiltakGroupedByEmne),
+
   getByIdFn: getProsjektTiltakById,
   createFn: createProsjektTiltak,
   updateFn: updateProsjektTiltak,
@@ -54,7 +86,7 @@ export const prosjektTiltak = {
       showRelations: true,
     },
     // Fields to display in card view - These fields appear prominently on each prosjekt tiltak card
-    cardFields: ["prosjektTiltakUID", "tittel", "beskrivelse", "obligatorisk"],
+    cardFields: ["tiltakUID", "tittel", "beskrivelse", "obligatorisk"],
 
     // EntityDetailPane-specific form configuration - Controls the detail view when clicking on a prosjekt tiltak
     detailForm: {
@@ -64,16 +96,17 @@ export const prosjektTiltak = {
         "givenOrder",
         "updatedBy",
         "createdBy",
-        "prosjektTiltakUID",
+        "tiltakUID",
         "beskrivelseSnippet",
         "implementasjonSnippet",
         "tilbakemeldingSnippet",
         "vurderingId",
         "statusId",
         "prioritet",
+        "generalTiltakId",
       ], // Fields to hide in view mode (when not editing)
       workspaceHiddenEdit: [
-        "prosjektTiltakUID",
+        "tiltakUID",
         "updatedBy",
         "createdBy",
         "givenOrder",
@@ -83,9 +116,10 @@ export const prosjektTiltak = {
         "vurderingId",
         "statusId",
         "prioritet",
+        "generalTiltakId",
       ], // Fields to hide when editing existing records
       workspaceHiddenCreate: [
-        "prosjektTiltakUID",
+        "tiltakUID",
         "updatedBy",
         "createdBy",
         "givenOrder",
@@ -95,6 +129,7 @@ export const prosjektTiltak = {
         "vurderingId",
         "statusId",
         "prioritet",
+        "generalTiltakId",
       ], // Fields to hide when creating new records
 
       // Section organization - Organizes form fields into collapsible sections
@@ -137,15 +172,16 @@ export const prosjektTiltak = {
           section: "info", // Primary content description
           order: 2,
         },
-        krav: {
-          section: "info", // Related requirements
-          order: 3,
-          row: "emne-row", // Separate row for multiselect
-        },
         prosjektKrav: {
           section: "info", // Related project requirements
           order: 3,
           row: "emne-row", // Separate row for multiselect
+        },
+        // Reference and relationship information
+        parentId: {
+          section: "info", // Parent relationship
+          order: 3,
+          row: "emne-row", // Group with reference fields
         },
         emneId: {
           section: "info", // Reference value
@@ -167,11 +203,10 @@ export const prosjektTiltak = {
           order: 6,
         },
 
-        // Reference and relationship information
-        parentId: {
-          section: "references", // Parent relationship
+        generalTiltakId: {
+          section: "references", // Reference to general tiltak
           order: 8,
-          row: "reference-row", // Group with reference fields
+          row: "reference-row", // Same row as parentId
         },
 
         // Administrative information - context and requirements
@@ -194,7 +229,7 @@ export const prosjektTiltak = {
   },
   fields: [
     {
-      name: "prosjektTiltakUID",
+      name: "tiltakUID",
       label: "Prosjekt Tiltak UID",
       type: "text",
       required: false,
@@ -306,6 +341,13 @@ export const prosjektTiltak = {
       required: false,
       field_info:
         "Velg et overordnet prosjekttiltak hvis dette tiltaket er et undertiltak. Systemet forhindrer at tiltak med egne undertiltak kan velges som foreldre for å unngå hierarkiproblemer.",
+    },
+    {
+      name: "generalTiltakId",
+      label: "Tilknyttet generelt tiltak",
+      type: "tiltakselect",
+      required: false,
+      field_info: "Velg hvilket generelle tiltak dette prosjekt-spesifikke tiltaket er tilknyttet",
     },
     {
       name: "vurderingId",

@@ -153,4 +153,48 @@ export const BASIC_DISPLAY_TYPES = {
     
     return hasFiles ? `${files.length} fil${files.length !== 1 ? 'er' : ''}` : "Ingen filer";
   },
+
+  // Multiselect field display - generic handler for all multiselect relationships
+  multiselect: (row, field, context) => {
+    const items = row[field.name] || [];
+    
+    if (!Array.isArray(items) || items.length === 0) {
+      const emptyText = "Ingen valgte elementer";
+      return context.format === "REACT" ? <span className="text-sm text-gray-500">{emptyText}</span> : emptyText;
+    }
+
+    if (context.format === "REACT") {
+      return (
+        <div className="text-sm space-y-1">
+          {items.map((item, index) => {
+            // Try to get a meaningful display value from the object
+            let displayText = '';
+            if (typeof item === 'object' && item !== null) {
+              const uid = item.kravUID || item.tiltakUID || item.prosjektKravUID || item.prosjektTiltakUID;
+              const title = item.tittel || item.navn || item.name;
+              displayText = uid && title ? `${uid} - ${title}` : (title || uid || `ID: ${item.id}`);
+            } else {
+              displayText = `ID: ${item}`;
+            }
+            
+            return (
+              <div key={index} className="text-blue-600">
+                {displayText}
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    // For string format, return comma-separated list
+    return items.map((item, index) => {
+      if (typeof item === 'object' && item !== null) {
+        const uid = item.kravUID || item.tiltakUID || item.prosjektKravUID || item.prosjektTiltakUID;
+        const title = item.tittel || item.navn || item.name;
+        return uid && title ? `${uid} - ${title}` : (title || uid || `ID: ${item.id}`);
+      }
+      return `ID: ${item}`;
+    }).join(', ');
+  },
 };

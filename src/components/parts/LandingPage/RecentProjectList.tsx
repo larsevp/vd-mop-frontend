@@ -1,55 +1,40 @@
 /*
-* Used fo;
-} from "lucide-react";
-import React from "react";
-/*
 * Used for the recent project list in the landing page
 */
-import { ArrowRight, Award, Building2, HeartHandshake, Leaf, Lightbulb, Trophy, FolderOpen } from "lucide-react";
 import React from "react";
-import { Separator, Heading, CardWrapper } from "@/components/ui";
-
-interface ProjectItem {
-  id: number;
-  navn: string;
-  link: string;
-}
+import { useNavigate } from "react-router-dom";
+import { Heading, CardWrapper } from "@/components/ui";
+import LastVisitedProjectsList from "@/components/ui/projects/LastVisitedProjectsList";
+import { useLastVisitedProjects } from "@/hooks/useLastVisitedProjects";
 
 interface RecentProjectListProps {
-  items?: ProjectItem[];
+  // No longer need items prop as we get data from the hook
 }
 
-const RecentProjectList = ({ items = [] }: RecentProjectListProps) => {
+const RecentProjectList = (): JSX.Element => {
+  const navigate = useNavigate();
+  const { trackProjectVisit } = useLastVisitedProjects();
+
+  const handleProjectSelect = (project: any) => {
+    // Track the visit
+    trackProjectVisit(project);
+    
+    // Navigate to project
+    navigate(`/prosjekt/${project.id}`);
+  };
+
   return (
     <CardWrapper>
       <Heading level={6} className="mb-4">
         Sist brukte prosjekter
       </Heading>
-      <div className="flex flex-col">
-        {items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10">
-            <FolderOpen className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-sm text-muted-foreground">Ingen prosjekter funnet.</p>
-          </div>
-        ) : (
-          items.map((item, index) => (
-            <React.Fragment key={item.id}>
-              {index > 0 && <Separator className="my-2" />}
-              <a
-                href={`/prosjekt/${item.id}`}
-                className="grid items-center gap-2 px-4 py-5 md:grid-cols-[3fr_1fr] hover:bg-neutral-50 rounded-lg transition cursor-pointer"
-              >
-                {/* Name Column */}
-                <div className="flex items-center gap-2">
-                  <FolderOpen className="h-5 w-5 text-primary-700" />
-                  <Heading level={6} className="text-sm font-medium">
-                    {item.navn.length > 30 ? `${item.navn.slice(0, 30)}...` : item.navn}
-                  </Heading>
-                </div>
-              </a>
-            </React.Fragment>
-          ))
-        )}
+      <div className="p-2">
+        <LastVisitedProjectsList
+          onProjectSelect={handleProjectSelect}
+          variant="landing"
+          limit={5}
+          showCurrentFirst={false}
+        />
       </div>
     </CardWrapper>
   );

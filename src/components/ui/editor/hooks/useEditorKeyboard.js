@@ -6,6 +6,36 @@ export const createKeyboardHandler = (editor, disabled = false) => {
     // If no editor passed, this is likely being called during initialization
     // We'll work directly with the view for basic operations
     if (!editor && !view) return false;
+
+    // Handle Escape key to focus out of editor (prevent form-level Esc handling)
+    if (event.key === "Escape" && !disabled) {
+      event.preventDefault();
+      event.stopPropagation(); // Prevent bubbling to form-level Esc handler
+      
+      // Blur the editor to focus out
+      if (editor && editor.view && editor.view.dom) {
+        editor.view.dom.blur();
+        
+        // Find the next focusable element and focus it
+        const editorElement = editor.view.dom.closest('.tiptap-editor, [data-tiptap-editor]') || editor.view.dom;
+        const form = editorElement.closest('form') || document;
+        const focusableElements = form.querySelectorAll(
+          'input:not([disabled]):not([tabindex="-1"]), textarea:not([disabled]):not([tabindex="-1"]), select:not([disabled]):not([tabindex="-1"]), button:not([disabled]):not([tabindex="-1"]):not([type="button"]), [tabindex]:not([tabindex="-1"]):not([disabled])'
+        );
+        
+        const currentIndex = Array.from(focusableElements).findIndex(el => 
+          el === editorElement || el.contains(editorElement) || editorElement.contains(el)
+        );
+        
+        // Focus the next element after the editor
+        if (currentIndex >= 0 && currentIndex < focusableElements.length - 1) {
+          focusableElements[currentIndex + 1].focus();
+        }
+      }
+      
+      return true; // Event handled
+    }
+
     // Handle Ctrl+K for link creation
     if (event.key === "k" && (event.ctrlKey || event.metaKey) && !disabled) {
       event.preventDefault();

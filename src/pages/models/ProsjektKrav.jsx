@@ -18,7 +18,7 @@ export default function ProsjektKrav() {
     });
   }
   function handleBack() {
-    navigate("/");
+    navigate(-1);
   }
   return (
     <AdminPage

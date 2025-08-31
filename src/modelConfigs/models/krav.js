@@ -151,7 +151,11 @@ export const krav = {
         kravreferanse: {
           section: "info", // Reference value
           order: 3,
-          row: "main-row",
+        },
+        parentId: {
+          section: "info", // Task requirements
+          order: 4,
+          row: "main-row", // Group with administrative flags
         },
         emneId: {
           section: "info", // Reference value
@@ -196,11 +200,7 @@ export const krav = {
           row: "reference-row", // Same row as reference type
         },
         // Administrative information - context and requirements
-        parentId: {
-          section: "references", // Task requirements
-          order: 11,
-          row: "reference-row-2", // Group with administrative flags
-        },
+
         // Administrative information - context and requirements
         obligatorisk: {
           section: "admin", // Task requirements

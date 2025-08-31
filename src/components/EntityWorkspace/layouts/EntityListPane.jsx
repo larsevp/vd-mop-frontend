@@ -27,6 +27,21 @@ const EntityListPane = ({
   const [focusedIndex, setFocusedIndex] = useState(0);
   const [collapsedGroups, setCollapsedGroups] = useState(new Set());
 
+  // Generate unique ID for combined view items that may have duplicates
+  const generateUniqueEntityId = (item) => {
+    if (!item.entityType) {
+      return item.id?.toString();
+    }
+
+    // For combined view items that might be duplicated (same tiltak under different krav)
+    if (item._relatedToKrav !== undefined) {
+      return `${item.entityType}-${item.id}-krav-${item._relatedToKrav}`;
+    }
+
+    // Standard unique ID for regular items
+    return `${item.entityType}-${item.id}`;
+  };
+
   // Get default view options from model config
   const getDefaultViewOptions = () => {
     const defaults = modelConfig?.workspace?.ui || {};
@@ -71,14 +86,29 @@ const EntityListPane = ({
   }, [entityType, viewOptions]);
   const listRef = useRef(null);
 
+  // Map entityType to the actual property name in grouped data (same as EntityFilterService)
+  const getGroupedDataPropertyName = (entityType) => {
+    const mapping = {
+      'prosjekt-krav': 'prosjektkrav',
+      'prosjekt-tiltak': 'prosjekttiltak',
+      'krav': 'krav',
+      'tiltak': 'tiltak',
+      'prosjektkrav': 'prosjektkrav',
+      'prosjekttiltak': 'prosjekttiltak'
+    };
+    return mapping[entityType] || entityType;
+  };
+
   // Use items directly - backend provides properly grouped data
   const groupedItems = items || [];
 
   // Flatten for keyboard navigation - build with proper indexing
   const allItems = useMemo(() => {
     const flattened = [];
+    const propertyName = getGroupedDataPropertyName(entityType);
+    
     groupedItems.forEach((group) => {
-      const groupItems = group[entityType] || group.entities || group.tiltak || group.krav || [];
+      const groupItems = group[propertyName] || group[entityType] || group.entities || group.tiltak || group.krav || [];
       flattened.push(...groupItems);
     });
     return flattened;
@@ -135,18 +165,18 @@ const EntityListPane = ({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [enableKeyboardNav, allItems, focusedIndex, onEntitySelect]);
 
-  // Auto-scroll focused item into view
-  useEffect(() => {
-    if (listRef.current && focusedIndex >= 0) {
-      const focusedElement = listRef.current.children[focusedIndex + 1]; // +1 for header
-      if (focusedElement) {
-        focusedElement.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-        });
-      }
-    }
-  }, [focusedIndex]);
+  // Auto-scroll focused item into view - DISABLED to prevent unwanted scrolling
+  // useEffect(() => {
+  //   if (listRef.current && focusedIndex >= 0) {
+  //     const focusedElement = listRef.current.children[focusedIndex + 1]; // +1 for header
+  //     if (focusedElement) {
+  //       focusedElement.scrollIntoView({
+  //         behavior: "smooth",
+  //         block: "nearest",
+  //       });
+  //     }
+  //   }
+  // }, [focusedIndex]);
 
   return (
     <div className="flex flex-col h-full">
@@ -192,7 +222,8 @@ const EntityListPane = ({
           groupedItems.map((group, groupIndex) => {
             const groupKey = `${entityType}-group-${group.emne?.id || "no-emne"}-${groupIndex}`;
             const isCollapsed = collapsedGroups.has(groupKey);
-            const groupItems = group[entityType] || group.entities || group.tiltak || group.krav || [];
+            const propertyName = getGroupedDataPropertyName(entityType);
+            const groupItems = group[propertyName] || group[entityType] || group.entities || group.tiltak || group.krav || [];
 
             return (
               <div key={groupKey}>
@@ -249,7 +280,7 @@ const EntityListPane = ({
                         modelConfig={modelConfig}
                         entityType={entityType}
                         isSelected={(() => {
-                          const entityUniqueId = entity.entityType ? `${entity.entityType}-${entity.id}` : entity.id?.toString();
+                          const entityUniqueId = generateUniqueEntityId(entity);
                           return entityUniqueId === selectedEntityId?.toString();
                         })()}
                         isFocused={globalIndex === focusedIndex}

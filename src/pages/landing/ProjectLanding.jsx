@@ -87,20 +87,44 @@ export default function ProjectLanding() {
     // Project-specific cards for individual project view
     const projectCards = [
       {
-        title: "Prosjekt Krav",
-        desc: "Administrer og følg opp krav knyttet til dette prosjektet",
-        link: `/prosjekt/${prosjektId}/krav`,
-        icon: CheckSquare,
+        title: "Prosjekt Krav Workspace",
+        desc: "Modern håndtering av prosjektspesifikke krav med kortvisning, avanserte søkefilter og sømløs filhåndtering",
+        link: `/prosjekt-krav-workspace`,
+        icon: Briefcase,
         color: "from-red-500 to-red-600",
-        available: false, // Not yet implemented
+        available: true, // Now implemented
       },
       {
-        title: "Prosjekt Tiltak",
-        desc: "Administrer og følg opp tiltak knyttet til dette prosjektet",
-        link: `/prosjekt/${prosjektId}/tiltak`,
+        title: "Prosjekt Tiltak Workspace",
+        desc: "Modern håndtering av prosjektspesifikke tiltak med kortvisning, avanserte søkefilter og sømløs filhåndtering",
+        link: `/prosjekt-tiltak-workspace`,
         icon: Briefcase,
         color: "from-green-500 to-green-600",
-        available: false, // Not yet implemented
+        available: true, // Now implemented
+      },
+      {
+        title: "Prosjekt Krav & Tiltak Combined",
+        desc: "Unified view av prosjektspesifikke krav og tiltak med hierarkiske forhold og kryssreferanser",
+        link: `/prosjekt-combined-workspace`,
+        icon: Briefcase,
+        color: "from-violet-500 to-purple-600",
+        available: true, // Now implemented
+      },
+      {
+        title: "Prosjekt Krav (Admin)",
+        desc: "Administrer og følg opp krav knyttet til dette prosjektet (tradisjonell liste)",
+        link: `/prosjekt-krav`,
+        icon: CheckSquare,
+        color: "from-orange-500 to-orange-600",
+        available: true, // Available for admin access
+      },
+      {
+        title: "Prosjekt Tiltak (Admin)",
+        desc: "Administrer og følg opp tiltak knyttet til dette prosjektet (tradisjonell liste)",
+        link: `/prosjekt-tiltak`,
+        icon: CheckSquare,
+        color: "from-teal-500 to-teal-600",
+        available: true, // Available for admin access
       },
       {
         title: "Prosjekt Filer",
@@ -108,14 +132,6 @@ export default function ProjectLanding() {
         link: `/prosjekt/${prosjektId}/files`,
         icon: FolderOpen,
         color: "from-slate-500 to-slate-600",
-        available: false, // Not yet implemented
-      },
-      {
-        title: "Prosjekt Team",
-        desc: "Administrer teammedlemmer og roller for prosjektet",
-        link: `/prosjekt/${prosjektId}/team`,
-        icon: Users,
-        color: "from-blue-500 to-blue-600",
         available: false, // Not yet implemented
       },
     ];

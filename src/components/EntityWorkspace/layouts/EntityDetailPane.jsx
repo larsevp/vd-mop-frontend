@@ -5,6 +5,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import EntityDetailForm from "../shared/EntityDetailForm";
 import { FieldResolver } from "../../tableComponents/fieldTypes/fieldResolver.jsx";
 import { modelConfigs } from "@/modelConfigs";
+import { EntityTypeResolver } from "@/components/EntityWorkspace/services/EntityTypeResolver";
+import { useEmneInheritance } from "../../../hooks/useEmneInheritance";
+import { useEditingActions } from "@/stores/editingStateStore";
 
 /**
  * Clean, minimal detail pane for selected entity
@@ -23,13 +26,13 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
   // Dynamically resolve the correct model config for combined entities
   const resolvedModelConfig = useMemo(() => {
     if (entity?.entityType && entity.entityType !== entityType) {
-      // This is a combined entity with a different type - resolve the correct config
-      const targetModelName = entity.entityType === "krav" ? "krav" : entity.entityType === "tiltak" ? "tiltak" : null;
+      // This is a combined entity with a different type - use EntityTypeResolver
+      const resolvedConfig = EntityTypeResolver.resolveModelConfig(entity.entityType);
 
-      // EntityDetailPane - Resolving config for combined entity: entityType, originalEntityType, targetModelName, hasTargetConfig
+      // EntityDetailPane - Resolving config for combined entity: entityType, originalEntityType, resolvedConfig
 
-      if (targetModelName && modelConfigs[targetModelName]) {
-        return modelConfigs[targetModelName];
+      if (resolvedConfig && resolvedConfig !== EntityTypeResolver._createFallbackConfig(entity.entityType)) {
+        return resolvedConfig;
       }
     }
     // Fall back to the provided modelConfig
@@ -76,10 +79,9 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
 
       // For specific entity types within combined view, check their individual capabilities
       if (entity?.entityType) {
-        const targetModelName = entity.entityType === "krav" ? "krav" : entity.entityType === "tiltak" ? "tiltak" : null;
+        const targetConfig = EntityTypeResolver.resolveModelConfig(entity.entityType);
 
-        if (targetModelName && modelConfigs[targetModelName]) {
-          const targetConfig = modelConfigs[targetModelName];
+        if (targetConfig && targetConfig !== EntityTypeResolver._createFallbackConfig(entity.entityType)) {
           // Check if the target model allows editing
           permissions.canEdit = targetConfig.workspace?.features?.inlineEdit !== false;
           permissions.editButtonText = `Rediger ${targetConfig.title || entity.entityType}`;
@@ -110,13 +112,22 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
   const [hasChanges, setHasChanges] = useState(false);
   const [errors, setErrors] = useState({});
 
+  // Get the store initialization function
+  const { initializeForEntity } = useEmneInheritance();
+
+  // Get editing state actions from store
+  const { setEntityEditing } = useEditingActions();
+
   // Initialize edit data when entity changes
   useEffect(() => {
     if (entity) {
-      // For new entities, start in edit mode
-      if (isNewEntity) {
-        setIsEditing(true);
-      }
+      // Initialize store for this specific entity (surgical reset only when switching entities)
+      initializeForEntity(entity.id, resolvedEntityType);
+
+      // For new entities, start in edit mode; for existing entities, start in view mode
+      const shouldEdit = isNewEntity;
+      setIsEditing(shouldEdit);
+      setEntityEditing(entity.id, shouldEdit);
 
       // Initialize only with fields that can be edited (not hidden, computed, or relationship fields)
       const initialData = {};
@@ -141,7 +152,7 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
       setHasChanges(false);
       setErrors({});
     }
-  }, [entity, resolvedModelConfig, resolvedEntityType]);
+  }, [entity?.id, isNewEntity, resolvedModelConfig, resolvedEntityType, initializeForEntity, setEntityEditing]);
 
   // Get display values
   const title = entity[titleField] || "Uten tittel";
@@ -161,16 +172,23 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
     const newErrors = {};
     const visibleFields = resolvedModelConfig.fields.filter((f) => !f.hiddenEdit);
 
+    //console.log('🔍 Validating form for entity:', { entityType, resolvedEntityType, visibleFieldsCount: visibleFields.length });
+
     visibleFields.forEach((field) => {
       const value = editData[field.name];
       const error = FieldResolver.validateField(field, value, resolvedEntityType);
 
       if (error) {
+        //console.log('❌ Validation error:', { field: field.name, value, error });
         newErrors[field.name] = error;
       }
     });
+
+    const isValid = Object.keys(newErrors).length === 0;
+    //console.log('🔍 Form validation result:', { isValid, errorCount: Object.keys(newErrors).length, errors: newErrors });
+
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return isValid;
   };
 
   const handleSave = async () => {
@@ -203,15 +221,31 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
 
       // [DEBUG] Filtered data for update/create: filteredData
 
+      let updatedData;
+
       // For combined views, use the correct model config's update function directly
       if (entity?.entityType && entity.entityType !== entityType && resolvedModelConfig.updateFn) {
         // Use the resolved model config's update function for combined entities
         if (isUpdate) {
           const saveData = { ...filteredData, id: entity.id };
-          await resolvedModelConfig.updateFn(saveData);
+          updatedData = await resolvedModelConfig.updateFn(saveData);
+
+          // Handle propagation and cache updates for combined view updates
+          const actualEntityType = entity.entityType; // "tiltak", "krav", "prosjekttiltak", "prosjektkrav"
+
+          // Import and apply enhanced optimistic updates
+          try {
+            const { handleEmnePropagationInvalidation } = await import("@/components/EntityWorkspace/utils/optimisticUpdates.js");
+
+            // Apply propagation handling if this is a krav/prosjektKrav update with delay for backend completion
+            setTimeout(() => {
+              handleEmnePropagationInvalidation(queryClient, updatedData || saveData, entity, actualEntityType);
+            }, 100);
+          } catch (error) {
+            console.warn("Could not apply propagation updates:", error);
+          }
 
           // Manually invalidate caches for combined view updates since we bypass useEntityWorkspaceActions
-          const actualEntityType = entity.entityType; // "tiltak" or "krav"
           queryClient.invalidateQueries({
             queryKey: [actualEntityType, "workspace"],
             exact: false,
@@ -221,10 +255,10 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
             exact: false,
           });
         } else {
-          await resolvedModelConfig.createFn(filteredData);
+          updatedData = await resolvedModelConfig.createFn(filteredData);
 
           // Manually invalidate caches for combined view creates
-          const actualEntityType = entity.entityType; // "tiltak" or "krav"
+          const actualEntityType = entity.entityType; // "tiltak", "krav", "prosjekttiltak", "prosjektkrav"
           queryClient.invalidateQueries({
             queryKey: [actualEntityType, "workspace"],
             exact: false,
@@ -240,17 +274,53 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
           // For updates: API needs id for URL path, so include it
           // But the backend validates only the body, so we pass the id separately
           const saveData = { ...filteredData, id: entity.id };
-          await onSave(saveData, isUpdate);
+          updatedData = await onSave(saveData, isUpdate);
         } else {
           // For creates: just the form data
-          await onSave(filteredData, isUpdate);
+          updatedData = await onSave(filteredData, isUpdate);
+        }
+
+        // Handle emne propagation for krav/prosjektKrav updates in regular EntityWorkspace
+        const camelCaseEntityType = entityType.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+        console.log(
+          `🔍 EntityDetailPane: Checking emne propagation for entityType: ${entityType} (${camelCaseEntityType}), emneId changed:`,
+          (updatedData || { ...filteredData, id: entity.id }).emneId !== entity.emneId
+        );
+
+        if (camelCaseEntityType === "krav" || camelCaseEntityType === "prosjektKrav") {
+          try {
+            const { handleEmnePropagationInvalidation } = await import("@/components/EntityWorkspace/utils/optimisticUpdates.js");
+
+            // Add a small delay to ensure backend propagation completes before cache invalidation
+            setTimeout(() => {
+              handleEmnePropagationInvalidation(queryClient, updatedData || { ...filteredData, id: entity.id }, entity, entityType);
+            }, 100);
+          } catch (error) {
+            console.warn("Could not apply propagation updates:", error);
+          }
         }
       }
 
       // Update local entity data with the saved changes for immediate display
-      Object.assign(entity, editData);
+      // Use the API response data if available (should include populated relationships)
+      // Otherwise fall back to form data
+      if (updatedData) {
+        // Filter out undefined values to prevent controlled/uncontrolled input warnings
+        const filteredUpdatedData = {};
+        Object.entries(updatedData).forEach(([key, value]) => {
+          if (value !== undefined) {
+            filteredUpdatedData[key] = value;
+          }
+        });
+
+        Object.assign(entity, filteredUpdatedData);
+      } else {
+        // Fallback: just update with form data (should rarely happen)
+        Object.assign(entity, editData);
+      }
 
       setIsEditing(false);
+      setEntityEditing(entity.id, false);
       setHasChanges(false);
     } catch (error) {
       console.error("Error saving entity:", error);
@@ -265,13 +335,14 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
     });
     setEditData(resetData);
     setIsEditing(false);
+    setEntityEditing(entity.id, false);
     setHasChanges(false);
     setErrors({});
   };
 
   const handleDelete = () => {
     if (window.confirm(actionPermissions.deleteConfirmText)) {
-      onDelete(entity);
+      onDelete(entity.id);
       onClose(); // Close detail pane after delete
     }
   };
@@ -281,6 +352,16 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
     const handleKeyDown = (e) => {
       // Don't trigger shortcuts if user is typing in an input
       if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.contentEditable === "true") {
+        // Handle Enter for save when in edit mode and in form fields
+        if (e.key === "Enter" && isEditing && !e.shiftKey) {
+          // Allow Shift+Enter for line breaks in textareas
+          if (e.target.tagName === "TEXTAREA") {
+            return;
+          }
+          e.preventDefault();
+          handleSave();
+          return;
+        }
         // Only handle Escape when in inputs during edit mode
         if (e.key === "Escape" && isEditing) {
           e.preventDefault();
@@ -295,6 +376,13 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
           if (!isEditing && actionPermissions.canEdit) {
             e.preventDefault();
             setIsEditing(true);
+            setEntityEditing(entity.id, true);
+          }
+          break;
+        case "Enter":
+          if (isEditing) {
+            e.preventDefault();
+            handleSave();
           }
           break;
         case "Escape":
@@ -308,7 +396,7 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isEditing, handleCancel, actionPermissions.canEdit]);
+  }, [isEditing, handleCancel, handleSave, actionPermissions.canEdit]);
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -348,12 +436,14 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
                   onClick={handleSave}
                   disabled={!isNewEntity && !hasChanges}
                   className="px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Lagre (trykk Enter)"
                 >
                   <Save className="w-4 h-4 mr-1.5 inline" />
                   {isNewEntity ? "Lagre" : "Oppdater"}
                 </button>
                 <button
                   onClick={handleCancel}
+                  tabIndex={-1}
                   className="px-3 py-2 text-sm bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
                   title="Avbryt (trykk Esc)"
                 >
@@ -364,28 +454,35 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
             ) : (
               <>
                 <button
-                  onClick={() => setIsEditing(true)}
+                  onClick={() => {
+                    setIsEditing(true);
+                    setEntityEditing(entity.id, true);
+                  }}
+                  tabIndex={-1}
                   className="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                   title="Rediger (trykk E)"
                 >
                   <Edit className="w-4 h-4 mr-1.5 inline" />
                   Rediger
                 </button>
-                <button onClick={handleDelete} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Slett">
+                <button
+                  onClick={handleDelete}
+                  tabIndex={-1}
+                  className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                  title="Slett"
+                >
                   <Trash2 className="w-4 h-4" />
                 </button>
               </>
             )}
-            <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+            <button onClick={onClose} tabIndex={-1} className="p-2 text-gray-400 hover:text-gray-600 transition-colors" title="Lukk">
               <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
         {/* Edit mode indicator */}
-        {isEditing && (
-          <div className="mt-3 text-xs text-blue-700">Redigeringsmodus - gjør endringer og klikk "Lagre" eller "Avbryt" (Esc)</div>
-        )}
+        {isEditing && <div className="mt-3 text-xs text-blue-700">Redigeringsmodus - trykk Enter for å lagre eller Esc for å avbryte</div>}
 
         {/* Subtle keyboard hint when not editing */}
         {!isEditing && <div className="mt-3 text-xs text-gray-500">Trykk E for å redigere</div>}

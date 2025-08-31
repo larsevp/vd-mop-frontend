@@ -55,7 +55,24 @@ export const getProsjektTiltakById = (id, config = {}) => {
   return API.get(`/prosjekt-tiltak/${id}`, updatedConfig);
 };
 
-export const createProsjektTiltak = (prosjektTiltakData) => API.post("/prosjekt-tiltak", prosjektTiltakData);
+export const createProsjektTiltak = async (prosjektTiltakData) => {
+  // Get current project from store
+  const { useProjectStore } = await import("@/stores/userStore");
+  const { currentProject } = useProjectStore.getState();
+  const projectId = currentProject?.id;
+  
+  if (!projectId || isNaN(Number(projectId))) {
+    throw new Error('Ingen gyldig prosjekt valgt. Vennligst velg et prosjekt før du oppretter tiltak.');
+  }
+  
+  // Include projectId in the data
+  const dataWithProjectId = {
+    ...prosjektTiltakData,
+    projectId: Number(projectId)
+  };
+  
+  return API.post("/prosjekt-tiltak", dataWithProjectId);
+};
 
 export const updateProsjektTiltak = (prosjektTiltakData) => API.put(`/prosjekt-tiltak/${prosjektTiltakData.id}`, prosjektTiltakData);
 
@@ -68,19 +85,55 @@ export const multiSelectProsjektTiltak = (config = {}) => {
 };
 
 // Pagination endpoints
-export const getPaginatedProsjektTiltak = (page = 1, pageSize = 10, search = "", sortBy = "", sortOrder = "asc") => {
+export const getPaginatedProsjektTiltak = (page = 1, pageSize = 10, search = "", sortBy = "", sortOrder = "asc", projectId = null) => {
   const config = addProsjektTiltakFieldExclusion("index");
-  return getPaginatedData("/prosjekt-tiltak", page, pageSize, search, sortBy, sortOrder, config);
+  
+  // Build params including projectId
+  const params = new URLSearchParams({
+    page: page.toString(),
+    pageSize: pageSize.toString(),
+    ...(search && { search }),
+    ...(sortBy && { sortBy }),
+    ...(sortOrder && { sortOrder }),
+    ...(projectId && { projectId: projectId.toString() }),
+  });
+
+  // Call the endpoint directly since we're building custom params
+  return API.get(`/prosjekt-tiltak/paginated?${params}`, config);
 };
 
-export const getPaginatedProsjektTiltakAll = (page = 1, pageSize = 10, search = "", sortBy = "", sortOrder = "asc") => {
+export const getPaginatedProsjektTiltakAll = (page = 1, pageSize = 10, search = "", sortBy = "", sortOrder = "asc", projectId = null) => {
   // No field exclusion - return all fields including heavy content
-  return getPaginatedData("/prosjekt-tiltak", page, pageSize, search, sortBy, sortOrder);
+  
+  // Build params including projectId
+  const params = new URLSearchParams({
+    page: page.toString(),
+    pageSize: pageSize.toString(),
+    ...(search && { search }),
+    ...(sortBy && { sortBy }),
+    ...(sortOrder && { sortOrder }),
+    ...(projectId && { projectId: projectId.toString() }),
+  });
+
+  // Call the endpoint directly since we're building custom params
+  return API.get(`/prosjekt-tiltak/paginated?${params}`);
 };
 
-export const getPaginatedProsjektTiltakGroupedByEmne = (page = 1, pageSize = 10, search = "", sortBy = "", sortOrder = "asc") => {
+export const getPaginatedProsjektTiltakGroupedByEmne = (page = 1, pageSize = 10, search = "", sortBy = "", sortOrder = "asc", projectId = null) => {
   const config = addProsjektTiltakFieldExclusion("index");
-  return getPaginatedData("/prosjekt-tiltak/grouped-by-emne", page, pageSize, search, sortBy, sortOrder, config);
+  
+  // Build params including projectId
+  const params = new URLSearchParams({
+    page: page.toString(),
+    pageSize: pageSize.toString(),
+    ...(search && { search }),
+    ...(sortBy && { sortBy }),
+    ...(sortOrder && { sortOrder }),
+    ...(projectId && { projectId: projectId.toString() }),
+  });
+
+  // Call the endpoint directly since we're building custom params
+  return API.get(`/prosjekt-tiltak/grouped-by-emne/paginated?${params}`, config);
 };
 
 // Relationship management - ProsjektTiltak-Krav

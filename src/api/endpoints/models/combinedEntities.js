@@ -7,9 +7,13 @@ import { API } from "@/api";
  * Uses the dedicated grouped route like Krav service
  */
 export const getPaginatedCombinedEntities = (page = 1, pageSize = 50, search = "", sortBy = "", sortOrder = "asc") => {
+  // Extract actual page number if it's wrapped in an object
+  const actualPage =
+    typeof page === "object" && page !== null ? page.page || page.pageNumber || page.currentPage || 1 : parseInt(page) || 1;
+
   // Build query parameters
   const queryParams = new URLSearchParams({
-    page: page.toString(),
+    page: actualPage.toString(),
     pageSize: pageSize.toString(),
     search,
     sortBy,
@@ -17,7 +21,7 @@ export const getPaginatedCombinedEntities = (page = 1, pageSize = 50, search = "
     // Default view options for grouped route
     primaryView: "krav-first",
     showHierarchy: "true",
-    showCrossRelations: "true", 
+    showCrossRelations: "true",
     includeChildren: "true",
     includeRelated: "true",
   });
@@ -30,14 +34,7 @@ export const getPaginatedCombinedEntities = (page = 1, pageSize = 50, search = "
  * Advanced version that accepts custom options
  */
 export const getPaginatedCombinedEntitiesWithOptions = async (params = {}) => {
-  const {
-    page = 1,
-    pageSize = 50,
-    search = "",
-    sortBy = "",
-    sortOrder = "asc",
-    options = {}
-  } = params;
+  const { page = 1, pageSize = 50, search = "", sortBy = "", sortOrder = "asc", options = {} } = params;
 
   // Build query parameters
   const queryParams = new URLSearchParams({
@@ -67,8 +64,8 @@ export const getCombinedEntitiesKravFirst = async (params = {}) => {
     ...params,
     options: {
       ...params.options,
-      primaryView: "krav-first"
-    }
+      primaryView: "krav-first",
+    },
   });
 };
 
@@ -80,22 +77,17 @@ export const getCombinedEntitiesTiltakFirst = async (params = {}) => {
     ...params,
     options: {
       ...params.options,
-      primaryView: "tiltak-first"
-    }
+      primaryView: "tiltak-first",
+    },
   });
 };
 
 /**
  * Get combined view grouped by Emne (convenience method)
+ * Matches EntityWorkspace expected signature: (page, pageSize, search, sortBy, sortOrder)
  */
-export const getCombinedEntitiesGroupedByEmne = async (params = {}) => {
-  return getPaginatedCombinedEntities({
-    ...params,
-    options: {
-      ...params.options,
-      groupByEmne: true
-    }
-  });
+export const getCombinedEntitiesGroupedByEmne = (page = 1, pageSize = 50, search = "", sortBy = "", sortOrder = "asc") => {
+  return getPaginatedCombinedEntities(page, pageSize, search, sortBy, sortOrder);
 };
 
 /**

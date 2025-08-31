@@ -123,7 +123,7 @@ export default function LandingPage() {
             }
           />
           {/* Recent projects */}
-          <RecentProjectList items={projects} />
+          <RecentProjectList />
         </div>
       </section>
 

@@ -9,6 +9,7 @@ interface Tiltak {
   tiltakUID: string;
   beskrivelse?: string;
   parentId?: number | null;
+  emneId?: number | null; // Add emneId for inheritance
 }
 
 interface TiltakSelectProps {
@@ -23,6 +24,8 @@ interface TiltakSelectProps {
   allowEmpty?: boolean;
   emptyLabel?: string;
   excludeId?: number; // ID to exclude from the options (current record)
+  onDataLoaded?: (data: Tiltak[]) => void; // Callback when API data is loaded
+  onTiltakSelected?: (tiltak: Tiltak | null) => void; // Callback when a specific tiltak is selected
 }
 
 export function TiltakSelect({
@@ -37,6 +40,8 @@ export function TiltakSelect({
   emptyLabel = "Ingen overordnet tiltak",
   className = "",
   excludeId,
+  onDataLoaded,
+  onTiltakSelected,
 }: TiltakSelectProps) {
   const {
     data: tiltakList = [],
@@ -67,12 +72,26 @@ export function TiltakSelect({
       });
 
       // Sort by ID for consistent ordering
-      return filteredData.sort((a: Tiltak, b: Tiltak) => a.id - b.id);
+      const sortedData = filteredData.sort((a: Tiltak, b: Tiltak) => a.id - b.id);
+      
+      // Notify parent component that data is loaded
+      if (onDataLoaded) {
+        onDataLoaded(sortedData);
+      }
+      
+      return sortedData;
     },
   });
 
   const handleValueChange = (event: { target: { name?: string; value: string | null; type: string } }) => {
     const numericValue = event.target.value === null ? null : parseInt(event.target.value, 10);
+    
+    // Find the selected tiltak object and pass it to the callback
+    if (onTiltakSelected) {
+      const selectedTiltak = numericValue ? tiltakList.find(t => t.id === numericValue) : null;
+      onTiltakSelected(selectedTiltak || null);
+    }
+    
     onChange({
       target: {
         name,

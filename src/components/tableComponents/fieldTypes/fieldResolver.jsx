@@ -15,27 +15,33 @@ export class FieldResolver {
   static getFieldComponent(field, modelName) {
     const modelConfig = MODEL_SPECIFIC_FIELDS[modelName];
 
+    // Debug logging removed - field resolution is working correctly
 
     // 1. Check for model-specific field name override
     if (modelConfig?.fieldNames?.[field.name]) {
+      //console.log("✅ Using model-specific field name override");
       return modelConfig.fieldNames[field.name];
     }
 
     // 2. Check for model-specific field type override
     if (modelConfig?.fieldTypes?.[field.type]) {
+      //console.log("✅ Using model-specific field type override");
       return modelConfig.fieldTypes[field.type];
     }
 
     // 3. Check for global entity field type
     if (ENTITY_FIELD_TYPES[field.type]) {
+      //console.log("✅ Using global entity field type");
       return ENTITY_FIELD_TYPES[field.type];
     }
 
     // 4. Check for basic field type
     if (BASIC_FIELD_TYPES[field.type]) {
+      //console.log("✅ Using basic field type");
       return BASIC_FIELD_TYPES[field.type];
     }
 
+    //console.log("❌ Falling back to text input");
     // 5. Fallback to text input
     return BASIC_FIELD_TYPES.text;
   }
@@ -99,8 +105,8 @@ export class FieldResolver {
       if (editing && row && row[field.name] !== undefined) {
         // Convert string booleans to actual booleans
         const value = row[field.name];
-        if (typeof value === 'string') {
-          return value === 'true' || value === '1';
+        if (typeof value === "string") {
+          return value === "true" || value === "1";
         }
         return Boolean(value);
       }

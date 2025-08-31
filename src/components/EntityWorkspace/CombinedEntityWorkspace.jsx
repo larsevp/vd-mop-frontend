@@ -7,7 +7,7 @@ import { modelConfigs } from "@/modelConfigs";
 /**
  * CombinedEntityWorkspace - A wrapper component that enables EntityWorkspace
  * to display mixed Krav and Tiltak entities in a unified interface.
- * 
+ *
  * This component handles:
  * - Dynamic field resolution based on row.entityType
  * - Uses existing Krav/Tiltak field configurations
@@ -21,18 +21,18 @@ const combinedModelConfig = {
   modelPrintName: "combined",
   title: "Krav og Tiltak",
   desc: "Unified view of requirements and measures",
-  
+
   // EntityWorkspace configuration optimized for mixed entity display
   workspace: {
     enabled: true,
     layout: "split",
     groupBy: "emne",
-    
+
     layoutConfig: {
       listWidth: "40%",
       enableKeyboardNav: true,
     },
-    
+
     features: {
       grouping: true,
       hierarchy: true,
@@ -41,7 +41,7 @@ const combinedModelConfig = {
       filters: true,
       bulkActions: false, // Disable for mixed entity types
     },
-    
+
     ui: {
       showHierarchy: true,
       showEntityType: true,
@@ -51,7 +51,7 @@ const combinedModelConfig = {
       showPrioritet: true,
     },
   },
-  
+
   // Minimal field list - actual fields will be resolved dynamically by EntityRow/EntityDisplay
   fields: [
     {
@@ -61,13 +61,13 @@ const combinedModelConfig = {
       show_in_list: true,
       computed: (row) => {
         const typeMap = {
-          'krav': 'Krav',
-          'tiltak': 'Tiltak', 
-          'prosjektkrav': 'Prosjekt Krav',
-          'prosjekttiltak': 'Prosjekt Tiltak'
+          krav: "Krav",
+          tiltak: "Tiltak",
+          prosjektkrav: "Prosjekt Krav",
+          prosjekttiltak: "Prosjekt Tiltak",
         };
         return typeMap[row.entityType] || row.entityType;
-      }
+      },
     },
     {
       name: "level",
@@ -80,31 +80,30 @@ const combinedModelConfig = {
   ],
 };
 
-export const CombinedEntityWorkspace = ({ 
-  combinedEntityService, 
-  viewOptions = {},
-  ...props 
-}) => {
-  
+export const CombinedEntityWorkspace = ({ combinedEntityService, entityType = "combined", viewOptions = {}, ...props }) => {
   // Create API functions that use the combined entity service (general entities only)
   const combinedApiConfig = {
     ...combinedModelConfig,
     queryFn: combinedEntityService.getPaginatedCombinedView,
+    queryFnGroupedByEmne: combinedEntityService.getGroupedByEmne,
     // Disable create/update/delete for combined view
     createFn: null,
     updateFn: null,
     deleteFn: null,
   };
-  
+
   return (
     <EntityWorkspace
       {...props}
       modelConfig={combinedApiConfig}
+      entityType={entityType}
       displayResolver={DynamicDisplayValueResolver}
       customContext={{
         isCombinedView: true,
-        entityTypes: ['krav', 'tiltak'], // Only general entities
-        ...props.customContext
+        entityTypes: entityType === "prosjekt-combined" 
+          ? ["prosjektkrav", "prosjekttiltak"] // Project entities
+          : ["krav", "tiltak"], // General entities
+        ...props.customContext,
       }}
     />
   );

@@ -378,6 +378,7 @@ export function ComboBox({
             {selectedOption && !searchValue && (
               <button
                 type="button"
+                tabIndex={-1}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleSelect("empty");

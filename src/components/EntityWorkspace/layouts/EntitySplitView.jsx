@@ -31,6 +31,13 @@ const EntitySplitView = ({
   onFilterChange,
   onSortChange,
   onSortOrderChange,
+  // New props for EntityFilters
+  viewMode,
+  onViewModeChange,
+  additionalFilters,
+  onAdditionalFiltersChange,
+  availableStatuses,
+  availableVurderinger,
   isLoading,
   isFetching,
   onCreateNew,
@@ -40,9 +47,11 @@ const EntitySplitView = ({
   user,
   // Split view specific props
   activeEntity, // External entity to display (e.g., for new entity creation)
+  setActiveEntity, // Function to clear/set active entity
   listWidth = "35%",
   enableKeyboardNav = true,
 }) => {
+
   const navigate = useNavigate();
   const params = useParams();
 
@@ -51,13 +60,13 @@ const EntitySplitView = ({
 
   // Selected entity state - synced with URL
   const [selectedEntityId, setSelectedEntityId] = useState(params.entityId || null);
-  
+
   // Collapsible panel state - persistent with localStorage
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem(`${entityType}-listPaneCollapsed`);
     return saved ? JSON.parse(saved) : false;
   });
-  
+
   // Resizable width state - persistent with localStorage
   const [panelWidth, setPanelWidth] = useState(() => {
     const saved = localStorage.getItem(`${entityType}-listPaneWidth`);
@@ -65,23 +74,36 @@ const EntitySplitView = ({
     if (saved) {
       const parsedWidth = parseFloat(saved);
       // If it's a reasonable pixel value, use it; otherwise reset to default
-      if (saved.includes('px') && parsedWidth >= 200 && parsedWidth <= 500) {
+      if (saved.includes("px") && parsedWidth >= 200 && parsedWidth <= 500) {
         return saved;
       }
       // If it's a percentage, convert to reasonable pixel default
-      if (saved.includes('%') && parsedWidth > 0 && parsedWidth <= 50) {
+      if (saved.includes("%") && parsedWidth > 0 && parsedWidth <= 50) {
         return "350px"; // Reasonable default
       }
     }
     // Fallback to reasonable pixel default
     return "350px";
   });
-  
+
   // Drag state for resizing
   const [isDragging, setIsDragging] = useState(false);
-  
+
   // Ref for the left panel to avoid DOM traversal issues
   const leftPanelRef = useRef(null);
+
+  // Map entityType to the actual property name in grouped data (same as EntityFilterService and EntityListPane)
+  const getGroupedDataPropertyName = (entityType) => {
+    const mapping = {
+      'prosjekt-krav': 'prosjektkrav',
+      'prosjekt-tiltak': 'prosjekttiltak',
+      'krav': 'krav',
+      'tiltak': 'tiltak',
+      'prosjektkrav': 'prosjektkrav',
+      'prosjekttiltak': 'prosjekttiltak'
+    };
+    return mapping[entityType] || entityType;
+  };
 
   // Flatten items if they're grouped (for compatibility with grouped data)
   const flatItems = useMemo(() => {
@@ -89,11 +111,13 @@ const EntitySplitView = ({
 
     // Check if we have grouped data (items contain emne and entity arrays)
     const firstItem = items[0];
-    if (firstItem.emne && (firstItem[entityType] || firstItem.entities || firstItem.krav || firstItem.tiltak)) {
+    const propertyName = getGroupedDataPropertyName(entityType);
+    
+    if (firstItem.emne && (firstItem[propertyName] || firstItem[entityType] || firstItem.entities || firstItem.krav || firstItem.tiltak)) {
       // Flatten grouped data
       const flattened = [];
       items.forEach((group) => {
-        const entities = group[entityType] || group.entities || group.krav || group.tiltak || [];
+        const entities = group[propertyName] || group[entityType] || group.entities || group.krav || group.tiltak || [];
         entities.forEach((entity) => {
           // Attach emne info for display
           entity.emne = group.emne;
@@ -107,12 +131,29 @@ const EntitySplitView = ({
     return items;
   }, [items, entityType]);
 
+  // Generate unique ID for combined view items that may have duplicates
+  const generateUniqueEntityId = (item) => {
+    if (!item.entityType) {
+      return item.id?.toString();
+    }
+
+    // For combined view items that might be duplicated (same tiltak under different krav)
+    if (item._relatedToKrav !== undefined) {
+      return `${item.entityType}-${item.id}-krav-${item._relatedToKrav}`;
+    }
+
+    // Standard unique ID for regular items
+    return `${item.entityType}-${item.id}`;
+  };
+
   // Determine which entity to display
   // Priority: activeEntity (external) > selectedEntity (from URL/internal state)
-  const displayEntity = activeEntity || flatItems.find((item) => {
-    const itemUniqueId = item.entityType ? `${item.entityType}-${item.id}` : item.id?.toString();
-    return itemUniqueId === selectedEntityId?.toString();
-  });
+  const displayEntity =
+    activeEntity ||
+    flatItems.find((item) => {
+      const itemUniqueId = generateUniqueEntityId(item);
+      return itemUniqueId === selectedEntityId?.toString();
+    });
 
   // Debug logging (can be removed in production)
   // EntitySplitView DEBUG - flatItems, selectedEntityId, activeEntity, displayEntity
@@ -142,13 +183,23 @@ const EntitySplitView = ({
 
   const handleEntitySelect = (entity) => {
     // EntitySplitView DEBUG - entity selected: entity
-    // Use compound ID for combined views to avoid conflicts
-    const uniqueId = entity.entityType ? `${entity.entityType}-${entity.id}` : entity.id;
+    // Use compound ID for combined views to avoid conflicts, including relationship context
+    const uniqueId = generateUniqueEntityId(entity);
     setSelectedEntityId(uniqueId);
+    
+    // Clear activeEntity when selecting from list to prevent create-new from staying visible
+    if (setActiveEntity && activeEntity?.id === "create-new") {
+      setActiveEntity(null);
+    }
   };
 
   const handleEntityDeselect = () => {
     setSelectedEntityId(null);
+    
+    // Also clear activeEntity if it's create-new
+    if (setActiveEntity && activeEntity?.id === "create-new") {
+      setActiveEntity(null);
+    }
   };
 
   // Toggle collapse state
@@ -159,70 +210,73 @@ const EntitySplitView = ({
   }, [isCollapsed, entityType]);
 
   // Handle resizer drag
-  const handleMouseDown = useCallback((e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    // Use ref instead of DOM traversal
-    if (!leftPanelRef.current) {
-      console.error('Left panel ref not available');
-      return;
-    }
-    
-    setIsDragging(true);
-    const startX = e.clientX;
-    const startWidth = leftPanelRef.current.offsetWidth;
-    let animationId = null;
-    
-    const handleMouseMove = (moveEvent) => {
-      moveEvent.preventDefault();
-      
-      // Cancel previous animation frame if still pending
-      if (animationId) {
-        cancelAnimationFrame(animationId);
+  const handleMouseDown = useCallback(
+    (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Use ref instead of DOM traversal
+      if (!leftPanelRef.current) {
+        console.error("Left panel ref not available");
+        return;
       }
-      
-      // Use requestAnimationFrame for smooth 60fps updates
-      animationId = requestAnimationFrame(() => {
-        const diff = moveEvent.clientX - startX;
-        let newWidth = startWidth + diff;
-        
-        // Simple constraints: min 200px, max 500px
-        newWidth = Math.max(200, Math.min(newWidth, 500));
-        
-        // Direct DOM manipulation for performance - no React re-renders during drag
-        if (leftPanelRef.current) {
-          leftPanelRef.current.style.width = `${newWidth}px`;
+
+      setIsDragging(true);
+      const startX = e.clientX;
+      const startWidth = leftPanelRef.current.offsetWidth;
+      let animationId = null;
+
+      const handleMouseMove = (moveEvent) => {
+        moveEvent.preventDefault();
+
+        // Cancel previous animation frame if still pending
+        if (animationId) {
+          cancelAnimationFrame(animationId);
         }
-      });
-    };
-    
-    const handleMouseUp = () => {
-      // Clean up animation frame
-      if (animationId) {
-        cancelAnimationFrame(animationId);
-      }
-      
-      setIsDragging(false);
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      
-      // Sync final width back to React state
-      if (leftPanelRef.current) {
-        const finalWidth = leftPanelRef.current.style.width;
-        setPanelWidth(finalWidth);
-        localStorage.setItem(`${entityType}-listPaneWidth`, finalWidth);
-      }
-    };
-    
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  }, [panelWidth, entityType]);
+
+        // Use requestAnimationFrame for smooth 60fps updates
+        animationId = requestAnimationFrame(() => {
+          const diff = moveEvent.clientX - startX;
+          let newWidth = startWidth + diff;
+
+          // Simple constraints: min 200px, max 500px
+          newWidth = Math.max(200, Math.min(newWidth, 500));
+
+          // Direct DOM manipulation for performance - no React re-renders during drag
+          if (leftPanelRef.current) {
+            leftPanelRef.current.style.width = `${newWidth}px`;
+          }
+        });
+      };
+
+      const handleMouseUp = () => {
+        // Clean up animation frame
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+        }
+
+        setIsDragging(false);
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+
+        // Sync final width back to React state
+        if (leftPanelRef.current) {
+          const finalWidth = leftPanelRef.current.style.width;
+          setPanelWidth(finalWidth);
+          localStorage.setItem(`${entityType}-listPaneWidth`, finalWidth);
+        }
+      };
+
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+    },
+    [panelWidth, entityType]
+  );
 
   // Save width changes to localStorage (only save valid values)
   useEffect(() => {
     const parsedWidth = parseFloat(panelWidth);
-    if (panelWidth.includes('px') && parsedWidth >= 200 && parsedWidth <= 500) {
+    if (panelWidth.includes("px") && parsedWidth >= 200 && parsedWidth <= 500) {
       localStorage.setItem(`${entityType}-listPaneWidth`, panelWidth);
     }
   }, [panelWidth, entityType]);
@@ -233,39 +287,41 @@ const EntitySplitView = ({
     if (saved) {
       const parsedWidth = parseFloat(saved);
       // If saved value is invalid, remove it
-      if (saved.includes('%') || parsedWidth < 200 || parsedWidth > 500) {
+      if (saved.includes("%") || parsedWidth < 200 || parsedWidth > 500) {
         localStorage.removeItem(`${entityType}-listPaneWidth`);
       }
     }
   }, [entityType]);
 
   return (
-    <div 
-      className={`flex bg-gray-50 ${isDragging ? 'select-none' : ''}`} 
-      style={{ height: "calc(100vh - 80px)" }}
-    >
+    <div className={`flex bg-gray-50 ${isDragging ? "select-none" : ""}`} style={{ height: "calc(100vh - 80px)" }}>
       {/* Left Pane - Entity List */}
-      <div 
+      <div
         ref={leftPanelRef}
         className={`flex-shrink-0 bg-white border-r border-gray-200 overflow-hidden transition-all duration-300 ${
-          isCollapsed ? 'w-0' : ''
+          isCollapsed ? "w-0" : ""
         }`}
         style={{ width: isCollapsed ? 0 : panelWidth }}
       >
         {!isCollapsed && (
-          <EntityListPane
-            items={items}
-            modelConfig={modelConfig}
-            entityType={entityType}
-            config={config}
-            selectedEntityId={selectedEntityId}
-            onEntitySelect={handleEntitySelect}
-            searchQuery={searchQuery}
-            isLoading={isLoading}
-            isFetching={isFetching}
-            enableKeyboardNav={enableKeyboardNav}
-            renderIcon={renderIcon}
-          />
+          <div className="flex flex-col h-full">
+            {/* Entity list - takes full space */}
+            <div className="flex-1 overflow-hidden">
+              <EntityListPane
+                items={items}
+                modelConfig={modelConfig}
+                entityType={entityType}
+                config={config}
+                selectedEntityId={selectedEntityId}
+                onEntitySelect={handleEntitySelect}
+                searchQuery={searchQuery}
+                isLoading={isLoading}
+                isFetching={isFetching}
+                enableKeyboardNav={enableKeyboardNav}
+                renderIcon={renderIcon}
+              />
+            </div>
+          </div>
         )}
       </div>
 
@@ -275,26 +331,22 @@ const EntitySplitView = ({
         {!isCollapsed && (
           <div
             className={`w-2 bg-gray-200 hover:bg-blue-300 cursor-col-resize flex items-center justify-center transition-colors select-none ${
-              isDragging ? 'bg-blue-400 w-3' : ''
+              isDragging ? "bg-blue-400 w-3" : ""
             }`}
             style={{ height: "calc(100vh - 80px)" }}
             onMouseDown={handleMouseDown}
           >
-            <GripVertical className={`text-gray-400 ${isDragging ? 'text-blue-600' : ''}`} size={14} />
+            <GripVertical className={`text-gray-400 ${isDragging ? "text-blue-600" : ""}`} size={14} />
           </div>
         )}
-        
+
         {/* Collapse/Expand button - only visible on hover */}
         <button
           onClick={handleToggleCollapse}
           className="absolute -right-4 top-1/2 transform -translate-y-1/2 z-10 bg-white border border-gray-200 rounded-full p-1.5 shadow-sm hover:shadow-md hover:bg-gray-50 transition-all opacity-0 group-hover:opacity-100"
           title={isCollapsed ? "Vis liste" : "Skjul liste"}
         >
-          {isCollapsed ? (
-            <ChevronRight className="w-4 h-4 text-gray-600" />
-          ) : (
-            <ChevronLeft className="w-4 h-4 text-gray-600" />
-          )}
+          {isCollapsed ? <ChevronRight className="w-4 h-4 text-gray-600" /> : <ChevronLeft className="w-4 h-4 text-gray-600" />}
         </button>
       </div>
 

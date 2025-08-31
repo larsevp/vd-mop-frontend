@@ -22,6 +22,7 @@ interface GenericMultiSelectProps {
   loadingMessage?: string;
   customLabelFormatter?: (item: any) => string; // Custom function to format labels
   descriptionField?: string; // Field to use for description/tooltip
+  onDataLoaded?: (data: any[]) => void; // Callback when API data is loaded
 }
 
 export function GenericMultiSelect({
@@ -38,6 +39,7 @@ export function GenericMultiSelect({
   loadingMessage = "Laster...",
   customLabelFormatter,
   descriptionField,
+  onDataLoaded,
 }: GenericMultiSelectProps) {
   // Create a unique query key based on the API endpoint function name and field config
   const queryKey = ["multiselect", apiEndpoint.name || "unknown", valueField, labelField];
@@ -48,11 +50,20 @@ export function GenericMultiSelect({
     error,
   } = useQuery({
     queryKey,
-    queryFn: apiEndpoint,
-    staleTime: 1000, // 1 second - fresh for 1 second
-    select: (response: any): Option[] => {
-      // Transform the data to the expected format
+    queryFn: async () => {
+      const response = await apiEndpoint();
       const data = response?.data || response || [];
+      console.log(data);
+      
+      // Notify parent component that data is loaded
+      if (onDataLoaded) {
+        onDataLoaded(data);
+      }
+      
+      return data;
+    },
+    staleTime: 1000, // 1 second - fresh for 1 second
+    select: (data: any[]): Option[] => {
       return data.map((item: any) => {
         // Use custom label formatter if provided, otherwise use the labelField
         const label = customLabelFormatter ? customLabelFormatter(item) : item[labelField] || `Item ${item[valueField]}`;

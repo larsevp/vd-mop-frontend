@@ -81,13 +81,14 @@ export function MultiSelect({
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className={cn("justify-between text-left font-normal", selectedValues.length === 0 && "text-muted-foreground")}
+            className="justify-between text-left font-normal"
             disabled={disabled}
           >
             <span className="truncate">{displayText()}</span>
             <div className="flex items-center gap-2">
               {selectedValues.length > 0 && (
                 <div
+                  tabIndex={-1}
                   className="h-4 w-4 p-0 hover:bg-muted rounded cursor-pointer flex items-center justify-center"
                   onClick={(e: React.MouseEvent) => {
                     e.stopPropagation();
@@ -150,6 +151,7 @@ export function MultiSelect({
             <Badge key={option.value} variant="secondary" className="text-xs">
               {option.label}
               <button
+                tabIndex={-1}
                 className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
