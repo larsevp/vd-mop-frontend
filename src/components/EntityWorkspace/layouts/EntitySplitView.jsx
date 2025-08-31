@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Plus, ChevronLeft, ChevronRight, GripVertical } from "lucide-react";
+import { EntityTypeTranslator } from "@/utils/entityTypeTranslator";
 import EntityListPane from "./EntityListPane";
 import EntityDetailPane from "./EntityDetailPane";
 
@@ -51,7 +52,6 @@ const EntitySplitView = ({
   listWidth = "35%",
   enableKeyboardNav = true,
 }) => {
-
   const navigate = useNavigate();
   const params = useParams();
 
@@ -94,15 +94,7 @@ const EntitySplitView = ({
 
   // Map entityType to the actual property name in grouped data (same as EntityFilterService and EntityListPane)
   const getGroupedDataPropertyName = (entityType) => {
-    const mapping = {
-      'prosjekt-krav': 'prosjektkrav',
-      'prosjekt-tiltak': 'prosjekttiltak',
-      'krav': 'krav',
-      'tiltak': 'tiltak',
-      'prosjektkrav': 'prosjektkrav',
-      'prosjekttiltak': 'prosjekttiltak'
-    };
-    return mapping[entityType] || entityType;
+    return EntityTypeTranslator.translate(entityType, "lowercase");
   };
 
   // Flatten items if they're grouped (for compatibility with grouped data)
@@ -112,7 +104,7 @@ const EntitySplitView = ({
     // Check if we have grouped data (items contain emne and entity arrays)
     const firstItem = items[0];
     const propertyName = getGroupedDataPropertyName(entityType);
-    
+
     if (firstItem.emne && (firstItem[propertyName] || firstItem[entityType] || firstItem.entities || firstItem.krav || firstItem.tiltak)) {
       // Flatten grouped data
       const flattened = [];
@@ -186,7 +178,7 @@ const EntitySplitView = ({
     // Use compound ID for combined views to avoid conflicts, including relationship context
     const uniqueId = generateUniqueEntityId(entity);
     setSelectedEntityId(uniqueId);
-    
+
     // Clear activeEntity when selecting from list to prevent create-new from staying visible
     if (setActiveEntity && activeEntity?.id === "create-new") {
       setActiveEntity(null);
@@ -195,7 +187,7 @@ const EntitySplitView = ({
 
   const handleEntityDeselect = () => {
     setSelectedEntityId(null);
-    
+
     // Also clear activeEntity if it's create-new
     if (setActiveEntity && activeEntity?.id === "create-new") {
       setActiveEntity(null);

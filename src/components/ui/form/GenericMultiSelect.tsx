@@ -53,13 +53,13 @@ export function GenericMultiSelect({
     queryFn: async () => {
       const response = await apiEndpoint();
       const data = response?.data || response || [];
-      console.log(data);
-      
+      //console.log(data);
+
       // Notify parent component that data is loaded
       if (onDataLoaded) {
         onDataLoaded(data);
       }
-      
+
       return data;
     },
     staleTime: 1000, // 1 second - fresh for 1 second

@@ -26,7 +26,7 @@ import { Toast } from "@/components/ui/editor/components/Toast.jsx";
 
 /**
  * EntityWorkspaceCore - Zustand-powered component with clean architecture
- * 
+ *
  * Now uses centralized Zustand store for state management while preserving
  * all existing functionality including optimistic updates and cache invalidation
  */
@@ -34,7 +34,7 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useUserStore();
-  
+
   // Track if any entity is currently being edited (to disable create button)
   const isAnyEntityEditing = useIsAnyEntityEditing();
 
@@ -57,7 +57,7 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
     collapsedGroups,
     activeEntity,
     selectedEntity,
-    
+
     // Actions
     initializeWorkspace,
     handleSearchInputChange,
@@ -77,9 +77,9 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
     handleSave,
     handleDelete,
     hideToast,
-    
+
     // Filtering methods
-    getFilteringInfo
+    getFilteringInfo,
   } = useEntityWorkspaceStore();
 
   // Resolve configuration and capabilities
@@ -136,21 +136,12 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
   // Filtering Logic - now handled by Zustand store
   const filtering = useMemo(() => {
     const result = getFilteringInfo(data.items);
-    
+
     // Debug project entities before passing to display components
-    const isProjectEntity = entityType?.includes('prosjekt') || entityType?.includes('project');
+    const isProjectEntity = entityType?.includes("prosjekt") || entityType?.includes("project");
     if (isProjectEntity) {
-      console.log('🔍 PROJECT entity BEFORE DISPLAY:', {
-        entityType,
-        dataItemsCount: data.items?.length,
-        filteredItemsCount: result.filteredItems?.length,
-        groupByEmne,
-        configFeaturesGrouping: config.features.grouping,
-        effectiveGroupByEmne: config.features.grouping ? groupByEmne : false,
-        filteredItems: result.filteredItems
-      });
     }
-    
+
     return result;
   }, [data.items, getFilteringInfo, entityType, groupByEmne]);
 
@@ -171,8 +162,8 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
   const handleSaveWithContext = (entityData) => {
     return handleSave(entityData, {
       queryClient,
-      onSuccess: (message, type) => console.log('Save success:', message),
-      onError: (message, type) => console.error('Save error:', message)
+      onSuccess: (message, type) => console.log("Save success:", message),
+      onError: (message, type) => console.error("Save error:", message),
     });
   };
 
@@ -180,8 +171,8 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
   const handleDeleteWithContext = (entity) => {
     return handleDelete(entity, {
       queryClient,
-      onSuccess: (message, type) => console.log('Delete success:', message),
-      onError: (message, type) => console.error('Delete error:', message)
+      onSuccess: (message, type) => console.log("Delete success:", message),
+      onError: (message, type) => console.error("Delete error:", message),
     });
   };
 
@@ -205,12 +196,14 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
   if (data.isLoading && !data.hasData) {
     return (
       <div className={config.layout === "split" ? "bg-neutral-50" : "min-h-screen bg-neutral-50 p-6"}>
-        <div className="max-w-[1600px] mx-auto"
-             style={{
-               minHeight: config.layout === "split" ? "100vh" : "auto",
-               width: "100%",
-               maxWidth: config.layout === "split" ? "1600px" : "80rem"
-             }}>
+        <div
+          className="max-w-[1600px] mx-auto"
+          style={{
+            minHeight: config.layout === "split" ? "100vh" : "auto",
+            width: "100%",
+            maxWidth: config.layout === "split" ? "1600px" : "80rem",
+          }}
+        >
           <div className="flex items-center justify-center h-96">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -226,12 +219,14 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
   if (data.isError && !data.hasData) {
     return (
       <div className={config.layout === "split" ? "bg-neutral-50" : "min-h-screen bg-neutral-50 p-6"}>
-        <div className="max-w-[1600px] mx-auto"
-             style={{
-               minHeight: config.layout === "split" ? "100vh" : "auto",
-               width: "100%",
-               maxWidth: config.layout === "split" ? "1600px" : "80rem"
-             }}>
+        <div
+          className="max-w-[1600px] mx-auto"
+          style={{
+            minHeight: config.layout === "split" ? "100vh" : "auto",
+            width: "100%",
+            maxWidth: config.layout === "split" ? "1600px" : "80rem",
+          }}
+        >
           <div className="flex items-center justify-center h-96">
             <div className="text-center">
               <p className="text-red-600 mb-4">Feil ved lasting av {entityDisplayName.toLowerCase()}</p>
@@ -245,12 +240,14 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
 
   return (
     <div className={config.layout === "split" ? "bg-neutral-50" : "min-h-screen bg-neutral-50 p-6"}>
-      <div className="max-w-[1600px] mx-auto"
-           style={{
-             minHeight: config.layout === "split" ? "100vh" : "auto",
-             width: "100%",
-             maxWidth: config.layout === "split" ? "1600px" : "80rem" // 80rem = max-w-7xl
-           }}>
+      <div
+        className="max-w-[1600px] mx-auto"
+        style={{
+          minHeight: config.layout === "split" ? "100vh" : "auto",
+          width: "100%",
+          maxWidth: config.layout === "split" ? "1600px" : "80rem", // 80rem = max-w-7xl
+        }}
+      >
         {/* Header - Responsive based on layout */}
         {config.layout === "split" ? (
           <div className="sticky top-0 z-20 flex-shrink-0 bg-white border-b border-gray-200 px-6 py-4">
@@ -268,9 +265,7 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
                 <h1 className="text-xl font-semibold text-neutral-900">{entityDisplayName}</h1>
                 <div className="flex items-center gap-4 text-sm text-neutral-600">
                   <span>{filtering.filteredStats.total} totalt</span>
-                  {filtering.filteredStats.obligatorisk !== undefined && (
-                    <span>{filtering.filteredStats.obligatorisk} obligatoriske</span>
-                  )}
+                  {filtering.filteredStats.obligatorisk !== undefined && <span>{filtering.filteredStats.obligatorisk} obligatoriske</span>}
                 </div>
               </div>
 
@@ -299,9 +294,9 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
               )}
 
               {permissions.canCreate && (
-                <Button 
-                  onClick={handleCreateNewWithContext} 
-                  size="default" 
+                <Button
+                  onClick={handleCreateNewWithContext}
+                  size="default"
                   className="flex items-center gap-2"
                   disabled={isAnyEntityEditing}
                   title={isAnyEntityEditing ? "Kan ikke opprette ny mens du redigerer" : undefined}
@@ -337,8 +332,8 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
                 </div>
               </div>
               {permissions.canCreate && (
-                <Button 
-                  onClick={handleCreateNewWithContext} 
+                <Button
+                  onClick={handleCreateNewWithContext}
                   className="flex items-center gap-2"
                   disabled={isAnyEntityEditing}
                   title={isAnyEntityEditing ? "Kan ikke opprette ny mens du redigerer" : undefined}

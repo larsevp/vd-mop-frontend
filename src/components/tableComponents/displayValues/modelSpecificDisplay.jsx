@@ -67,8 +67,6 @@ const InlineMultiSelect = ({ items, emptyText = "None selected", fieldName = "ti
   );
 };
 
-
-
 // Enum translations for krav status
 const kravStatusTranslations = {
   draft: "Kladd",
@@ -224,7 +222,7 @@ export const MODEL_SPECIFIC_DISPLAY = {
     fieldNames: {
       // Regular krav multiselect relationship with detailed display
       krav: (row, field, context) => {
-        console.log('prosjektTiltak krav handler called', { row, field, context });
+        //console.log('prosjektTiltak krav handler called', { row, field, context });
         if (context.format === "REACT") {
           return <EnhancedRelationshipListDisplay items={row.krav} entityType="krav" emptyText="Ingen krav" />;
         }
@@ -233,7 +231,7 @@ export const MODEL_SPECIFIC_DISPLAY = {
 
       // ProsjektKrav multiselect relationship with detailed display
       prosjektKrav: (row, field, context) => {
-        console.log('prosjektTiltak prosjektKrav handler called', { row, field, context });
+        //console.log('prosjektTiltak prosjektKrav handler called', { row, field, context });
         if (context.format === "REACT") {
           return <EnhancedRelationshipListDisplay items={row.prosjektKrav} entityType="prosjektKrav" emptyText="Ingen prosjektkrav" />;
         }
@@ -242,7 +240,7 @@ export const MODEL_SPECIFIC_DISPLAY = {
 
       // Parent prosjektTiltak relationship with enhanced display
       parentId: (row, field, context) => {
-        console.log('prosjektTiltak parentId handler called', { row, field, context });
+        //console.log('prosjektTiltak parentId handler called', { row, field, context });
         if (context.format === "REACT") {
           return <EnhancedParentDisplay parent={row.parent} entityType="prosjektTiltak" emptyText="Ingen overordnet prosjekttiltak" />;
         }
@@ -250,5 +248,4 @@ export const MODEL_SPECIFIC_DISPLAY = {
       },
     },
   },
-
 };

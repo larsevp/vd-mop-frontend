@@ -1,8 +1,9 @@
-/**
- * EntityFilterService - Centralized filtering logic following SRP
- * Handles all filter extraction, application, and management
- */
+import { EntityTypeTranslator } from "@/utils/entityTypeTranslator";
 
+/**
+ * EntityFilterService - Handles filtering, sorting, and data processing for entity workspaces
+ * Single responsibility: Data transformation and filtering logic
+ */
 export class EntityFilterService {
   /**
    * Extract available filter options from entity items
@@ -14,28 +15,28 @@ export class EntityFilterService {
         statuses: [],
         vurderinger: [],
         emner: [],
-        priorities: []
+        priorities: [],
       };
     }
 
     const filters = {
       statuses: new Set(),
-      vurderinger: new Set(), 
+      vurderinger: new Set(),
       emner: new Set(),
-      priorities: new Set()
+      priorities: new Set(),
     };
 
     const extractFromItems = (itemList) => {
       itemList.forEach((item) => {
         // Extract status
         this._extractFilterValue(item.status, filters.statuses);
-        
+
         // Extract vurdering
         this._extractFilterValue(item.vurdering, filters.vurderinger);
-        
+
         // Extract emne
-        this._extractFilterValue(item.emne, filters.emner, 'tittel');
-        
+        this._extractFilterValue(item.emne, filters.emner, "tittel");
+
         // Extract priority categories
         if (item.prioritet !== undefined && item.prioritet !== null) {
           const priorityCategory = this._categorizePriority(item.prioritet);
@@ -54,7 +55,7 @@ export class EntityFilterService {
       statuses: Array.from(filters.statuses).filter(Boolean).sort(),
       vurderinger: Array.from(filters.vurderinger).filter(Boolean).sort(),
       emner: Array.from(filters.emner).filter(Boolean).sort(),
-      priorities: Array.from(filters.priorities).filter(Boolean).sort()
+      priorities: Array.from(filters.priorities).filter(Boolean).sort(),
     };
   }
 
@@ -63,7 +64,6 @@ export class EntityFilterService {
    * Single responsibility: Filter application logic
    */
   static applyFilters(items, filters, entityType = null, groupByEmne = false) {
-    
     if (!Array.isArray(items) || !filters || Object.keys(filters).length === 0) {
       return items;
     }
@@ -72,16 +72,16 @@ export class EntityFilterService {
       return itemsList.filter((item) => {
         // Status filter
         if (!this._matchesFilter(item.status, filters.status)) return false;
-        
-        // Vurdering filter  
+
+        // Vurdering filter
         if (!this._matchesFilter(item.vurdering, filters.vurdering)) return false;
-        
+
         // Priority filter
         if (!this._matchesPriorityFilter(item.prioritet, filters.priority)) return false;
-        
+
         // Main obligatory/optional filter
         if (!this._matchesObligatoryFilter(item.obligatorisk, filters.filterBy)) return false;
-        
+
         return true;
       });
     };
@@ -90,11 +90,11 @@ export class EntityFilterService {
       // For grouped data, filter within each group
       return items.map((group) => {
         const newGroup = { ...group };
-        
+
         // Handle different group structures
         // First try the mapped property name for this entity type
         const propertyName = this._getGroupedDataPropertyName(entityType);
-        
+
         if (group[propertyName]) {
           newGroup[propertyName] = filterItems(group[propertyName]);
         } else if (group[entityType]) {
@@ -110,7 +110,7 @@ export class EntityFilterService {
         } else if (group.prosjekttiltak) {
           newGroup.prosjekttiltak = filterItems(group.prosjekttiltak);
         }
-        
+
         return newGroup;
       });
     } else {
@@ -169,50 +169,38 @@ export class EntityFilterService {
     return {
       total: totalCount,
       obligatorisk: obligatoriskCount,
-      optional: totalCount - obligatoriskCount
+      optional: totalCount - obligatoriskCount,
     };
   }
 
   // Private helper methods
-  static _extractFilterValue(value, targetSet, propertyName = 'navn') {
+  static _extractFilterValue(value, targetSet, propertyName = "navn") {
     if (!value) return;
-    
-    if (typeof value === 'string') {
+
+    if (typeof value === "string") {
       targetSet.add(value);
-    } else if (typeof value === 'object' && value !== null) {
-      const extractedValue = value[propertyName] || 
-                           value.name || 
-                           value.label || 
-                           value.value || 
-                           value.title || 
-                           value.text || 
-                           value.displayName;
-      
-      if (extractedValue && typeof extractedValue === 'string') {
+    } else if (typeof value === "object" && value !== null) {
+      const extractedValue =
+        value[propertyName] || value.name || value.label || value.value || value.title || value.text || value.displayName;
+
+      if (extractedValue && typeof extractedValue === "string") {
         targetSet.add(extractedValue);
       }
     }
   }
 
   static _categorizePriority(priorityValue) {
-    if (priorityValue <= 2) return 'høy';
-    if (priorityValue === 3) return 'medium';
-    return 'lav';
+    if (priorityValue <= 2) return "høy";
+    if (priorityValue === 3) return "medium";
+    return "lav";
   }
 
   /**
    * Map entityType to the actual property name in grouped data
    */
   static _getGroupedDataPropertyName(entityType) {
-    const mapping = {
-      'prosjekt-krav': 'prosjektkrav',
-      'prosjekt-tiltak': 'prosjekttiltak',
-      'krav': 'krav',
-      'tiltak': 'tiltak',
-      'prosjektkrav': 'prosjektkrav',
-      'prosjekttiltak': 'prosjekttiltak'
-    };
-    return mapping[entityType] || entityType;
+    // Use centralized translator for consistent naming
+    return EntityTypeTranslator.translate(entityType, "lowercase");
   }
 
   static _handleGroupedData(item, entityType, extractFromItems) {
@@ -236,44 +224,45 @@ export class EntityFilterService {
   }
 
   static _matchesFilter(itemValue, filterValue) {
-    if (!filterValue || filterValue === 'all') return true;
-    
+    if (!filterValue || filterValue === "all") return true;
+
     let itemFilterValue;
-    if (typeof itemValue === 'string') {
+    if (typeof itemValue === "string") {
       itemFilterValue = itemValue;
-    } else if (typeof itemValue === 'object' && itemValue !== null) {
-      itemFilterValue = itemValue.navn || 
-                      itemValue.name || 
-                      itemValue.label || 
-                      itemValue.value || 
-                      itemValue.title || 
-                      itemValue.text || 
-                      itemValue.displayName;
+    } else if (typeof itemValue === "object" && itemValue !== null) {
+      itemFilterValue =
+        itemValue.navn ||
+        itemValue.name ||
+        itemValue.label ||
+        itemValue.value ||
+        itemValue.title ||
+        itemValue.text ||
+        itemValue.displayName;
     }
-    
+
     return itemFilterValue === filterValue;
   }
 
   static _matchesPriorityFilter(priorityValue, filterValue) {
-    if (!filterValue || filterValue === 'all') return true;
-    
+    if (!filterValue || filterValue === "all") return true;
+
     if (priorityValue === undefined || priorityValue === null) {
-      return filterValue === 'all';
+      return filterValue === "all";
     }
-    
+
     const priorityCategory = this._categorizePriority(priorityValue);
     return priorityCategory === filterValue;
   }
 
   static _matchesObligatoryFilter(obligatorisk, filterBy) {
-    if (!filterBy || filterBy === 'all') return true;
-    
-    if (filterBy === 'obligatorisk') {
+    if (!filterBy || filterBy === "all") return true;
+
+    if (filterBy === "obligatorisk") {
       return obligatorisk === true;
-    } else if (filterBy === 'optional') {
+    } else if (filterBy === "optional") {
       return obligatorisk === false || obligatorisk === null || obligatorisk === undefined;
     }
-    
+
     return true;
   }
 }

@@ -143,7 +143,7 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
         const isSystemField = ["id", "createdAt", "updatedAt", "createdBy", "updatedBy"].includes(field.name);
         const isEntityReference = field.name.endsWith("Id") && field.type.includes("select"); // emneId, statusId, etc. are OK
 
-        if (!isHidden && !isVirtual && !isRelationship && !isSystemField && field.name !== "id") {
+        if (!isHidden && !isVirtual && !isRelationship && !isSystemField) {
           // Use FieldResolver to get proper initial values including defaults
           initialData[field.name] = FieldResolver.initializeFieldValue(field, entity, !isNewEntity, resolvedEntityType);
         }
@@ -197,7 +197,6 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
     }
 
     try {
-
       // Follow RowForm pattern but adapt for our API
       const isUpdate = entity && entity.id && !isNewEntity;
 
@@ -219,8 +218,6 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
           filteredData[field.name] = editData[field.name];
         }
       });
-
-      // [DEBUG] Filtered data for update/create: filteredData
 
       let updatedData;
 
@@ -277,8 +274,13 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
           const saveData = { ...filteredData, id: entity.id };
           updatedData = await onSave(saveData, isUpdate);
         } else {
-          // For creates: just the form data
-          updatedData = await onSave(filteredData, isUpdate);
+          // For creates: add the necessary fields for the store to detect it's a new entity
+          const createData = {
+            ...filteredData,
+            id: "create-new", // Preserve the create-new identifier
+            isNew: true, // Add explicit new flag
+          };
+          updatedData = await onSave(createData, isUpdate);
         }
 
         // Handle emne propagation for krav/prosjektKrav updates in regular EntityWorkspace

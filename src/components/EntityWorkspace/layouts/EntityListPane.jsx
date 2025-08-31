@@ -11,6 +11,8 @@ import EntityListViewOptions from "../shared/EntityListViewOptions";
  * - Keyboard navigation
  * - Clean, scannable design
  */
+import { EntityTypeTranslator } from "@/utils/entityTypeTranslator";
+
 const EntityListPane = ({
   items,
   modelConfig,
@@ -88,15 +90,7 @@ const EntityListPane = ({
 
   // Map entityType to the actual property name in grouped data (same as EntityFilterService)
   const getGroupedDataPropertyName = (entityType) => {
-    const mapping = {
-      'prosjekt-krav': 'prosjektkrav',
-      'prosjekt-tiltak': 'prosjekttiltak',
-      'krav': 'krav',
-      'tiltak': 'tiltak',
-      'prosjektkrav': 'prosjektkrav',
-      'prosjekttiltak': 'prosjekttiltak'
-    };
-    return mapping[entityType] || entityType;
+    return EntityTypeTranslator.translate(entityType, "lowercase");
   };
 
   // Use items directly - backend provides properly grouped data
@@ -106,7 +100,7 @@ const EntityListPane = ({
   const allItems = useMemo(() => {
     const flattened = [];
     const propertyName = getGroupedDataPropertyName(entityType);
-    
+
     groupedItems.forEach((group) => {
       const groupItems = group[propertyName] || group[entityType] || group.entities || group.tiltak || group.krav || [];
       flattened.push(...groupItems);

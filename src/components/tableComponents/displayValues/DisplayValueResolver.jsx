@@ -1,8 +1,8 @@
-// Main display value resolver with priority-based resolution
 import React from "react";
 import { BASIC_DISPLAY_TYPES } from "./basicDisplayTypes.jsx";
 import { ENTITY_DISPLAY_TYPES } from "./entityDisplayTypes.jsx";
 import { MODEL_SPECIFIC_DISPLAY } from "./modelSpecificDisplay.jsx";
+import { EntityTypeTranslator } from "@/utils/entityTypeTranslator";
 
 /**
  * Display value resolution priority:
@@ -31,29 +31,10 @@ export class DisplayValueResolver {
       ...context,
     };
 
-    // Use EntityTypeResolver to handle kebab-case to camelCase conversion
-    const normalizedModelName = resolveContext.modelName ? 
-      (() => {
-        // Handle special mappings first (from EntityTypeResolver)
-        const specialMappings = {
-          "prosjekt-krav": "prosjektKrav",
-          "prosjekt-tiltak": "prosjektTiltak",
-        };
-        
-        if (specialMappings[resolveContext.modelName]) {
-          return specialMappings[resolveContext.modelName];
-        }
-        
-        // Handle kebab-case to camelCase conversion
-        if (resolveContext.modelName.includes('-')) {
-          return resolveContext.modelName.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
-        }
-        
-        return resolveContext.modelName;
-      })() : null;
+    // Use EntityTypeTranslator for consistent naming conversion
+    const normalizedModelName = resolveContext.modelName ? EntityTypeTranslator.translate(resolveContext.modelName, "camelCase") : null;
 
     const modelConfig = MODEL_SPECIFIC_DISPLAY[normalizedModelName];
-    
 
     // 1. Check for model-specific field name override (highest priority)
     if (modelConfig?.fieldNames?.[field.name]) {
