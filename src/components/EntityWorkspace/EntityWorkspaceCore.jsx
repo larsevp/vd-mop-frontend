@@ -17,7 +17,8 @@ import { useEntityPermissions } from "./hooks/useEntityPermissions";
 import { EntityTypeResolver } from "./services/EntityTypeResolver";
 
 // Components (keeping existing UI components)
-import { SearchBar, HeaderSearchBar, EntityFilters, ViewOptionsMenu } from "./shared";
+import { EntityFilters, ViewOptionsMenu } from "./shared";
+import SearchBar from "./components/SearchBar";
 import EntityCardList from "./components/EntityCardList";
 import EntitySplitView from "./layouts/EntitySplitView";
 import { Toast } from "@/components/ui/editor/components/Toast.jsx";
@@ -210,13 +211,16 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
                 <h1 className="text-xl font-semibold text-neutral-900">{entityDisplayName}</h1>
                 <div className="flex items-center gap-4 text-sm text-neutral-600">
                   <span>{filtering.filteredStats.total} totalt</span>
-                  {filtering.filteredStats.obligatorisk !== undefined && <span>{filtering.filteredStats.obligatorisk} obligatoriske</span>}
+                  {filtering.filteredStats.obligatorisk !== undefined && (
+                    <span>{filtering.filteredStats.obligatorisk} obligatoriske</span>
+                  )}
                 </div>
               </div>
 
               {/* Compact search for split view */}
               {config.features.search && (
-                <HeaderSearchBar
+                <SearchBar
+                  mode="advanced"
                   searchInput={state.searchInput}
                   onSearchInputChange={state.handleSearchInputChange}
                   onSearch={state.handleSearch}
@@ -296,10 +300,11 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
             <div className="flex flex-col lg:flex-row gap-4">
               {config.features.search && (
                 <SearchBar
+                  mode="simple"
                   searchInput={state.searchInput}
                   onSearchInputChange={state.handleSearchInputChange}
                   onSearch={state.handleSearch}
-                  onClear={state.handleClearSearch}
+                  onClearSearch={state.handleClearSearch}
                   isLoading={data.isFetching}
                   placeholder={`Søk i ${entityPluralName.toLowerCase()}...`}
                 />
