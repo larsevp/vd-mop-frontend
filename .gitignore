@@ -143,3 +143,9 @@ temp/
 
 # Ignore all Jest test folders
 **/__tests__/
+
+# Ignore all Jest mocks folders
+**/__mocks__/
+
+# Ignore all Jest mocks folders
+**/__mocks__/
