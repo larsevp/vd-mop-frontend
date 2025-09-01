@@ -13,3 +13,8 @@
   to   = "https://<your-do-backend>.ondigitalocean.app/:splat"
   status = 200
   force  = true
+
+[[redirects]]
+  from = "/*"
+  to   = "/index.html"
+  status = 200
