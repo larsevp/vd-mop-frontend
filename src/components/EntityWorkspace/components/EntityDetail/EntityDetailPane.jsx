@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Edit, X, ChevronDown, ChevronRight, Save, RotateCcw, Trash2, ExternalLink, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -29,6 +29,19 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
   const isNewEntity = entity?.id === "create-new";
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  
+  // Ref for the detail view container to enable scrolling
+  const detailViewRef = useRef(null);
+  
+  // Scroll to top when creating a new entity
+  useEffect(() => {
+    if (isNewEntity && detailViewRef.current) {
+      detailViewRef.current.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+  }, [isNewEntity]);
 
   // Dynamically resolve the correct model config for combined entities
   const resolvedModelConfig = useMemo(() => {
@@ -267,9 +280,7 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
             exact: false,
           });
         } else {
-          console.log('✨ EntityDetailPane: Saving NEW ENTITY (combined view)', { entityType: entity.entityType, createData: filteredData });
           updatedData = await resolvedModelConfig.createFn(filteredData);
-          console.log('✅ EntityDetailPane: NEW ENTITY saved (combined view), result:', updatedData);
 
           // Manually invalidate caches for combined view creates
           const actualEntityType = entity.entityType; // "tiltak", "krav", "prosjekttiltak", "prosjektkrav"
@@ -280,7 +291,6 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
             createdEntity.entityType = actualEntityType;
             
             // Set the isEntityJustCreated flag and update store for autoScroll
-            console.log('🎯 EntityDetailPane: Setting isEntityJustCreated=true for combined view entity:', createdEntity.id, actualEntityType);
             useEntityWorkspaceStore.setState({ 
               selectedEntity: createdEntity, 
               activeEntity: createdEntity, 
@@ -322,23 +332,19 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
         if (isUpdate) {
           // For updates: API needs id for URL path, so include it
           // But the backend validates only the body, so we pass the id separately
-          console.log('💾 EntityDetailPane: Saving UPDATE', { entityId: entity.id, entityType });
           const saveData = { ...filteredData, id: entity.id };
           updatedData = await onSave(saveData, isUpdate);
         } else {
           // For creates: add the necessary fields for the store to detect it's a new entity
-          console.log('✨ EntityDetailPane: Saving NEW ENTITY (regular path)', { entityType, createData: filteredData });
           const createData = {
             ...filteredData,
             id: "create-new", // Preserve the create-new identifier
             isNew: true, // Add explicit new flag
           };
           updatedData = await onSave(createData, isUpdate);
-          console.log('✅ EntityDetailPane: NEW ENTITY saved (regular path), result:', updatedData);
           
           // Also set the flag here as backup (though the store's handleSave should already do this)
           if (updatedData && (entityType === "krav" || entityType === "tiltak")) {
-            console.log('🎯 EntityDetailPane: Setting isEntityJustCreated=true for regular krav/tiltak:', updatedData.id || updatedData.data?.id);
             const createdEntity = updatedData.data || updatedData;
             useEntityWorkspaceStore.setState({ 
               selectedEntity: createdEntity, 
@@ -471,7 +477,7 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
   }, [isEditing, handleCancel, handleSave, actionPermissions.canEdit]);
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div ref={detailViewRef} className="flex flex-col h-full bg-white overflow-y-auto">
       {/* Sticky Header */}
       <div className={`flex-shrink-0 px-6 py-4 border-b border-gray-200 transition-colors ${isEditing ? "bg-blue-50" : "bg-white"}`}>
         <div className="flex items-start justify-between">

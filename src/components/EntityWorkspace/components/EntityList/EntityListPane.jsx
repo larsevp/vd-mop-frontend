@@ -107,8 +107,6 @@ const EntityListPane = ({
   const isEntityJustCreated = useEntityWorkspaceStore((state) => state.isEntityJustCreated);
   const clearJustCreatedFlag = useEntityWorkspaceStore((state) => state.clearJustCreatedFlag);
   
-  // Debug the store flag
-  console.log('🏪 Store isEntityJustCreated flag:', isEntityJustCreated);
 
   // Map entityType to the actual property name in grouped data (same as EntityFilterService)
   const getGroupedDataPropertyName = (entityType) => {
@@ -202,24 +200,12 @@ const EntityListPane = ({
     const hasListRef = !!listRef.current;
     
     
-    // Only log if there's a potential trigger
-    if (isEntityJustCreated) {
-      console.log('🔍 AutoScroll check:', {
-        hasSelectedEntityId,
-        isEntityIdChanged,
-        isEntityJustCreated,
-        hasListRef,
-        selectedEntityId,
-        willTrigger: hasSelectedEntityId && isEntityJustCreated && hasListRef
-      });
-    }
 
     if (
       hasSelectedEntityId &&
       isEntityJustCreated &&
       hasListRef
     ) {
-      console.log('✅ AutoScroll TRIGGERED!');
       // Small delay to ensure DOM is updated
       setTimeout(() => {
         // Try first with the full selectedEntityId

@@ -141,10 +141,7 @@ const useEntityWorkspaceStore = create(
       setSelectedEntity: (selectedEntity) => set({ selectedEntity }),
 
       // Entity creation tracking actions
-      clearJustCreatedFlag: () => {
-        console.log('🏁 Clearing isEntityJustCreated flag');
-        set({ isEntityJustCreated: false });
-      },
+      clearJustCreatedFlag: () => set({ isEntityJustCreated: false }),
 
       // Toast actions
       showToast: (message, type = "success") => {
@@ -284,7 +281,6 @@ const useEntityWorkspaceStore = create(
             const createdEntity = result.data || result;
             // Ensure entityType is set for combined views
             createdEntity.entityType = effectiveEntityType;
-            console.log('🎯 Setting isEntityJustCreated=true for:', createdEntity.id, createdEntity.entityType);
             set({ selectedEntity: createdEntity, activeEntity: createdEntity, isEntityJustCreated: true });
           }
 
