@@ -202,24 +202,22 @@ const EntityListPane = ({
     const hasListRef = !!listRef.current;
     
     
-    console.log('🔍 AutoScroll check:', {
-      hasSelectedEntityId,
-      isEntityIdChanged, 
-      isFromCreateNew,
-      isGenuineFromNull,
-      isEntityJustCreated,
-      hasListRef,
-      selectedEntityId,
-      prevId: prevSelectedEntityId.current,
-      // Show which condition might trigger
-      willTrigger: hasSelectedEntityId && isEntityIdChanged && (isFromCreateNew || isGenuineFromNull || isEntityJustCreated) && hasListRef,
-      triggerCondition: isFromCreateNew ? 'isFromCreateNew' : isGenuineFromNull ? 'isGenuineFromNull' : isEntityJustCreated ? 'isEntityJustCreated' : 'none'
-    });
+    // Only log if there's a potential trigger
+    if (isEntityJustCreated) {
+      console.log('🔍 AutoScroll check:', {
+        hasSelectedEntityId,
+        isEntityIdChanged,
+        isEntityJustCreated,
+        hasListRef,
+        selectedEntityId,
+        willTrigger: hasSelectedEntityId && isEntityIdChanged && isEntityJustCreated && hasListRef
+      });
+    }
 
     if (
       hasSelectedEntityId &&
       isEntityIdChanged &&
-      (isFromCreateNew || isGenuineFromNull || isEntityJustCreated) &&
+      isEntityJustCreated &&
       hasListRef
     ) {
       console.log('✅ AutoScroll TRIGGERED!');

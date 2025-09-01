@@ -267,7 +267,9 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
             exact: false,
           });
         } else {
+          console.log('✨ EntityDetailPane: Saving NEW ENTITY (combined view)', { entityType: entity.entityType, createData: filteredData });
           updatedData = await resolvedModelConfig.createFn(filteredData);
+          console.log('✅ EntityDetailPane: NEW ENTITY saved (combined view), result:', updatedData);
 
           // Manually invalidate caches for combined view creates
           const actualEntityType = entity.entityType; // "tiltak", "krav", "prosjekttiltak", "prosjektkrav"
@@ -276,6 +278,14 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
           if (updatedData && actualEntityType) {
             const createdEntity = updatedData.data || updatedData;
             createdEntity.entityType = actualEntityType;
+            
+            // Set the isEntityJustCreated flag and update store for autoScroll
+            console.log('🎯 EntityDetailPane: Setting isEntityJustCreated=true for combined view entity:', createdEntity.id, actualEntityType);
+            useEntityWorkspaceStore.setState({ 
+              selectedEntity: createdEntity, 
+              activeEntity: createdEntity, 
+              isEntityJustCreated: true 
+            });
           }
           queryClient.invalidateQueries({
             queryKey: [actualEntityType, "workspace"],
@@ -317,14 +327,25 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
           updatedData = await onSave(saveData, isUpdate);
         } else {
           // For creates: add the necessary fields for the store to detect it's a new entity
-          console.log('✨ EntityDetailPane: Saving NEW ENTITY', { entityType, createData: filteredData });
+          console.log('✨ EntityDetailPane: Saving NEW ENTITY (regular path)', { entityType, createData: filteredData });
           const createData = {
             ...filteredData,
             id: "create-new", // Preserve the create-new identifier
             isNew: true, // Add explicit new flag
           };
           updatedData = await onSave(createData, isUpdate);
-          console.log('✅ EntityDetailPane: NEW ENTITY saved, result:', updatedData);
+          console.log('✅ EntityDetailPane: NEW ENTITY saved (regular path), result:', updatedData);
+          
+          // Also set the flag here as backup (though the store's handleSave should already do this)
+          if (updatedData && (entityType === "krav" || entityType === "tiltak")) {
+            console.log('🎯 EntityDetailPane: Setting isEntityJustCreated=true for regular krav/tiltak:', updatedData.id || updatedData.data?.id);
+            const createdEntity = updatedData.data || updatedData;
+            useEntityWorkspaceStore.setState({ 
+              selectedEntity: createdEntity, 
+              activeEntity: createdEntity, 
+              isEntityJustCreated: true 
+            });
+          }
         }
 
         // Handle emne propagation for krav/prosjektKrav updates in regular EntityWorkspace
