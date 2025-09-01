@@ -11,7 +11,7 @@ import { getMsalInstance } from "../utils/msalUtils";
 
 // Create the main API client
 export const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: import.meta.env.VITE_API_URL || "/api",
 });
 
 /**

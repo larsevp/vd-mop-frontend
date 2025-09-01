@@ -13,16 +13,28 @@ import { useProjectStore } from "@/stores/userStore";
  * @param {number} props.limit - Maximum number of projects to show
  * @param {boolean} props.showCurrentFirst - Put current project first in list
  * @param {string} props.className - Additional CSS classes
+ * @param {Array} props.projects - Projects array (optional, uses hook if not provided)
+ * @param {boolean} props.isLoading - Loading state (optional, uses hook if not provided)
+ * @param {boolean} props.hasProjects - Has projects flag (optional, uses hook if not provided)
  */
 const LastVisitedProjectsList = ({ 
   onProjectSelect,
   variant = "menu",
   limit = 3,
   showCurrentFirst = true,
-  className = ""
+  className = "",
+  projects: providedProjects,
+  isLoading: providedIsLoading,
+  hasProjects: providedHasProjects
 }) => {
-  const { projects, isLoading, isError, hasProjects } = useLastVisitedProjects();
+  const hookData = useLastVisitedProjects();
   const { currentProject } = useProjectStore();
+
+  // Use provided props or fall back to hook data
+  const projects = providedProjects ?? hookData.projects;
+  const isLoading = providedIsLoading ?? hookData.isLoading;
+  const hasProjects = providedHasProjects ?? hookData.hasProjects;
+  const isError = hookData.isError;
 
   // Sort and limit projects
   const displayProjects = React.useMemo(() => {

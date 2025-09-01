@@ -5,7 +5,7 @@ import { getProsjekter, getProsjektById } from "@/api/endpoints";
 import { useQuery } from "@tanstack/react-query";
 import { useUserStore, useProjectStore } from "@/stores/userStore";
 import { SimpleCard } from "@/components/ui";
-import { useLastVisitedProjects } from "@/hooks/useLastVisitedProjects";
+import { useRecentProjectsStore } from "@/stores/recentProjectsStore";
 
 export default function ProjectLanding() {
   const { user } = useUserStore();
@@ -14,8 +14,8 @@ export default function ProjectLanding() {
   const { prosjektId } = useParams();
   const isAdmin = user?.rolle === "ADMIN";
   
-  // Use the same hook as RecentProjectList for consistent project visit tracking
-  const { trackProjectVisit } = useLastVisitedProjects();
+  // Use the store for consistent project visit tracking
+  const { trackProjectVisit } = useRecentProjectsStore();
 
   // If prosjektId is present, this is an individual project view
   const isIndividualProjectView = !!prosjektId;
@@ -45,7 +45,7 @@ export default function ProjectLanding() {
       
       // Track project visit when project page loads
       console.log('📄 ProjectLanding: Tracking project visit (onSuccess):', fullProject.id, fullProject.navn);
-      trackProjectVisit(fullProject);
+      trackProjectVisit(fullProject, user?.id);
     },
   });
 
@@ -55,7 +55,7 @@ export default function ProjectLanding() {
       const project = projectData.data || projectData;
       if (project && project.id) {
         console.log('📄 ProjectLanding: Tracking project visit (useEffect):', project.id, project.navn);
-        trackProjectVisit(project);
+        trackProjectVisit(project, user?.id);
       }
     }
   }, [isIndividualProjectView, projectData, trackProjectVisit]);
@@ -257,8 +257,8 @@ export default function ProjectLanding() {
       // Set current project in global store
       setCurrentProject(fullProject);
 
-      // Track project visit using the same hook as RecentProjectList
-      trackProjectVisit(fullProject);
+      // Track project visit using the store
+      trackProjectVisit(fullProject, user?.id);
 
       // Navigate to project landing page with current project context
       navigate(`/prosjekt/${project.id}`);
@@ -268,7 +268,7 @@ export default function ProjectLanding() {
 
       // At minimum, set the basic project info we have and track the visit
       setCurrentProject(project);
-      trackProjectVisit(project);
+      trackProjectVisit(project, user?.id);
       navigate(`/prosjekt/${project.id}`);
     }
   };

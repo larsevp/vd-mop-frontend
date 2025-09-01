@@ -6,7 +6,8 @@ import { useNavigate } from "react-router-dom";
 import { Heading, CardWrapper } from "@/components/ui";
 import LastVisitedProjectsList from "@/components/ui/projects/LastVisitedProjectsList";
 import { useRecentProjectsStore } from "@/stores/recentProjectsStore";
-import { useUserStore } from "@/stores/userStore";
+import { useUserStore, useProjectStore } from "@/stores/userStore";
+import { getProsjektById } from "@/api/endpoints";
 
 interface RecentProjectListProps {
   // No longer need items prop as we get data from the hook
@@ -15,6 +16,7 @@ interface RecentProjectListProps {
 const RecentProjectList = (): JSX.Element => {
   const navigate = useNavigate();
   const { user } = useUserStore();
+  const { setCurrentProject } = useProjectStore();
   const { recentProjects, fetchRecentProjects, trackProjectVisit, isLoading } = useRecentProjectsStore();
 
   // Fetch recent projects when component mounts
@@ -24,13 +26,31 @@ const RecentProjectList = (): JSX.Element => {
     }
   }, [user?.id, fetchRecentProjects]);
 
-  const handleProjectSelect = (project: any) => {
-    // Track the visit with store (includes deduplication)
-    console.log('🔗 RecentProjectList: Tracking project visit:', project.id, project.navn);
-    trackProjectVisit(project, user?.id);
-    
-    // Navigate to project
-    navigate(`/prosjekt/${project.id}`);
+  const handleProjectSelect = async (project: any) => {
+    // Use the same logic as the working "Åpne" button in the table
+    try {
+      // Fetch full project details and store in global state
+      const projectDetails = await getProsjektById(project.id);
+      const fullProject = projectDetails.data || projectDetails;
+
+      // Set current project in global store
+      setCurrentProject(fullProject);
+
+      // Track project visit using the store
+      console.log('🔗 RecentProjectList: Tracking project visit:', fullProject.id, fullProject.navn);
+      trackProjectVisit(fullProject, user?.id);
+
+      // Navigate to project landing page with current project context
+      navigate(`/prosjekt/${project.id}`);
+    } catch (error) {
+      // Continue navigation even if some operations fail
+      console.error("Failed to open project from recent list:", error);
+
+      // At minimum, set the basic project info we have and track the visit
+      setCurrentProject(project);
+      trackProjectVisit(project, user?.id);
+      navigate(`/prosjekt/${project.id}`);
+    }
   };
 
   return (
@@ -44,6 +64,9 @@ const RecentProjectList = (): JSX.Element => {
           variant="landing"
           limit={5}
           showCurrentFirst={false}
+          projects={recentProjects}
+          isLoading={isLoading}
+          hasProjects={recentProjects.length > 0}
         />
       </div>
     </CardWrapper>
