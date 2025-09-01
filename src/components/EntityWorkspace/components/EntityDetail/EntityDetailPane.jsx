@@ -18,6 +18,13 @@ import useEntityWorkspaceStore from "../../stores/entityWorkspaceStore";
  * - Keyboard shortcuts: 'e' for edit, 'esc' for cancel
  */
 const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onDelete, onClose, renderIcon, user }) => {
+  // Get store actions for setting the isEntityJustCreated flag
+  const setSelectedEntity = useEntityWorkspaceStore((state) => state.setSelectedEntity);
+  const setActiveEntity = useEntityWorkspaceStore((state) => state.setActiveEntity);
+  const clearJustCreatedFlag = useEntityWorkspaceStore((state) => state.clearJustCreatedFlag);
+  
+  // We need to access the store directly to set the flag
+  const store = useEntityWorkspaceStore.getState();
   // Check if this is a new entity being created
   const isNewEntity = entity?.id === "create-new";
   const navigate = useNavigate();
