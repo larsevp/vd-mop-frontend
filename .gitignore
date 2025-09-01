@@ -140,3 +140,6 @@ temp/
 *.map
 *.min.js
 *.min.css
+
+# Ignore all Jest test folders
+**/__tests__/
