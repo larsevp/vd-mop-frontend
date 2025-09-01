@@ -106,6 +106,9 @@ const EntityListPane = ({
   // Get the isEntityJustCreated flag from the store
   const isEntityJustCreated = useEntityWorkspaceStore((state) => state.isEntityJustCreated);
   const clearJustCreatedFlag = useEntityWorkspaceStore((state) => state.clearJustCreatedFlag);
+  
+  // Debug the store flag
+  console.log('🏪 Store isEntityJustCreated flag:', isEntityJustCreated);
 
   // Map entityType to the actual property name in grouped data (same as EntityFilterService)
   const getGroupedDataPropertyName = (entityType) => {
@@ -199,12 +202,27 @@ const EntityListPane = ({
     const hasListRef = !!listRef.current;
     
     
+    console.log('🔍 AutoScroll check:', {
+      hasSelectedEntityId,
+      isEntityIdChanged, 
+      isFromCreateNew,
+      isGenuineFromNull,
+      isEntityJustCreated,
+      hasListRef,
+      selectedEntityId,
+      prevId: prevSelectedEntityId.current,
+      // Show which condition might trigger
+      willTrigger: hasSelectedEntityId && isEntityIdChanged && (isFromCreateNew || isGenuineFromNull || isEntityJustCreated) && hasListRef,
+      triggerCondition: isFromCreateNew ? 'isFromCreateNew' : isGenuineFromNull ? 'isGenuineFromNull' : isEntityJustCreated ? 'isEntityJustCreated' : 'none'
+    });
+
     if (
       hasSelectedEntityId &&
       isEntityIdChanged &&
       (isFromCreateNew || isGenuineFromNull || isEntityJustCreated) &&
       hasListRef
     ) {
+      console.log('✅ AutoScroll TRIGGERED!');
       // Small delay to ensure DOM is updated
       setTimeout(() => {
         // Try first with the full selectedEntityId
@@ -223,11 +241,55 @@ const EntityListPane = ({
           const entityId = parts[1]; // Assume format is "type-id-context"
           if (entityId) {
             selectedElement = listRef.current.querySelector(`[data-entity-id="${entityId}"]`);
-            //console.log('🔍 Found with extracted ID', entityId, ':', selectedElement);
           }
         }
 
+        // Check if the parent group is collapsed - if so, expand it first
         if (selectedElement) {
+          const entityId = selectedEntityId;
+          const targetEntity = allItems.find(item => {
+            const itemUniqueId = generateUniqueEntityId(item);
+            return itemUniqueId === entityId?.toString();
+          });
+          
+          if (targetEntity) {
+            // Find the group this entity belongs to and ensure it's not collapsed
+            groupedItems.forEach((group, groupIndex) => {
+              const groupKey = `${entityType}-group-${group.emne?.id || "no-emne"}-${groupIndex}`;
+              const propertyName = getGroupedDataPropertyName(entityType);
+              const isCombinedView = entityType === "combined" || entityType === "combinedEntities" || entityType === "prosjekt-combined";
+              
+              let groupItems = [];
+              if (isCombinedView) {
+                groupItems = group.entities || [];
+              } else {
+                groupItems = group[propertyName] || group[entityType] || group.entities || group.tiltak || group.krav || [];
+              }
+              
+              // Check if our target entity is in this group
+              const entityInGroup = groupItems.some(item => {
+                const itemUniqueId = generateUniqueEntityId(item);
+                return itemUniqueId === entityId?.toString();
+              });
+              
+              if (entityInGroup && collapsedGroups.has(groupKey)) {
+                setCollapsedGroups(prev => {
+                  const newSet = new Set(prev);
+                  newSet.delete(groupKey);
+                  return newSet;
+                });
+                // Add extra delay to allow group expansion animation
+                setTimeout(() => {
+                  const updatedElement = listRef.current.querySelector(`[data-entity-id="${selectedEntityId}"]`);
+                  if (updatedElement) {
+                    updatedElement.scrollIntoView({ behavior: "smooth", block: "center" });
+                  }
+                }, 200);
+                return; // Exit early since we're expanding group
+              }
+            });
+          }
+          
           selectedElement.scrollIntoView({ behavior: "smooth", block: "center" });
         }
         

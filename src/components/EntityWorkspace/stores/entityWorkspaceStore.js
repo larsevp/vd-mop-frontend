@@ -53,6 +53,9 @@ const useEntityWorkspaceStore = create(
       // Error state
       error: null,
 
+      // Entity creation tracking for auto-scroll
+      isEntityJustCreated: false,
+
       // Actions
       initializeWorkspace: (entityType, modelConfig, workspaceConfig = {}) => {
         // Debug project entities
@@ -73,6 +76,8 @@ const useEntityWorkspaceStore = create(
           searchInput: "",
           searchQuery: "",
           page: 1,
+          // Reset entity creation tracking
+          isEntityJustCreated: false,
         });
       },
 
@@ -90,6 +95,7 @@ const useEntityWorkspaceStore = create(
           additionalFilters: {},
           page: 1,
           error: null,
+          isEntityJustCreated: false,
         });
       },
 
@@ -133,6 +139,12 @@ const useEntityWorkspaceStore = create(
       setPage: (page) => set({ page }),
       setActiveEntity: (activeEntity) => set({ activeEntity }),
       setSelectedEntity: (selectedEntity) => set({ selectedEntity }),
+
+      // Entity creation tracking actions
+      clearJustCreatedFlag: () => {
+        console.log('🏁 Clearing isEntityJustCreated flag');
+        set({ isEntityJustCreated: false });
+      },
 
       // Toast actions
       showToast: (message, type = "success") => {
@@ -221,10 +233,8 @@ const useEntityWorkspaceStore = create(
         try {
           // For combined views, use the entity's actual type to get the correct API functions
           const effectiveEntityType = entityData.entityType || currentEntityType;
-          const effectiveModelConfig = entityData.entityType ? 
-            EntityTypeResolver.resolveModelConfig(entityData.entityType) : 
-            modelConfig;
-          
+          const effectiveModelConfig = entityData.entityType ? EntityTypeResolver.resolveModelConfig(entityData.entityType) : modelConfig;
+
           const apiConfig = EntityTypeResolver.resolveApiConfig(effectiveEntityType, effectiveModelConfig);
           const isNewEntity = entityData.id === "create-new" || entityData.isNew;
 
@@ -268,15 +278,16 @@ const useEntityWorkspaceStore = create(
           const message = isNewEntity ? `${entityDisplayName} opprettet` : `${entityDisplayName} oppdatert`;
 
           get().showToast(message, "success");
-          
+
           // For new entities, update the selected entity to the created entity so it displays properly
           if (isNewEntity && result) {
             const createdEntity = result.data || result;
             // Ensure entityType is set for combined views
             createdEntity.entityType = effectiveEntityType;
-            set({ selectedEntity: createdEntity, activeEntity: createdEntity });
+            console.log('🎯 Setting isEntityJustCreated=true for:', createdEntity.id, createdEntity.entityType);
+            set({ selectedEntity: createdEntity, activeEntity: createdEntity, isEntityJustCreated: true });
           }
-          
+
           onSuccess?.(message, "success");
 
           return result;
@@ -384,9 +395,7 @@ const useEntityWorkspaceStore = create(
         try {
           // Resolve the actual entity type for combined views
           const effectiveEntityType = entity.entityType || currentEntityType;
-          const effectiveModelConfig = entity.entityType ? 
-            EntityTypeResolver.resolveModelConfig(entity.entityType) : 
-            modelConfig;
+          const effectiveModelConfig = entity.entityType ? EntityTypeResolver.resolveModelConfig(entity.entityType) : modelConfig;
 
           const apiConfig = EntityTypeResolver.resolveApiConfig(effectiveEntityType, effectiveModelConfig);
           await apiConfig.deleteFn(entity.id);
@@ -396,7 +405,7 @@ const useEntityWorkspaceStore = create(
             queryKey: [currentEntityType, "workspace"],
             exact: false,
           });
-          
+
           if (effectiveEntityType !== currentEntityType) {
             queryClient.invalidateQueries({
               queryKey: [effectiveEntityType, "workspace"],

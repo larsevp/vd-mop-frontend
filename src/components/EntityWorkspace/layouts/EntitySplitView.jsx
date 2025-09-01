@@ -182,6 +182,14 @@ const EntitySplitView = ({
   useEffect(() => {
     if (selectedEntity) {
       const entityUniqueId = generateUniqueEntityId(selectedEntity);
+      console.log('🔄 EntitySplitView syncing selectedEntity from store:', {
+        selectedEntity: selectedEntity.id,
+        entityType: selectedEntity.entityType,
+        entityUniqueId,
+        currentSelectedEntityId: selectedEntityId,
+        needsUpdate: entityUniqueId !== selectedEntityId
+      });
+      
       if (entityUniqueId !== selectedEntityId) {
         setSelectedEntityId(entityUniqueId);
       }

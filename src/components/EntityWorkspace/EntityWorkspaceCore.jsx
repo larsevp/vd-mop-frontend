@@ -142,13 +142,6 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
     // Debug combined entities after filtering processing
     const isCombinedEntity = entityType === "combined" || entityType === "prosjekt-combined";
     if (isCombinedEntity) {
-      console.log('🔧 EntityWorkspaceCore filtering result:', {
-        entityType,
-        dataItemsLength: data.items.length,
-        filteredItemsLength: result.filteredItems.length,
-        filteredStats: result.filteredStats,
-        hasActiveFilters: result.hasActiveFilters
-      });
     }
 
     return result;
@@ -172,21 +165,21 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
     try {
       // Get the specific model config for this entity type
       const specificModelConfig = EntityTypeResolver.resolveModelConfig(specificEntityType);
-      
+
       // Create a new entity template for the specific type
       const newEntity = {
         id: "create-new",
         isNew: true,
         entityType: specificEntityType, // Set the specific entity type
         // Add required fields based on the specific entity type
-        ...(specificEntityType.includes('Krav') && { tittel: '', beskrivelse: '' }),
-        ...(specificEntityType.includes('Tiltak') && { navn: '', beskrivelse: '' }),
+        ...(specificEntityType.includes("Krav") && { tittel: "", beskrivelse: "" }),
+        ...(specificEntityType.includes("Tiltak") && { navn: "", beskrivelse: "" }),
       };
 
       // Set as active entity so it shows in the detail pane
       setActiveEntity(newEntity);
     } catch (error) {
-      console.error('Error creating new entity of type', specificEntityType, ':', error);
+      console.error("Error creating new entity of type", specificEntityType, ":", error);
     }
   };
 
@@ -194,7 +187,6 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
   const handleSaveWithContext = (entityData) => {
     return handleSave(entityData, {
       queryClient,
-      onSuccess: (message, type) => console.log("Save success:", message),
       onError: (message, type) => console.error("Save error:", message),
     });
   };
@@ -203,22 +195,21 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
   const handleDeleteWithContext = (entity) => {
     return handleDelete(entity, {
       queryClient,
-      onSuccess: (message, type) => console.log("Delete success:", message),
       onError: (message, type) => console.error("Delete error:", message),
     });
   };
 
   // Determine if this is a combined view and what entity types to offer
   const getCombinedViewEntityTypes = () => {
-    if (entityType === 'combined' || entityType === 'combinedEntities') {
+    if (entityType === "combined" || entityType === "combinedEntities") {
       return [
-        { type: 'krav', label: 'Nytt Krav' },
-        { type: 'tiltak', label: 'Nytt Tiltak' }
+        { type: "krav", label: "Nytt Krav" },
+        { type: "tiltak", label: "Nytt Tiltak" },
       ];
-    } else if (entityType === 'prosjekt-combined' || entityType.includes('combined')) {
+    } else if (entityType === "prosjekt-combined" || entityType.includes("combined")) {
       return [
-        { type: 'prosjektKrav', label: 'Nytt Krav' },
-        { type: 'prosjektTiltak', label: 'Nytt Tiltak' }
+        { type: "prosjektKrav", label: "Nytt Krav" },
+        { type: "prosjektTiltak", label: "Nytt Tiltak" },
       ];
     }
     return null;
@@ -226,7 +217,7 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
 
   // Render create buttons - multiple for combined views, single for others
   const renderCreateButtons = () => {
-    // For combined views, we need to override the permission check since 
+    // For combined views, we need to override the permission check since
     // the system doesn't recognize "prosjekt-combined" as a creatable entity type
     const combinedTypes = getCombinedViewEntityTypes();
     if (combinedTypes) {

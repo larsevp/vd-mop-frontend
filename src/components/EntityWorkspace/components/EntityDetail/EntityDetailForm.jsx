@@ -280,24 +280,10 @@ const EntityDetailForm = ({
 
     // Debug: Log visible fields for prosjektKrav
     if (modelName === "prosjektKrav") {
-      console.log(
-        "[EntityDetailForm] Model config fields:",
-        modelConfig.fields?.map((f) => ({ name: f.name, type: f.type }))
-      );
-      console.log(
-        "[EntityDetailForm] Visible fields for prosjektKrav:",
-        fields.map((f) => ({ name: f.name, section: f.detailSection, order: f.detailOrder }))
-      );
       const prioritetField = fields.find((f) => f.name === "prioritet");
-      console.log("[EntityDetailForm] Prioritet field config:", prioritetField);
-      console.log("[EntityDetailForm] Entity data:", entity);
 
       // Debug status section fields specifically
       const statusFields = fields.filter((f) => f.detailSection === "status");
-      console.log(
-        "[EntityDetailForm] Status section fields:",
-        statusFields.map((f) => ({ name: f.name, order: f.detailOrder }))
-      );
     }
 
     const sections = {};

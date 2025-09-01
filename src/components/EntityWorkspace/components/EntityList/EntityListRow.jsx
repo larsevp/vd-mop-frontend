@@ -210,17 +210,29 @@ const EntityListRow = ({
 
   // Generate unique ID for data attribute (matches EntitySplitView logic)
   const generateUniqueEntityId = (item) => {
+    // Check if we're in a combined view context (matches EntitySplitView and EntityListPane)
+    const isCombinedView = entityType === "combined" || entityType === "combinedEntities" || entityType === "prosjekt-combined";
+    
+    // For regular (non-combined) views, always use simple numeric ID
+    if (!isCombinedView) {
+      return item.id?.toString();
+    }
+    
+    // Combined view logic - need complex IDs to avoid conflicts
     if (!item.entityType) {
       return item.id?.toString();
     }
 
+    // Normalize entityType to lowercase for consistency (matches EntitySplitView and EntityListPane)
+    const normalizedEntityType = item.entityType.toLowerCase();
+
     // For combined view items that might be duplicated (same tiltak under different krav)
     if (item._relatedToKrav !== undefined) {
-      return `${item.entityType}-${item.id}-krav-${item._relatedToKrav}`;
+      return `${normalizedEntityType}-${item.id}-krav-${item._relatedToKrav}`;
     }
 
-    // Standard unique ID for regular items
-    return `${item.entityType}-${item.id}`;
+    // Standard unique ID for combined view items
+    return `${normalizedEntityType}-${item.id}`;
   };
 
   const uniqueEntityId = generateUniqueEntityId(entity);

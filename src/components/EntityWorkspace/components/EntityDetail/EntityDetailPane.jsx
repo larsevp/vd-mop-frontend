@@ -305,16 +305,19 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
         if (isUpdate) {
           // For updates: API needs id for URL path, so include it
           // But the backend validates only the body, so we pass the id separately
+          console.log('💾 EntityDetailPane: Saving UPDATE', { entityId: entity.id, entityType });
           const saveData = { ...filteredData, id: entity.id };
           updatedData = await onSave(saveData, isUpdate);
         } else {
           // For creates: add the necessary fields for the store to detect it's a new entity
+          console.log('✨ EntityDetailPane: Saving NEW ENTITY', { entityType, createData: filteredData });
           const createData = {
             ...filteredData,
             id: "create-new", // Preserve the create-new identifier
             isNew: true, // Add explicit new flag
           };
           updatedData = await onSave(createData, isUpdate);
+          console.log('✅ EntityDetailPane: NEW ENTITY saved, result:', updatedData);
         }
 
         // Handle emne propagation for krav/prosjektKrav updates in regular EntityWorkspace
