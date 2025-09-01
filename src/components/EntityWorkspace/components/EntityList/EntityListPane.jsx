@@ -12,6 +12,7 @@ import EntityListViewOptions from "./EntityListViewOptions";
  * - Clean, scannable design
  */
 import { EntityTypeTranslator } from "@/components/EntityWorkspace/utils/entityTypeTranslator";
+import useEntityWorkspaceStore from "@/components/EntityWorkspace/stores/entityWorkspaceStore";
 
 const EntityListPane = ({
   items,
@@ -100,6 +101,11 @@ const EntityListPane = ({
   }, [entityType, viewOptions]);
   const listRef = useRef(null);
   const prevSelectedEntityId = useRef(null);
+  const isInitialMount = useRef(true);
+  
+  // Get the isEntityJustCreated flag from the store
+  const isEntityJustCreated = useEntityWorkspaceStore((state) => state.isEntityJustCreated);
+  const clearJustCreatedFlag = useEntityWorkspaceStore((state) => state.clearJustCreatedFlag);
 
   // Map entityType to the actual property name in grouped data (same as EntityFilterService)
   const getGroupedDataPropertyName = (entityType) => {
@@ -113,10 +119,18 @@ const EntityListPane = ({
   const allItems = useMemo(() => {
     const flattened = [];
     const propertyName = getGroupedDataPropertyName(entityType);
+    const isCombinedView = entityType === "combined" || entityType === "combinedEntities" || entityType === "prosjekt-combined";
 
     groupedItems.forEach((group) => {
-      const groupItems = group[propertyName] || group[entityType] || group.entities || group.tiltak || group.krav || [];
-      flattened.push(...groupItems);
+      if (isCombinedView) {
+        // For combined views, use entities array which contains mixed krav/tiltak
+        const groupItems = group.entities || [];
+        flattened.push(...groupItems);
+      } else {
+        // Regular entity views use single property
+        const groupItems = group[propertyName] || group[entityType] || group.entities || group.tiltak || group.krav || [];
+        flattened.push(...groupItems);
+      }
     });
     return flattened;
   }, [groupedItems, entityType]);
@@ -178,23 +192,17 @@ const EntityListPane = ({
     const isEntityIdChanged = selectedEntityId !== prevSelectedEntityId.current;
     const isFromCreateNew = prevSelectedEntityId.current === "create-new";
     const isFromNull = prevSelectedEntityId.current === null;
+    
+    // Don't auto-scroll on initial mount/page refresh - only on genuine null-to-entity transitions
+    const isGenuineFromNull = isFromNull && !isInitialMount.current;
+    
     const hasListRef = !!listRef.current;
     
-    console.log('🚀 Auto scroll check:', {
-      selectedEntityId,
-      prevSelectedEntityId: prevSelectedEntityId.current,
-      hasSelectedEntityId,
-      isEntityIdChanged,
-      isFromCreateNew,
-      isFromNull,
-      hasListRef,
-      shouldScroll: hasSelectedEntityId && isEntityIdChanged && (isFromCreateNew || isFromNull) && hasListRef
-    });
     
     if (
       hasSelectedEntityId &&
       isEntityIdChanged &&
-      (isFromCreateNew || isFromNull) &&
+      (isFromCreateNew || isGenuineFromNull || isEntityJustCreated) &&
       hasListRef
     ) {
       // Small delay to ensure DOM is updated
@@ -222,11 +230,17 @@ const EntityListPane = ({
         if (selectedElement) {
           selectedElement.scrollIntoView({ behavior: "smooth", block: "center" });
         }
+        
+        // Clear the "just created" flag after scrolling
+        if (isEntityJustCreated) {
+          clearJustCreatedFlag();
+        }
       }, 100);
     }
 
     prevSelectedEntityId.current = selectedEntityId;
-  }, [selectedEntityId]);
+    isInitialMount.current = false; // Mark that we're no longer on initial mount
+  }, [selectedEntityId, isEntityJustCreated]);
 
   return (
     <div className="flex flex-col h-full">
@@ -273,7 +287,17 @@ const EntityListPane = ({
             const groupKey = `${entityType}-group-${group.emne?.id || "no-emne"}-${groupIndex}`;
             const isCollapsed = collapsedGroups.has(groupKey);
             const propertyName = getGroupedDataPropertyName(entityType);
-            const groupItems = group[propertyName] || group[entityType] || group.entities || group.tiltak || group.krav || [];
+            // Handle combined entity groups that have both krav and tiltak arrays
+            let groupItems = [];
+            const isCombinedView = entityType === "combined" || entityType === "combinedEntities" || entityType === "prosjekt-combined";
+            
+            if (isCombinedView) {
+              // For combined views, use entities array which contains mixed krav/tiltak
+              groupItems = group.entities || [];
+            } else {
+              // Regular entity views use single property
+              groupItems = group[propertyName] || group[entityType] || group.entities || group.tiltak || group.krav || [];
+            }
 
             return (
               <div key={groupKey}>

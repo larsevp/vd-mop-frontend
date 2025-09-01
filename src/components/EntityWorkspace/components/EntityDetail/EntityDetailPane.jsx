@@ -294,9 +294,9 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
             // Ensure the created entity has the correct entityType for combined view display
             createdEntity.entityType = actualEntityType;
             
-            // Use the store's setSelectedEntity function
+            // Use the store's setSelectedEntity function with justCreated flag for auto-scroll
             const { setSelectedEntity, setActiveEntity } = useEntityWorkspaceStore.getState();
-            setSelectedEntity(createdEntity);
+            setSelectedEntity(createdEntity, true); // Set justCreated=true for auto-scroll
             setActiveEntity(createdEntity);
           }
         }

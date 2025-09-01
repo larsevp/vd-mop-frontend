@@ -16,7 +16,7 @@ import { InfoIcon } from "@/components/ui/InfoIcon.jsx";
 // Validation error summary component
 const ValidationErrorSummary = ({ errors }) => {
   const errorEntries = Object.entries(errors || {}).filter(([_, error]) => error);
-  
+
   if (errorEntries.length === 0) return null;
 
   return (
@@ -31,9 +31,7 @@ const ValidationErrorSummary = ({ errors }) => {
         </svg>
         <h3 className="text-red-800 font-medium">Validering feilet</h3>
       </div>
-      <p className="text-red-700 text-sm mb-3">
-        Følgende felt må fylles ut før du kan lagre:
-      </p>
+      <p className="text-red-700 text-sm mb-3">Følgende felt må fylles ut før du kan lagre:</p>
       <ul className="text-red-700 text-sm space-y-1">
         {errorEntries.map(([fieldName, error]) => (
           <li key={fieldName} className="flex items-start">
@@ -69,16 +67,25 @@ const FieldRenderer = ({ field, value, onChange, error, form, entity, modelName,
   const Component = FieldResolver.getFieldComponent(field, modelName);
 
   // Derive entityType from modelName for inheritance context
-  const entityType = modelName === 'prosjektTiltak' ? 'prosjektTiltak' : 
-                     modelName === 'tiltak' ? 'tiltak' : 
-                     modelName;
+  const entityType = modelName === "prosjektTiltak" ? "prosjektTiltak" : modelName === "tiltak" ? "tiltak" : modelName;
 
   // Check if the component handles its own label
   const componentHandlesOwnLabel = modelName && FieldResolver.getModelSpecificFields(modelName).fieldNames?.[field.name];
 
   if (componentHandlesOwnLabel) {
     // Component handles its own label
-    return <Component field={field} value={value} onChange={onChange} error={error} form={form} row={entity} modelName={modelName} entityType={entityType} />;
+    return (
+      <Component
+        field={field}
+        value={value}
+        onChange={onChange}
+        error={error}
+        form={form}
+        row={entity}
+        modelName={modelName}
+        entityType={entityType}
+      />
+    );
   }
 
   // For view mode, render value differently
@@ -100,7 +107,9 @@ const FieldRenderer = ({ field, value, onChange, error, form, entity, modelName,
           </label>
           <InfoIcon info={field.field_info} />
         </div>
-        <div className="text-gray-900" key={`${entity?.id}-${field.name}-value`}>{displayValue}</div>
+        <div className="text-gray-900" key={`${entity?.id}-${field.name}-value`}>
+          {displayValue}
+        </div>
       </div>
     );
   }
@@ -118,10 +127,21 @@ const FieldRenderer = ({ field, value, onChange, error, form, entity, modelName,
       {/* Add error boundary for Component rendering */}
       {(() => {
         try {
-          return <Component field={field} value={value} onChange={onChange} error={error} form={form} row={entity} modelName={modelName} entityType={entityType} />;
+          return (
+            <Component
+              field={field}
+              value={value}
+              onChange={onChange}
+              error={error}
+              form={form}
+              row={entity}
+              modelName={modelName}
+              entityType={entityType}
+            />
+          );
         } catch (renderError) {
-          if (field.name === 'kravreferansetypeId') {
-            console.error('🔍 kravreferansetypeId Component render error:', renderError);
+          if (field.name === "kravreferansetypeId") {
+            console.error("🔍 kravreferansetypeId Component render error:", renderError);
           }
           return <div className="text-red-600 text-sm">Error rendering field: {renderError.message}</div>;
         }
@@ -194,17 +214,28 @@ const EntityDetailForm = ({
 
         // Apply workspace-level hiding (from detailConfig)
         const workspaceHiddenInEdit = isEditing && detailConfig.workspaceHiddenEdit?.includes(field.name);
-        const workspaceHiddenInCreate = isEditing && entity?.id === "create-new" && detailConfig.workspaceHiddenCreate?.includes(field.name);
+        const workspaceHiddenInCreate =
+          isEditing && entity?.id === "create-new" && detailConfig.workspaceHiddenCreate?.includes(field.name);
         const workspaceHiddenInIndex = !isEditing && detailConfig.workspaceHiddenIndex?.includes(field.name);
         const workspaceHidden = workspaceHiddenInEdit || workspaceHiddenInCreate || workspaceHiddenInIndex;
 
         // Exclude fields that are shown elsewhere (e.g., title in header)
         const isExcluded = excludeFields.includes(field.name);
 
-
         return !standardHidden && !detailHidden && !workspaceHidden && !isExcluded;
       })
-      .sort((a, b) => (a.detailOrder || 0) - (b.detailOrder || 0));
+      .sort((a, b) => {
+        const orderA = a.detailOrder || 0;
+        const orderB = b.detailOrder || 0;
+
+        // Primary sort by order
+        if (orderA !== orderB) {
+          return orderA - orderB;
+        }
+
+        // Secondary sort by field name for predictable ordering when orders are equal
+        return a.name.localeCompare(b.name);
+      });
 
     return processedFields;
   };
@@ -246,6 +277,29 @@ const EntityDetailForm = ({
   // Group fields by section
   const getFieldsBySection = () => {
     const fields = getVisibleFields();
+
+    // Debug: Log visible fields for prosjektKrav
+    if (modelName === "prosjektKrav") {
+      console.log(
+        "[EntityDetailForm] Model config fields:",
+        modelConfig.fields?.map((f) => ({ name: f.name, type: f.type }))
+      );
+      console.log(
+        "[EntityDetailForm] Visible fields for prosjektKrav:",
+        fields.map((f) => ({ name: f.name, section: f.detailSection, order: f.detailOrder }))
+      );
+      const prioritetField = fields.find((f) => f.name === "prioritet");
+      console.log("[EntityDetailForm] Prioritet field config:", prioritetField);
+      console.log("[EntityDetailForm] Entity data:", entity);
+
+      // Debug status section fields specifically
+      const statusFields = fields.filter((f) => f.detailSection === "status");
+      console.log(
+        "[EntityDetailForm] Status section fields:",
+        statusFields.map((f) => ({ name: f.name, order: f.detailOrder }))
+      );
+    }
+
     const sections = {};
 
     fields.forEach((field) => {
@@ -254,9 +308,7 @@ const EntityDetailForm = ({
         sections[sectionName] = [];
       }
       sections[sectionName].push(field);
-      
     });
-
 
     return sections;
   };
@@ -288,11 +340,12 @@ const EntityDetailForm = ({
 
   const orderedSections = getOrderedSections();
 
-  // Group fields by row within each section
-  const groupFieldsByRow = (fields) => {
+  // Group fields by row within each section and create ordered items
+  const createOrderedFieldItems = (fields) => {
     const rows = {};
     const standaloneFields = [];
 
+    // First, separate fields into standalone and row-grouped
     fields.forEach((field) => {
       if (field.detailRow) {
         if (!rows[field.detailRow]) {
@@ -304,7 +357,31 @@ const EntityDetailForm = ({
       }
     });
 
-    return { rows, standaloneFields };
+    // Create ordered items that can be mixed (standalone fields and row groups)
+    const items = [];
+
+    // Add standalone fields as individual items
+    standaloneFields.forEach((field) => {
+      items.push({
+        type: "field",
+        field,
+        order: field.detailOrder || 0,
+      });
+    });
+
+    // Add row groups as single items (using the minimum order of fields in the row)
+    Object.entries(rows).forEach(([rowName, rowFields]) => {
+      const minOrder = Math.min(...rowFields.map((f) => f.detailOrder || 0));
+      items.push({
+        type: "row",
+        rowName,
+        fields: rowFields.sort((a, b) => (a.detailOrder || 0) - (b.detailOrder || 0)),
+        order: minOrder,
+      });
+    });
+
+    // Sort all items by order
+    return items.sort((a, b) => a.order - b.order);
   };
 
   // Toggle section expansion
@@ -323,8 +400,8 @@ const EntityDetailForm = ({
   // Handle field changes - supports both event objects and (fieldName, value) calls
   const handleChange = (fieldNameOrEvent, value) => {
     let fieldName, fieldValue;
-    
-    if (typeof fieldNameOrEvent === 'string') {
+
+    if (typeof fieldNameOrEvent === "string") {
       // Called as handleChange(fieldName, value)
       fieldName = fieldNameOrEvent;
       fieldValue = value;
@@ -333,10 +410,10 @@ const EntityDetailForm = ({
       fieldName = fieldNameOrEvent.target.name;
       fieldValue = fieldNameOrEvent.target.value;
     } else {
-      console.warn('Invalid onChange call in EntityDetailForm:', fieldNameOrEvent);
+      console.warn("Invalid onChange call in EntityDetailForm:", fieldNameOrEvent);
       return;
     }
-    
+
     if (onFieldChange) {
       onFieldChange(fieldName, fieldValue);
     }
@@ -348,7 +425,7 @@ const EntityDetailForm = ({
       {Object.entries(orderedSections).map(([sectionName, fields]) => {
         const sectionInfo = sectionConfig[sectionName] || { title: sectionName };
         const isExpanded = expandedSections.has(sectionName);
-        const { rows, standaloneFields } = groupFieldsByRow(fields);
+        const orderedItems = createOrderedFieldItems(fields);
 
         // Check if this is the main info section and should not be collapsible
         const isMainInfoSection = sectionName === "info" || sectionName === "main";
@@ -357,78 +434,85 @@ const EntityDetailForm = ({
         // Render field content (same for both collapsible and non-collapsible)
         const fieldContent = (
           <>
-            {/* Render standalone fields */}
-            {standaloneFields.map((field) => {
-              const fieldError = errors[field.name];
+            {orderedItems.map((item, index) => {
+              if (item.type === "field") {
+                // Render standalone field
+                const field = item.field;
+                const fieldError = errors[field.name];
 
-              return (
-                <div key={field.name}>
-                  <FieldRenderer
-                    field={field}
-                    value={formData[field.name] ?? ""}
-                    onChange={handleChange}
-                    error={fieldError}
-                    form={formData}
-                    entity={entity}
-                    modelName={modelName}
-                    isEditing={isEditing}
-                  />
-                  {fieldError && <ErrorDisplay error={fieldError} />}
-                </div>
-              );
+                return (
+                  <div key={field.name}>
+                    <FieldRenderer
+                      field={field}
+                      value={formData[field.name] ?? ""}
+                      onChange={handleChange}
+                      error={fieldError}
+                      form={formData}
+                      entity={entity}
+                      modelName={modelName}
+                      isEditing={isEditing}
+                    />
+                    {fieldError && <ErrorDisplay error={fieldError} />}
+                  </div>
+                );
+              } else if (item.type === "row") {
+                // Render row-grouped fields
+                const rowFields = item.fields;
+
+                return (
+                  <div
+                    key={item.rowName}
+                    className="grid gap-4"
+                    style={{
+                      gridTemplateColumns: rowFields
+                        .map((field) => {
+                          // Dynamic column sizing based on field type
+                          if (field.type === "checkbox" || field.type === "boolean") {
+                            return "1fr";
+                          } else if (field.type === "select" || field.type === "number") {
+                            return "1fr";
+                          } else if (field.type === "text" && field.name.includes("referanse")) {
+                            return "1fr";
+                          } else {
+                            return "2fr";
+                          }
+                        })
+                        .join(" "),
+                    }}
+                  >
+                    {rowFields.map((field) => {
+                      const fieldError = errors[field.name];
+                      return (
+                        <div key={field.name}>
+                          <FieldRenderer
+                            field={field}
+                            value={formData[field.name] ?? ""}
+                            onChange={handleChange}
+                            error={fieldError}
+                            form={formData}
+                            entity={entity}
+                            modelName={modelName}
+                            isEditing={isEditing}
+                          />
+                          {fieldError && <ErrorDisplay error={fieldError} />}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              }
+
+              return null;
             })}
-
-            {/* Render row-grouped fields */}
-            {Object.entries(rows).map(([rowName, rowFields]) => (
-              <div
-                key={rowName}
-                className="grid gap-4"
-                style={{
-                  gridTemplateColumns: rowFields
-                    .map((field) => {
-                      // Dynamic column sizing based on field type
-                      if (field.type === "checkbox" || field.type === "boolean") {
-                        return "1fr";
-                      } else if (field.type === "select" || field.type === "number") {
-                        return "1fr";
-                      } else if (field.type === "text" && field.name.includes("referanse")) {
-                        return "1fr";
-                      } else {
-                        return "2fr";
-                      }
-                    })
-                    .join(" "),
-                }}
-              >
-                {rowFields.map((field) => {
-                  const fieldError = errors[field.name];
-                  return (
-                    <div key={field.name}>
-                      <FieldRenderer
-                        field={field}
-                        value={formData[field.name] ?? ""}
-                        onChange={handleChange}
-                        error={fieldError}
-                        form={formData}
-                        entity={entity}
-                        modelName={modelName}
-                        isEditing={isEditing}
-                      />
-                      {fieldError && <ErrorDisplay error={fieldError} />}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
           </>
         );
 
         return (
           <div key={sectionName}>
             {shouldBeCollapsible ? (
-              <FieldSection 
-                title={sectionInfo.title} 
-                isExpanded={isExpanded} 
+              <FieldSection
+                title={sectionInfo.title}
+                isExpanded={isExpanded}
                 onToggle={() => toggleSection(sectionName)}
                 noTitle={sectionInfo.noTitle}
               >
@@ -436,9 +520,7 @@ const EntityDetailForm = ({
               </FieldSection>
             ) : (
               // Main info section without collapsible border/header
-              <div className="space-y-6">
-                {fieldContent}
-              </div>
+              <div className="space-y-6">{fieldContent}</div>
             )}
           </div>
         );

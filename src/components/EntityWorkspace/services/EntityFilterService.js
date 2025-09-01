@@ -77,7 +77,7 @@ export class EntityFilterService {
         if (!this._matchesFilter(item.vurdering, filters.vurdering)) return false;
 
         // Priority filter
-        if (!this._matchesPriorityFilter(item.prioritet, filters.priority)) return false;
+        if (!this._matchesPriorityFilter(item.prioritet, filters.prioritet)) return false;
 
         // Main obligatory/optional filter
         if (!this._matchesObligatoryFilter(item.obligatorisk, filters.filterBy)) return false;
@@ -90,25 +90,37 @@ export class EntityFilterService {
       // For grouped data, filter within each group
       return items.map((group) => {
         const newGroup = { ...group };
+        const isCombinedEntity = entityType === "combined" || entityType === "prosjekt-combined";
 
-        // Handle different group structures
-        // First try the mapped property name for this entity type
-        const propertyName = this._getGroupedDataPropertyName(entityType);
+        if (isCombinedEntity) {
+          // For combined entities, ALL entities are in a single 'entities' array
+          if (group.entities) {
+            newGroup.entities = filterItems(group.entities);
+          }
+          // Fallback for legacy structure (if any groups still use separate arrays)
+          if (group.krav) newGroup.krav = filterItems(group.krav);
+          if (group.tiltak) newGroup.tiltak = filterItems(group.tiltak);
+          if (group.prosjektkrav) newGroup.prosjektkrav = filterItems(group.prosjektkrav);
+          if (group.prosjekttiltak) newGroup.prosjekttiltak = filterItems(group.prosjekttiltak);
+        } else {
+          // For single entity types, use the original logic
+          const propertyName = this._getGroupedDataPropertyName(entityType);
 
-        if (group[propertyName]) {
-          newGroup[propertyName] = filterItems(group[propertyName]);
-        } else if (group[entityType]) {
-          newGroup[entityType] = filterItems(group[entityType]);
-        } else if (group.entities) {
-          newGroup.entities = filterItems(group.entities);
-        } else if (group.krav) {
-          newGroup.krav = filterItems(group.krav);
-        } else if (group.tiltak) {
-          newGroup.tiltak = filterItems(group.tiltak);
-        } else if (group.prosjektkrav) {
-          newGroup.prosjektkrav = filterItems(group.prosjektkrav);
-        } else if (group.prosjekttiltak) {
-          newGroup.prosjekttiltak = filterItems(group.prosjekttiltak);
+          if (group[propertyName]) {
+            newGroup[propertyName] = filterItems(group[propertyName]);
+          } else if (group[entityType]) {
+            newGroup[entityType] = filterItems(group[entityType]);
+          } else if (group.entities) {
+            newGroup.entities = filterItems(group.entities);
+          } else if (group.krav) {
+            newGroup.krav = filterItems(group.krav);
+          } else if (group.tiltak) {
+            newGroup.tiltak = filterItems(group.tiltak);
+          } else if (group.prosjektkrav) {
+            newGroup.prosjektkrav = filterItems(group.prosjektkrav);
+          } else if (group.prosjekttiltak) {
+            newGroup.prosjekttiltak = filterItems(group.prosjekttiltak);
+          }
         }
 
         return newGroup;
@@ -142,23 +154,37 @@ export class EntityFilterService {
 
     if (groupByEmne) {
       // For grouped data, count across all groups
+      const isCombinedEntity = entityType === "combined" || entityType === "prosjekt-combined";
+
       items.forEach((group) => {
-        // First try the mapped property name for this entity type
-        const propertyName = this._getGroupedDataPropertyName(entityType);
-        if (group[propertyName]) {
-          countItems(group[propertyName]);
-        } else if (group[entityType]) {
-          countItems(group[entityType]);
-        } else if (group.entities) {
-          countItems(group.entities);
-        } else if (group.krav) {
-          countItems(group.krav);
-        } else if (group.tiltak) {
-          countItems(group.tiltak);
-        } else if (group.prosjektkrav) {
-          countItems(group.prosjektkrav);
-        } else if (group.prosjekttiltak) {
-          countItems(group.prosjekttiltak);
+        if (isCombinedEntity) {
+          // For combined entities, ALL entities are in a single 'entities' array
+          if (group.entities) {
+            countItems(group.entities);
+          }
+          // Fallback for legacy structure (if any groups still use separate arrays)
+          if (group.krav) countItems(group.krav);
+          if (group.tiltak) countItems(group.tiltak);
+          if (group.prosjektkrav) countItems(group.prosjektkrav);
+          if (group.prosjekttiltak) countItems(group.prosjekttiltak);
+        } else {
+          // For single entity types, use the original logic
+          const propertyName = this._getGroupedDataPropertyName(entityType);
+          if (group[propertyName]) {
+            countItems(group[propertyName]);
+          } else if (group[entityType]) {
+            countItems(group[entityType]);
+          } else if (group.entities) {
+            countItems(group.entities);
+          } else if (group.krav) {
+            countItems(group.krav);
+          } else if (group.tiltak) {
+            countItems(group.tiltak);
+          } else if (group.prosjektkrav) {
+            countItems(group.prosjektkrav);
+          } else if (group.prosjekttiltak) {
+            countItems(group.prosjekttiltak);
+          }
         }
       });
     } else {
@@ -204,22 +230,37 @@ export class EntityFilterService {
   }
 
   static _handleGroupedData(item, entityType, extractFromItems) {
-    // First try the mapped property name for this entity type
-    const propertyName = this._getGroupedDataPropertyName(entityType);
-    if (item[propertyName]) {
-      extractFromItems(item[propertyName]);
-    } else if (item[entityType]) {
-      extractFromItems(item[entityType]);
-    } else if (item.entities) {
-      extractFromItems(item.entities);
-    } else if (item.krav) {
-      extractFromItems(item.krav);
-    } else if (item.tiltak) {
-      extractFromItems(item.tiltak);
-    } else if (item.prosjektkrav) {
-      extractFromItems(item.prosjektkrav);
-    } else if (item.prosjekttiltak) {
-      extractFromItems(item.prosjekttiltak);
+    // For combined entity types, process all entity arrays to get complete filter options
+    const isCombinedEntity = entityType === "combined" || entityType === "prosjekt-combined";
+
+    if (isCombinedEntity) {
+      // For combined entities, ALL entities are in a single 'entities' array with entityType property
+      if (item.entities) {
+        extractFromItems(item.entities);
+      }
+      // Fallback for legacy structure (if any groups still use separate arrays)
+      if (item.krav) extractFromItems(item.krav);
+      if (item.tiltak) extractFromItems(item.tiltak);
+      if (item.prosjektkrav) extractFromItems(item.prosjektkrav);
+      if (item.prosjekttiltak) extractFromItems(item.prosjekttiltak);
+    } else {
+      // For single entity types, use the original logic
+      const propertyName = this._getGroupedDataPropertyName(entityType);
+      if (item[propertyName]) {
+        extractFromItems(item[propertyName]);
+      } else if (item[entityType]) {
+        extractFromItems(item[entityType]);
+      } else if (item.entities) {
+        extractFromItems(item.entities);
+      } else if (item.krav) {
+        extractFromItems(item.krav);
+      } else if (item.tiltak) {
+        extractFromItems(item.tiltak);
+      } else if (item.prosjektkrav) {
+        extractFromItems(item.prosjektkrav);
+      } else if (item.prosjekttiltak) {
+        extractFromItems(item.prosjekttiltak);
+      }
     }
   }
 

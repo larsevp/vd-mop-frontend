@@ -131,15 +131,24 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
     sortBy,
     sortOrder,
     groupByEmne: config.features.grouping ? groupByEmne : false,
+    filterBy,
+    additionalFilters,
   });
 
   // Filtering Logic - now handled by Zustand store
   const filtering = useMemo(() => {
     const result = getFilteringInfo(data.items);
 
-    // Debug project entities before passing to display components
-    const isProjectEntity = entityType?.includes("prosjekt") || entityType?.includes("project");
-    if (isProjectEntity) {
+    // Debug combined entities after filtering processing
+    const isCombinedEntity = entityType === "combined" || entityType === "prosjekt-combined";
+    if (isCombinedEntity) {
+      console.log('🔧 EntityWorkspaceCore filtering result:', {
+        entityType,
+        dataItemsLength: data.items.length,
+        filteredItemsLength: result.filteredItems.length,
+        filteredStats: result.filteredStats,
+        hasActiveFilters: result.hasActiveFilters
+      });
     }
 
     return result;

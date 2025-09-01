@@ -62,10 +62,12 @@ const SearchBar = ({
         onSearch();
         break;
       case "Escape":
-        if (searchInput) {
-          onClearSearch();
-        } else if (showFilters && mode === "advanced") {
+        if (showFilters && mode === "advanced") {
+          // Close filters panel
           setShowFilters(false);
+        } else if (searchInput) {
+          // Clear search only (don't reset filters)
+          onClearSearch();
         } else {
           searchRef.current?.blur();
         }
@@ -261,22 +263,41 @@ const SearchBar = ({
             )}
           </div>
 
-          {/* Clear filters button */}
-          {hasActiveFilters && (
-            <div className="mt-4 pt-3 border-t border-gray-100">
-              <button
+          {/* Action buttons */}
+          <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+            <div className="flex gap-2">
+              <Button
                 onClick={() => {
-                  onFilterChange("all");
-                  onSortChange("updatedAt");
-                  onSortOrderChange("desc");
-                  onAdditionalFiltersChange({});
+                  onSearch();
+                  setShowFilters(false);
                 }}
-                className="text-xs text-gray-500 hover:text-gray-700"
+                size="sm"
+                className="text-xs"
               >
-                Nullstill alle filtre
-              </button>
+                Bruk filter
+              </Button>
+              {hasActiveFilters && (
+                <button
+                  onClick={() => {
+                    onFilterChange("all");
+                    onSortChange("updatedAt");
+                    onSortOrderChange("desc");
+                    onAdditionalFiltersChange({});
+                    onSearch(); // Apply the reset immediately
+                  }}
+                  className="text-xs text-gray-500 hover:text-gray-700"
+                >
+                  Nullstill alle filtre
+                </button>
+              )}
             </div>
-          )}
+            <button
+              onClick={() => setShowFilters(false)}
+              className="text-xs text-gray-400 hover:text-gray-600"
+            >
+              Lukk
+            </button>
+          </div>
         </div>
       )}
     </div>

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/primitives/button";
 import { Edit, Trash2, AlertCircle, Clock, Paperclip, GitBranch, ArrowUp } from "lucide-react";
 import { MerknadField } from "../shared";
 import { EntityTypeResolver } from "../services/EntityTypeResolver";
+import PrioritetDropdown from "@/pages/KravTiltak/Old/Krav_old/old/components/PrioritetDropdown";
 
 /**
  * Generic EntityCard component that can render any entity type
@@ -34,9 +35,8 @@ const EntityCard = ({
   const [prioritetLoading, setPrioritetLoading] = useState(false);
 
   // For combined views, use entity-specific model config if entity has entityType
-  const effectiveModelConfig = entity.entityType && entity.entityType !== entityType 
-    ? EntityTypeResolver.resolveModelConfig(entity.entityType)
-    : modelConfig;
+  const effectiveModelConfig =
+    entity.entityType && entity.entityType !== entityType ? EntityTypeResolver.resolveModelConfig(entity.entityType) : modelConfig;
 
   // Get entity display fields from effective model config
   const titleField =
@@ -44,9 +44,10 @@ const EntityCard = ({
 
   const uidField = effectiveModelConfig.workspace?.cardFields?.find((f) => f.toLowerCase().includes("uid") || f === "id");
 
-  const descField = effectiveModelConfig.workspace?.cardFields?.find(
-    (f) => f.toLowerCase().includes("beskrivelse") || f.toLowerCase().includes("description")
-  ) || "beskrivelse"; // Fallback for combined views
+  const descField =
+    effectiveModelConfig.workspace?.cardFields?.find(
+      (f) => f.toLowerCase().includes("beskrivelse") || f.toLowerCase().includes("description")
+    ) || "beskrivelse"; // Fallback for combined views
 
   // Get display values
   const title = entity[titleField] || "Uten tittel";
@@ -197,8 +198,10 @@ const EntityCard = ({
         <div className="flex flex-col items-end gap-3 flex-shrink-0 min-w-[140px]">
           {/* Actionable Controls Row - All dropdowns grouped together */}
           <div className="flex flex-wrap items-center gap-2 justify-end">
-            {/* TODO: Generic dropdown components for status, vurdering, prioritet */}
-            {/* These would need to be implemented based on the specific field types in the model config */}
+            {/* Priority Dropdown */}
+            {showPrioritet && entity?.id && entity.id !== "create-new" && (
+              <PrioritetDropdown value={entity.prioritet} onChange={handlePrioritetChange} loading={prioritetLoading} />
+            )}
           </div>
 
           {/* Status and Info badges row */}

@@ -100,10 +100,6 @@ export const prosjektTiltak = {
         "beskrivelseSnippet",
         "implementasjonSnippet",
         "tilbakemeldingSnippet",
-        "vurderingId",
-        "statusId",
-        "prioritet",
-        "generalTiltakId",
       ], // Fields to hide in view mode (when not editing)
       workspaceHiddenEdit: [
         "tiltakUID",
@@ -113,10 +109,6 @@ export const prosjektTiltak = {
         "beskrivelseSnippet",
         "implementasjonSnippet",
         "tilbakemeldingSnippet",
-        "vurderingId",
-        "statusId",
-        "prioritet",
-        "generalTiltakId",
       ], // Fields to hide when editing existing records
       workspaceHiddenCreate: [
         "tiltakUID",
@@ -126,10 +118,6 @@ export const prosjektTiltak = {
         "beskrivelseSnippet",
         "implementasjonSnippet",
         "tilbakemeldingSnippet",
-        "vurderingId",
-        "statusId",
-        "prioritet",
-        "generalTiltakId",
       ], // Fields to hide when creating new records
 
       // Section organization - Organizes form fields into collapsible sections
@@ -188,24 +176,39 @@ export const prosjektTiltak = {
           order: 4,
           row: "emne-row",
         },
+        vurderingId: {
+          section: "info", // Reference value - moved below beskrivelse
+          order: 5,
+          row: "main-row-2",
+        },
+        statusId: {
+          section: "info", // Reference value - moved below beskrivelse
+          order: 6,
+          row: "main-row-2",
+        },
+        prioritet: {
+          section: "info", // Priority value - moved below beskrivelse
+          order: 7,
+          row: "main-row-2",
+        },
         merknad: {
           section: "info", // Administrative notes
-          order: 4,
+          order: 8,
         },
 
         // Implementation details - separate section for execution information
         implementasjon: {
           section: "annet", // How the task is carried out
-          order: 5,
+          order: 9,
         },
         tilbakemelding: {
           section: "annet", // Feedback and results
-          order: 6,
+          order: 10,
         },
 
         generalTiltakId: {
           section: "references", // Reference to general tiltak
-          order: 8,
+          order: 11,
           row: "reference-row", // Same row as parentId
         },
 

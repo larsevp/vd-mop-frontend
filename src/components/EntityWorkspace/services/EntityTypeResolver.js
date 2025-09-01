@@ -195,8 +195,20 @@ export class EntityTypeResolver {
   }
 
   static _pluralize(str) {
-    // Simple pluralization - extend as needed
+    // Norwegian pluralization rules
+    if (!str) return str;
+    
+    const lowerStr = str.toLowerCase();
+    
+    // Words that don't change in plural
+    if (lowerStr.includes("krav") || lowerStr.includes("tiltak")) {
+      return str;
+    }
+    
+    // Already plural (ends with 's')
     if (str.endsWith("s")) return str;
+    
+    // Default Norwegian pluralization
     return str + "er";
   }
 

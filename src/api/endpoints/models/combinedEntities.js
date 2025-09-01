@@ -6,7 +6,15 @@ import { API } from "@/api";
  * EntityWorkspace expects a function that accepts (page, pageSize, search, sortBy, sortOrder)
  * Uses the dedicated grouped route like Krav service
  */
-export const getPaginatedCombinedEntities = (page = 1, pageSize = 50, search = "", sortBy = "", sortOrder = "asc") => {
+export const getPaginatedCombinedEntities = (
+  page = 1,
+  pageSize = 50,
+  search = "",
+  sortBy = "",
+  sortOrder = "asc",
+  filterBy = "all",
+  additionalFilters = {}
+) => {
   // Extract actual page number if it's wrapped in an object
   const actualPage =
     typeof page === "object" && page !== null ? page.page || page.pageNumber || page.currentPage || 1 : parseInt(page) || 1;
@@ -18,12 +26,29 @@ export const getPaginatedCombinedEntities = (page = 1, pageSize = 50, search = "
     search,
     sortBy,
     sortOrder,
+    // Filter parameters
+    ...(filterBy && filterBy !== "all" && { filterBy }),
+    // Additional filters as separate parameters
+    ...(additionalFilters.status && { status: additionalFilters.status }),
+    ...(additionalFilters.vurdering && { vurdering: additionalFilters.vurdering }),
+    ...(additionalFilters.prioritet && { prioritet: additionalFilters.prioritet }),
     // Default view options for grouped route
     primaryView: "krav-first",
     showHierarchy: "true",
     showCrossRelations: "true",
     includeChildren: "true",
     includeRelated: "true",
+  });
+
+  console.log("[DEBUG] Combined entity API call with parameters:", {
+    page: actualPage,
+    pageSize,
+    search,
+    sortBy,
+    sortOrder,
+    filterBy,
+    additionalFilters,
+    queryParams: queryParams.toString(),
   });
 
   // Use the dedicated grouped route like Krav service
@@ -86,8 +111,16 @@ export const getCombinedEntitiesTiltakFirst = async (params = {}) => {
  * Get combined view grouped by Emne (convenience method)
  * Matches EntityWorkspace expected signature: (page, pageSize, search, sortBy, sortOrder)
  */
-export const getCombinedEntitiesGroupedByEmne = (page = 1, pageSize = 50, search = "", sortBy = "", sortOrder = "asc") => {
-  return getPaginatedCombinedEntities(page, pageSize, search, sortBy, sortOrder);
+export const getCombinedEntitiesGroupedByEmne = (
+  page = 1,
+  pageSize = 50,
+  search = "",
+  sortBy = "",
+  sortOrder = "asc",
+  filterBy = "all",
+  additionalFilters = {}
+) => {
+  return getPaginatedCombinedEntities(page, pageSize, search, sortBy, sortOrder, filterBy, additionalFilters);
 };
 
 /**

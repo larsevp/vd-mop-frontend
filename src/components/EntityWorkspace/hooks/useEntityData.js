@@ -17,6 +17,8 @@ export const useEntityData = ({
   sortBy = "updatedAt",
   sortOrder = "desc",
   groupByEmne = false,
+  filterBy = "all",
+  additionalFilters = {},
 }) => {
   const { currentProject } = useProjectStore();
 
@@ -26,7 +28,7 @@ export const useEntityData = ({
   // Build query key for stable caching - include project context for project entities
   const queryKey = useMemo(() => {
     const isProjectEntity = entityType.includes("prosjekt");
-    const baseKey = [entityType, "workspace", "paginated", page, pageSize, searchQuery, sortBy, sortOrder, groupByEmne];
+    const baseKey = [entityType, "workspace", "paginated", page, pageSize, searchQuery, sortBy, sortOrder, groupByEmne, filterBy, additionalFilters];
 
     // Add project context for project-specific entities
     if (isProjectEntity && currentProject) {
@@ -34,7 +36,7 @@ export const useEntityData = ({
     }
 
     return baseKey;
-  }, [entityType, page, pageSize, searchQuery, sortBy, sortOrder, groupByEmne, currentProject]);
+  }, [entityType, page, pageSize, searchQuery, sortBy, sortOrder, groupByEmne, filterBy, additionalFilters, currentProject]);
 
   // Choose the appropriate query function based on grouping
   // Prefer workspace-specific functions for project entities
@@ -53,7 +55,14 @@ export const useEntityData = ({
           // Debug logging for combined entities
           if (entityType === "combined") {
           }
-          return queryFunction(page, pageSize, searchQuery, sortBy, sortOrder);
+          // Only pass filter parameters to combined entity API functions
+          const isCombinedEntity = entityType === "combined" || entityType === "prosjekt-combined";
+          
+          if (isCombinedEntity) {
+            return queryFunction(page, pageSize, searchQuery, sortBy, sortOrder, filterBy, additionalFilters);
+          } else {
+            return queryFunction(page, pageSize, searchQuery, sortBy, sortOrder);
+          }
         }
       : undefined,
     enabled: !!queryFunction, // Only run query if we have a function
@@ -78,17 +87,50 @@ export const useEntityData = ({
     const totalCount = responseData.totalCount || responseData.count || 0;
     const totalPages = responseData.totalPages || Math.ceil(totalCount / pageSize);
 
-    // Debug logging for ProsjektKrav
-    if (entityType === "prosjekt-krav") {
+    // Debug logging for combined entities - check for orphan entities
+    if (entityType === "combined" || entityType === "prosjekt-combined") {
+      const entityTypes = items.map(group => {
+        if (group.krav || group.tiltak || group.prosjektKrav || group.prosjektTiltak) {
+          // Grouped data - check what entity types are present in each group
+          const hasKrav = (group.krav?.length > 0) || (group.prosjektKrav?.length > 0);
+          const hasTiltak = (group.tiltak?.length > 0) || (group.prosjektTiltak?.length > 0);
+          return { hasKrav, hasTiltak, groupTitle: group.emne?.tittel };
+        }
+        return { entityType: group.entityType, title: group.tittel || group.navn };
+      });
+      
     }
 
-    return {
-      items,
-      totalCount,
-      totalPages,
+    // Apply frontend filtering for non-combined entities (combined entities handle filtering in backend)
+    const isCombinedEntity = entityType === "combined" || entityType === "prosjekt-combined";
+    let filteredItems = items;
+    let finalTotalCount = totalCount;
+    let finalTotalPages = totalPages;
+    
+    if (!isCombinedEntity && (filterBy !== "all" || Object.keys(additionalFilters).length > 0)) {
+      // Build filter object combining filterBy and additionalFilters
+      const combinedFilters = {
+        ...(filterBy && filterBy !== "all" && { filterBy }),
+        ...additionalFilters
+      };
+      
+      if (Object.keys(combinedFilters).length > 0) {
+        filteredItems = EntityFilterService.applyFilters(filteredItems, combinedFilters, entityType, groupByEmne);
+        finalTotalCount = filteredItems.length;
+        finalTotalPages = Math.ceil(filteredItems.length / pageSize);
+      }
+    }
+
+    const result = {
+      items: filteredItems,
+      totalCount: finalTotalCount,
+      totalPages: finalTotalPages,
       currentPage: page,
+      originalTotalCount: totalCount, // Keep original count for reference
     };
-  }, [queryResult.data, page, pageSize, entityType]);
+    
+    return result;
+  }, [queryResult.data, page, pageSize, entityType, filterBy, additionalFilters]);
 
   // Clean: Let React Query handle staleness naturally after proper cache invalidation
 

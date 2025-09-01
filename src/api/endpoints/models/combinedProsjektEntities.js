@@ -7,7 +7,7 @@ import { useProjectStore } from "@/stores/userStore";
  * EntityWorkspace expects a function that accepts (page, pageSize, search, sortBy, sortOrder)
  * Uses the combined-entities route with projectId parameter
  */
-export const getPaginatedCombinedProsjektEntities = (page = 1, pageSize = 50, search = "", sortBy = "", sortOrder = "asc") => {
+export const getPaginatedCombinedProsjektEntities = (page = 1, pageSize = 50, search = "", sortBy = "", sortOrder = "asc", filterBy = "all", additionalFilters = {}) => {
   // Handle case where page is passed as an object (fix for object parameter issue)
   const actualPage = typeof page === "object" && page !== null ? page.page || page.pageNumber || page.currentPage || 1 : parseInt(page) || 1;
   
@@ -28,6 +28,11 @@ export const getPaginatedCombinedProsjektEntities = (page = 1, pageSize = 50, se
     sortBy,
     sortOrder,
     projectId: projectId.toString(),
+    // Filter parameters
+    ...(filterBy && filterBy !== "all" && { filterBy }),
+    // Additional filters as separate parameters
+    ...(additionalFilters.status && { status: additionalFilters.status }),
+    ...(additionalFilters.vurdering && { vurdering: additionalFilters.vurdering }),
     // Default view options for project entities
     primaryView: "prosjektkrav-first",
     showHierarchy: "true",
@@ -92,9 +97,8 @@ export const getCombinedProsjektEntitiesTiltakFirst = async (params = {}) => {
 /**
  * Get combined view grouped by Emne (convenience method)
  */
-export const getCombinedProsjektEntitiesGroupedByEmne = async (params = {}) => {
-  const { page = 1, pageSize = 50, search = "", sortBy = "", sortOrder = "asc" } = params;
-  return getPaginatedCombinedProsjektEntities(page, pageSize, search, sortBy, sortOrder);
+export const getCombinedProsjektEntitiesGroupedByEmne = async (page = 1, pageSize = 50, search = "", sortBy = "", sortOrder = "asc", filterBy = "all", additionalFilters = {}) => {
+  return getPaginatedCombinedProsjektEntities(page, pageSize, search, sortBy, sortOrder, filterBy, additionalFilters);
 };
 
 /**

@@ -102,9 +102,6 @@ export const prosjektKrav = {
         "kravUID",
         "beskrivelseSnippet",
         "informasjonSnippet",
-        "vurderingId",
-        "statusId",
-        "prioritet",
       ], // Fields to hide in view mode (when not editing)
       workspaceHiddenEdit: [
         "kravUID",
@@ -115,9 +112,6 @@ export const prosjektKrav = {
         "givenOrder",
         "beskrivelseSnippet",
         "informasjonSnippet",
-        "vurderingId",
-        "statusId",
-        "prioritet",
       ], // Fields to hide when editing existing records
       workspaceHiddenCreate: [
         "kravUID",
@@ -128,9 +122,6 @@ export const prosjektKrav = {
         "givenOrder",
         "beskrivelseSnippet",
         "informasjonSnippet",
-        "vurderingId",
-        "statusId",
-        "prioritet",
       ], // Fields to hide when creating new records
 
       // Section organization - Organizes form fields into collapsible sections
@@ -177,19 +168,34 @@ export const prosjektKrav = {
           section: "info", // Primary content description
           order: 2,
         },
+        parentId: {
+          section: "info", // Task requirements
+          order: 3,
+          row: "main-row", // Group with administrative flags
+        },
         emneId: {
-          section: "info", // Reference value
+          section: "info", // Reference value - moved below beskrivelse
           order: 3,
           row: "main-row",
         },
-        parentId: {
-          section: "info", // Task requirements
-          order: 4,
-          row: "main-row", // Group with administrative flags
+        vurderingId: {
+          section: "info", // Reference value - moved below beskrivelse
+          order: 5,
+          row: "main-row-2",
+        },
+        statusId: {
+          section: "info", // Reference value - moved below beskrivelse
+          order: 6,
+          row: "main-row-2",
+        },
+        prioritet: {
+          section: "info", // Priority value - moved below beskrivelse
+          order: 7,
+          row: "main-row-2",
         },
         merknader: {
           section: "info", // Administrative notes
-          order: 5,
+          order: 8,
         },
         kravreferanse: {
           section: "info", // Reference value
@@ -200,11 +206,6 @@ export const prosjektKrav = {
         kravStatus: {
           section: "status", // Status information
           order: 7,
-          row: "status-row",
-        },
-        prioritet: {
-          section: "status", // Priority information
-          order: 8,
           row: "status-row",
         },
         obligatorisk: {
@@ -223,18 +224,6 @@ export const prosjektKrav = {
           section: "references", // Version information
           order: 11,
           row: "reference-row",
-        },
-
-        // Assessment section
-        vurderingId: {
-          section: "details", // Assessment
-          order: 12,
-          row: "assessment-row",
-        },
-        statusId: {
-          section: "details", // Status
-          order: 13,
-          row: "assessment-row",
         },
 
         // Administrative section
