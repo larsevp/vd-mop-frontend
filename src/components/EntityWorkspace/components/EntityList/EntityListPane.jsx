@@ -210,13 +210,12 @@ const EntityListPane = ({
         isEntityJustCreated,
         hasListRef,
         selectedEntityId,
-        willTrigger: hasSelectedEntityId && isEntityIdChanged && isEntityJustCreated && hasListRef
+        willTrigger: hasSelectedEntityId && isEntityJustCreated && hasListRef
       });
     }
 
     if (
       hasSelectedEntityId &&
-      isEntityIdChanged &&
       isEntityJustCreated &&
       hasListRef
     ) {
