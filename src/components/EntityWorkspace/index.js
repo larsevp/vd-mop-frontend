@@ -2,11 +2,8 @@
 export { default as EntityWorkspace } from "./EntityWorkspace.jsx";
 export { default as EntityWorkspaceCore } from "./EntityWorkspaceCore.jsx";
 
-// Export refactored hooks
+// Export remaining hooks
 export { useEntityData } from "./hooks/useEntityData.js";
-export { useEntityState } from "./hooks/useEntityState.js"; 
-export { useEntityFiltering } from "./hooks/useEntityFiltering.js";
-export { useEntityActions } from "./hooks/useEntityActions.js";
 export { useEntityPermissions } from "./hooks/useEntityPermissions.js";
 
 // Export services

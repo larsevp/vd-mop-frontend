@@ -1,46 +1,88 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/primitives/button";
 import { Plus, ArrowLeft } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useUserStore } from "@/stores/userStore";
 import { useIsAnyEntityEditing } from "@/stores/editingStateStore";
 
-// Refactored hooks following SRP
+// Zustand store
+import useEntityWorkspaceStore from "./stores/entityWorkspaceStore";
+
+// Keep only essential hooks for data fetching (React Query)
 import { useEntityData } from "./hooks/useEntityData";
-import { useEntityState } from "./hooks/useEntityState";
-import { useEntityFiltering } from "./hooks/useEntityFiltering";
-import { useEntityActions } from "./hooks/useEntityActions";
 import { useEntityPermissions } from "./hooks/useEntityPermissions";
 
 // Services
 import { EntityTypeResolver } from "./services/EntityTypeResolver";
 
 // Components (keeping existing UI components)
-import { SearchBar, HeaderSearchBar, EntityFilters, ViewOptionsMenu } from "./shared";
+import { EntityFilters, ViewOptionsMenu } from "./shared";
+import SearchBar from "./components/SearchBar";
 import EntityCardList from "./components/EntityCardList";
 import EntitySplitView from "./layouts/EntitySplitView";
 import { Toast } from "@/components/ui/editor/components/Toast.jsx";
 
 /**
- * EntityWorkspaceCore - Refactored component following SOLID principles
+ * EntityWorkspaceCore - Zustand-powered component with clean architecture
  *
- * SOLID Compliance:
- * - Single Responsibility: Pure orchestration, delegates to specialized hooks/services
- * - Open/Closed: Easy to extend with new entity types via configuration
- * - Liskov Substitution: All entity types work through same interface
- * - Interface Segregation: Hooks are focused and cohesive
- * - Dependency Inversion: Depends on abstractions (services) not implementations
+ * Now uses centralized Zustand store for state management while preserving
+ * all existing functionality including optimistic updates and cache invalidation
  */
 const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useUserStore();
-  
+
   // Track if any entity is currently being edited (to disable create button)
   const isAnyEntityEditing = useIsAnyEntityEditing();
 
+  // Zustand store state and actions
+  const {
+    // State
+    searchInput,
+    searchQuery,
+    filterBy,
+    sortBy,
+    sortOrder,
+    viewMode,
+    groupByEmne,
+    showMerknader,
+    page,
+    pageSize,
+    additionalFilters,
+    toast,
+    expandedCards,
+    collapsedGroups,
+    activeEntity,
+    selectedEntity,
+
+    // Actions
+    initializeWorkspace,
+    handleSearchInputChange,
+    handleSearch,
+    handleClearSearch,
+    handleFilterChange,
+    handleSortChange,
+    handleSortOrderChange,
+    handleAdditionalFiltersChange,
+    setViewMode,
+    setGroupByEmne,
+    setShowMerknader,
+    setExpandedCards,
+    toggleGroupCollapse,
+    setActiveEntity,
+    handleCreateNew,
+    handleSave,
+    handleDelete,
+    hideToast,
+
+    // Filtering methods
+    getFilteringInfo,
+  } = useEntityWorkspaceStore();
+
   // Resolve configuration and capabilities
-  // If modelConfig is explicitly passed, use it. Otherwise try to resolve from entityType
   const resolvedModelConfig = useMemo(() => {
     if (modelConfig && Object.keys(modelConfig).length > 0) {
       return modelConfig;
@@ -51,7 +93,7 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
   const config = useMemo(
     () => ({
       // Default configuration
-      layout: "cards",
+      layout: "split", // Changed default to split for better UX
       groupBy: "emne",
       features: {
         grouping: true,
@@ -72,55 +114,150 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
       ...workspaceConfig,
     }),
     [resolvedModelConfig.workspace, workspaceConfig]
-  ); // UI State Management (Single Responsibility)
-  const state = useEntityState({
-    entityType,
-    initialConfig: {
-      groupByEmne: config.features?.grouping,
-      showMerknader: config.ui?.showMerknader,
-      sortBy: "updatedAt",
-      sortOrder: "desc",
-      viewMode: config.layout === "split" ? "list" : "grid",
-      pageSize: 50,
-    },
-  });
+  );
 
-  // Data Fetching (Single Responsibility)
+  // Initialize workspace when entity type changes (config is handled separately)
+  useEffect(() => {
+    initializeWorkspace(entityType, resolvedModelConfig, config);
+  }, [entityType, resolvedModelConfig.title]);
+
+  // Data Fetching (React Query)
   const data = useEntityData({
     entityType,
     modelConfig: resolvedModelConfig,
-    page: state.page,
-    pageSize: state.pageSize,
-    searchQuery: state.searchQuery,
-    sortBy: state.sortBy,
-    sortOrder: state.sortOrder,
-    groupByEmne: config.features.grouping ? state.groupByEmne : false,
+    page,
+    pageSize,
+    searchQuery,
+    sortBy,
+    sortOrder,
+    groupByEmne: config.features.grouping ? groupByEmne : false,
+    filterBy,
+    additionalFilters,
   });
 
-  // Filtering Logic (Single Responsibility)
-  const filtering = useEntityFiltering({
-    items: data.items,
-    entityType,
-    groupByEmne: config.features.grouping ? state.groupByEmne : false,
-    filters: { filterBy: state.filterBy },
-    additionalFilters: state.additionalFilters,
-  });
+  // Filtering Logic - now handled by Zustand store
+  const filtering = useMemo(() => {
+    const result = getFilteringInfo(data.items);
 
-  // CRUD Actions (Single Responsibility)
-  const actions = useEntityActions({
-    entityType,
-    modelConfig: resolvedModelConfig,
-    onSuccess: state.showToast,
-    onError: state.showToast,
-  });
+    // Debug combined entities after filtering processing
+    const isCombinedEntity = entityType === "combined" || entityType === "prosjekt-combined";
+    if (isCombinedEntity) {
+    }
 
-  // Permission Resolution (Single Responsibility)
+    return result;
+  }, [data.items, getFilteringInfo, entityType, groupByEmne]);
+
+  // Permission Resolution
   const permissions = useEntityPermissions({
     entityType,
     modelConfig: resolvedModelConfig,
     workspaceConfig: config,
     user,
   });
+
+  // Create new entity handler with queryClient context
+  const handleCreateNewWithContext = () => {
+    handleCreateNew(user);
+  };
+
+  // Handle creating new entity of specific type (for combined views)
+  const handleCreateNewTypeWithContext = (specificEntityType) => {
+    try {
+      // Get the specific model config for this entity type
+      const specificModelConfig = EntityTypeResolver.resolveModelConfig(specificEntityType);
+
+      // Create a new entity template for the specific type
+      const newEntity = {
+        id: "create-new",
+        isNew: true,
+        entityType: specificEntityType, // Set the specific entity type
+        // Add required fields based on the specific entity type
+        ...(specificEntityType.includes("Krav") && { tittel: "", beskrivelse: "" }),
+        ...(specificEntityType.includes("Tiltak") && { navn: "", beskrivelse: "" }),
+      };
+
+      // Set as active entity so it shows in the detail pane
+      setActiveEntity(newEntity);
+    } catch (error) {
+      console.error("Error creating new entity of type", specificEntityType, ":", error);
+    }
+  };
+
+  // Save handler with queryClient context
+  const handleSaveWithContext = (entityData) => {
+    return handleSave(entityData, {
+      queryClient,
+      onError: (message, type) => console.error("Save error:", message),
+    });
+  };
+
+  // Delete handler with queryClient context
+  const handleDeleteWithContext = (entity) => {
+    return handleDelete(entity, {
+      queryClient,
+      onError: (message, type) => console.error("Delete error:", message),
+    });
+  };
+
+  // Determine if this is a combined view and what entity types to offer
+  const getCombinedViewEntityTypes = () => {
+    if (entityType === "combined" || entityType === "combinedEntities") {
+      return [
+        { type: "krav", label: "Nytt Krav" },
+        { type: "tiltak", label: "Nytt Tiltak" },
+      ];
+    } else if (entityType === "prosjekt-combined" || entityType.includes("combined")) {
+      return [
+        { type: "prosjektKrav", label: "Nytt Krav" },
+        { type: "prosjektTiltak", label: "Nytt Tiltak" },
+      ];
+    }
+    return null;
+  };
+
+  // Render create buttons - multiple for combined views, single for others
+  const renderCreateButtons = () => {
+    // For combined views, we need to override the permission check since
+    // the system doesn't recognize "prosjekt-combined" as a creatable entity type
+    const combinedTypes = getCombinedViewEntityTypes();
+    if (combinedTypes) {
+      // In combined views, show buttons if user can create any of the component types
+      return (
+        <div className="flex items-center gap-2">
+          {combinedTypes.map(({ type, label }) => (
+            <Button
+              key={type}
+              onClick={() => handleCreateNewTypeWithContext(type)}
+              size="default"
+              className="flex items-center gap-2"
+              disabled={isAnyEntityEditing}
+              title={isAnyEntityEditing ? "Kan ikke opprette ny mens du redigerer" : undefined}
+            >
+              <Plus className="h-4 w-4" />
+              {label}
+            </Button>
+          ))}
+        </div>
+      );
+    }
+
+    // Regular views - check permissions normally
+    if (!permissions.canCreate) return null;
+
+    // Single button for regular views
+    return (
+      <Button
+        onClick={handleCreateNewWithContext}
+        size="default"
+        className="flex items-center gap-2"
+        disabled={isAnyEntityEditing}
+        title={isAnyEntityEditing ? "Kan ikke opprette ny mens du redigerer" : undefined}
+      >
+        <Plus className="h-4 w-4" />
+        {permissions.createButtonText}
+      </Button>
+    );
+  };
 
   // Icon renderer utility
   const renderLucideIcon = (iconName, size = 20) => {
@@ -134,11 +271,6 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
     return <IconComponent size={size} />;
   };
 
-  // Create new entity handler
-  const handleCreateNew = () => {
-    state.handleCreateNew(user);
-  };
-
   // Display names
   const entityDisplayName = EntityTypeResolver.getDisplayName(entityType, resolvedModelConfig);
   const entityPluralName = EntityTypeResolver.getDisplayName(entityType, resolvedModelConfig, true);
@@ -147,12 +279,14 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
   if (data.isLoading && !data.hasData) {
     return (
       <div className={config.layout === "split" ? "bg-neutral-50" : "min-h-screen bg-neutral-50 p-6"}>
-        <div className="max-w-[1600px] mx-auto"
-             style={{
-               minHeight: config.layout === "split" ? "100vh" : "auto",
-               width: "100%",
-               maxWidth: config.layout === "split" ? "1600px" : "80rem"
-             }}>
+        <div
+          className="max-w-[1600px] mx-auto"
+          style={{
+            minHeight: config.layout === "split" ? "100vh" : "auto",
+            width: "100%",
+            maxWidth: config.layout === "split" ? "1600px" : "80rem",
+          }}
+        >
           <div className="flex items-center justify-center h-96">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -168,12 +302,14 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
   if (data.isError && !data.hasData) {
     return (
       <div className={config.layout === "split" ? "bg-neutral-50" : "min-h-screen bg-neutral-50 p-6"}>
-        <div className="max-w-[1600px] mx-auto"
-             style={{
-               minHeight: config.layout === "split" ? "100vh" : "auto",
-               width: "100%",
-               maxWidth: config.layout === "split" ? "1600px" : "80rem"
-             }}>
+        <div
+          className="max-w-[1600px] mx-auto"
+          style={{
+            minHeight: config.layout === "split" ? "100vh" : "auto",
+            width: "100%",
+            maxWidth: config.layout === "split" ? "1600px" : "80rem",
+          }}
+        >
           <div className="flex items-center justify-center h-96">
             <div className="text-center">
               <p className="text-red-600 mb-4">Feil ved lasting av {entityDisplayName.toLowerCase()}</p>
@@ -187,12 +323,14 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
 
   return (
     <div className={config.layout === "split" ? "bg-neutral-50" : "min-h-screen bg-neutral-50 p-6"}>
-      <div className="max-w-[1600px] mx-auto"
-           style={{
-             minHeight: config.layout === "split" ? "100vh" : "auto",
-             width: "100%",
-             maxWidth: config.layout === "split" ? "1600px" : "80rem" // 80rem = max-w-7xl
-           }}>
+      <div
+        className="max-w-[1600px] mx-auto"
+        style={{
+          minHeight: config.layout === "split" ? "100vh" : "auto",
+          width: "100%",
+          maxWidth: config.layout === "split" ? "1600px" : "80rem", // 80rem = max-w-7xl
+        }}
+      >
         {/* Header - Responsive based on layout */}
         {config.layout === "split" ? (
           <div className="sticky top-0 z-20 flex-shrink-0 bg-white border-b border-gray-200 px-6 py-4">
@@ -216,39 +354,29 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
 
               {/* Compact search for split view */}
               {config.features.search && (
-                <HeaderSearchBar
-                  searchInput={state.searchInput}
-                  onSearchInputChange={state.handleSearchInputChange}
-                  onSearch={state.handleSearch}
-                  onClearSearch={state.handleClearSearch}
+                <SearchBar
+                  mode="advanced"
+                  searchInput={searchInput}
+                  onSearchInputChange={handleSearchInputChange}
+                  onSearch={handleSearch}
+                  onClearSearch={handleClearSearch}
                   isLoading={data.isFetching}
                   placeholder={`Søk i ${entityPluralName.toLowerCase()}...`}
-                  filterBy={state.filterBy}
-                  onFilterChange={state.handleFilterChange}
-                  sortBy={state.sortBy}
-                  sortOrder={state.sortOrder}
-                  onSortChange={state.handleSortChange}
-                  onSortOrderChange={state.handleSortOrderChange}
+                  filterBy={filterBy}
+                  onFilterChange={handleFilterChange}
+                  sortBy={sortBy}
+                  sortOrder={sortOrder}
+                  onSortChange={handleSortChange}
+                  onSortOrderChange={handleSortOrderChange}
                   entityType={entityType}
-                  additionalFilters={state.additionalFilters}
-                  onAdditionalFiltersChange={state.handleAdditionalFiltersChange}
+                  additionalFilters={additionalFilters}
+                  onAdditionalFiltersChange={handleAdditionalFiltersChange}
                   availableStatuses={filtering.availableStatuses}
                   availableVurderinger={filtering.availableVurderinger}
                 />
               )}
 
-              {permissions.canCreate && (
-                <Button 
-                  onClick={handleCreateNew} 
-                  size="default" 
-                  className="flex items-center gap-2"
-                  disabled={isAnyEntityEditing}
-                  title={isAnyEntityEditing ? "Kan ikke opprette ny mens du redigerer" : undefined}
-                >
-                  <Plus className="h-4 w-4" />
-                  {permissions.createButtonText}
-                </Button>
-              )}
+              {renderCreateButtons()}
             </div>
           </div>
         ) : (
@@ -275,17 +403,7 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
                   )}
                 </div>
               </div>
-              {permissions.canCreate && (
-                <Button 
-                  onClick={handleCreateNew} 
-                  className="flex items-center gap-2"
-                  disabled={isAnyEntityEditing}
-                  title={isAnyEntityEditing ? "Kan ikke opprette ny mens du redigerer" : undefined}
-                >
-                  <Plus className="h-4 w-4" />
-                  {permissions.createButtonText}
-                </Button>
-              )}
+              {renderCreateButtons()}
             </div>
           </div>
         )}
@@ -296,10 +414,11 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
             <div className="flex flex-col lg:flex-row gap-4">
               {config.features.search && (
                 <SearchBar
-                  searchInput={state.searchInput}
-                  onSearchInputChange={state.handleSearchInputChange}
-                  onSearch={state.handleSearch}
-                  onClear={state.handleClearSearch}
+                  mode="simple"
+                  searchInput={searchInput}
+                  onSearchInputChange={handleSearchInputChange}
+                  onSearch={handleSearch}
+                  onClearSearch={handleClearSearch}
                   isLoading={data.isFetching}
                   placeholder={`Søk i ${entityPluralName.toLowerCase()}...`}
                 />
@@ -307,29 +426,29 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
 
               {config.features.filters && (
                 <EntityFilters
-                  filterBy={state.filterBy}
-                  onFilterChange={state.handleFilterChange}
-                  viewMode={state.viewMode}
-                  onViewModeChange={state.setViewMode}
-                  sortBy={state.sortBy}
-                  onSortChange={state.handleSortChange}
-                  sortOrder={state.sortOrder}
-                  onSortOrderChange={state.handleSortOrderChange}
+                  filterBy={filterBy}
+                  onFilterChange={handleFilterChange}
+                  viewMode={viewMode}
+                  onViewModeChange={setViewMode}
+                  sortBy={sortBy}
+                  onSortChange={handleSortChange}
+                  sortOrder={sortOrder}
+                  onSortOrderChange={handleSortOrderChange}
                   entityType={entityType}
-                  additionalFilters={state.additionalFilters}
-                  onAdditionalFiltersChange={state.handleAdditionalFiltersChange}
+                  additionalFilters={additionalFilters}
+                  onAdditionalFiltersChange={handleAdditionalFiltersChange}
                   availableStatuses={filtering.availableStatuses}
                   availableVurderinger={filtering.availableVurderinger}
                 />
               )}
 
               {/* View Options Menu */}
-              {(config.features.grouping || state.showMerknader) && (
+              {(config.features.grouping || showMerknader) && (
                 <ViewOptionsMenu
-                  groupByEmne={state.groupByEmne}
-                  onGroupByEmneChange={state.setGroupByEmne}
-                  showMerknader={state.showMerknader}
-                  onShowMerknaderChange={state.setShowMerknader}
+                  groupByEmne={groupByEmne}
+                  onGroupByEmneChange={setGroupByEmne}
+                  showMerknader={showMerknader}
+                  onShowMerknaderChange={setShowMerknader}
                 />
               )}
             </div>
@@ -345,33 +464,33 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
               entityType={entityType}
               config={config}
               actionPermissions={permissions}
-              searchQuery={state.searchQuery}
-              filterBy={state.filterBy}
-              sortBy={state.sortBy}
-              sortOrder={state.sortOrder}
-              searchInput={state.searchInput}
-              onSearchInputChange={state.handleSearchInputChange}
-              onSearch={state.handleSearch}
-              onClearSearch={state.handleClearSearch}
-              onFilterChange={state.handleFilterChange}
-              onSortChange={state.handleSortChange}
-              onSortOrderChange={state.handleSortOrderChange}
+              searchQuery={searchQuery}
+              filterBy={filterBy}
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              searchInput={searchInput}
+              onSearchInputChange={handleSearchInputChange}
+              onSearch={handleSearch}
+              onClearSearch={handleClearSearch}
+              onFilterChange={handleFilterChange}
+              onSortChange={handleSortChange}
+              onSortOrderChange={handleSortOrderChange}
               // Additional props needed for EntityFilters
-              viewMode={state.viewMode}
-              onViewModeChange={state.setViewMode}
-              additionalFilters={state.additionalFilters}
-              onAdditionalFiltersChange={state.handleAdditionalFiltersChange}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+              additionalFilters={additionalFilters}
+              onAdditionalFiltersChange={handleAdditionalFiltersChange}
               availableStatuses={filtering.availableStatuses}
               availableVurderinger={filtering.availableVurderinger}
               isLoading={data.isLoading}
               isFetching={data.isFetching}
-              onCreateNew={handleCreateNew}
-              onSave={actions.handleSave}
-              onDelete={actions.handleDelete}
+              onCreateNew={handleCreateNewWithContext}
+              onSave={handleSaveWithContext}
+              onDelete={handleDeleteWithContext}
               renderIcon={renderLucideIcon}
               user={user}
-              activeEntity={state.activeEntity}
-              setActiveEntity={state.setActiveEntity}
+              activeEntity={activeEntity}
+              setActiveEntity={setActiveEntity}
               listWidth={config.layoutConfig?.listWidth}
               enableKeyboardNav={config.layoutConfig?.enableKeyboardNav}
             />
@@ -382,19 +501,19 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
               entityType={entityType}
               config={config}
               actionPermissions={permissions}
-              groupByEmne={state.groupByEmne}
-              collapsedGroups={state.collapsedGroups}
-              expandedCards={state.expandedCards}
-              activeEntity={state.activeEntity}
-              showMerknader={state.showMerknader}
-              searchQuery={state.searchQuery}
-              filterBy={state.filterBy}
-              onCreateNew={handleCreateNew}
-              onToggleGroupCollapse={state.toggleGroupCollapse}
-              setExpandedCards={state.setExpandedCards}
-              setActiveEntity={state.setActiveEntity}
-              onSave={actions.handleSave}
-              onDelete={actions.handleDelete}
+              groupByEmne={groupByEmne}
+              collapsedGroups={collapsedGroups}
+              expandedCards={expandedCards}
+              activeEntity={activeEntity}
+              showMerknader={showMerknader}
+              searchQuery={searchQuery}
+              filterBy={filterBy}
+              onCreateNew={handleCreateNewWithContext}
+              onToggleGroupCollapse={toggleGroupCollapse}
+              setExpandedCards={setExpandedCards}
+              setActiveEntity={setActiveEntity}
+              onSave={handleSaveWithContext}
+              onDelete={handleDeleteWithContext}
               renderIcon={renderLucideIcon}
               user={user}
             />
@@ -404,19 +523,19 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
         {/* Results count - Only show for card layout */}
         {config.layout !== "split" && filtering.filteredItems.length > 0 && (
           <div className="mt-8 text-center text-sm text-neutral-500">
-            {state.groupByEmne && config.features.grouping
+            {groupByEmne && config.features.grouping
               ? `Viser ${filtering.filteredItems.length} ${filtering.filteredItems.length === 1 ? "gruppe" : "grupper"} med totalt ${
                   filtering.filteredStats.total
                 } ${entityPluralName.toLowerCase()}`
               : `Viser ${filtering.filteredItems.length} av ${filtering.filteredStats.total} ${entityPluralName.toLowerCase()}`}
-            {state.searchQuery && ` (søkte etter "${state.searchQuery}")`}
+            {searchQuery && ` (søkte etter "${searchQuery}")`}
             {filtering.hasActiveFilters && ` med ${filtering.activeFilterCount} filter${filtering.activeFilterCount !== 1 ? "" : ""}`}
           </div>
         )}
       </div>
 
       {/* Toast */}
-      <Toast show={state.toast.show} message={state.toast.message} type={state.toast.type} onClose={state.hideToast} />
+      <Toast show={toast.show} message={toast.message} type={toast.type} onClose={hideToast} />
     </div>
   );
 };

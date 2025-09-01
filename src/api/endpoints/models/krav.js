@@ -49,7 +49,7 @@ export const getKrav = (config = {}) => {
 export const getKravSimple = () => API.get("/krav/simple", addKravFieldExclusion("simple"));
 export const createKrav = (kravData) => API.post("krav", kravData);
 
-export const updateKrav = (kravData) => API.put(`krav/${kravData.id}`, kravData);
+export const updateKrav = (id, kravData) => API.put(`krav/${id}`, kravData);
 
 export const updateKravMerknad = (kravId, merknader) => API.patch(`krav/${kravId}/merknad`, { merknader });
 

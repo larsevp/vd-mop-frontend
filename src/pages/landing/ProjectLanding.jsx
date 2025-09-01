@@ -26,10 +26,10 @@ export default function ProjectLanding() {
   });
 
   // Fetch individual project (for individual project view)
-  const { 
-    data: projectData, 
-    isLoading: projectLoading, 
-    error: projectError 
+  const {
+    data: projectData,
+    isLoading: projectLoading,
+    error: projectError,
   } = useQuery({
     queryKey: ["prosjekt", prosjektId],
     queryFn: () => getProsjektById(prosjektId),
@@ -110,30 +110,6 @@ export default function ProjectLanding() {
         color: "from-violet-500 to-purple-600",
         available: true, // Now implemented
       },
-      {
-        title: "Prosjekt Krav (Admin)",
-        desc: "Administrer og følg opp krav knyttet til dette prosjektet (tradisjonell liste)",
-        link: `/prosjekt-krav`,
-        icon: CheckSquare,
-        color: "from-orange-500 to-orange-600",
-        available: true, // Available for admin access
-      },
-      {
-        title: "Prosjekt Tiltak (Admin)",
-        desc: "Administrer og følg opp tiltak knyttet til dette prosjektet (tradisjonell liste)",
-        link: `/prosjekt-tiltak`,
-        icon: CheckSquare,
-        color: "from-teal-500 to-teal-600",
-        available: true, // Available for admin access
-      },
-      {
-        title: "Prosjekt Filer",
-        desc: "Dokumenter og filer knyttet til prosjektet",
-        link: `/prosjekt/${prosjektId}/files`,
-        icon: FolderOpen,
-        color: "from-slate-500 to-slate-600",
-        available: false, // Not yet implemented
-      },
     ];
 
     const handleImportObligatoryRequirements = () => {
@@ -150,24 +126,15 @@ export default function ProjectLanding() {
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center mb-4">
-                  <Link
-                    to="/"
-                    className="inline-flex items-center text-primary-200 hover:text-white transition-colors mr-4"
-                  >
+                  <Link to="/" className="inline-flex items-center text-primary-200 hover:text-white transition-colors mr-4">
                     <ArrowLeft size={20} className="mr-2" />
                     Tilbake til prosjekter
                   </Link>
                 </div>
-                <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                  {project.navn || "Uten navn"}
-                </h1>
-                <p className="text-primary-100 mt-2">
-                  Prosjektnummer: {project.prosjektnummer || "N/A"}
-                </p>
+                <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{project.navn || "Uten navn"}</h1>
+                <p className="text-primary-100 mt-2">Prosjektnummer: {project.prosjektnummer || "N/A"}</p>
                 {project.beskrivelse && (
-                  <p className="text-primary-200 mt-2 max-w-2xl">
-                    {project.beskrivelseSnippet || project.beskrivelse}
-                  </p>
+                  <p className="text-primary-200 mt-2 max-w-2xl">{project.beskrivelseSnippet || project.beskrivelse}</p>
                 )}
               </div>
               <div className="hidden md:flex items-center space-x-4 text-primary-200">
@@ -179,11 +146,7 @@ export default function ProjectLanding() {
                 )}
                 <div className="flex items-center">
                   <Calendar size={16} className="mr-2" />
-                  <span>
-                    {project.createdAt
-                      ? new Date(project.createdAt).toLocaleDateString("nb-NO")
-                      : "N/A"}
-                  </span>
+                  <span>{project.createdAt ? new Date(project.createdAt).toLocaleDateString("nb-NO") : "N/A"}</span>
                 </div>
               </div>
             </div>
@@ -200,8 +163,8 @@ export default function ProjectLanding() {
                 Importer obligatoriske krav
               </h2>
               <p className="text-blue-700 mb-4">
-                Importer alle obligatoriske generelle krav og tiltak til dette prosjektet. Dette vil
-                kopiere relevante krav som må følges opp i prosjektet.
+                Importer alle obligatoriske generelle krav og tiltak til dette prosjektet. Dette vil kopiere relevante krav som må følges
+                opp i prosjektet.
               </p>
               <button
                 onClick={handleImportObligatoryRequirements}
@@ -223,15 +186,9 @@ export default function ProjectLanding() {
 
                 if (isAvailable) {
                   return (
-                    <Link
-                      key={card.title}
-                      to={card.link}
-                      className="group block transform transition-all duration-200 hover:scale-105"
-                    >
+                    <Link key={card.title} to={card.link} className="group block transform transition-all duration-200 hover:scale-105">
                       <div className="card-base card-hover rounded-xl p-6 h-full transition-all duration-200 group-hover:shadow-xl">
-                        <div
-                          className={`inline-flex p-3 rounded-xl bg-gradient-to-r ${card.color} text-white mb-4 shadow-md`}
-                        >
+                        <div className={`inline-flex p-3 rounded-xl bg-gradient-to-r ${card.color} text-white mb-4 shadow-md`}>
                           <IconComponent size={24} />
                         </div>
                         <h3 className="text-lg font-bold text-text-primary mb-2 group-hover:text-primary-700 transition-colors">
@@ -258,17 +215,12 @@ export default function ProjectLanding() {
                 } else {
                   // Not available - show as disabled mockup
                   return (
-                    <div
-                      key={card.title}
-                      className="block cursor-not-allowed opacity-60"
-                    >
+                    <div key={card.title} className="block cursor-not-allowed opacity-60">
                       <div className="card-base rounded-xl p-6 h-full bg-gray-50 border-dashed border-2 border-gray-300">
                         <div className="inline-flex p-3 rounded-xl bg-gray-400 text-white mb-4">
                           <IconComponent size={24} />
                         </div>
-                        <h3 className="text-lg font-bold text-gray-600 mb-2">
-                          {card.title}
-                        </h3>
+                        <h3 className="text-lg font-bold text-gray-600 mb-2">{card.title}</h3>
                         <p className="text-gray-500 text-sm leading-relaxed mb-4">{card.desc}</p>
                         <div className="flex items-center text-gray-400 font-medium text-sm">
                           <span>Kommer snart...</span>
@@ -290,7 +242,7 @@ export default function ProjectLanding() {
       // Fetch full project details and store in global state
       const projectDetails = await getProsjektById(project.id);
       const fullProject = projectDetails.data || projectDetails;
-      
+
       // Set current project in global store
       setCurrentProject(fullProject);
 
@@ -311,7 +263,7 @@ export default function ProjectLanding() {
     } catch (error) {
       // Continue navigation even if some operations fail
       console.error("Failed to open project:", error);
-      
+
       // At minimum, set the basic project info we have
       setCurrentProject(project);
       navigate(`/prosjekt/${project.id}`);
@@ -353,9 +305,7 @@ export default function ProjectLanding() {
         <div className="max-w-screen-xl mx-auto px-4 py-8 sm:py-12 sm:px-6 md:px-8">
           <div className="text-center">
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">MOP</h1>
-            <p className="max-w-2xl mx-auto mt-6 text-xl">
-              Miljø og Prosjekthåndteringssystem for oversikt over tiltak og prosjekter
-            </p>
+            <p className="max-w-2xl mx-auto mt-6 text-xl">Miljø og Prosjekthåndteringssystem for oversikt over tiltak og prosjekter</p>
           </div>
         </div>
       </section>
@@ -368,30 +318,21 @@ export default function ProjectLanding() {
             <h2 className="text-lg font-semibold text-primary-900 mb-4">Hurtigtilgang</h2>
             <ul className="space-y-3">
               <li>
-                <Link
-                  to="/tiltak"
-                  className="flex items-center gap-2 text-primary-700 hover:text-primary-800 transition-colors"
-                >
+                <Link to="/tiltak" className="flex items-center gap-2 text-primary-700 hover:text-primary-800 transition-colors">
                   <Book size={18} />
                   <span>Generelle tiltak</span>
                 </Link>
               </li>
               {isAdmin && (
                 <li>
-                  <Link
-                    to="/admin"
-                    className="flex items-center gap-2 text-primary-700 hover:text-primary-800 transition-colors"
-                  >
+                  <Link to="/admin" className="flex items-center gap-2 text-primary-700 hover:text-primary-800 transition-colors">
                     <Users size={18} />
                     <span>Brukeradministrasjon</span>
                   </Link>
                 </li>
               )}
               <li>
-                <Link
-                  to="/prosjekter"
-                  className="flex items-center gap-2 text-primary-700 hover:text-primary-800 transition-colors"
-                >
+                <Link to="/prosjekter" className="flex items-center gap-2 text-primary-700 hover:text-primary-800 transition-colors">
                   <FolderOpen size={18} />
                   <span>Prosjektadministrasjon</span>
                 </Link>
@@ -406,9 +347,7 @@ export default function ProjectLanding() {
             </div>
             <h2 className="text-lg font-semibold text-text-primary mb-2">Opprett nytt prosjekt</h2>
             <p className="text-text-muted mb-6">Start et nytt prosjekt med predefinerte tiltak</p>
-            <button className="btn btn-primary rounded-lg px-5 py-2.5 font-medium shadow-sm transition-all">
-              Nytt prosjekt
-            </button>
+            <button className="btn btn-primary rounded-lg px-5 py-2.5 font-medium shadow-sm transition-all">Nytt prosjekt</button>
           </div>
 
           {/* Recent projects */}
@@ -467,28 +406,16 @@ export default function ProjectLanding() {
           <table className="min-w-full divide-y divide-neutral-200">
             <thead className="bg-neutral-50">
               <tr>
-                <th
-                  scope="col"
-                  className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-neutral-900 sm:pl-6"
-                >
+                <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-neutral-900 sm:pl-6">
                   Prosjektnavn
                 </th>
-                <th
-                  scope="col"
-                  className="hidden px-3 py-3.5 text-left text-sm font-semibold text-neutral-900 lg:table-cell"
-                >
+                <th scope="col" className="hidden px-3 py-3.5 text-left text-sm font-semibold text-neutral-900 lg:table-cell">
                   Beskrivelse
                 </th>
-                <th
-                  scope="col"
-                  className="hidden px-3 py-3.5 text-left text-sm font-semibold text-neutral-900 sm:table-cell"
-                >
+                <th scope="col" className="hidden px-3 py-3.5 text-left text-sm font-semibold text-neutral-900 sm:table-cell">
                   Prosjektnummer
                 </th>
-                <th
-                  scope="col"
-                  className="px-3 py-3.5 text-left text-sm font-semibold text-neutral-900"
-                >
+                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-neutral-900">
                   Sist oppdatert
                 </th>
                 <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
@@ -499,17 +426,11 @@ export default function ProjectLanding() {
             <tbody className="divide-y divide-neutral-200 bg-white">
               {projects.map((project) => (
                 <tr key={project.id} className="hover:bg-neutral-50">
-                  <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-neutral-900 sm:pl-6">
-                    {project.navn}
-                  </td>
+                  <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-neutral-900 sm:pl-6">{project.navn}</td>
                   <td className="hidden px-3 py-4 text-sm text-neutral-500 lg:table-cell">
-                    <div className="max-w-xs truncate">
-                      {project.beskrivelseSnippet || project.beskrivelse || "Ingen beskrivelse"}
-                    </div>
+                    <div className="max-w-xs truncate">{project.beskrivelseSnippet || project.beskrivelse || "Ingen beskrivelse"}</div>
                   </td>
-                  <td className="hidden px-3 py-4 text-sm text-neutral-500 sm:table-cell">
-                    {project.prosjektnummer || "N/A"}
-                  </td>
+                  <td className="hidden px-3 py-4 text-sm text-neutral-500 sm:table-cell">{project.prosjektnummer || "N/A"}</td>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-neutral-500">
                     {new Date(project.updatedAt).toLocaleDateString("nb-NO")}
                   </td>

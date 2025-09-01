@@ -12,9 +12,6 @@ export { default as EntityWorkspaceCore } from './EntityWorkspaceCore';
 
 // Export individual hooks and services for advanced usage
 export { useEntityData } from './hooks/useEntityData';
-export { useEntityState } from './hooks/useEntityState';
-export { useEntityFiltering } from './hooks/useEntityFiltering';
-export { useEntityActions } from './hooks/useEntityActions';
 export { useEntityPermissions } from './hooks/useEntityPermissions';
 
 export { EntityFilterService } from './services/EntityFilterService';

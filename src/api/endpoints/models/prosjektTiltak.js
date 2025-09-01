@@ -74,7 +74,7 @@ export const createProsjektTiltak = async (prosjektTiltakData) => {
   return API.post("/prosjekt-tiltak", dataWithProjectId);
 };
 
-export const updateProsjektTiltak = (prosjektTiltakData) => API.put(`/prosjekt-tiltak/${prosjektTiltakData.id}`, prosjektTiltakData);
+export const updateProsjektTiltak = (id, prosjektTiltakData) => API.put(`/prosjekt-tiltak/${id}`, prosjektTiltakData);
 
 export const deleteProsjektTiltak = (id) => API.delete(`/prosjekt-tiltak/${id}`);
 

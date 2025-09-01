@@ -4,6 +4,7 @@
  */
 
 import { modelConfigs } from "@/modelConfigs";
+import { EntityTypeTranslator } from "../utils/entityTypeTranslator";
 
 export class EntityTypeResolver {
   /**
@@ -22,7 +23,13 @@ export class EntityTypeResolver {
       return modelConfigs[camelCaseType];
     }
 
-    // Handle special cases
+    // Handle special cases using centralized translator
+    const translatedType = EntityTypeTranslator.translate(entityType, "camelCase");
+    if (translatedType !== entityType && modelConfigs[translatedType]) {
+      return modelConfigs[translatedType];
+    }
+
+    // Legacy special mappings for backwards compatibility
     const specialMappings = {
       combined: "combinedEntities",
       combinedEntities: "combinedEntities",
@@ -50,7 +57,7 @@ export class EntityTypeResolver {
     // If modelConfig already has API functions, use them
     if (modelConfig.queryFn || modelConfig.queryFnAll) {
       // For project entities, prefer workspace-aware functions if available
-      const isProjectEntity = entityType.includes("prosjekt") || entityType.includes("project");
+      const isProjectEntity = EntityTypeTranslator.isProjectEntity(entityType);
 
       return {
         queryFn:
@@ -188,14 +195,24 @@ export class EntityTypeResolver {
   }
 
   static _pluralize(str) {
-    // Simple pluralization - extend as needed
+    // Norwegian pluralization rules
+    if (!str) return str;
+    
+    const lowerStr = str.toLowerCase();
+    
+    // Words that don't change in plural
+    if (lowerStr.includes("krav") || lowerStr.includes("tiltak")) {
+      return str;
+    }
+    
+    // Already plural (ends with 's')
     if (str.endsWith("s")) return str;
+    
+    // Default Norwegian pluralization
     return str + "er";
   }
 
   static _createFallbackConfig(entityType) {
-    console.warn(`Creating fallback config for unknown entity type: ${entityType}`);
-
     return {
       title: this._capitalize(entityType),
       modelPrintName: entityType,
@@ -216,8 +233,22 @@ export class EntityTypeResolver {
   }
 
   static _resolveDynamicApiConfig(entityType) {
-    // This would typically import API functions dynamically
-    // For now, return null to indicate no API functions available
+    // For combined entity types or store-managed entities, return store-compatible config
+    const storeBasedTypes = ["combined", "combinedEntities", "prosjekt-combined"];
+
+    if (storeBasedTypes.includes(entityType)) {
+      // Return a special config that indicates this should use the store
+      return {
+        queryFn: null, // Indicates to use store instead of API
+        queryFnGroupedByEmne: null,
+        createFn: null,
+        updateFn: null,
+        deleteFn: null,
+        useStore: true, // Flag to indicate store-based management
+      };
+    }
+
+    // For other entity types, warn and return null functions
     console.warn(`No API functions configured for entity type: ${entityType}`);
 
     return {
@@ -242,6 +273,13 @@ export class EntityTypeResolver {
   static _supportsBulkActions(entityType) {
     const bulkActionTypes = ["krav", "tiltak"];
     return bulkActionTypes.includes(entityType);
+  }
+
+  static _supportsGroupByEmne(entityType) {
+    // Use EntityTypeTranslator for consistent naming
+    const normalizedType = EntityTypeTranslator.translate(entityType, "lowercase");
+    const groupableTypes = ["krav", "tiltak", "prosjektkrav", "prosjekttiltak"];
+    return groupableTypes.includes(normalizedType);
   }
 }
 

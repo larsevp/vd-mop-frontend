@@ -54,7 +54,7 @@ export default function HeaderNav({ showBackButton = false }) {
           <div className="flex-1 flex items-center justify-end gap-4">
             <nav className="hidden md:flex">
               <ul className="flex gap-1">
-                {navItems.map((item) => (
+                {/* navItems.map((item) => (
                   <li key={item.path}>
                     <Link
                       to={item.path}
@@ -66,7 +66,7 @@ export default function HeaderNav({ showBackButton = false }) {
                       {item.label}
                     </Link>
                   </li>
-                ))}
+                )) */}
                 {isAdmin && (
                   <>
                     <li>
@@ -83,9 +83,7 @@ export default function HeaderNav({ showBackButton = false }) {
               </ul>
             </nav>
             {/* Modern User & Project Menu */}
-            {(user || (accounts && accounts.length > 0)) && (
-              <UserProjectMenu />
-            )}
+            {(user || (accounts && accounts.length > 0)) && <UserProjectMenu />}
           </div>
         </div>
         {/* Mobile navigation */}

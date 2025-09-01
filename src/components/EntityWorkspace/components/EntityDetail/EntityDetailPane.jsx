@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Edit, X, ChevronDown, ChevronRight, Save, RotateCcw, Trash2, ExternalLink, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import EntityDetailForm from "../shared/EntityDetailForm";
-import { FieldResolver } from "../../tableComponents/fieldTypes/fieldResolver.jsx";
+import EntityDetailForm from "./EntityDetailForm";
+import { FieldResolver } from "@/components/tableComponents/fieldTypes/fieldResolver.jsx";
 import { modelConfigs } from "@/modelConfigs";
 import { EntityTypeResolver } from "@/components/EntityWorkspace/services/EntityTypeResolver";
-import { useEmneInheritance } from "../../../hooks/useEmneInheritance";
 import { useEditingActions } from "@/stores/editingStateStore";
+import useEntityWorkspaceStore from "../../stores/entityWorkspaceStore";
 
 /**
  * Clean, minimal detail pane for selected entity
@@ -18,10 +18,30 @@ import { useEditingActions } from "@/stores/editingStateStore";
  * - Keyboard shortcuts: 'e' for edit, 'esc' for cancel
  */
 const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onDelete, onClose, renderIcon, user }) => {
+  // Get store actions for setting the isEntityJustCreated flag
+  const setSelectedEntity = useEntityWorkspaceStore((state) => state.setSelectedEntity);
+  const setActiveEntity = useEntityWorkspaceStore((state) => state.setActiveEntity);
+  const clearJustCreatedFlag = useEntityWorkspaceStore((state) => state.clearJustCreatedFlag);
+  
+  // We need to access the store directly to set the flag
+  const store = useEntityWorkspaceStore.getState();
   // Check if this is a new entity being created
   const isNewEntity = entity?.id === "create-new";
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  
+  // Ref for the detail view container to enable scrolling
+  const detailViewRef = useRef(null);
+  
+  // Scroll to top when creating a new entity
+  useEffect(() => {
+    if (isNewEntity && detailViewRef.current) {
+      detailViewRef.current.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+  }, [isNewEntity]);
 
   // Dynamically resolve the correct model config for combined entities
   const resolvedModelConfig = useMemo(() => {
@@ -113,7 +133,6 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
   const [errors, setErrors] = useState({});
 
   // Get the store initialization function
-  const { initializeForEntity } = useEmneInheritance();
 
   // Get editing state actions from store
   const { setEntityEditing } = useEditingActions();
@@ -122,7 +141,6 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
   useEffect(() => {
     if (entity) {
       // Initialize store for this specific entity (surgical reset only when switching entities)
-      initializeForEntity(entity.id, resolvedEntityType);
 
       // For new entities, start in edit mode; for existing entities, start in view mode
       const shouldEdit = isNewEntity;
@@ -143,7 +161,7 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
         const isSystemField = ["id", "createdAt", "updatedAt", "createdBy", "updatedBy"].includes(field.name);
         const isEntityReference = field.name.endsWith("Id") && field.type.includes("select"); // emneId, statusId, etc. are OK
 
-        if (!isHidden && !isVirtual && !isRelationship && !isSystemField && field.name !== "id") {
+        if (!isHidden && !isVirtual && !isRelationship && !isSystemField) {
           // Use FieldResolver to get proper initial values including defaults
           initialData[field.name] = FieldResolver.initializeFieldValue(field, entity, !isNewEntity, resolvedEntityType);
         }
@@ -152,7 +170,7 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
       setHasChanges(false);
       setErrors({});
     }
-  }, [entity?.id, isNewEntity, resolvedModelConfig, resolvedEntityType, initializeForEntity, setEntityEditing]);
+  }, [entity?.id, isNewEntity, resolvedModelConfig, resolvedEntityType, setEntityEditing]);
 
   // Get display values
   const title = entity[titleField] || "Uten tittel";
@@ -219,8 +237,6 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
         }
       });
 
-      // [DEBUG] Filtered data for update/create: filteredData
-
       let updatedData;
 
       // For combined views, use the correct model config's update function directly
@@ -228,7 +244,7 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
         // Use the resolved model config's update function for combined entities
         if (isUpdate) {
           const saveData = { ...filteredData, id: entity.id };
-          updatedData = await resolvedModelConfig.updateFn(saveData);
+          updatedData = await resolvedModelConfig.updateFn(entity.id, saveData);
 
           // Handle propagation and cache updates for combined view updates
           const actualEntityType = entity.entityType; // "tiltak", "krav", "prosjekttiltak", "prosjektkrav"
@@ -254,11 +270,33 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
             queryKey: ["combined", "workspace"],
             exact: false,
           });
+          queryClient.invalidateQueries({
+            queryKey: ["combinedEntities", "workspace"],
+            exact: false,
+          });
+          // Also invalidate the current workspace type cache
+          queryClient.invalidateQueries({
+            queryKey: [entityType, "workspace"],
+            exact: false,
+          });
         } else {
           updatedData = await resolvedModelConfig.createFn(filteredData);
 
           // Manually invalidate caches for combined view creates
           const actualEntityType = entity.entityType; // "tiltak", "krav", "prosjekttiltak", "prosjektkrav"
+          
+          // Ensure the created entity has the correct entityType for combined view display
+          if (updatedData && actualEntityType) {
+            const createdEntity = updatedData.data || updatedData;
+            createdEntity.entityType = actualEntityType;
+            
+            // Set the isEntityJustCreated flag and update store for autoScroll
+            useEntityWorkspaceStore.setState({ 
+              selectedEntity: createdEntity, 
+              activeEntity: createdEntity, 
+              isEntityJustCreated: true 
+            });
+          }
           queryClient.invalidateQueries({
             queryKey: [actualEntityType, "workspace"],
             exact: false,
@@ -267,6 +305,27 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
             queryKey: ["combined", "workspace"],
             exact: false,
           });
+          queryClient.invalidateQueries({
+            queryKey: ["combinedEntities", "workspace"],
+            exact: false,
+          });
+          // Also invalidate the current workspace type cache
+          queryClient.invalidateQueries({
+            queryKey: [entityType, "workspace"],
+            exact: false,
+          });
+
+          // Set the created entity as selected for auto-scroll (same as store does)
+          if (updatedData) {
+            const createdEntity = updatedData.data || updatedData;
+            // Ensure the created entity has the correct entityType for combined view display
+            createdEntity.entityType = actualEntityType;
+            
+            // Use the store's setSelectedEntity function with justCreated flag for auto-scroll
+            const { setSelectedEntity, setActiveEntity } = useEntityWorkspaceStore.getState();
+            setSelectedEntity(createdEntity, true); // Set justCreated=true for auto-scroll
+            setActiveEntity(createdEntity);
+          }
         }
       } else {
         // Use the standard onSave handler for regular views
@@ -276,8 +335,23 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
           const saveData = { ...filteredData, id: entity.id };
           updatedData = await onSave(saveData, isUpdate);
         } else {
-          // For creates: just the form data
-          updatedData = await onSave(filteredData, isUpdate);
+          // For creates: add the necessary fields for the store to detect it's a new entity
+          const createData = {
+            ...filteredData,
+            id: "create-new", // Preserve the create-new identifier
+            isNew: true, // Add explicit new flag
+          };
+          updatedData = await onSave(createData, isUpdate);
+          
+          // Also set the flag here as backup (though the store's handleSave should already do this)
+          if (updatedData && (entityType === "krav" || entityType === "tiltak")) {
+            const createdEntity = updatedData.data || updatedData;
+            useEntityWorkspaceStore.setState({ 
+              selectedEntity: createdEntity, 
+              activeEntity: createdEntity, 
+              isEntityJustCreated: true 
+            });
+          }
         }
 
         // Handle emne propagation for krav/prosjektKrav updates in regular EntityWorkspace
@@ -341,8 +415,12 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
   };
 
   const handleDelete = () => {
+    if (!entity.id || entity.id === 'create-new') {
+      console.error('Cannot delete entity without valid ID:', entity.id);
+      return;
+    }
     if (window.confirm(actionPermissions.deleteConfirmText)) {
-      onDelete(entity.id);
+      onDelete(entity);
       onClose(); // Close detail pane after delete
     }
   };
@@ -399,7 +477,7 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
   }, [isEditing, handleCancel, handleSave, actionPermissions.canEdit]);
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div ref={detailViewRef} className="flex flex-col h-full bg-white overflow-y-auto">
       {/* Sticky Header */}
       <div className={`flex-shrink-0 px-6 py-4 border-b border-gray-200 transition-colors ${isEditing ? "bg-blue-50" : "bg-white"}`}>
         <div className="flex items-start justify-between">
@@ -418,7 +496,7 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
               {isEditing ? (
                 <input
                   type="text"
-                  value={editData.tittel}
+                  value={editData.tittel || ""}
                   onChange={(e) => handleFieldChange("tittel", e.target.value)}
                   className="text-xl font-semibold text-gray-900 leading-tight flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Tittel..."
@@ -465,14 +543,16 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
                   <Edit className="w-4 h-4 mr-1.5 inline" />
                   Rediger
                 </button>
-                <button
-                  onClick={handleDelete}
-                  tabIndex={-1}
-                  className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                  title="Slett"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {actionPermissions.canDelete && entity.id && !isNewEntity && (
+                  <button
+                    onClick={handleDelete}
+                    tabIndex={-1}
+                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Slett"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </>
             )}
             <button onClick={onClose} tabIndex={-1} className="p-2 text-gray-400 hover:text-gray-600 transition-colors" title="Lukk">

@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Plus, ChevronLeft, ChevronRight, GripVertical } from "lucide-react";
-import EntityListPane from "./EntityListPane";
-import EntityDetailPane from "./EntityDetailPane";
+import { EntityTypeTranslator } from "../utils/entityTypeTranslator";
+import EntityListPane from "../components/EntityList/EntityListPane";
+import EntityDetailPane from "../components/EntityDetail/EntityDetailPane";
+import useEntityWorkspaceStore from "../stores/entityWorkspaceStore";
 
 /**
  * Master-Detail Split View Layout
@@ -51,14 +53,14 @@ const EntitySplitView = ({
   listWidth = "35%",
   enableKeyboardNav = true,
 }) => {
-
   const navigate = useNavigate();
   const params = useParams();
+  
+  // Get selectedEntity from store
+  const selectedEntity = useEntityWorkspaceStore((state) => state.selectedEntity);
+  const clearJustCreatedFlag = useEntityWorkspaceStore((state) => state.clearJustCreatedFlag);
 
-  // Debug logging (can be removed in production)
-  // EntitySplitView DEBUG - params, entityType
-
-  // Selected entity state - synced with URL
+  // Selected entity state - synced with URL and store
   const [selectedEntityId, setSelectedEntityId] = useState(params.entityId || null);
 
   // Collapsible panel state - persistent with localStorage
@@ -94,15 +96,7 @@ const EntitySplitView = ({
 
   // Map entityType to the actual property name in grouped data (same as EntityFilterService and EntityListPane)
   const getGroupedDataPropertyName = (entityType) => {
-    const mapping = {
-      'prosjekt-krav': 'prosjektkrav',
-      'prosjekt-tiltak': 'prosjekttiltak',
-      'krav': 'krav',
-      'tiltak': 'tiltak',
-      'prosjektkrav': 'prosjektkrav',
-      'prosjekttiltak': 'prosjekttiltak'
-    };
-    return mapping[entityType] || entityType;
+    return EntityTypeTranslator.translate(entityType, "lowercase");
   };
 
   // Flatten items if they're grouped (for compatibility with grouped data)
@@ -112,7 +106,7 @@ const EntitySplitView = ({
     // Check if we have grouped data (items contain emne and entity arrays)
     const firstItem = items[0];
     const propertyName = getGroupedDataPropertyName(entityType);
-    
+
     if (firstItem.emne && (firstItem[propertyName] || firstItem[entityType] || firstItem.entities || firstItem.krav || firstItem.tiltak)) {
       // Flatten grouped data
       const flattened = [];
@@ -133,17 +127,29 @@ const EntitySplitView = ({
 
   // Generate unique ID for combined view items that may have duplicates
   const generateUniqueEntityId = (item) => {
+    // Check if we're in a combined view context
+    const isCombinedView = entityType === "combined" || entityType === "combinedEntities" || entityType === "prosjekt-combined";
+    
+    // For regular (non-combined) views, always use simple numeric ID
+    if (!isCombinedView) {
+      return item.id?.toString();
+    }
+    
+    // Combined view logic - need complex IDs to avoid conflicts
     if (!item.entityType) {
       return item.id?.toString();
     }
 
+    // Normalize entityType to lowercase for consistency
+    const normalizedEntityType = item.entityType.toLowerCase();
+
     // For combined view items that might be duplicated (same tiltak under different krav)
     if (item._relatedToKrav !== undefined) {
-      return `${item.entityType}-${item.id}-krav-${item._relatedToKrav}`;
+      return `${normalizedEntityType}-${item.id}-krav-${item._relatedToKrav}`;
     }
 
-    // Standard unique ID for regular items
-    return `${item.entityType}-${item.id}`;
+    // Standard unique ID for combined view items
+    return `${normalizedEntityType}-${item.id}`;
   };
 
   // Determine which entity to display
@@ -172,21 +178,37 @@ const EntitySplitView = ({
     }
   }, [selectedEntityId, entityType, navigate]);
 
+  // Sync with store's selectedEntity (for new entity creation)
+  useEffect(() => {
+    if (selectedEntity) {
+      const entityUniqueId = generateUniqueEntityId(selectedEntity);
+      
+      if (entityUniqueId !== selectedEntityId) {
+        setSelectedEntityId(entityUniqueId);
+      }
+    }
+  }, [selectedEntity]);
+
   // Sync with URL params changes
   useEffect(() => {
     const urlEntityId = params.entityId || null;
     if (urlEntityId !== selectedEntityId) {
-      // EntitySplitView DEBUG - URL changed, updating selection: urlEntityId
       setSelectedEntityId(urlEntityId);
     }
-  }, [params.entityId]); // Remove selectedEntityId dependency to prevent loop
+  }, [params.entityId]);
 
   const handleEntitySelect = (entity) => {
     // EntitySplitView DEBUG - entity selected: entity
     // Use compound ID for combined views to avoid conflicts, including relationship context
     const uniqueId = generateUniqueEntityId(entity);
     setSelectedEntityId(uniqueId);
-    
+
+    // Only clear the "just created" flag if this is truly a manual selection from the list
+    // Don't clear it if this entity selection is coming from the store sync (i.e., entity creation)
+    if (entity.id !== selectedEntity?.id) {
+      clearJustCreatedFlag();
+    }
+
     // Clear activeEntity when selecting from list to prevent create-new from staying visible
     if (setActiveEntity && activeEntity?.id === "create-new") {
       setActiveEntity(null);
@@ -195,7 +217,7 @@ const EntitySplitView = ({
 
   const handleEntityDeselect = () => {
     setSelectedEntityId(null);
-    
+
     // Also clear activeEntity if it's create-new
     if (setActiveEntity && activeEntity?.id === "create-new") {
       setActiveEntity(null);

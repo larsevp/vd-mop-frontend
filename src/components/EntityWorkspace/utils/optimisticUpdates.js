@@ -14,9 +14,12 @@ export const sortItemsByEmne = (items) => {
     const aSortIt = a.emne?.sortIt;
     const bSortIt = b.emne?.sortIt;
 
-    // Handle null/undefined sortIt values - put them at the end
-    if (aSortIt === null || aSortIt === undefined) {
-      if (bSortIt === null || bSortIt === undefined) {
+    // Handle null/undefined/0 sortIt values - put them at the end (match backend logic)
+    const aHasValidSort = aSortIt !== null && aSortIt !== undefined && aSortIt !== 0;
+    const bHasValidSort = bSortIt !== null && bSortIt !== undefined && bSortIt !== 0;
+
+    if (!aHasValidSort) {
+      if (!bHasValidSort) {
         // Both are null, sort by tittel or put "Ingen emne" last
         const aTitle = a.emne?.tittel || "Ingen emne";
         const bTitle = b.emne?.tittel || "Ingen emne";
@@ -33,15 +36,15 @@ export const sortItemsByEmne = (items) => {
         if (idDiff !== 0) return idDiff;
 
         // Tertiary sort by UID as additional fallback
-        const aUID = a.kravUID || a.tiltakUID || a.prosjektKravUID || a.prosjektTiltakUID || '';
-        const bUID = b.kravUID || b.tiltakUID || b.prosjektKravUID || b.prosjektTiltakUID || '';
+        const aUID = a.kravUID || a.tiltakUID || a.prosjektKravUID || a.prosjektTiltakUID || "";
+        const bUID = b.kravUID || b.tiltakUID || b.prosjektKravUID || b.prosjektTiltakUID || "";
         return aUID.localeCompare(bUID);
       }
-      return 1; // a is null, b has value - a goes after b
+      return 1; // a has no valid sort, b has valid sort - a goes after b
     }
 
-    if (bSortIt === null || bSortIt === undefined) {
-      return -1; // b is null, a has value - a goes before b
+    if (!bHasValidSort) {
+      return -1; // b has no valid sort, a has valid sort - a goes before b
     }
 
     // Both have sortIt values - sort by sortIt, then by emne id as tiebreaker
@@ -61,25 +64,20 @@ export const sortItemsByEmne = (items) => {
     if (idDiff !== 0) return idDiff;
 
     // Tertiary sort by UID as additional fallback
-    const aUID = a.kravUID || a.tiltakUID || a.prosjektKravUID || a.prosjektTiltakUID || '';
-    const bUID = b.kravUID || b.tiltakUID || b.prosjektKravUID || b.prosjektTiltakUID || '';
+    const aUID = a.kravUID || a.tiltakUID || a.prosjektKravUID || a.prosjektTiltakUID || "";
+    const bUID = b.kravUID || b.tiltakUID || b.prosjektKravUID || b.prosjektTiltakUID || "";
     return aUID.localeCompare(bUID);
   });
 };
+
+import { EntityTypeTranslator } from "./entityTypeTranslator";
 
 /**
  * Map entityType to the actual property name in grouped data (same as EntityFilterService)
  */
 const getGroupedDataPropertyName = (entityType) => {
-  const mapping = {
-    'prosjekt-krav': 'prosjektkrav',
-    'prosjekt-tiltak': 'prosjekttiltak',
-    'krav': 'krav',
-    'tiltak': 'tiltak',
-    'prosjektkrav': 'prosjektkrav',
-    'prosjekttiltak': 'prosjekttiltak'
-  };
-  return mapping[entityType] || entityType;
+  // Use centralized translator for consistent naming
+  return EntityTypeTranslator.translate(entityType, "lowercase");
 };
 
 /**
@@ -91,7 +89,7 @@ const getGroupedDataPropertyName = (entityType) => {
 export const regroupByEmne = (flatItems, entityType) => {
   // Get the correct property name for this entity type
   const propertyName = getGroupedDataPropertyName(entityType);
-  
+
   const grouped = flatItems.reduce((acc, item) => {
     const emneId = item.emne?.id || "no-emne";
     const emneKey = item.emne?.id ? `emne-${emneId}` : "no-emne";
@@ -129,39 +127,60 @@ export const regroupByEmne = (flatItems, entityType) => {
   }, {});
 
   // Convert to array and sort groups by emne.sortIt (matching backend groupingHelper logic)
-  return Object.values(grouped).sort((a, b) => {
-    const aSortIt = a.emne?.sortIt;
-    const bSortIt = b.emne?.sortIt;
-
-    // Handle null/undefined sortIt values - put them at the end
-    if (aSortIt === null || aSortIt === undefined) {
-      if (bSortIt === null || bSortIt === undefined) {
-        // Both are null, sort by tittel or put "Ingen emne" last
-        const aTitle = a.emne?.tittel || "Ingen emne";
-        const bTitle = b.emne?.tittel || "Ingen emne";
-
-        if (aTitle === "Ingen emne" && bTitle !== "Ingen emne") return 1;
-        if (bTitle === "Ingen emne" && aTitle !== "Ingen emne") return -1;
-
-        return aTitle.localeCompare(bTitle, "no", { sensitivity: "base" });
+  return Object.values(grouped)
+    .filter((group) => {
+      // Filter out empty groups - check different property structures
+      if (entityType === "combinedEntities" || entityType === "combined") {
+        return group.entities && group.entities.length > 0;
+      } else {
+        const propertyArray = group[propertyName];
+        return propertyArray && propertyArray.length > 0;
       }
-      return 1; // a is null, b has value - a goes after b
-    }
+    })
+    .sort((a, b) => {
+      const aSortIt = a.emne?.sortIt;
+      const bSortIt = b.emne?.sortIt;
 
-    if (bSortIt === null || bSortIt === undefined) {
-      return -1; // b is null, a has value - a goes before b
-    }
+      // Handle null/undefined/0 sortIt values - put them at the end (match backend logic)
+      const aHasValidSort = aSortIt !== null && aSortIt !== undefined && aSortIt !== 0;
+      const bHasValidSort = bSortIt !== null && bSortIt !== undefined && bSortIt !== 0;
 
-    // Both have sortIt values - sort by sortIt, then by id as tiebreaker
-    if (aSortIt !== bSortIt) {
-      return aSortIt - bSortIt;
-    }
+      if (!aHasValidSort) {
+        if (!bHasValidSort) {
+          // Both have no valid sortIt, sort by emne.id, then by tittel
+          const aId = a.emne?.id || 0;
+          const bId = b.emne?.id || 0;
+          
+          if (aId !== bId) {
+            return aId - bId;
+          }
 
-    // Same sortIt value - sort by emne id as tiebreaker
-    const aId = a.emne?.id || 0;
-    const bId = b.emne?.id || 0;
-    return aId - bId;
-  });
+          // Same ID (or both 0), sort by tittel or put "Ingen emne" last
+          const aTitle = a.emne?.tittel || "Ingen emne";
+          const bTitle = b.emne?.tittel || "Ingen emne";
+
+          if (aTitle === "Ingen emne" && bTitle !== "Ingen emne") return 1;
+          if (bTitle === "Ingen emne" && aTitle !== "Ingen emne") return -1;
+
+          return aTitle.localeCompare(bTitle, "no", { sensitivity: "base" });
+        }
+        return 1; // a has no valid sort, b has valid sort - a goes after b
+      }
+
+      if (!bHasValidSort) {
+        return -1; // b has no valid sort, a has valid sort - a goes before b
+      }
+
+      // Both have sortIt values - sort by sortIt, then by id as tiebreaker
+      if (aSortIt !== bSortIt) {
+        return aSortIt - bSortIt;
+      }
+
+      // Same sortIt value - sort by emne id as tiebreaker
+      const aId = a.emne?.id || 0;
+      const bId = b.emne?.id || 0;
+      return aId - bId;
+    });
 };
 
 /**
@@ -318,96 +337,92 @@ export const applyOptimisticUpdateCombined = (queryClient, updatedData, original
 const applySilentEmnePropagationUpdates = (queryClient, updatedKravData, kravEntityType) => {
   const newEmneId = updatedKravData.emneId;
   const kravId = updatedKravData.id;
-  
-  console.log(`🔄 Silent propagation: Updating tiltak caches for ${kravEntityType} ${kravId} emneId change to ${newEmneId}`);
-  
+
+  //console.log(`🔄 Silent propagation: Updating tiltak caches for ${kravEntityType} ${kravId} emneId change to ${newEmneId}`);
+
   // Helper to update tiltak entities in a query data structure
   const updateTiltakInQueryData = (oldData, tiltakType) => {
     if (!oldData) return oldData;
-    
+
     let updated = false;
-    
+
     // Handle flat data structure (items array)
     if (oldData.items && Array.isArray(oldData.items)) {
-      const updatedItems = oldData.items.map(item => {
+      const updatedItems = oldData.items.map((item) => {
         // Check if this tiltak is connected to the changed krav
-        const isConnectedToKrav = item.krav?.some(k => k.id === kravId);
-        const shouldUpdate = isConnectedToKrav && 
-                           item.parentId === null && // Only update if no parent override
-                           item.emneId !== newEmneId; // Only if actually changing
-        
+        const isConnectedToKrav = item.krav?.some((k) => k.id === kravId);
+        const shouldUpdate =
+          isConnectedToKrav &&
+          item.parentId === null && // Only update if no parent override
+          item.emneId !== newEmneId; // Only if actually changing
+
         if (shouldUpdate) {
-          console.log(`🔄 Silent update: ${tiltakType} ${item.id} emneId ${item.emneId} → ${newEmneId} (via ${kravEntityType} ${kravId})`);
+          //console.log(`🔄 Silent update: ${tiltakType} ${item.id} emneId ${item.emneId} → ${newEmneId} (via ${kravEntityType} ${kravId})`);
           updated = true;
           return { ...item, emneId: newEmneId };
         }
         return item;
       });
-      
+
       if (updated) {
         return { ...oldData, items: updatedItems };
       }
     }
-    
+
     // Handle grouped data structure (array of groups)
     if (Array.isArray(oldData.items) && oldData.items[0]?.tiltak) {
-      const updatedGroups = oldData.items.map(group => {
+      const updatedGroups = oldData.items.map((group) => {
         if (!group.tiltak) return group;
-        
-        const updatedTiltak = group.tiltak.map(tiltak => {
-          const isConnectedToKrav = tiltak.krav?.some(k => k.id === kravId);
-          const shouldUpdate = isConnectedToKrav && 
-                             tiltak.parentId === null &&
-                             tiltak.emneId !== newEmneId;
-          
+
+        const updatedTiltak = group.tiltak.map((tiltak) => {
+          const isConnectedToKrav = tiltak.krav?.some((k) => k.id === kravId);
+          const shouldUpdate = isConnectedToKrav && tiltak.parentId === null && tiltak.emneId !== newEmneId;
+
           if (shouldUpdate) {
-            console.log(`🔄 Silent update: ${tiltakType} ${tiltak.id} emneId ${tiltak.emneId} → ${newEmneId} (via ${kravEntityType} ${kravId})`);
             updated = true;
             return { ...tiltak, emneId: newEmneId };
           }
           return tiltak;
         });
-        
+
         return { ...group, tiltak: updatedTiltak };
       });
-      
+
       if (updated) {
         return { ...oldData, items: updatedGroups };
       }
     }
-    
+
     // Handle combined entities structure
     if (Array.isArray(oldData.items) && oldData.items[0]?.entities) {
-      const updatedGroups = oldData.items.map(group => {
+      const updatedGroups = oldData.items.map((group) => {
         if (!group.entities) return group;
-        
-        const updatedEntities = group.entities.map(entity => {
-          if (entity.entityType !== 'tiltak') return entity;
-          
-          const isConnectedToKrav = entity.krav?.some(k => k.id === kravId);
-          const shouldUpdate = isConnectedToKrav && 
-                             entity.parentId === null &&
-                             entity.emneId !== newEmneId;
-          
+
+        const updatedEntities = group.entities.map((entity) => {
+          if (entity.entityType !== "tiltak") return entity;
+
+          const isConnectedToKrav = entity.krav?.some((k) => k.id === kravId);
+          const shouldUpdate = isConnectedToKrav && entity.parentId === null && entity.emneId !== newEmneId;
+
           if (shouldUpdate) {
-            console.log(`🔄 Silent update: tiltak ${entity.id} emneId ${entity.emneId} → ${newEmneId} (via ${kravEntityType} ${kravId})`);
+            // console.log(`🔄 Silent update: tiltak ${entity.id} emneId ${entity.emneId} → ${newEmneId} (via ${kravEntityType} ${kravId})`);
             updated = true;
             return { ...entity, emneId: newEmneId };
           }
           return entity;
         });
-        
+
         return { ...group, entities: updatedEntities };
       });
-      
+
       if (updated) {
         return { ...oldData, items: updatedGroups };
       }
     }
-    
+
     return oldData;
   };
-  
+
   // Apply silent updates to various query caches
   const queriesToUpdate = [
     { queryKey: ["tiltak"], tiltakType: "tiltak" },
@@ -420,9 +435,9 @@ const applySilentEmnePropagationUpdates = (queryClient, updatedKravData, kravEnt
     { queryKey: ["combinedEntities", "workspace"], tiltakType: "tiltak" },
     { queryKey: ["combinedEntities", "workspace", "paginated"], tiltakType: "tiltak" },
   ];
-  
+
   let totalUpdated = 0;
-  
+
   queriesToUpdate.forEach(({ queryKey, tiltakType }) => {
     queryClient.setQueryData(queryKey, (oldData) => {
       const newData = updateTiltakInQueryData(oldData, tiltakType);
@@ -432,9 +447,9 @@ const applySilentEmnePropagationUpdates = (queryClient, updatedKravData, kravEnt
       return newData;
     });
   });
-  
-  console.log(`🔄 Silent propagation: Updated ${totalUpdated} cache entries for ${kravEntityType} ${kravId}`);
-  
+
+  //console.log(`🔄 Silent propagation: Updated ${totalUpdated} cache entries for ${kravEntityType} ${kravId}`);
+
   return totalUpdated > 0;
 };
 
@@ -445,45 +460,45 @@ const applySilentEmnePropagationUpdates = (queryClient, updatedKravData, kravEnt
  * @param {string} entityType - Type of entity that was updated (krav/prosjektKrav)
  */
 const applyOptimisticRegroupingAfterPropagation = (queryClient, entityType) => {
-  console.log(`🔄 Applying optimistic regrouping after ${entityType} emne propagation`);
-  
+  //console.log(`🔄 Applying optimistic regrouping after ${entityType} emne propagation`);
+
   // Target the workspace queries that display grouped data
   const workspaceQueries = [
     ["tiltak", "workspace", "paginated"],
     ["prosjektTiltak", "workspace", "paginated"],
-    ["combinedEntities", "workspace", "paginated"]
+    ["combinedEntities", "workspace", "paginated"],
   ];
-  
-  workspaceQueries.forEach(queryKey => {
+
+  workspaceQueries.forEach((queryKey) => {
     queryClient.setQueryData(queryKey, (oldData) => {
       if (!oldData?.items) return oldData;
-      
+
       // Check if this is grouped data that needs regrouping
       const isGroupedData = Array.isArray(oldData.items) && oldData.items[0]?.tiltak;
       const isCombinedData = Array.isArray(oldData.items) && oldData.items[0]?.entities;
-      
+
       if (isGroupedData) {
         // Extract flat tiltak from all groups
-        const flatTiltak = oldData.items.flatMap(group => group.tiltak || []);
-        
+        const flatTiltak = oldData.items.flatMap((group) => group.tiltak || []);
+
         // Regroup by emne with proper sorting
         const regroupedData = regroupByEmne(flatTiltak, "tiltak");
-        
-        console.log(`✅ Regrouped tiltak data after ${entityType} propagation`);
+
+        //console.log(`✅ Regrouped tiltak data after ${entityType} propagation`);
         return { ...oldData, items: regroupedData };
       }
-      
+
       if (isCombinedData) {
-        // Extract flat entities from all groups  
-        const flatEntities = oldData.items.flatMap(group => group.entities || []);
-        
+        // Extract flat entities from all groups
+        const flatEntities = oldData.items.flatMap((group) => group.entities || []);
+
         // Regroup by emne with proper sorting
         const regroupedData = regroupByEmne(flatEntities, "combinedEntities");
-        
-        console.log(`✅ Regrouped combined entities after ${entityType} propagation`);
+
+        //console.log(`✅ Regrouped combined entities after ${entityType} propagation`);
         return { ...oldData, items: regroupedData };
       }
-      
+
       return oldData;
     });
   });
@@ -499,62 +514,54 @@ const applyOptimisticRegroupingAfterPropagation = (queryClient, entityType) => {
  */
 export const handleEmnePropagationInvalidation = (queryClient, updatedData, originalData, entityType) => {
   const emneChanged = updatedData.emneId !== originalData?.emneId;
-  
+
   // Convert kebab-case to camelCase for consistent checking
   const camelCaseEntityType = entityType.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
-  
-  console.log(`🔍 handleEmnePropagationInvalidation called:`, {
-    entityType,
-    camelCaseEntityType,
-    emneChanged,
-    newEmneId: updatedData.emneId,
-    oldEmneId: originalData?.emneId
-  });
-  
+
   // Only handle propagation for krav and prosjektKrav emneId changes (handle both kebab-case and camelCase)
-  if (emneChanged && (camelCaseEntityType === 'krav' || camelCaseEntityType === 'prosjektKrav')) {
-    console.log(`🔄 Emne propagation: ${entityType} ${updatedData.id} emneId changed, invalidating tiltak queries`);
-    
+  if (emneChanged && (camelCaseEntityType === "krav" || camelCaseEntityType === "prosjektKrav")) {
+    //console.log(`🔄 Emne propagation: ${entityType} ${updatedData.id} emneId changed, invalidating tiltak queries`);
+
     // Invalidate tiltak queries - this marks them as stale and forces refetch when accessed
-    queryClient.invalidateQueries({ 
+    queryClient.invalidateQueries({
       queryKey: ["tiltak"],
-      exact: false
+      exact: false,
     });
-    
-    queryClient.invalidateQueries({ 
+
+    queryClient.invalidateQueries({
       queryKey: ["prosjektTiltak"],
-      exact: false
+      exact: false,
     });
-    
+
     // Also invalidate with kebab-case format used in project workspaces
-    queryClient.invalidateQueries({ 
+    queryClient.invalidateQueries({
       queryKey: ["prosjekt-tiltak"],
-      exact: false
+      exact: false,
     });
-    
-    queryClient.invalidateQueries({ 
+
+    queryClient.invalidateQueries({
       queryKey: ["combinedEntities"],
-      exact: false
+      exact: false,
     });
-    
+
     // For immediate feedback, also trigger refetch of active tiltak and prosjektTiltak workspace queries
-    queryClient.refetchQueries({ 
+    queryClient.refetchQueries({
       queryKey: ["tiltak", "workspace"],
       exact: false,
-      type: 'active' // Only refetch if currently being viewed
+      type: "active", // Only refetch if currently being viewed
     });
-    
-    queryClient.refetchQueries({ 
+
+    queryClient.refetchQueries({
       queryKey: ["prosjektTiltak", "workspace"],
       exact: false,
-      type: 'active' // Only refetch if currently being viewed
+      type: "active", // Only refetch if currently being viewed
     });
-    
+
     // Also refetch with kebab-case format used in project workspaces
-    queryClient.refetchQueries({ 
+    queryClient.refetchQueries({
       queryKey: ["prosjekt-tiltak", "workspace"],
       exact: false,
-      type: 'active' // Only refetch if currently being viewed
+      type: "active", // Only refetch if currently being viewed
     });
   }
 };
@@ -570,13 +577,6 @@ export const handleEmnePropagationInvalidation = (queryClient, updatedData, orig
  * @param {string} params.entityType - Type of entity (tiltak, krav, combinedEntities, etc.)
  */
 export const handleOptimisticEntityUpdate = ({ queryClient, queryKey, updatedData, originalData, entityType }) => {
-  console.log(`🔍 DEBUG: handleOptimisticEntityUpdate called with:`, {
-    entityType,
-    updatedData: updatedData ? { id: updatedData.id, emneId: updatedData.emneId } : null,
-    originalData: originalData ? { id: originalData.id, emneId: originalData.emneId } : null,
-    queryKey
-  });
-
   // Apply to flat data cache
   applyOptimisticUpdateFlat(queryClient, queryKey, updatedData, originalData, entityType);
 
@@ -590,7 +590,7 @@ export const handleOptimisticEntityUpdate = ({ queryClient, queryKey, updatedDat
   }
 
   // Handle emne propagation for krav and prosjektKrav updates
-  console.log(`🔍 DEBUG: About to call handleEmnePropagationInvalidation for ${entityType}`);
+  //console.log(`🔍 DEBUG: About to call handleEmnePropagationInvalidation for ${entityType}`);
   handleEmnePropagationInvalidation(queryClient, updatedData, originalData, entityType);
 
   // Always invalidate queries to sync with backend eventually

@@ -7,24 +7,32 @@ import { useProjectStore } from "@/stores/userStore";
  * EntityWorkspace expects a function that accepts (page, pageSize, search, sortBy, sortOrder)
  * Uses the combined-entities route with projectId parameter
  */
-export const getPaginatedCombinedProsjektEntities = (page = 1, pageSize = 50, search = "", sortBy = "", sortOrder = "asc") => {
+export const getPaginatedCombinedProsjektEntities = (page = 1, pageSize = 50, search = "", sortBy = "", sortOrder = "asc", filterBy = "all", additionalFilters = {}) => {
+  // Handle case where page is passed as an object (fix for object parameter issue)
+  const actualPage = typeof page === "object" && page !== null ? page.page || page.pageNumber || page.currentPage || 1 : parseInt(page) || 1;
+  
   // Get current project ID from store
   const currentProject = useProjectStore.getState().currentProject;
   const projectId = currentProject?.id;
 
   if (!projectId) {
     console.warn("No project selected - ProsjektCombinedWorkspace will return empty results");
-    return Promise.resolve({ data: { items: [], totalCount: 0, page, pageSize, totalPages: 0 } });
+    return Promise.resolve({ data: { items: [], totalCount: 0, page: actualPage, pageSize, totalPages: 0 } });
   }
 
   // Build query parameters
   const queryParams = new URLSearchParams({
-    page: page.toString(),
+    page: actualPage.toString(),
     pageSize: pageSize.toString(),
     search,
     sortBy,
     sortOrder,
     projectId: projectId.toString(),
+    // Filter parameters
+    ...(filterBy && filterBy !== "all" && { filterBy }),
+    // Additional filters as separate parameters
+    ...(additionalFilters.status && { status: additionalFilters.status }),
+    ...(additionalFilters.vurdering && { vurdering: additionalFilters.vurdering }),
     // Default view options for project entities
     primaryView: "prosjektkrav-first",
     showHierarchy: "true",
@@ -74,39 +82,23 @@ export const getPaginatedCombinedProsjektEntitiesWithOptions = async (params = {
  * Get combined view with ProsjektKrav-first hierarchy (convenience method)
  */
 export const getCombinedProsjektEntitiesKravFirst = async (params = {}) => {
-  return getPaginatedCombinedProsjektEntities({
-    ...params,
-    options: {
-      ...params.options,
-      primaryView: "prosjektkrav-first"
-    }
-  });
+  const { page = 1, pageSize = 50, search = "", sortBy = "", sortOrder = "asc" } = params;
+  return getPaginatedCombinedProsjektEntities(page, pageSize, search, sortBy, sortOrder);
 };
 
 /**
  * Get combined view with ProsjektTiltak-first hierarchy (convenience method)
  */
 export const getCombinedProsjektEntitiesTiltakFirst = async (params = {}) => {
-  return getPaginatedCombinedProsjektEntities({
-    ...params,
-    options: {
-      ...params.options,
-      primaryView: "prosjekttiltak-first"
-    }
-  });
+  const { page = 1, pageSize = 50, search = "", sortBy = "", sortOrder = "asc" } = params;
+  return getPaginatedCombinedProsjektEntities(page, pageSize, search, sortBy, sortOrder);
 };
 
 /**
  * Get combined view grouped by Emne (convenience method)
  */
-export const getCombinedProsjektEntitiesGroupedByEmne = async (params = {}) => {
-  return getPaginatedCombinedProsjektEntities({
-    ...params,
-    options: {
-      ...params.options,
-      groupByEmne: true
-    }
-  });
+export const getCombinedProsjektEntitiesGroupedByEmne = async (page = 1, pageSize = 50, search = "", sortBy = "", sortOrder = "asc", filterBy = "all", additionalFilters = {}) => {
+  return getPaginatedCombinedProsjektEntities(page, pageSize, search, sortBy, sortOrder, filterBy, additionalFilters);
 };
 
 /**

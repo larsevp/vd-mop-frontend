@@ -69,7 +69,7 @@ export const createProsjektKrav = async (prosjektKravData) => {
   return API.post("prosjekt-krav", dataWithProjectId);
 };
 
-export const updateProsjektKrav = (prosjektKravData) => API.put(`prosjekt-krav/${prosjektKravData.id}`, prosjektKravData);
+export const updateProsjektKrav = (id, prosjektKravData) => API.put(`prosjekt-krav/${id}`, prosjektKravData);
 
 export const updateProsjektKravMerknad = (prosjektKravId, merknader) => API.patch(`prosjekt-krav/${prosjektKravId}/merknad`, { merknader });
 

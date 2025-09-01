@@ -26,6 +26,13 @@ const EntityListRow = ({
     showRelations: true,
   },
 }) => {
+  // Helper function to truncate text - defined early so it can be used throughout
+  const truncateText = (text, maxLength = 60) => {
+    if (!text) return "";
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + "..";
+  };
+
   // Check if this is a combined view
   const isCombinedView = entityType === "combinedEntities" || entityType === "combined" || entityType === "prosjekt-combined";
 
@@ -93,6 +100,11 @@ const EntityListRow = ({
       entity.descriptionSnippet ||
       extractTextFromTipTap(entity.description) ||
       "";
+  }
+
+  // Ensure snippet fields are properly truncated (they might be long)
+  if (description && (entity.beskrivelseSnippet || entity.descriptionSnippet)) {
+    description = truncateText(description);
   }
 
   // Helper function to extract text from TipTap JSON
@@ -175,12 +187,6 @@ const EntityListRow = ({
     return null;
   };
 
-  const truncateText = (text, maxLength = 140) => {
-    if (!text) return "";
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + "...";
-  };
-
   const handleClick = (e) => {
     e.preventDefault(); // Prevent default anchor behavior
     e.stopPropagation(); // Stop event bubbling
@@ -202,8 +208,38 @@ const EntityListRow = ({
     shouldIndent = hasKravConnections || hasParent;
   }
 
+  // Generate unique ID for data attribute (matches EntitySplitView logic)
+  const generateUniqueEntityId = (item) => {
+    // Check if we're in a combined view context (matches EntitySplitView and EntityListPane)
+    const isCombinedView = entityType === "combined" || entityType === "combinedEntities" || entityType === "prosjekt-combined";
+    
+    // For regular (non-combined) views, always use simple numeric ID
+    if (!isCombinedView) {
+      return item.id?.toString();
+    }
+    
+    // Combined view logic - need complex IDs to avoid conflicts
+    if (!item.entityType) {
+      return item.id?.toString();
+    }
+
+    // Normalize entityType to lowercase for consistency (matches EntitySplitView and EntityListPane)
+    const normalizedEntityType = item.entityType.toLowerCase();
+
+    // For combined view items that might be duplicated (same tiltak under different krav)
+    if (item._relatedToKrav !== undefined) {
+      return `${normalizedEntityType}-${item.id}-krav-${item._relatedToKrav}`;
+    }
+
+    // Standard unique ID for combined view items
+    return `${normalizedEntityType}-${item.id}`;
+  };
+
+  const uniqueEntityId = generateUniqueEntityId(entity);
+
   return (
     <div
+      data-entity-id={uniqueEntityId}
       onClick={handleClick}
       onMouseEnter={onFocus}
       onMouseLeave={() => onFocus && onFocus(-1)} // Clear focus when mouse leaves (use -1 to indicate no focus)
