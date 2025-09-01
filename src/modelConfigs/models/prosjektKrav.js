@@ -168,55 +168,111 @@ export const prosjektKrav = {
 
       // Field customization for detail view - Override default field behavior in detail form
       fieldOverrides: {
-        // Basic info - organized into logical sections
+        // Basic info section - logical order from general to specific
+        tittel: {
+          section: "info", // Title is first in info section
+          order: 1,
+        },
         beskrivelse: {
           section: "info", // Primary content description
           order: 2,
         },
-        merknader: {
-          section: "info", // Administrative notes
-          order: 2,
-        },
-        kravreferanse: {
+        emneId: {
           section: "info", // Reference value
           order: 3,
+          row: "main-row",
         },
-        // Administrative information - context and requirements
         parentId: {
           section: "info", // Task requirements
           order: 4,
           row: "main-row", // Group with administrative flags
         },
-        emneId: {
+        merknader: {
+          section: "info", // Administrative notes
+          order: 5,
+        },
+        kravreferanse: {
           section: "info", // Reference value
-          order: 4,
-          row: "main-row",
+          order: 6,
         },
 
-        // Reference and versioning information
+        // Status section
+        kravStatus: {
+          section: "status", // Status information
+          order: 7,
+          row: "status-row",
+        },
+        prioritet: {
+          section: "status", // Priority information
+          order: 8,
+          row: "status-row",
+        },
+        obligatorisk: {
+          section: "status", // Requirements flag
+          order: 9,
+          row: "status-row",
+        },
+
+        // References section
         kravreferansetypeId: {
           section: "references", // Reference type
-          order: 4,
+          order: 10,
           row: "reference-row", // Group with reference fields
         },
-
-        // Administrative information - context and requirements
-        obligatorisk: {
-          section: "admin", // Task requirements
+        versjon: {
+          section: "references", // Version information
           order: 11,
-          row: "admin-row", // Group with administrative flags
+          row: "reference-row",
         },
-        // Administrative information - context and requirements
+
+        // Assessment section
+        vurderingId: {
+          section: "details", // Assessment
+          order: 12,
+          row: "assessment-row",
+        },
+        statusId: {
+          section: "details", // Status
+          order: 13,
+          row: "assessment-row",
+        },
+
+        // Administrative section
         enhetId: {
-          section: "admin", // Task requirements
-          order: 11,
-          row: "admin-row", // Group with administrative flags
+          section: "admin", // Organizational unit
+          order: 14,
+          row: "admin-row",
+        },
+        givenOrder: {
+          section: "admin", // Order value
+          order: 15,
+          row: "admin-row",
         },
 
-        // Detailed information - separate section for additional content
+        // Files and additional information
+        files: {
+          section: "annet", // File attachments
+          order: 16,
+        },
         informasjon: {
           section: "annet", // Additional detailed information
-          order: 5,
+          order: 17,
+        },
+
+        // Metadata (usually auto-managed)
+        kravUID: {
+          section: "metadata", // Unique identifier
+          order: 18,
+        },
+        createdBy: {
+          section: "metadata", // Creation info
+          order: 19,
+          row: "metadata-row",
+        },
+        updatedBy: {
+          section: "metadata", // Update info
+          order: 20,
+          row: "metadata-row",
         },
       },
     },

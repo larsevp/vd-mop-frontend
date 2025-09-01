@@ -144,6 +144,16 @@ export const krav = {
           section: "info", // Primary content description
           order: 2,
         },
+        parentId: {
+          section: "info", // Task requirements
+          order: 2,
+          row: "main-row", // Group with administrative flags
+        },
+        emneId: {
+          section: "info", // Reference value
+          order: 2,
+          row: "main-row",
+        },
         merknader: {
           section: "info", // Administrative notes
           order: 3,
@@ -152,16 +162,7 @@ export const krav = {
           section: "info", // Reference value
           order: 3,
         },
-        parentId: {
-          section: "info", // Task requirements
-          order: 4,
-          row: "main-row", // Group with administrative flags
-        },
-        emneId: {
-          section: "info", // Reference value
-          order: 4,
-          row: "main-row",
-        },
+
         /*
         statusId: {
           section: "status", // Current progress status

@@ -8,7 +8,7 @@ import { devtools } from "zustand/middleware";
 import { EntityTypeResolver } from "@/components/EntityWorkspace/services/EntityTypeResolver";
 import { EntityFilterService } from "@/components/EntityWorkspace/services/EntityFilterService";
 import { handleOptimisticEntityUpdate, sortItemsByEmne } from "@/components/EntityWorkspace/utils/optimisticUpdates";
-import { EntityTypeTranslator } from "@/utils/entityTypeTranslator";
+import { EntityTypeTranslator } from "../utils/entityTypeTranslator";
 
 const useEntityWorkspaceStore = create(
   devtools(
@@ -219,7 +219,13 @@ const useEntityWorkspaceStore = create(
         const { currentEntityType, modelConfig } = get();
 
         try {
-          const apiConfig = EntityTypeResolver.resolveApiConfig(currentEntityType, modelConfig);
+          // For combined views, use the entity's actual type to get the correct API functions
+          const effectiveEntityType = entityData.entityType || currentEntityType;
+          const effectiveModelConfig = entityData.entityType ? 
+            EntityTypeResolver.resolveModelConfig(entityData.entityType) : 
+            modelConfig;
+          
+          const apiConfig = EntityTypeResolver.resolveApiConfig(effectiveEntityType, effectiveModelConfig);
           const isNewEntity = entityData.id === "create-new" || entityData.isNew;
 
           let result;
@@ -262,6 +268,15 @@ const useEntityWorkspaceStore = create(
           const message = isNewEntity ? `${entityDisplayName} opprettet` : `${entityDisplayName} oppdatert`;
 
           get().showToast(message, "success");
+          
+          // For new entities, update the selected entity to the created entity so it displays properly
+          if (isNewEntity && result) {
+            const createdEntity = result.data || result;
+            // Ensure entityType is set for combined views
+            createdEntity.entityType = effectiveEntityType;
+            set({ selectedEntity: createdEntity, activeEntity: createdEntity });
+          }
+          
           onSuccess?.(message, "success");
 
           return result;
@@ -367,14 +382,27 @@ const useEntityWorkspaceStore = create(
         const { currentEntityType, modelConfig } = get();
 
         try {
-          const apiConfig = EntityTypeResolver.resolveApiConfig(currentEntityType, modelConfig);
+          // Resolve the actual entity type for combined views
+          const effectiveEntityType = entity.entityType || currentEntityType;
+          const effectiveModelConfig = entity.entityType ? 
+            EntityTypeResolver.resolveModelConfig(entity.entityType) : 
+            modelConfig;
+
+          const apiConfig = EntityTypeResolver.resolveApiConfig(effectiveEntityType, effectiveModelConfig);
           await apiConfig.deleteFn(entity.id);
 
-          // Invalidate caches
+          // Invalidate caches for both current workspace and actual entity type
           queryClient.invalidateQueries({
             queryKey: [currentEntityType, "workspace"],
             exact: false,
           });
+          
+          if (effectiveEntityType !== currentEntityType) {
+            queryClient.invalidateQueries({
+              queryKey: [effectiveEntityType, "workspace"],
+              exact: false,
+            });
+          }
 
           if (["tiltak", "krav", "prosjektKrav", "prosjektTiltak"].includes(currentEntityType)) {
             queryClient.invalidateQueries({
@@ -389,12 +417,12 @@ const useEntityWorkspaceStore = create(
             set({ selectedEntity: null, activeEntity: null });
           }
 
-          const message = `${modelConfig.title || currentEntityType} slettet`;
+          const message = `${effectiveModelConfig.title || effectiveEntityType} slettet`;
           get().showToast(message, "success");
           onSuccess?.(message, "success");
         } catch (error) {
-          console.error(`Error deleting ${currentEntityType}:`, error);
-          const message = `Feil ved sletting av ${modelConfig.title || currentEntityType}`;
+          console.error(`Error deleting ${effectiveEntityType}:`, error);
+          const message = `Feil ved sletting av ${effectiveModelConfig.title || effectiveEntityType}`;
           get().showToast(message, "error");
           onError?.(message, "error");
           throw error;

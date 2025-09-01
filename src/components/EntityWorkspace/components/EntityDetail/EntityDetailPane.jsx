@@ -2,12 +2,12 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Edit, X, ChevronDown, ChevronRight, Save, RotateCcw, Trash2, ExternalLink, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import EntityDetailForm from "../shared/EntityDetailForm";
-import { FieldResolver } from "../../tableComponents/fieldTypes/fieldResolver.jsx";
+import EntityDetailForm from "./EntityDetailForm";
+import { FieldResolver } from "@/components/tableComponents/fieldTypes/fieldResolver.jsx";
 import { modelConfigs } from "@/modelConfigs";
 import { EntityTypeResolver } from "@/components/EntityWorkspace/services/EntityTypeResolver";
-import { useEmneInheritance } from "../../../hooks/useEmneInheritance";
 import { useEditingActions } from "@/stores/editingStateStore";
+import useEntityWorkspaceStore from "../../stores/entityWorkspaceStore";
 
 /**
  * Clean, minimal detail pane for selected entity
@@ -113,7 +113,6 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
   const [errors, setErrors] = useState({});
 
   // Get the store initialization function
-  const { initializeForEntity } = useEmneInheritance();
 
   // Get editing state actions from store
   const { setEntityEditing } = useEditingActions();
@@ -122,7 +121,6 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
   useEffect(() => {
     if (entity) {
       // Initialize store for this specific entity (surgical reset only when switching entities)
-      initializeForEntity(entity.id, resolvedEntityType);
 
       // For new entities, start in edit mode; for existing entities, start in view mode
       const shouldEdit = isNewEntity;
@@ -152,7 +150,7 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
       setHasChanges(false);
       setErrors({});
     }
-  }, [entity?.id, isNewEntity, resolvedModelConfig, resolvedEntityType, initializeForEntity, setEntityEditing]);
+  }, [entity?.id, isNewEntity, resolvedModelConfig, resolvedEntityType, setEntityEditing]);
 
   // Get display values
   const title = entity[titleField] || "Uten tittel";
@@ -226,7 +224,7 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
         // Use the resolved model config's update function for combined entities
         if (isUpdate) {
           const saveData = { ...filteredData, id: entity.id };
-          updatedData = await resolvedModelConfig.updateFn(saveData);
+          updatedData = await resolvedModelConfig.updateFn(entity.id, saveData);
 
           // Handle propagation and cache updates for combined view updates
           const actualEntityType = entity.entityType; // "tiltak", "krav", "prosjekttiltak", "prosjektkrav"
@@ -252,11 +250,26 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
             queryKey: ["combined", "workspace"],
             exact: false,
           });
+          queryClient.invalidateQueries({
+            queryKey: ["combinedEntities", "workspace"],
+            exact: false,
+          });
+          // Also invalidate the current workspace type cache
+          queryClient.invalidateQueries({
+            queryKey: [entityType, "workspace"],
+            exact: false,
+          });
         } else {
           updatedData = await resolvedModelConfig.createFn(filteredData);
 
           // Manually invalidate caches for combined view creates
           const actualEntityType = entity.entityType; // "tiltak", "krav", "prosjekttiltak", "prosjektkrav"
+          
+          // Ensure the created entity has the correct entityType for combined view display
+          if (updatedData && actualEntityType) {
+            const createdEntity = updatedData.data || updatedData;
+            createdEntity.entityType = actualEntityType;
+          }
           queryClient.invalidateQueries({
             queryKey: [actualEntityType, "workspace"],
             exact: false,
@@ -265,6 +278,27 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
             queryKey: ["combined", "workspace"],
             exact: false,
           });
+          queryClient.invalidateQueries({
+            queryKey: ["combinedEntities", "workspace"],
+            exact: false,
+          });
+          // Also invalidate the current workspace type cache
+          queryClient.invalidateQueries({
+            queryKey: [entityType, "workspace"],
+            exact: false,
+          });
+
+          // Set the created entity as selected for auto-scroll (same as store does)
+          if (updatedData) {
+            const createdEntity = updatedData.data || updatedData;
+            // Ensure the created entity has the correct entityType for combined view display
+            createdEntity.entityType = actualEntityType;
+            
+            // Use the store's setSelectedEntity function
+            const { setSelectedEntity, setActiveEntity } = useEntityWorkspaceStore.getState();
+            setSelectedEntity(createdEntity);
+            setActiveEntity(createdEntity);
+          }
         }
       } else {
         // Use the standard onSave handler for regular views
@@ -344,8 +378,12 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
   };
 
   const handleDelete = () => {
+    if (!entity.id || entity.id === 'create-new') {
+      console.error('Cannot delete entity without valid ID:', entity.id);
+      return;
+    }
     if (window.confirm(actionPermissions.deleteConfirmText)) {
-      onDelete(entity.id);
+      onDelete(entity);
       onClose(); // Close detail pane after delete
     }
   };
@@ -421,7 +459,7 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
               {isEditing ? (
                 <input
                   type="text"
-                  value={editData.tittel}
+                  value={editData.tittel || ""}
                   onChange={(e) => handleFieldChange("tittel", e.target.value)}
                   className="text-xl font-semibold text-gray-900 leading-tight flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Tittel..."
@@ -468,14 +506,16 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
                   <Edit className="w-4 h-4 mr-1.5 inline" />
                   Rediger
                 </button>
-                <button
-                  onClick={handleDelete}
-                  tabIndex={-1}
-                  className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                  title="Slett"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {actionPermissions.canDelete && entity.id && !isNewEntity && (
+                  <button
+                    onClick={handleDelete}
+                    tabIndex={-1}
+                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Slett"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </>
             )}
             <button onClick={onClose} tabIndex={-1} className="p-2 text-gray-400 hover:text-gray-600 transition-colors" title="Lukk">

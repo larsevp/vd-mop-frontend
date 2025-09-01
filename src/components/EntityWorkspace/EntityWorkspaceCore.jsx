@@ -158,6 +158,29 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
     handleCreateNew(user);
   };
 
+  // Handle creating new entity of specific type (for combined views)
+  const handleCreateNewTypeWithContext = (specificEntityType) => {
+    try {
+      // Get the specific model config for this entity type
+      const specificModelConfig = EntityTypeResolver.resolveModelConfig(specificEntityType);
+      
+      // Create a new entity template for the specific type
+      const newEntity = {
+        id: "create-new",
+        isNew: true,
+        entityType: specificEntityType, // Set the specific entity type
+        // Add required fields based on the specific entity type
+        ...(specificEntityType.includes('Krav') && { tittel: '', beskrivelse: '' }),
+        ...(specificEntityType.includes('Tiltak') && { navn: '', beskrivelse: '' }),
+      };
+
+      // Set as active entity so it shows in the detail pane
+      setActiveEntity(newEntity);
+    } catch (error) {
+      console.error('Error creating new entity of type', specificEntityType, ':', error);
+    }
+  };
+
   // Save handler with queryClient context
   const handleSaveWithContext = (entityData) => {
     return handleSave(entityData, {
@@ -174,6 +197,66 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
       onSuccess: (message, type) => console.log("Delete success:", message),
       onError: (message, type) => console.error("Delete error:", message),
     });
+  };
+
+  // Determine if this is a combined view and what entity types to offer
+  const getCombinedViewEntityTypes = () => {
+    if (entityType === 'combined' || entityType === 'combinedEntities') {
+      return [
+        { type: 'krav', label: 'Nytt Krav' },
+        { type: 'tiltak', label: 'Nytt Tiltak' }
+      ];
+    } else if (entityType === 'prosjekt-combined' || entityType.includes('combined')) {
+      return [
+        { type: 'prosjektKrav', label: 'Nytt Krav' },
+        { type: 'prosjektTiltak', label: 'Nytt Tiltak' }
+      ];
+    }
+    return null;
+  };
+
+  // Render create buttons - multiple for combined views, single for others
+  const renderCreateButtons = () => {
+    // For combined views, we need to override the permission check since 
+    // the system doesn't recognize "prosjekt-combined" as a creatable entity type
+    const combinedTypes = getCombinedViewEntityTypes();
+    if (combinedTypes) {
+      // In combined views, show buttons if user can create any of the component types
+      return (
+        <div className="flex items-center gap-2">
+          {combinedTypes.map(({ type, label }) => (
+            <Button
+              key={type}
+              onClick={() => handleCreateNewTypeWithContext(type)}
+              size="default"
+              className="flex items-center gap-2"
+              disabled={isAnyEntityEditing}
+              title={isAnyEntityEditing ? "Kan ikke opprette ny mens du redigerer" : undefined}
+            >
+              <Plus className="h-4 w-4" />
+              {label}
+            </Button>
+          ))}
+        </div>
+      );
+    }
+
+    // Regular views - check permissions normally
+    if (!permissions.canCreate) return null;
+
+    // Single button for regular views
+    return (
+      <Button
+        onClick={handleCreateNewWithContext}
+        size="default"
+        className="flex items-center gap-2"
+        disabled={isAnyEntityEditing}
+        title={isAnyEntityEditing ? "Kan ikke opprette ny mens du redigerer" : undefined}
+      >
+        <Plus className="h-4 w-4" />
+        {permissions.createButtonText}
+      </Button>
+    );
   };
 
   // Icon renderer utility
@@ -293,18 +376,7 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
                 />
               )}
 
-              {permissions.canCreate && (
-                <Button
-                  onClick={handleCreateNewWithContext}
-                  size="default"
-                  className="flex items-center gap-2"
-                  disabled={isAnyEntityEditing}
-                  title={isAnyEntityEditing ? "Kan ikke opprette ny mens du redigerer" : undefined}
-                >
-                  <Plus className="h-4 w-4" />
-                  {permissions.createButtonText}
-                </Button>
-              )}
+              {renderCreateButtons()}
             </div>
           </div>
         ) : (
@@ -331,17 +403,7 @@ const EntityWorkspaceCore = ({ modelConfig, entityType, workspaceConfig = {} }) 
                   )}
                 </div>
               </div>
-              {permissions.canCreate && (
-                <Button
-                  onClick={handleCreateNewWithContext}
-                  className="flex items-center gap-2"
-                  disabled={isAnyEntityEditing}
-                  title={isAnyEntityEditing ? "Kan ikke opprette ny mens du redigerer" : undefined}
-                >
-                  <Plus className="h-4 w-4" />
-                  {permissions.createButtonText}
-                </Button>
-              )}
+              {renderCreateButtons()}
             </div>
           </div>
         )}

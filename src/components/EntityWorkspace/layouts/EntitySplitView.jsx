@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Plus, ChevronLeft, ChevronRight, GripVertical } from "lucide-react";
-import { EntityTypeTranslator } from "@/utils/entityTypeTranslator";
-import EntityListPane from "./EntityListPane";
-import EntityDetailPane from "./EntityDetailPane";
+import { EntityTypeTranslator } from "../utils/entityTypeTranslator";
+import EntityListPane from "../components/EntityList/EntityListPane";
+import EntityDetailPane from "../components/EntityDetail/EntityDetailPane";
+import useEntityWorkspaceStore from "../stores/entityWorkspaceStore";
 
 /**
  * Master-Detail Split View Layout
@@ -54,11 +55,11 @@ const EntitySplitView = ({
 }) => {
   const navigate = useNavigate();
   const params = useParams();
+  
+  // Get selectedEntity from store
+  const { selectedEntity } = useEntityWorkspaceStore();
 
-  // Debug logging (can be removed in production)
-  // EntitySplitView DEBUG - params, entityType
-
-  // Selected entity state - synced with URL
+  // Selected entity state - synced with URL and store
   const [selectedEntityId, setSelectedEntityId] = useState(params.entityId || null);
 
   // Collapsible panel state - persistent with localStorage
@@ -125,17 +126,29 @@ const EntitySplitView = ({
 
   // Generate unique ID for combined view items that may have duplicates
   const generateUniqueEntityId = (item) => {
+    // Check if we're in a combined view context
+    const isCombinedView = entityType === "combined" || entityType === "combinedEntities" || entityType === "prosjekt-combined";
+    
+    // For regular (non-combined) views, always use simple numeric ID
+    if (!isCombinedView) {
+      return item.id?.toString();
+    }
+    
+    // Combined view logic - need complex IDs to avoid conflicts
     if (!item.entityType) {
       return item.id?.toString();
     }
 
+    // Normalize entityType to lowercase for consistency
+    const normalizedEntityType = item.entityType.toLowerCase();
+
     // For combined view items that might be duplicated (same tiltak under different krav)
     if (item._relatedToKrav !== undefined) {
-      return `${item.entityType}-${item.id}-krav-${item._relatedToKrav}`;
+      return `${normalizedEntityType}-${item.id}-krav-${item._relatedToKrav}`;
     }
 
-    // Standard unique ID for regular items
-    return `${item.entityType}-${item.id}`;
+    // Standard unique ID for combined view items
+    return `${normalizedEntityType}-${item.id}`;
   };
 
   // Determine which entity to display
@@ -164,14 +177,25 @@ const EntitySplitView = ({
     }
   }, [selectedEntityId, entityType, navigate]);
 
+  // Sync with store's selectedEntity (for new entity creation)
+  useEffect(() => {
+    if (selectedEntity) {
+      const entityUniqueId = generateUniqueEntityId(selectedEntity);
+      console.log('🔄 EntitySplitView sync - selectedEntity:', selectedEntity.id, 'entityType:', selectedEntity.entityType, 'generated ID:', entityUniqueId, 'current selectedEntityId:', selectedEntityId);
+      if (entityUniqueId !== selectedEntityId) {
+        console.log('🔄 Setting selectedEntityId to:', entityUniqueId);
+        setSelectedEntityId(entityUniqueId);
+      }
+    }
+  }, [selectedEntity]);
+
   // Sync with URL params changes
   useEffect(() => {
     const urlEntityId = params.entityId || null;
     if (urlEntityId !== selectedEntityId) {
-      // EntitySplitView DEBUG - URL changed, updating selection: urlEntityId
       setSelectedEntityId(urlEntityId);
     }
-  }, [params.entityId]); // Remove selectedEntityId dependency to prevent loop
+  }, [params.entityId]);
 
   const handleEntitySelect = (entity) => {
     // EntitySplitView DEBUG - entity selected: entity

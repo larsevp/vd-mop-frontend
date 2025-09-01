@@ -14,9 +14,12 @@ export const sortItemsByEmne = (items) => {
     const aSortIt = a.emne?.sortIt;
     const bSortIt = b.emne?.sortIt;
 
-    // Handle null/undefined sortIt values - put them at the end
-    if (aSortIt === null || aSortIt === undefined) {
-      if (bSortIt === null || bSortIt === undefined) {
+    // Handle null/undefined/0 sortIt values - put them at the end (match backend logic)
+    const aHasValidSort = aSortIt !== null && aSortIt !== undefined && aSortIt !== 0;
+    const bHasValidSort = bSortIt !== null && bSortIt !== undefined && bSortIt !== 0;
+
+    if (!aHasValidSort) {
+      if (!bHasValidSort) {
         // Both are null, sort by tittel or put "Ingen emne" last
         const aTitle = a.emne?.tittel || "Ingen emne";
         const bTitle = b.emne?.tittel || "Ingen emne";
@@ -37,11 +40,11 @@ export const sortItemsByEmne = (items) => {
         const bUID = b.kravUID || b.tiltakUID || b.prosjektKravUID || b.prosjektTiltakUID || "";
         return aUID.localeCompare(bUID);
       }
-      return 1; // a is null, b has value - a goes after b
+      return 1; // a has no valid sort, b has valid sort - a goes after b
     }
 
-    if (bSortIt === null || bSortIt === undefined) {
-      return -1; // b is null, a has value - a goes before b
+    if (!bHasValidSort) {
+      return -1; // b has no valid sort, a has valid sort - a goes before b
     }
 
     // Both have sortIt values - sort by sortIt, then by emne id as tiebreaker
@@ -67,7 +70,7 @@ export const sortItemsByEmne = (items) => {
   });
 };
 
-import { EntityTypeTranslator } from "@/utils/entityTypeTranslator";
+import { EntityTypeTranslator } from "./entityTypeTranslator";
 
 /**
  * Map entityType to the actual property name in grouped data (same as EntityFilterService)
@@ -124,39 +127,60 @@ export const regroupByEmne = (flatItems, entityType) => {
   }, {});
 
   // Convert to array and sort groups by emne.sortIt (matching backend groupingHelper logic)
-  return Object.values(grouped).sort((a, b) => {
-    const aSortIt = a.emne?.sortIt;
-    const bSortIt = b.emne?.sortIt;
-
-    // Handle null/undefined sortIt values - put them at the end
-    if (aSortIt === null || aSortIt === undefined) {
-      if (bSortIt === null || bSortIt === undefined) {
-        // Both are null, sort by tittel or put "Ingen emne" last
-        const aTitle = a.emne?.tittel || "Ingen emne";
-        const bTitle = b.emne?.tittel || "Ingen emne";
-
-        if (aTitle === "Ingen emne" && bTitle !== "Ingen emne") return 1;
-        if (bTitle === "Ingen emne" && aTitle !== "Ingen emne") return -1;
-
-        return aTitle.localeCompare(bTitle, "no", { sensitivity: "base" });
+  return Object.values(grouped)
+    .filter((group) => {
+      // Filter out empty groups - check different property structures
+      if (entityType === "combinedEntities" || entityType === "combined") {
+        return group.entities && group.entities.length > 0;
+      } else {
+        const propertyArray = group[propertyName];
+        return propertyArray && propertyArray.length > 0;
       }
-      return 1; // a is null, b has value - a goes after b
-    }
+    })
+    .sort((a, b) => {
+      const aSortIt = a.emne?.sortIt;
+      const bSortIt = b.emne?.sortIt;
 
-    if (bSortIt === null || bSortIt === undefined) {
-      return -1; // b is null, a has value - a goes before b
-    }
+      // Handle null/undefined/0 sortIt values - put them at the end (match backend logic)
+      const aHasValidSort = aSortIt !== null && aSortIt !== undefined && aSortIt !== 0;
+      const bHasValidSort = bSortIt !== null && bSortIt !== undefined && bSortIt !== 0;
 
-    // Both have sortIt values - sort by sortIt, then by id as tiebreaker
-    if (aSortIt !== bSortIt) {
-      return aSortIt - bSortIt;
-    }
+      if (!aHasValidSort) {
+        if (!bHasValidSort) {
+          // Both have no valid sortIt, sort by emne.id, then by tittel
+          const aId = a.emne?.id || 0;
+          const bId = b.emne?.id || 0;
+          
+          if (aId !== bId) {
+            return aId - bId;
+          }
 
-    // Same sortIt value - sort by emne id as tiebreaker
-    const aId = a.emne?.id || 0;
-    const bId = b.emne?.id || 0;
-    return aId - bId;
-  });
+          // Same ID (or both 0), sort by tittel or put "Ingen emne" last
+          const aTitle = a.emne?.tittel || "Ingen emne";
+          const bTitle = b.emne?.tittel || "Ingen emne";
+
+          if (aTitle === "Ingen emne" && bTitle !== "Ingen emne") return 1;
+          if (bTitle === "Ingen emne" && aTitle !== "Ingen emne") return -1;
+
+          return aTitle.localeCompare(bTitle, "no", { sensitivity: "base" });
+        }
+        return 1; // a has no valid sort, b has valid sort - a goes after b
+      }
+
+      if (!bHasValidSort) {
+        return -1; // b has no valid sort, a has valid sort - a goes before b
+      }
+
+      // Both have sortIt values - sort by sortIt, then by id as tiebreaker
+      if (aSortIt !== bSortIt) {
+        return aSortIt - bSortIt;
+      }
+
+      // Same sortIt value - sort by emne id as tiebreaker
+      const aId = a.emne?.id || 0;
+      const bId = b.emne?.id || 0;
+      return aId - bId;
+    });
 };
 
 /**

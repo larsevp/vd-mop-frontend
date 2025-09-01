@@ -208,8 +208,26 @@ const EntityListRow = ({
     shouldIndent = hasKravConnections || hasParent;
   }
 
+  // Generate unique ID for data attribute (matches EntitySplitView logic)
+  const generateUniqueEntityId = (item) => {
+    if (!item.entityType) {
+      return item.id?.toString();
+    }
+
+    // For combined view items that might be duplicated (same tiltak under different krav)
+    if (item._relatedToKrav !== undefined) {
+      return `${item.entityType}-${item.id}-krav-${item._relatedToKrav}`;
+    }
+
+    // Standard unique ID for regular items
+    return `${item.entityType}-${item.id}`;
+  };
+
+  const uniqueEntityId = generateUniqueEntityId(entity);
+
   return (
     <div
+      data-entity-id={uniqueEntityId}
       onClick={handleClick}
       onMouseEnter={onFocus}
       onMouseLeave={() => onFocus && onFocus(-1)} // Clear focus when mouse leaves (use -1 to indicate no focus)

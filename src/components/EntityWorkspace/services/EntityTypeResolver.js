@@ -4,7 +4,7 @@
  */
 
 import { modelConfigs } from "@/modelConfigs";
-import { EntityTypeTranslator } from "@/utils/entityTypeTranslator";
+import { EntityTypeTranslator } from "../utils/entityTypeTranslator";
 
 export class EntityTypeResolver {
   /**

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { Loader2, ChevronDown, ChevronRight, FileText } from "lucide-react";
 import EntityListRow from "./EntityListRow";
-import EntityListViewOptions from "../shared/EntityListViewOptions";
+import EntityListViewOptions from "./EntityListViewOptions";
 
 /**
  * Clean, minimal left pane for entity list
@@ -11,7 +11,7 @@ import EntityListViewOptions from "../shared/EntityListViewOptions";
  * - Keyboard navigation
  * - Clean, scannable design
  */
-import { EntityTypeTranslator } from "@/utils/entityTypeTranslator";
+import { EntityTypeTranslator } from "@/components/EntityWorkspace/utils/entityTypeTranslator";
 
 const EntityListPane = ({
   items,
@@ -31,17 +31,29 @@ const EntityListPane = ({
 
   // Generate unique ID for combined view items that may have duplicates
   const generateUniqueEntityId = (item) => {
+    // Check if we're in a combined view context
+    const isCombinedView = entityType === "combined" || entityType === "combinedEntities" || entityType === "prosjekt-combined";
+    
+    // For regular (non-combined) views, always use simple numeric ID
+    if (!isCombinedView) {
+      return item.id?.toString();
+    }
+    
+    // Combined view logic - need complex IDs to avoid conflicts
     if (!item.entityType) {
       return item.id?.toString();
     }
 
+    // Normalize entityType to lowercase for consistency
+    const normalizedEntityType = item.entityType.toLowerCase();
+
     // For combined view items that might be duplicated (same tiltak under different krav)
     if (item._relatedToKrav !== undefined) {
-      return `${item.entityType}-${item.id}-krav-${item._relatedToKrav}`;
+      return `${normalizedEntityType}-${item.id}-krav-${item._relatedToKrav}`;
     }
 
-    // Standard unique ID for regular items
-    return `${item.entityType}-${item.id}`;
+    // Standard unique ID for combined view items
+    return `${normalizedEntityType}-${item.id}`;
   };
 
   // Get default view options from model config
@@ -87,6 +99,7 @@ const EntityListPane = ({
     localStorage.setItem(`${entityType}-viewOptions`, JSON.stringify(viewOptions));
   }, [entityType, viewOptions]);
   const listRef = useRef(null);
+  const prevSelectedEntityId = useRef(null);
 
   // Map entityType to the actual property name in grouped data (same as EntityFilterService)
   const getGroupedDataPropertyName = (entityType) => {
@@ -159,18 +172,61 @@ const EntityListPane = ({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [enableKeyboardNav, allItems, focusedIndex, onEntitySelect]);
 
-  // Auto-scroll focused item into view - DISABLED to prevent unwanted scrolling
-  // useEffect(() => {
-  //   if (listRef.current && focusedIndex >= 0) {
-  //     const focusedElement = listRef.current.children[focusedIndex + 1]; // +1 for header
-  //     if (focusedElement) {
-  //       focusedElement.scrollIntoView({
-  //         behavior: "smooth",
-  //         block: "nearest",
-  //       });
-  //     }
-  //   }
-  // }, [focusedIndex]);
+  // Auto-scroll to newly created entities
+  useEffect(() => {
+    const hasSelectedEntityId = !!selectedEntityId;
+    const isEntityIdChanged = selectedEntityId !== prevSelectedEntityId.current;
+    const isFromCreateNew = prevSelectedEntityId.current === "create-new";
+    const isFromNull = prevSelectedEntityId.current === null;
+    const hasListRef = !!listRef.current;
+    
+    console.log('🚀 Auto scroll check:', {
+      selectedEntityId,
+      prevSelectedEntityId: prevSelectedEntityId.current,
+      hasSelectedEntityId,
+      isEntityIdChanged,
+      isFromCreateNew,
+      isFromNull,
+      hasListRef,
+      shouldScroll: hasSelectedEntityId && isEntityIdChanged && (isFromCreateNew || isFromNull) && hasListRef
+    });
+    
+    if (
+      hasSelectedEntityId &&
+      isEntityIdChanged &&
+      (isFromCreateNew || isFromNull) &&
+      hasListRef
+    ) {
+      // Small delay to ensure DOM is updated
+      setTimeout(() => {
+        // Try first with the full selectedEntityId
+        let selectedElement = listRef.current.querySelector(`[data-entity-id="${selectedEntityId}"]`);
+        
+        // If not found, try with lowercase version (handle case mismatch)
+        if (!selectedElement) {
+          const lowercaseId = selectedEntityId.toLowerCase();
+          selectedElement = listRef.current.querySelector(`[data-entity-id="${lowercaseId}"]`);
+        }
+
+        // If not found and selectedEntityId is complex (contains dashes), extract the actual entity ID
+        if (!selectedElement && selectedEntityId.includes("-")) {
+          // For complex IDs like "krav-123-emne-456", extract the numeric part
+          const parts = selectedEntityId.split("-");
+          const entityId = parts[1]; // Assume format is "type-id-context"
+          if (entityId) {
+            selectedElement = listRef.current.querySelector(`[data-entity-id="${entityId}"]`);
+            //console.log('🔍 Found with extracted ID', entityId, ':', selectedElement);
+          }
+        }
+
+        if (selectedElement) {
+          selectedElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 100);
+    }
+
+    prevSelectedEntityId.current = selectedEntityId;
+  }, [selectedEntityId]);
 
   return (
     <div className="flex flex-col h-full">
