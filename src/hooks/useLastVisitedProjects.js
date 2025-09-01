@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { getUserLastVisitedProjects, setLastVisitedProject } from "@/api/endpoints/models/lastVisitedProjects";
 import { useUserStore } from "@/stores/userStore";
+import { useRef } from "react";
 
 /**
  * Custom hook for managing last visited projects with proper caching and local updates

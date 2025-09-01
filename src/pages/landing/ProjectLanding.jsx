@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowRight, FolderOpen, Plus, Book, Users, CheckSquare, Briefcase, Download, ArrowLeft, Calendar, Building2 } from "lucide-react";
-import { getProsjekter, setLastVisitedProject, getProsjektById } from "@/api/endpoints";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { getProsjekter, getProsjektById } from "@/api/endpoints";
+import { useQuery } from "@tanstack/react-query";
 import { useUserStore, useProjectStore } from "@/stores/userStore";
 import { SimpleCard } from "@/components/ui";
+import { useLastVisitedProjects } from "@/hooks/useLastVisitedProjects";
 
 export default function ProjectLanding() {
   const { user } = useUserStore();
@@ -12,6 +13,9 @@ export default function ProjectLanding() {
   const navigate = useNavigate();
   const { prosjektId } = useParams();
   const isAdmin = user?.rolle === "ADMIN";
+  
+  // Use the same hook as RecentProjectList for consistent project visit tracking
+  const { trackProjectVisit } = useLastVisitedProjects();
 
   // If prosjektId is present, this is an individual project view
   const isIndividualProjectView = !!prosjektId;
@@ -38,17 +42,24 @@ export default function ProjectLanding() {
       // Set current project in global store when fetched
       const fullProject = data.data || data;
       setCurrentProject(fullProject);
+      
+      // Track project visit when project page loads
+      console.log('📄 ProjectLanding: Tracking project visit (onSuccess):', fullProject.id, fullProject.navn);
+      trackProjectVisit(fullProject);
     },
   });
 
-  // Mutation for updating last visited project
-  const updateLastVisitedMutation = useMutation({
-    mutationFn: setLastVisitedProject,
-    onError: (error) => {
-      console.error("Failed to update last visited project:", error);
-      // Continue navigation even if this fails
-    },
-  });
+  // Also track visit on direct navigation to project page
+  useEffect(() => {
+    if (isIndividualProjectView && projectData) {
+      const project = projectData.data || projectData;
+      if (project && project.id) {
+        console.log('📄 ProjectLanding: Tracking project visit (useEffect):', project.id, project.navn);
+        trackProjectVisit(project);
+      }
+    }
+  }, [isIndividualProjectView, projectData, trackProjectVisit]);
+
 
   const projects = data || [];
 
@@ -246,17 +257,8 @@ export default function ProjectLanding() {
       // Set current project in global store
       setCurrentProject(fullProject);
 
-      // TODO: Fix lastVisitedProjects API call format - currently getting 400 error
-      // Try to update last visited project (non-blocking)
-      try {
-        await updateLastVisitedMutation.mutateAsync({
-          userId: user?.id,
-          projectId: project.id, // Try 'projectId' instead of 'prosjektId'
-          visitedAt: new Date().toISOString(),
-        });
-      } catch (lastVisitedError) {
-        console.warn("Failed to update last visited project (non-critical):", lastVisitedError);
-      }
+      // Track project visit using the same hook as RecentProjectList
+      trackProjectVisit(fullProject);
 
       // Navigate to project landing page with current project context
       navigate(`/prosjekt/${project.id}`);
@@ -264,8 +266,9 @@ export default function ProjectLanding() {
       // Continue navigation even if some operations fail
       console.error("Failed to open project:", error);
 
-      // At minimum, set the basic project info we have
+      // At minimum, set the basic project info we have and track the visit
       setCurrentProject(project);
+      trackProjectVisit(project);
       navigate(`/prosjekt/${project.id}`);
     }
   };
@@ -369,7 +372,6 @@ export default function ProjectLanding() {
                     <button
                       onClick={() => handleProjectOpen(project)}
                       className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 transition-colors ml-4"
-                      disabled={updateLastVisitedMutation.isLoading}
                     >
                       <span>Åpne</span>
                       <ArrowRight size={14} />
@@ -438,7 +440,6 @@ export default function ProjectLanding() {
                     <button
                       onClick={() => handleProjectOpen(project)}
                       className="text-blue-600 hover:text-blue-900 transition-colors"
-                      disabled={updateLastVisitedMutation.isLoading}
                     >
                       Åpne<span className="sr-only">, {project.navn}</span>
                     </button>

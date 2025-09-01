@@ -1,0 +1,9 @@
+[build]
+  publish = "dist"
+  command = "npm run build"
+
+[build.environment]
+  # These VITE_* are public config; omit them from secret scanning
+  SECRETS_SCAN_OMIT_KEYS = "VITE_API_URL,VITE_MSAL_CLIENT_ID,VITE_MSAL_TENANT_ID"
+  # Omit build output and test/mocks from scanning
+  SECRETS_SCAN_OMIT_PATHS = "dist/**,src/**/__tests__/**,src/__mocks__/**"

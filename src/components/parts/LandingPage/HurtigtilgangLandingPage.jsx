@@ -22,40 +22,7 @@ export default function HurtigtilgangLandingPage() {
             </Link>
           </li>
 
-          {isAdmin && (
-            <>
-              <li>
-                <Link to="/admin" className="flex items-center gap-2 text-primary-700 hover:text-primary-800 transition-colors">
-                  <Users size={18} />
-                  <span>Brukeradministrasjon</span>
-                </Link>
-              </li>
-              <li>
-                <Link to="/enheter" className="flex items-center gap-2 text-primary-700 hover:text-primary-800 transition-colors">
-                  <FolderOpen size={18} />
-                  <span>Enhetsadministrasjon</span>
-                </Link>
-              </li>
-              <li>
-                <Link to="/status" className="flex items-center gap-2 text-primary-700 hover:text-primary-800 transition-colors">
-                  <FolderOpen size={18} />
-                  <span>Statusadministrasjon</span>
-                </Link>
-              </li>
-              <li>
-                <Link to="/vurderinger" className="flex items-center gap-2 text-primary-700 hover:text-primary-800 transition-colors">
-                  <FolderOpen size={18} />
-                  <span>Vurdering-administrasjon</span>
-                </Link>
-              </li>
-              <li>
-                <Link to="/kravpakker" className="flex items-center gap-2 text-primary-700 hover:text-primary-800 transition-colors">
-                  <FolderOpen size={18} />
-                  <span>Kravpakker administrasjon</span>
-                </Link>
-              </li>
-            </>
-          )}
+          {isAdmin && <></>}
 
           <li>
             <Link to="/prosjekter" className="flex items-center gap-2 text-primary-700 hover:text-primary-800 transition-colors">
