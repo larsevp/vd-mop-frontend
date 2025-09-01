@@ -7,10 +7,12 @@
   SECRETS_SCAN_OMIT_KEYS = "VITE_API_URL,VITE_MSAL_CLIENT_ID,VITE_MSAL_TENANT_ID"
   # Omit build output and test/mocks from scanning
   SECRETS_SCAN_OMIT_PATHS = "dist/**,src/**/__tests__/**,src/__mocks__/**"
+  # Use Netlify proxy by default in production builds
+  VITE_API_URL = "/api"
 
 [[redirects]]
   from = "/api/*"
-  to   = "https://<your-do-backend>.ondigitalocean.app/:splat"
+  to   = "https://https://walrus-app-z3a9a.ondigitalocean.app/:splat"
   status = 200
   force  = true
 
