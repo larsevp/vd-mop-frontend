@@ -345,6 +345,18 @@ export function ComboBox({
               setSearchValue(e.target.value);
               if (!open) setOpen(true);
             }}
+            onKeyDown={(e) => {
+              // Prevent Enter key from propagating to parent form
+              if (e.key === "Enter") {
+                e.preventDefault();
+                e.stopPropagation();
+
+                // If dropdown is closed, try to select the first matching option
+                if (!open && filteredOptions.length > 0) {
+                  handleSelect(filteredOptions[0].id);
+                }
+              }
+            }}
             onFocus={() => {
               setIsFocused(true);
               setOpen(true);
