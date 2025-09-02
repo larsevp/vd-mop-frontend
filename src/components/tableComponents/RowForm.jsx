@@ -82,7 +82,22 @@ export default function RowForm({
   const createMutation = useMutation({
     mutationFn: createFn,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey });
+      // Use intelligent cache invalidation for creates in table components
+      if (modelName && modelName !== "unknown") {
+        import("@/utils/cacheInvalidationUtils.js")
+          .then(({ invalidateEntityCachesAfterCreate }) => {
+            invalidateEntityCachesAfterCreate(queryClient, modelName, { verbose: false });
+          })
+          .catch((error) => {
+            console.warn("Could not apply table component cache invalidation:", error);
+            // Fallback to original behavior
+            queryClient.invalidateQueries({ queryKey });
+          });
+      } else {
+        // Fallback for unknown entity types
+        queryClient.invalidateQueries({ queryKey });
+      }
+
       setForm(
         fields.reduce((acc, field) => {
           acc[field.name] = FieldResolver.resetFieldValue(field, modelName);
@@ -113,6 +128,23 @@ export default function RowForm({
           // Fallback to simple invalidation
           queryClient.invalidateQueries({ queryKey });
         });
+
+      // Generic cache invalidation for all entity types in table components
+      // This ensures edit forms get fresh data after updates
+      if (modelName && modelName !== "unknown") {
+        import("@/utils/cacheInvalidationUtils.js")
+          .then(({ invalidateEntityCachesAfterUpdate }) => {
+            invalidateEntityCachesAfterUpdate(queryClient, modelName, { verbose: false });
+          })
+          .catch((error) => {
+            console.warn("Could not apply table component cache invalidation:", error);
+            // Fallback to basic invalidation
+            queryClient.invalidateQueries({
+              queryKey: [modelName.toLowerCase()],
+              exact: false,
+            });
+          });
+      }
 
       if (onSuccess) onSuccess();
     },

@@ -22,23 +22,23 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
   const setSelectedEntity = useEntityWorkspaceStore((state) => state.setSelectedEntity);
   const setActiveEntity = useEntityWorkspaceStore((state) => state.setActiveEntity);
   const clearJustCreatedFlag = useEntityWorkspaceStore((state) => state.clearJustCreatedFlag);
-  
+
   // We need to access the store directly to set the flag
   const store = useEntityWorkspaceStore.getState();
   // Check if this is a new entity being created
   const isNewEntity = entity?.id === "create-new";
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  
+
   // Ref for the detail view container to enable scrolling
   const detailViewRef = useRef(null);
-  
+
   // Scroll to top when creating a new entity
   useEffect(() => {
     if (isNewEntity && detailViewRef.current) {
       detailViewRef.current.scrollTo({
         top: 0,
-        behavior: 'smooth'
+        behavior: "smooth",
       });
     }
   }, [isNewEntity]);
@@ -284,17 +284,17 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
 
           // Manually invalidate caches for combined view creates
           const actualEntityType = entity.entityType; // "tiltak", "krav", "prosjekttiltak", "prosjektkrav"
-          
+
           // Ensure the created entity has the correct entityType for combined view display
           if (updatedData && actualEntityType) {
             const createdEntity = updatedData.data || updatedData;
             createdEntity.entityType = actualEntityType;
-            
+
             // Set the isEntityJustCreated flag and update store for autoScroll
-            useEntityWorkspaceStore.setState({ 
-              selectedEntity: createdEntity, 
-              activeEntity: createdEntity, 
-              isEntityJustCreated: true 
+            useEntityWorkspaceStore.setState({
+              selectedEntity: createdEntity,
+              activeEntity: createdEntity,
+              isEntityJustCreated: true,
             });
           }
           queryClient.invalidateQueries({
@@ -320,7 +320,7 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
             const createdEntity = updatedData.data || updatedData;
             // Ensure the created entity has the correct entityType for combined view display
             createdEntity.entityType = actualEntityType;
-            
+
             // Use the store's setSelectedEntity function with justCreated flag for auto-scroll
             const { setSelectedEntity, setActiveEntity } = useEntityWorkspaceStore.getState();
             setSelectedEntity(createdEntity, true); // Set justCreated=true for auto-scroll
@@ -342,14 +342,14 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
             isNew: true, // Add explicit new flag
           };
           updatedData = await onSave(createData, isUpdate);
-          
+
           // Also set the flag here as backup (though the store's handleSave should already do this)
           if (updatedData && (entityType === "krav" || entityType === "tiltak")) {
             const createdEntity = updatedData.data || updatedData;
-            useEntityWorkspaceStore.setState({ 
-              selectedEntity: createdEntity, 
-              activeEntity: createdEntity, 
-              isEntityJustCreated: true 
+            useEntityWorkspaceStore.setState({
+              selectedEntity: createdEntity,
+              activeEntity: createdEntity,
+              isEntityJustCreated: true,
             });
           }
         }
@@ -372,6 +372,21 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
           } catch (error) {
             console.warn("Could not apply propagation updates:", error);
           }
+        }
+
+        // Handle cache invalidation for emne entity updates
+        if (camelCaseEntityType === "emne" || entityType === "emne") {
+          // For emne updates, invalidate the individual emne cache so edit forms get fresh data
+          queryClient.invalidateQueries({
+            queryKey: ["emne"],
+            exact: false,
+          });
+
+          // Also invalidate related queries that might use emne data
+          queryClient.invalidateQueries({
+            queryKey: ["emner"],
+            exact: false,
+          });
         }
       }
 
@@ -415,8 +430,8 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
   };
 
   const handleDelete = () => {
-    if (!entity.id || entity.id === 'create-new') {
-      console.error('Cannot delete entity without valid ID:', entity.id);
+    if (!entity.id || entity.id === "create-new") {
+      console.error("Cannot delete entity without valid ID:", entity.id);
       return;
     }
     if (window.confirm(actionPermissions.deleteConfirmText)) {

@@ -1,7 +1,7 @@
 // Basic display value handlers for common field types
 import React from "react";
 import { booleanToJaNei } from "../../../utils/booleanParser";
-import { IconWithText } from "../../ui/DynamicIcon";
+import { IconWithText, DynamicIcon } from "../../ui/DynamicIcon";
 import { ExpandableRichText } from "./ExpandableRichText";
 
 export const BASIC_DISPLAY_TYPES = {
@@ -200,5 +200,51 @@ export const BASIC_DISPLAY_TYPES = {
         return `ID: ${item}`;
       })
       .join(", ");
+  },
+
+  // Color fields
+  color: (row, field, context) => {
+    const value = row[field.name];
+    if (!value) {
+      const displayValue = "N/A";
+      return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
+    }
+
+    if (context.format === "REACT") {
+      return (
+        <div className="flex items-center gap-2">
+          <div
+            className="w-4 h-4 rounded border border-gray-300 flex-shrink-0"
+            style={{
+              backgroundColor: value,
+              boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.1)",
+            }}
+          />
+          <span className="text-sm font-mono">{value}</span>
+        </div>
+      );
+    }
+
+    return value;
+  },
+
+  // Icon fields
+  icon: (row, field, context) => {
+    const value = row[field.name];
+    if (!value) {
+      const displayValue = "N/A";
+      return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
+    }
+
+    if (context.format === "REACT") {
+      return (
+        <div className="flex items-center gap-2">
+          <DynamicIcon name={value} size={16} className="flex-shrink-0" />
+          <span className="text-sm text-gray-600">{value}</span>
+        </div>
+      );
+    }
+
+    return value;
   },
 };

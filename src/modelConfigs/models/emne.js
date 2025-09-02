@@ -27,13 +27,13 @@ export const emne = {
     {
       name: "icon",
       label: "Ikon",
-      type: "text",
+      type: "icon",
       required: false,
     },
     {
       name: "color",
       label: "Farge",
-      type: "text",
+      type: "color",
       required: false,
     },
     {

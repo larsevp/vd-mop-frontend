@@ -4,6 +4,8 @@ import { BooleanSelect } from "@/components/ui/form/BooleanSelect";
 import NumberInput from "../NumberInput";
 import { TiptapEditor } from "@/components/ui/editor/TiptapEditor";
 import { FileUpload } from "@/components/forms";
+import ColorPicker from "@/components/ui/form/ColorPicker";
+import { IconPicker } from "@/components/ui/icon-picker";
 
 export const BASIC_FIELD_TYPES = {
   text: ({ field, value, onChange, error }) => (
@@ -97,6 +99,58 @@ export const BASIC_FIELD_TYPES = {
       required={field.required}
     />
   ),
+
+  color: ({ field, value, onChange, error }) => (
+    <ColorPicker name={field.name} value={value} onChange={onChange} error={error} placeholder={field.placeholder || "Velg farge..."} />
+  ),
+
+  icon: ({ field, value, onChange, error }) => {
+    // Convert kebab-case to PascalCase for storage
+    const kebabToPascalCase = (str) => {
+      if (!str) return str;
+      return str
+        .split("-")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join("");
+    };
+
+    // Convert PascalCase back to kebab-case for the IconPicker display
+    const pascalToKebabCase = (str) => {
+      if (!str) return str;
+      return str
+        .replace(/([A-Z])/g, "-$1")
+        .toLowerCase()
+        .replace(/^-/, ""); // Remove leading dash
+    };
+
+    const handleIconChange = (iconName) => {
+      // Convert from kebab-case (IconPicker format) to PascalCase (storage format)
+      const pascalCaseValue = kebabToPascalCase(iconName);
+
+      const syntheticEvent = {
+        target: {
+          name: field.name,
+          value: pascalCaseValue,
+          type: "icon",
+        },
+      };
+      onChange(syntheticEvent);
+    };
+
+    // Convert stored PascalCase back to kebab-case for IconPicker display
+    const displayValue = pascalToKebabCase(value);
+
+    return (
+      <IconPicker
+        value={displayValue}
+        onValueChange={handleIconChange}
+        searchPlaceholder={field.placeholder || "Søk etter ikon..."}
+        triggerPlaceholder={field.placeholder || "Velg ikon"}
+        categorized={true}
+        searchable={true}
+      />
+    );
+  },
 
   date: ({ field, value, onChange, error }) => (
     <input

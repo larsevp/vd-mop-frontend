@@ -1,3 +1,6 @@
+// Suppress Lucide errors
+//import "./utils/suppressLucideErrors";
+
 import React, { useEffect } from "react";
 import AppRouter from "./AppRouter";
 import { MsalProvider } from "@azure/msal-react";
