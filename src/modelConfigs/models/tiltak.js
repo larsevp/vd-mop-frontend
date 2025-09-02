@@ -132,77 +132,74 @@ export const tiltak = {
 
       // Field customization for detail view - Override default field behavior in detail form
       fieldOverrides: {
-        // Basic info - organized into logical sections
+        // Basic info section - logical order from general to specific
         beskrivelse: {
           section: "info", // Primary content description
           order: 2,
         },
-        krav: {
-          section: "info", // Related requirements
-          order: 3,
-          row: "emne-row", // Separate row for multiselect
+        merknad: {
+          section: "info", // Administrative notes
+          order: 2,
         },
         emneId: {
           section: "info", // Reference value
-          order: 4,
+          order: 3,
           row: "emne-row",
+        },
+        krav: {
+          section: "info", // Related requirements
+          order: 4,
+          row: "emne-row", // Separate row for multiselect
         },
         parentId: {
           section: "info", // Parent relationship
-          order: 4,
+          order: 5,
           row: "emne-row", // Group with reference fields
         },
 
-        merknad: {
-          section: "info", // Administrative notes
-          order: 4,
-        },
-
-        // Status-related fields (commented out in original - keeping same pattern)
+        // Status-related fields (commented out to match pattern but structure maintained)
         /*
-        statusId: {
-          section: "status", // Current progress status
-          order: 6,
-          row: "status-row", // Same row as vurdering
-        },
         vurderingId: {
-          section: "status", // Status and assessment tracking
-          order: 7,
-          row: "status-row", // Group with other status-related fields
+          section: "info", // Reference value - moved below beskrivelse
+          order: 5,
+          row: "main-row-2",
+        },
+        statusId: {
+          section: "info", // Reference value - moved below beskrivelse
+          order: 6,
+          row: "main-row-2",
         },
         prioritet: {
-          section: "status", // Priority level for task management
-          order: 8,
-          row: "status-row", // Same row as vurdering and status
+          section: "info", // Priority value - moved below beskrivelse
+          order: 7,
+          row: "main-row-2",
         },
         */
 
         // Implementation details - separate section for execution information
         implementasjon: {
           section: "annet", // How the task is carried out
-          order: 5,
+          order: 10,
         },
         tilbakemelding: {
           section: "annet", // Feedback and results
-          order: 6,
+          order: 11,
         },
-
-        // Reference and relationship information
 
         // Administrative information - context and requirements
         obligatorisk: {
           section: "admin", // Task requirements
-          order: 11,
+          order: 14,
           row: "admin-row", // Group with administrative flags
         },
         enhetId: {
           section: "admin", // Organizational assignment
-          order: 11,
+          order: 14,
           row: "admin-row", // Same row as obligatorisk
         },
         givenOrder: {
           section: "admin", // Ordering information
-          order: 12,
+          order: 15,
         },
       },
     },

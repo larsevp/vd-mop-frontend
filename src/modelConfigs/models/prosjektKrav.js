@@ -401,14 +401,14 @@ export const prosjektKrav = {
     },
     {
       name: "vurderingId",
-      label: "VurderingId",
+      label: "Vurdering",
       type: "number",
       required: false,
       type: "vurderingselect",
     },
     {
       name: "statusId",
-      label: "StatusId",
+      label: "Status",
       type: "number",
       required: false,
       type: "statusselect",

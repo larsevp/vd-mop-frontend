@@ -139,86 +139,87 @@ export const krav = {
 
       // Field customization for detail view - Override default field behavior in detail form
       fieldOverrides: {
-        // Basic info - organized into logical sections
+        // Basic info section - logical order from general to specific
         beskrivelse: {
           section: "info", // Primary content description
           order: 2,
         },
-        parentId: {
-          section: "info", // Task requirements
-          order: 2,
-          row: "main-row", // Group with administrative flags
-        },
-        emneId: {
-          section: "info", // Reference value
-          order: 2,
-          row: "main-row",
-        },
         merknader: {
           section: "info", // Administrative notes
-          order: 3,
+          order: 2,
         },
         kravreferanse: {
           section: "info", // Reference value
           order: 3,
+          row: "merknad-row",
+        },
+        emneId: {
+          section: "info", // Reference value
+          order: 3,
+          row: "merknad-row",
         },
 
+        // Status-related fields (commented out to match pattern but structure maintained)
         /*
-        statusId: {
-          section: "status", // Current progress status
-          order: 6,
-          row: "status-row", // Same row as vurdering
-        },
-
-        // Status-related fields on same row for compact layout
         vurderingId: {
-          section: "status", // Status and assessment tracking
-          order: 7,
-          row: "status-row", // Group with other status-related fields
+          section: "info", // Reference value - moved below beskrivelse
+          order: 5,
+          row: "main-row-2",
         },
-
+        statusId: {
+          section: "info", // Reference value - moved below beskrivelse
+          order: 6,
+          row: "main-row-2",
+        },
         prioritet: {
-          section: "status", // Priority level for requirement management
-          order: 8,
-          row: "status-row", // Same row as vurdering and status
+          section: "info", // Priority value - moved below beskrivelse
+          order: 7,
+          row: "main-row-2",
         },
         */
 
         // Reference and versioning information
         kravreferansetypeId: {
           section: "references", // Reference type
-          order: 8,
+          order: 10,
           row: "reference-row", // Group with reference fields
         },
         lover: {
           section: "references", // Reference value
-          order: 8,
+          order: 10,
           row: "reference-row", // Same row as reference type
         },
         kravpakker: {
           section: "references", // Reference value
-          order: 8,
+          order: 10,
           row: "reference-row", // Same row as reference type
         },
-        // Administrative information - context and requirements
+        parentId: {
+          section: "references", // Parent relationship
+          order: 11,
+          row: "reference-row-2", // Group with reference fields
+        },
 
         // Administrative information - context and requirements
         obligatorisk: {
           section: "admin", // Task requirements
-          order: 11,
+          order: 14,
           row: "admin-row", // Group with administrative flags
         },
-        // Administrative information - context and requirements
         enhetId: {
-          section: "admin", // Task requirements
-          order: 11,
-          row: "admin-row", // Group with administrative flags
+          section: "admin", // Organizational assignment
+          order: 14,
+          row: "admin-row", // Same row as obligatorisk
+        },
+        givenOrder: {
+          section: "admin", // Ordering information
+          order: 15,
         },
 
         // Detailed information - separate section for additional content
         informasjon: {
           section: "annet", // Additional detailed information
-          order: 5,
+          order: 16,
         },
       },
     },
