@@ -3,8 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { RowList, AdminPage } from "@/components/tableComponents";
 import { getModelConfig } from "@/modelConfigs";
 import { user } from "@/modelConfigs/models/user";
+import { useSmartBack } from "@/hooks/useSmartBack";
+
 export default function Brukeradministrasjon() {
   const navigate = useNavigate();
+  const { goBack } = useSmartBack();
   const config = user; //getModelConfig("users");
 
   function handleEdit(user) {
@@ -19,7 +22,7 @@ export default function Brukeradministrasjon() {
   }
 
   function handleBack() {
-    navigate(-1);
+    goBack();
   }
 
   return (

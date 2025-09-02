@@ -2,9 +2,11 @@ import React from "react";
 import { RowList, AdminPage } from "@/components/tableComponents/";
 import { getModelConfig } from "../../modelConfigs";
 import { useNavigate } from "react-router-dom";
+import { useSmartBack } from "@/hooks/useSmartBack";
 
 export default function Vurderingadministrasjon() {
   const navigate = useNavigate();
+  const { goBack } = useSmartBack();
   const config = getModelConfig("vurderinger");
 
   function handleEdit(row) {
@@ -18,7 +20,7 @@ export default function Vurderingadministrasjon() {
     });
   }
   function handleBack() {
-    navigate(-1);
+    goBack();
   }
   return (
     <AdminPage

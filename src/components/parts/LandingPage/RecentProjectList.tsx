@@ -1,6 +1,6 @@
 /*
-* Used for the recent project list in the landing page
-*/
+ * Used for the recent project list in the landing page
+ */
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Heading, CardWrapper } from "@/components/ui";
@@ -37,7 +37,6 @@ const RecentProjectList = (): JSX.Element => {
       setCurrentProject(fullProject);
 
       // Track project visit using the store
-      console.log('🔗 RecentProjectList: Tracking project visit:', fullProject.id, fullProject.navn);
       trackProjectVisit(fullProject, user?.id);
 
       // Navigate to project landing page with current project context

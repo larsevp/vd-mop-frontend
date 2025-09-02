@@ -11,28 +11,28 @@ export const createKeyboardHandler = (editor, disabled = false) => {
     if (event.key === "Escape" && !disabled) {
       event.preventDefault();
       event.stopPropagation(); // Prevent bubbling to form-level Esc handler
-      
+
       // Blur the editor to focus out
       if (editor && editor.view && editor.view.dom) {
         editor.view.dom.blur();
-        
+
         // Find the next focusable element and focus it
-        const editorElement = editor.view.dom.closest('.tiptap-editor, [data-tiptap-editor]') || editor.view.dom;
-        const form = editorElement.closest('form') || document;
+        const editorElement = editor.view.dom.closest(".tiptap-editor, [data-tiptap-editor]") || editor.view.dom;
+        const form = editorElement.closest("form") || document;
         const focusableElements = form.querySelectorAll(
           'input:not([disabled]):not([tabindex="-1"]), textarea:not([disabled]):not([tabindex="-1"]), select:not([disabled]):not([tabindex="-1"]), button:not([disabled]):not([tabindex="-1"]):not([type="button"]), [tabindex]:not([tabindex="-1"]):not([disabled])'
         );
-        
-        const currentIndex = Array.from(focusableElements).findIndex(el => 
-          el === editorElement || el.contains(editorElement) || editorElement.contains(el)
+
+        const currentIndex = Array.from(focusableElements).findIndex(
+          (el) => el === editorElement || el.contains(editorElement) || editorElement.contains(el)
         );
-        
+
         // Focus the next element after the editor
         if (currentIndex >= 0 && currentIndex < focusableElements.length - 1) {
           focusableElements[currentIndex + 1].focus();
         }
       }
-      
+
       return true; // Event handled
     }
 
@@ -100,12 +100,15 @@ export const createKeyboardHandler = (editor, disabled = false) => {
       }
     }
 
-    // Handle Enter key to create lists from patterns
+    // Handle Enter key to create lists from patterns OR prevent form submission
     if (event.key === "Enter" && !disabled && editor) {
       const { from, to } = editor.state.selection;
-      const textBefore = editor.state.doc.textBetween(Math.max(0, from - 10), from); // Check for "- " or "* " at start of line to create bullet list
+      const textBefore = editor.state.doc.textBetween(Math.max(0, from - 10), from);
+
+      // Check for "- " or "* " at start of line to create bullet list
       if (textBefore.match(/^- $/) || textBefore.match(/^\* $/)) {
         event.preventDefault();
+        event.stopPropagation(); // Prevent bubbling to form
         // Remove the "- " or "* " and create a bullet list
         editor
           .chain()
@@ -122,6 +125,7 @@ export const createKeyboardHandler = (editor, disabled = false) => {
 
       if (dotPattern) {
         event.preventDefault();
+        event.stopPropagation(); // Prevent bubbling to form
         const fullMatch = dotPattern[0];
         editor
           .chain()
@@ -134,6 +138,7 @@ export const createKeyboardHandler = (editor, disabled = false) => {
 
       if (parenPattern) {
         event.preventDefault();
+        event.stopPropagation(); // Prevent bubbling to form
         const fullMatch = parenPattern[0];
         editor
           .chain()
@@ -143,6 +148,14 @@ export const createKeyboardHandler = (editor, disabled = false) => {
           .run();
         return true;
       }
+
+      // IMPORTANT: Always prevent Enter from bubbling to form submission
+      // This prevents the editor from triggering form submissions
+      event.preventDefault();
+      event.stopPropagation();
+
+      // Let TipTap handle the Enter key normally (create new paragraph, etc.)
+      return false; // Return false to let TipTap's default Enter handling work
     }
 
     return false;

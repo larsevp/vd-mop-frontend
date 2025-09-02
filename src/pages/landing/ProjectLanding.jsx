@@ -13,7 +13,7 @@ export default function ProjectLanding() {
   const navigate = useNavigate();
   const { prosjektId } = useParams();
   const isAdmin = user?.rolle === "ADMIN";
-  
+
   // Use the store for consistent project visit tracking
   const { trackProjectVisit } = useRecentProjectsStore();
 
@@ -42,9 +42,8 @@ export default function ProjectLanding() {
       // Set current project in global store when fetched
       const fullProject = data.data || data;
       setCurrentProject(fullProject);
-      
+
       // Track project visit when project page loads
-      console.log('📄 ProjectLanding: Tracking project visit (onSuccess):', fullProject.id, fullProject.navn);
       trackProjectVisit(fullProject, user?.id);
     },
   });
@@ -54,12 +53,10 @@ export default function ProjectLanding() {
     if (isIndividualProjectView && projectData) {
       const project = projectData.data || projectData;
       if (project && project.id) {
-        console.log('📄 ProjectLanding: Tracking project visit (useEffect):', project.id, project.navn);
         trackProjectVisit(project, user?.id);
       }
     }
   }, [isIndividualProjectView, projectData, trackProjectVisit]);
-
 
   const projects = data || [];
 
@@ -437,10 +434,7 @@ export default function ProjectLanding() {
                     {new Date(project.updatedAt).toLocaleDateString("nb-NO")}
                   </td>
                   <td className="whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                    <button
-                      onClick={() => handleProjectOpen(project)}
-                      className="text-blue-600 hover:text-blue-900 transition-colors"
-                    >
+                    <button onClick={() => handleProjectOpen(project)} className="text-blue-600 hover:text-blue-900 transition-colors">
                       Åpne<span className="sr-only">, {project.navn}</span>
                     </button>
                   </td>

@@ -2,9 +2,11 @@ import React from "react";
 import { RowList, AdminPage } from "@/components/tableComponents/";
 import { getModelConfig } from "@/modelConfigs";
 import { useNavigate } from "react-router-dom";
+import { useSmartBack } from "@/hooks/useSmartBack";
 
 export default function ProsjektKrav() {
   const navigate = useNavigate();
+  const { goBack } = useSmartBack();
   const config = getModelConfig("prosjektKrav");
 
   function handleEdit(row) {
@@ -18,7 +20,7 @@ export default function ProsjektKrav() {
     });
   }
   function handleBack() {
-    navigate(-1);
+    goBack();
   }
   return (
     <AdminPage

@@ -25,6 +25,18 @@ export const emne = {
       required: false,
     },
     {
+      name: "icon",
+      label: "Ikon",
+      type: "text",
+      required: false,
+    },
+    {
+      name: "color",
+      label: "Farge",
+      type: "text",
+      required: false,
+    },
+    {
       name: "enhetId",
       label: "EnhetId",
       type: "enhetselect",

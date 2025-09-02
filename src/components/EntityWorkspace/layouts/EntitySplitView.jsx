@@ -55,7 +55,7 @@ const EntitySplitView = ({
 }) => {
   const navigate = useNavigate();
   const params = useParams();
-  
+
   // Get selectedEntity from store
   const selectedEntity = useEntityWorkspaceStore((state) => state.selectedEntity);
   const clearJustCreatedFlag = useEntityWorkspaceStore((state) => state.clearJustCreatedFlag);
@@ -129,12 +129,12 @@ const EntitySplitView = ({
   const generateUniqueEntityId = (item) => {
     // Check if we're in a combined view context
     const isCombinedView = entityType === "combined" || entityType === "combinedEntities" || entityType === "prosjekt-combined";
-    
+
     // For regular (non-combined) views, always use simple numeric ID
     if (!isCombinedView) {
       return item.id?.toString();
     }
-    
+
     // Combined view logic - need complex IDs to avoid conflicts
     if (!item.entityType) {
       return item.id?.toString();
@@ -182,7 +182,7 @@ const EntitySplitView = ({
   useEffect(() => {
     if (selectedEntity) {
       const entityUniqueId = generateUniqueEntityId(selectedEntity);
-      
+
       if (entityUniqueId !== selectedEntityId) {
         setSelectedEntityId(entityUniqueId);
       }
@@ -203,15 +203,15 @@ const EntitySplitView = ({
     const uniqueId = generateUniqueEntityId(entity);
     setSelectedEntityId(uniqueId);
 
+    // Update activeEntity so the detail view refreshes immediately
+    if (setActiveEntity) {
+      setActiveEntity(entity);
+    }
+
     // Only clear the "just created" flag if this is truly a manual selection from the list
     // Don't clear it if this entity selection is coming from the store sync (i.e., entity creation)
     if (entity.id !== selectedEntity?.id) {
       clearJustCreatedFlag();
-    }
-
-    // Clear activeEntity when selecting from list to prevent create-new from staying visible
-    if (setActiveEntity && activeEntity?.id === "create-new") {
-      setActiveEntity(null);
     }
   };
 

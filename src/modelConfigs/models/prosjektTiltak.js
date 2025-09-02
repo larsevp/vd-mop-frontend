@@ -160,21 +160,32 @@ export const prosjektTiltak = {
           section: "info", // Primary content description
           order: 2,
         },
-        prosjektKrav: {
-          section: "info", // Related project requirements
-          order: 3,
-          row: "emne-row", // Separate row for multiselect
+        merknad: {
+          section: "info", // Administrative notes
+          order: 2,
         },
-        // Reference and relationship information
-        parentId: {
-          section: "info", // Parent relationship
+        // Implementation details - separate section for execution information
+        implementasjon: {
+          section: "info", // How the task is carried out
           order: 3,
-          row: "emne-row", // Group with reference fields
         },
         emneId: {
           section: "info", // Reference value
-          order: 4,
+          order: 3,
           row: "emne-row",
+        },
+
+        prosjektKrav: {
+          section: "info", // Related project requirements
+          order: 4,
+          row: "emne-row", // Separate row for multiselect
+        },
+
+        // Reference and relationship information
+        parentId: {
+          section: "info", // Parent relationship
+          order: 5,
+          row: "emne-row", // Group with reference fields
         },
         vurderingId: {
           section: "info", // Reference value - moved below beskrivelse
@@ -191,16 +202,7 @@ export const prosjektTiltak = {
           order: 7,
           row: "main-row-2",
         },
-        merknad: {
-          section: "info", // Administrative notes
-          order: 8,
-        },
 
-        // Implementation details - separate section for execution information
-        implementasjon: {
-          section: "annet", // How the task is carried out
-          order: 9,
-        },
         tilbakemelding: {
           section: "annet", // Feedback and results
           order: 10,

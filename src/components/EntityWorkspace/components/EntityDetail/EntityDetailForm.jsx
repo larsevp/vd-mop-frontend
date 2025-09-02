@@ -162,7 +162,7 @@ const FieldSection = ({ title, isExpanded, onToggle, children, noTitle = false }
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center text-left hover:bg-gray-50 transition-colors duration-200 py-3 px-2 -mx-2 rounded-md gap-3"
+        className="w-full flex items-center text-left hover:bg-gray-50 transition-colors duration-200 py-3 px-2 -mx-2 rounded-md gap-3 border border-gray-200"
       >
         <div className="w-5 h-5 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 text-xs font-medium flex-shrink-0">
           {isExpanded ? "−" : "+"}
@@ -446,30 +446,11 @@ const EntityDetailForm = ({
                 const rowFields = item.fields;
 
                 return (
-                  <div
-                    key={item.rowName}
-                    className="grid gap-4"
-                    style={{
-                      gridTemplateColumns: rowFields
-                        .map((field) => {
-                          // Dynamic column sizing based on field type
-                          if (field.type === "checkbox" || field.type === "boolean") {
-                            return "1fr";
-                          } else if (field.type === "select" || field.type === "number") {
-                            return "1fr";
-                          } else if (field.type === "text" && field.name.includes("referanse")) {
-                            return "1fr";
-                          } else {
-                            return "2fr";
-                          }
-                        })
-                        .join(" "),
-                    }}
-                  >
-                    {rowFields.map((field) => {
+                  <div key={item.rowName} className="grid grid-cols-3 gap-4 p-3">
+                    {rowFields.map((field, index) => {
                       const fieldError = errors[field.name];
                       return (
-                        <div key={field.name}>
+                        <div key={field.name} className={index >= 3 ? "hidden" : ""}>
                           <FieldRenderer
                             field={field}
                             value={formData[field.name] ?? ""}
@@ -484,6 +465,10 @@ const EntityDetailForm = ({
                         </div>
                       );
                     })}
+                    {/* Fill empty slots if less than 3 fields */}
+                    {Array.from({ length: 3 - Math.min(rowFields.length, 3) }).map((_, index) => (
+                      <div key={`empty-${index}`} />
+                    ))}
                   </div>
                 );
               }

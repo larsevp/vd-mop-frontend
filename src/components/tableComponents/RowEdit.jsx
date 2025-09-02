@@ -3,10 +3,12 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import RowForm from "./RowForm";
 import { useQuery } from "@tanstack/react-query";
 import { getModelConfig } from "../../modelConfigs";
+import { useSmartBack } from "@/hooks/useSmartBack";
 
 export default function RowEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { goBack } = useSmartBack();
   const location = useLocation();
   const modelType = location.state?.modelType;
   const config = getModelConfig(modelType);
@@ -50,8 +52,8 @@ export default function RowEdit() {
           modelName={modelType}
           queryKey={config.queryKey}
           updateFn={config.updateFn}
-          onSuccess={() => navigate(-1)}
-          onCancel={() => navigate(-1)}
+          onSuccess={goBack}
+          onCancel={goBack}
         />
       </div>
     </div>

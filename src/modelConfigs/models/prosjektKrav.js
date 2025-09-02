@@ -168,16 +168,26 @@ export const prosjektKrav = {
           section: "info", // Primary content description
           order: 2,
         },
-        parentId: {
-          section: "info", // Task requirements
+        merknader: {
+          section: "info", // Administrative notes
+          order: 2,
+        },
+        informasjon: {
+          section: "info", // Additional detailed information
           order: 3,
-          row: "main-row", // Group with administrative flags
         },
         emneId: {
           section: "info", // Reference value - moved below beskrivelse
           order: 3,
-          row: "main-row",
+          row: "merknad-row",
         },
+
+        kravreferanse: {
+          section: "info", // Reference value
+          order: 3,
+          row: "merknad-row",
+        },
+
         vurderingId: {
           section: "info", // Reference value - moved below beskrivelse
           order: 5,
@@ -193,14 +203,6 @@ export const prosjektKrav = {
           order: 7,
           row: "main-row-2",
         },
-        merknader: {
-          section: "info", // Administrative notes
-          order: 8,
-        },
-        kravreferanse: {
-          section: "info", // Reference value
-          order: 6,
-        },
 
         // Status section
         kravStatus: {
@@ -208,12 +210,12 @@ export const prosjektKrav = {
           order: 7,
           row: "status-row",
         },
-        obligatorisk: {
-          section: "status", // Requirements flag
-          order: 9,
-          row: "status-row",
-        },
 
+        parentId: {
+          section: "references", // Task requirements
+          order: 10,
+          row: "reference-row", // Group with administrative flags
+        },
         // References section
         kravreferansetypeId: {
           section: "references", // Reference type
@@ -237,15 +239,17 @@ export const prosjektKrav = {
           order: 15,
           row: "admin-row",
         },
+        obligatorisk: {
+          section: "admin", // Requirements flag
+          order: 15,
+          row: "admin-row",
+          default: "false",
+        },
 
         // Files and additional information
         files: {
           section: "annet", // File attachments
           order: 16,
-        },
-        informasjon: {
-          section: "annet", // Additional detailed information
-          order: 17,
         },
 
         // Metadata (usually auto-managed)
@@ -296,7 +300,7 @@ export const prosjektKrav = {
     },
     {
       name: "informasjon",
-      label: "Informasjon",
+      label: "Ytterligere informasjon",
       type: "richtext",
       required: false,
       placeholder: "Legg til detaljert informasjon om prosjektkravet...",
@@ -367,7 +371,7 @@ export const prosjektKrav = {
     },
     {
       name: "parentId",
-      label: "Underprosjektkrav av:",
+      label: "Tilhører krav:",
       type: "prosjektKravselect",
       required: false,
       field_info:

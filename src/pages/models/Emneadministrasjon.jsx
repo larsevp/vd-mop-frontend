@@ -1,10 +1,12 @@
 import React from "react";
 import { RowList, AdminPage } from "@/components/tableComponents/";
-import { getModelConfig } from "@/modelConfigs";
+import { getModelConfig } from "../../modelConfigs";
 import { useNavigate } from "react-router-dom";
+import { useSmartBack } from "@/hooks/useSmartBack";
 
 export default function Emneadministrasjon() {
   const navigate = useNavigate();
+  const { goBack } = useSmartBack();
   const config = getModelConfig("emner");
 
   function handleEdit(row) {
@@ -18,7 +20,7 @@ export default function Emneadministrasjon() {
     });
   }
   function handleBack() {
-    navigate(-1);
+    goBack();
   }
   return (
     <AdminPage

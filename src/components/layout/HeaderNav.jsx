@@ -1,14 +1,15 @@
 import React from "react";
 import { List, Briefcase, Home, ArrowLeft, Users } from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useMsal } from "@azure/msal-react";
 import { useUserStore } from "@/stores/userStore";
 import { UserProjectMenu } from "./UserProjectMenu";
+import { useSmartBack } from "@/hooks/useSmartBack";
 
 export default function HeaderNav({ showBackButton = false }) {
   const user = useUserStore((state) => state.user);
   const location = useLocation();
-  const navigate = useNavigate();
+  const { goBack } = useSmartBack();
   const { accounts } = useMsal();
   const [tenantError] = React.useState(false);
   const isAdmin = user?.rolle === "ADMIN";
@@ -37,11 +38,7 @@ export default function HeaderNav({ showBackButton = false }) {
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-2">
             {showBackButton ? (
-              <button
-                onClick={() => navigate(-1)}
-                className="p-1 rounded-full hover:bg-background-muted text-text-muted"
-                aria-label="Gå tilbake"
-              >
+              <button onClick={goBack} className="p-1 rounded-full hover:bg-background-muted text-text-muted" aria-label="Gå tilbake">
                 <ArrowLeft size={18} />
               </button>
             ) : null}
