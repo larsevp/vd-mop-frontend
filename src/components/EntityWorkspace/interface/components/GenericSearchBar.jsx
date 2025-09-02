@@ -3,6 +3,7 @@ import { Search, Filter, X, Loader2, ArrowUpDown, ChevronDown } from "lucide-rea
 import { Button } from "@/components/ui/primitives/button";
 import { Input } from "@/components/ui/primitives/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/primitives/select";
+import { createEntityInterface } from "../utils/EntityInterface.js";
 
 /**
  * Generic Search Bar Interface Component
@@ -48,24 +49,19 @@ const GenericSearchBar = ({
   const [showFilters, setShowFilters] = useState(false);
   const searchRef = useRef(null);
   
+  // Create EntityInterface for adapter-based operations
+  const { entityType, modelConfig } = config;
+  const entityInterface = createEntityInterface(entityType, { modelConfig });
+  
   // Extract configuration using adapter
-  const { entityType, adapter } = config;
-  const entityDisplayName = adapter ? adapter.getDisplayName(entityType, true) : entityType;
+  const entityDisplayName = entityInterface.getEntityTypeDisplayName(true);
   const searchPlaceholder = placeholder || `Søk ${entityDisplayName.toLowerCase()}...`;
 
   // Get available sort options from adapter
-  const sortOptions = adapter ? adapter.getSortOptions(entityType) : [
-    { value: 'updatedAt', label: 'Sist oppdatert' },
-    { value: 'createdAt', label: 'Opprettet' },
-    { value: 'title', label: 'Navn' }
-  ];
+  const sortOptions = entityInterface.adapter.getSortOptions(entityType);
 
   // Get available filter options from adapter  
-  const filterOptions = adapter ? adapter.getFilterOptions(entityType) : [
-    { value: 'all', label: 'Alle' },
-    { value: 'active', label: 'Aktive' },
-    { value: 'inactive', label: 'Inaktive' }
-  ];
+  const filterOptions = entityInterface.adapter.getFilterOptions(entityType);
 
   // Global keyboard shortcuts for advanced mode
   useEffect(() => {

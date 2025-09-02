@@ -235,4 +235,109 @@ export class BaseAdapter {
       isGrouped
     };
   }
+
+  /**
+   * Get display name for entity type
+   */
+  getDisplayName(entityType, plural = false) {
+    const displayNames = {
+      krav: plural ? 'Krav' : 'Krav',
+      tiltak: plural ? 'Tiltak' : 'Tiltak', 
+      prosjektKrav: plural ? 'Prosjektkrav' : 'Prosjektkrav',
+      prosjektTiltak: plural ? 'Prosjekttiltak' : 'Prosjekttiltak',
+      prosjektkrav: plural ? 'Prosjektkrav' : 'Prosjektkrav',
+      prosjekttiltak: plural ? 'Prosjekttiltak' : 'Prosjekttiltak'
+    };
+    return displayNames[entityType] || entityType;
+  }
+
+  /**
+   * Get available sort options for entity type
+   */
+  getSortOptions(entityType) {
+    const commonSortOptions = [
+      { value: 'updatedAt', label: 'Sist oppdatert' },
+      { value: 'createdAt', label: 'Opprettet' },
+      { value: 'id', label: 'ID' }
+    ];
+
+    // Entity-specific sort options
+    const entitySortOptions = {
+      krav: [
+        { value: 'tittel', label: 'Tittel' },
+        { value: 'kravUID', label: 'Krav-ID' },
+        ...commonSortOptions
+      ],
+      tiltak: [
+        { value: 'tittel', label: 'Tittel' },
+        { value: 'tiltakUID', label: 'Tiltak-ID' },
+        ...commonSortOptions
+      ],
+      prosjektKrav: [
+        { value: 'tittel', label: 'Tittel' },
+        { value: 'kravUID', label: 'Krav-ID' },
+        ...commonSortOptions
+      ],
+      prosjektTiltak: [
+        { value: 'tittel', label: 'Tittel' },
+        { value: 'tiltakUID', label: 'Tiltak-ID' },
+        ...commonSortOptions
+      ]
+    };
+
+    return entitySortOptions[entityType] || commonSortOptions;
+  }
+
+  /**
+   * Get available filter options for entity type
+   */
+  getFilterOptions(entityType) {
+    return [
+      { value: 'all', label: 'Alle' },
+      { value: 'active', label: 'Aktive' },
+      { value: 'completed', label: 'Fullførte' },
+      { value: 'pending', label: 'Ventende' }
+    ];
+  }
+
+  /**
+   * Extract available filters from entity collection
+   */
+  extractAvailableFilters(entities) {
+    if (!Array.isArray(entities) || entities.length === 0) {
+      return {
+        statuses: [],
+        vurderinger: [],
+        emner: [],
+        priorities: []
+      };
+    }
+
+    const statuses = new Set();
+    const vurderinger = new Set();
+    const emner = new Set();
+    const priorities = new Set();
+
+    entities.forEach(entity => {
+      if (entity.status?.navn || entity.status?.name) {
+        statuses.add(JSON.stringify(entity.status));
+      }
+      if (entity.vurdering?.navn || entity.vurdering?.name) {
+        vurderinger.add(JSON.stringify(entity.vurdering));
+      }
+      if (entity.emne?.tittel || entity.emne?.title) {
+        emner.add(JSON.stringify(entity.emne));
+      }
+      if (entity.prioritet !== undefined && entity.prioritet !== null) {
+        priorities.add(entity.prioritet);
+      }
+    });
+
+    return {
+      statuses: Array.from(statuses).map(s => JSON.parse(s)),
+      vurderinger: Array.from(vurderinger).map(v => JSON.parse(v)),
+      emner: Array.from(emner).map(e => JSON.parse(e)),
+      priorities: Array.from(priorities).sort((a, b) => a - b)
+    };
+  }
 }
