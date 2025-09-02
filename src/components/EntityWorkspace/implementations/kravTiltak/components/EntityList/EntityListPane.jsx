@@ -11,8 +11,8 @@ import EntityListViewOptions from "./EntityListViewOptions";
  * - Keyboard navigation
  * - Clean, scannable design
  */
-import { EntityTypeTranslator } from "@/components/EntityWorkspace/utils/entityTypeTranslator";
-import useEntityWorkspaceStore from "@/components/EntityWorkspace/stores/entityWorkspaceStore";
+import { EntityTypeTranslator } from "../../../../shared/utils/entityTypeTranslator";
+import useEntityWorkspaceStore from "../../stores/entityWorkspaceStore";
 
 const EntityListPane = ({
   items,

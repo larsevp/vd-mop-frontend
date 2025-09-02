@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { EntityFilterService } from '../services/EntityFilterService';
+import { EntityFilterService } from '../implementations/kravTiltak/services/EntityFilterService';
 
 describe('Emne Change Visibility Bug - Simple Reproduction', () => {
   

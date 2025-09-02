@@ -5,7 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import EntityDetailForm from "./EntityDetailForm";
 import { FieldResolver } from "@/components/tableComponents/fieldTypes/fieldResolver.jsx";
 import { modelConfigs } from "@/modelConfigs";
-import { EntityTypeResolver } from "@/components/EntityWorkspace/services/EntityTypeResolver";
+import { EntityTypeResolver } from "../../services/EntityTypeResolver";
 import { useEditingActions } from "@/stores/editingStateStore";
 import useEntityWorkspaceStore from "../../stores/entityWorkspaceStore";
 
@@ -251,7 +251,7 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
 
           // Import and apply enhanced optimistic updates
           try {
-            const { handleEmnePropagationInvalidation } = await import("@/components/EntityWorkspace/utils/optimisticUpdates.js");
+            const { handleEmnePropagationInvalidation } = await import("../../../../shared/utils/optimisticUpdates.js");
 
             // Apply propagation handling if this is a krav/prosjektKrav update with delay for backend completion
             setTimeout(() => {
@@ -363,7 +363,7 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
 
         if (camelCaseEntityType === "krav" || camelCaseEntityType === "prosjektKrav") {
           try {
-            const { handleEmnePropagationInvalidation } = await import("@/components/EntityWorkspace/utils/optimisticUpdates.js");
+            const { handleEmnePropagationInvalidation } = await import("../../../../shared/utils/optimisticUpdates.js");
 
             // Add a small delay to ensure backend propagation completes before cache invalidation
             setTimeout(() => {

@@ -5,10 +5,10 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import useEntityWorkspaceStore from '../stores/entityWorkspaceStore';
+import useEntityWorkspaceStore from '../implementations/kravTiltak/stores/entityWorkspaceStore';
 
 // Mock the dependencies
-vi.mock('../services/EntityTypeResolver', () => ({
+vi.mock('../implementations/kravTiltak/services/EntityTypeResolver', () => ({
   EntityTypeResolver: {
     resolveApiConfig: vi.fn(() => ({
       createFn: vi.fn(),
@@ -19,7 +19,7 @@ vi.mock('../services/EntityTypeResolver', () => ({
   }
 }));
 
-vi.mock('../services/EntityFilterService', () => ({
+vi.mock('../implementations/kravTiltak/services/EntityFilterService', () => ({
   EntityFilterService: {
     applyFilters: vi.fn((items, filters) => items),
     calculateStats: vi.fn(() => ({ total: 1, obligatorisk: 1, optional: 0 })),
@@ -32,7 +32,7 @@ vi.mock('../services/EntityFilterService', () => ({
   }
 }));
 
-vi.mock('../utils/optimisticUpdates', () => ({
+vi.mock('../shared/utils/optimisticUpdates', () => ({
   handleOptimisticEntityUpdate: vi.fn()
 }));
 

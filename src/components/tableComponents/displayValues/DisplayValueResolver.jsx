@@ -2,7 +2,7 @@ import React from "react";
 import { BASIC_DISPLAY_TYPES } from "./basicDisplayTypes.jsx";
 import { ENTITY_DISPLAY_TYPES } from "./entityDisplayTypes.jsx";
 import { MODEL_SPECIFIC_DISPLAY } from "./modelSpecificDisplay.jsx";
-import { EntityTypeTranslator } from "@/components/EntityWorkspace/utils/entityTypeTranslator";
+import { EntityTypeTranslator } from "@/components/EntityWorkspace/shared/utils/entityTypeTranslator";
 
 /**
  * Display value resolution priority:

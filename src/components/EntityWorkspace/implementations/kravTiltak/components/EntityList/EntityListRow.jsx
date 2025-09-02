@@ -1,6 +1,6 @@
 import React from "react";
-import { EntityTypeResolver } from "@/components/EntityWorkspace/services/EntityTypeResolver";
-import { getEntityUID, getConnectedEntityUID, getEntityDisplayName } from "../../utils/uidUtils";
+import { EntityTypeResolver } from "../../services/EntityTypeResolver";
+import { getEntityUID, getConnectedEntityUID, getEntityDisplayName } from "../../../../shared/utils/uidUtils";
 
 /**
  * Ultra-clean two-line entity row with configurable display options

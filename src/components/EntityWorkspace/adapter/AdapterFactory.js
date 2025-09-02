@@ -5,7 +5,7 @@
 
 import { EntityWorkspaceAdapter } from './models/EntityWorkspaceAdapter.js';
 import { SimpleAdapter } from './models/SimpleAdapter.js';
-import { EntityTypeTranslator } from '../utils/entityTypeTranslator.js';
+import { EntityTypeTranslator } from '../shared/utils/entityTypeTranslator.js';
 
 export class AdapterFactory {
   /**

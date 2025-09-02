@@ -5,10 +5,10 @@
 
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import { EntityTypeResolver } from "@/components/EntityWorkspace/services/EntityTypeResolver";
-import { EntityFilterService } from "@/components/EntityWorkspace/services/EntityFilterService";
-import { handleOptimisticEntityUpdate, sortItemsByEmne } from "@/components/EntityWorkspace/utils/optimisticUpdates";
-import { EntityTypeTranslator } from "../utils/entityTypeTranslator";
+import { EntityTypeResolver } from "../services/EntityTypeResolver";
+import { EntityFilterService } from "../services/EntityFilterService";
+import { handleOptimisticEntityUpdate, sortItemsByEmne } from "../../../shared/utils/optimisticUpdates";
+import { EntityTypeTranslator } from "../../../shared/utils/entityTypeTranslator";
 
 const useEntityWorkspaceStore = create(
   devtools(

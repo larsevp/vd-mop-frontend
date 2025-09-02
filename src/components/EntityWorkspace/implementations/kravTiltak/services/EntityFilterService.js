@@ -1,4 +1,4 @@
-import { EntityTypeTranslator } from "../utils/entityTypeTranslator";
+import { EntityTypeTranslator } from "../../../shared/utils/entityTypeTranslator";
 
 /**
  * EntityFilterService - Handles filtering, sorting, and data processing for entity workspaces

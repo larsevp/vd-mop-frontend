@@ -8,19 +8,19 @@ import { useUserStore } from "@/stores/userStore";
 import { useIsAnyEntityEditing } from "@/stores/editingStateStore";
 
 // Zustand store
-import useEntityWorkspaceStore from "./stores/entityWorkspaceStore";
+import useEntityWorkspaceStore from "./implementations/kravTiltak/stores/entityWorkspaceStore";
 
 // Keep only essential hooks for data fetching (React Query)
-import { useEntityData } from "./hooks/useEntityData";
-import { useEntityPermissions } from "./hooks/useEntityPermissions";
+import { useEntityData } from "./implementations/kravTiltak/hooks/useEntityData";
+import { useEntityPermissions } from "./implementations/kravTiltak/hooks/useEntityPermissions";
 
 // Services
-import { EntityTypeResolver } from "./services/EntityTypeResolver";
+import { EntityTypeResolver } from "./implementations/kravTiltak/services/EntityTypeResolver";
 
 // Components (keeping existing UI components)
 import { EntityFilters, ViewOptionsMenu } from "./shared";
-import SearchBar from "./components/SearchBar";
-import EntityCardList from "./components/EntityCardList_old";
+import SearchBar from "./implementations/kravTiltak/components/SearchBar";
+import EntityCardList from "./implementations/kravTiltak/components/EntityCardList_old";
 import EntitySplitView from "./layouts/EntitySplitView";
 import { Toast } from "@/components/ui/editor/components/Toast.jsx";
 

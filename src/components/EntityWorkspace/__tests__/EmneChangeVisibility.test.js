@@ -3,8 +3,8 @@
  * Tests to reproduce and identify the bug where entities become invisible after emne changes
  */
 
-import { EntityFilterService } from '../services/EntityFilterService';
-import { EntityTypeResolver } from '../services/EntityTypeResolver';
+import { EntityFilterService } from '../implementations/kravTiltak/services/EntityFilterService';
+import { EntityTypeResolver } from '../implementations/kravTiltak/services/EntityTypeResolver';
 
 describe('Emne Change Visibility Bug Investigation', () => {
   // Mock data representing entities before emne change
