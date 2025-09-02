@@ -81,7 +81,7 @@ const getGroupedDataPropertyName = (entityType) => {
 };
 
 /**
- * Re-group entities by emne after an update
+ * Regroup flat entities by emne
  * @param {Array} flatItems - Flat array of entities
  * @param {string} entityType - Type of entity (tiltak, krav, combinedEntities, etc.)
  * @returns {Array} - Array of grouped objects sorted by emne.sortIt
@@ -109,14 +109,14 @@ export const regroupByEmne = (flatItems, entityType) => {
       }
     }
 
-    // For combined entities, sort into appropriate arrays
+    // For combined entities, add to flat entities array and maintain hierarchical order
     if (entityType === "combinedEntities" || entityType === "combined") {
       acc[emneKey].entities.push(item);
 
-      // Also add to specific type arrays for compatibility
-      if (item.entityType === "krav") {
+      // Also add to specific type arrays for compatibility (but entities array is primary)
+      if (item.entityType === "krav" || item.entityType === "prosjektkrav") {
         acc[emneKey].krav.push(item);
-      } else if (item.entityType === "tiltak") {
+      } else if (item.entityType === "tiltak" || item.entityType === "prosjekttiltak") {
         acc[emneKey].tiltak.push(item);
       }
     } else {
@@ -127,7 +127,7 @@ export const regroupByEmne = (flatItems, entityType) => {
   }, {});
 
   // Convert to array and sort groups by emne.sortIt (matching backend groupingHelper logic)
-  return Object.values(grouped)
+  const groupedArray = Object.values(grouped)
     .filter((group) => {
       // Filter out empty groups - check different property structures
       if (entityType === "combinedEntities" || entityType === "combined") {
@@ -150,7 +150,7 @@ export const regroupByEmne = (flatItems, entityType) => {
           // Both have no valid sortIt, sort by emne.id, then by tittel
           const aId = a.emne?.id || 0;
           const bId = b.emne?.id || 0;
-          
+
           if (aId !== bId) {
             return aId - bId;
           }
@@ -181,6 +181,66 @@ export const regroupByEmne = (flatItems, entityType) => {
       const bId = b.emne?.id || 0;
       return aId - bId;
     });
+
+  // For combined entities, ensure hierarchical ordering within each group
+  if (entityType === "combinedEntities" || entityType === "combined") {
+    groupedArray.forEach((group) => {
+      group.entities = sortCombinedEntitiesHierarchically(group.entities);
+    });
+  }
+
+  return groupedArray;
+};
+
+/**
+ * Sort combined entities to maintain hierarchical order (Krav followed by their related Tiltak)
+ * @param {Array} entities - Flat array of mixed Krav and Tiltak entities
+ * @returns {Array} - Sorted array with hierarchical order preserved
+ */
+const sortCombinedEntitiesHierarchically = (entities) => {
+  // Separate entities by type
+  const krav = entities.filter((e) => e.entityType === "krav" || e.entityType === "prosjektkrav");
+  const tiltak = entities.filter((e) => e.entityType === "tiltak" || e.entityType === "prosjekttiltak");
+
+  // Sort Krav by their natural order (ID, title, etc.)
+  const sortedKrav = krav.sort((a, b) => {
+    // Sort by ID first
+    if (a.id !== b.id) return a.id - b.id;
+    // Then by title
+    return (a.tittel || "").localeCompare(b.tittel || "", "no", { sensitivity: "base" });
+  });
+
+  // Build the final hierarchical array
+  const result = [];
+
+  for (const kravEntity of sortedKrav) {
+    // Add the Krav first
+    result.push(kravEntity);
+
+    // Find and add related Tiltak immediately after
+    const relatedTiltak = tiltak.filter((t) => t._relatedToKrav === kravEntity.id);
+    const sortedRelatedTiltak = relatedTiltak.sort((a, b) => {
+      // Sort by ID first
+      if (a.id !== b.id) return a.id - b.id;
+      // Then by title
+      return (a.tittel || "").localeCompare(b.tittel || "", "no", { sensitivity: "base" });
+    });
+
+    result.push(...sortedRelatedTiltak);
+  }
+
+  // Add orphaned Tiltak (those without _relatedToKrav or not displayed under Krav)
+  const orphanedTiltak = tiltak.filter((t) => !t._relatedToKrav || !t._displayedUnderKrav);
+  const sortedOrphanedTiltak = orphanedTiltak.sort((a, b) => {
+    // Sort by ID first
+    if (a.id !== b.id) return a.id - b.id;
+    // Then by title
+    return (a.tittel || "").localeCompare(b.tittel || "", "no", { sensitivity: "base" });
+  });
+
+  result.push(...sortedOrphanedTiltak);
+
+  return result;
 };
 
 /**
@@ -229,18 +289,36 @@ export const applyOptimisticUpdateGrouped = (queryClient, baseQueryKey, updatedD
         let flatItems = [];
 
         // Handle different group structures
-        if (entityType === "combinedEntities" || entityType === "combined") {
-          // Combined entities can have entities, krav, or tiltak arrays
-          flatItems = oldGroupedData.items.flatMap((group) => group.entities || group.krav || group.tiltak || []);
+        if (entityType === "combinedEntities" || entityType === "combined" || entityType === "prosjekt-combined") {
+          // Combined entities use the flat entities array
+          flatItems = oldGroupedData.items.flatMap((group) => group.entities || []);
         } else {
-          // Single entity type
+          // Single entity type - use appropriate property
           flatItems = oldGroupedData.items.flatMap((group) => group.tiltak || group.krav || group.entities || []);
         }
 
-        // Update the specific item
-        const updatedFlatItems = flatItems.map((item) => (item.id === updatedData.id ? { ...item, ...updatedData } : item));
+        // Update all matching entities (including duplicated instances for combined views)
+        const updatedFlatItems = flatItems.map((item) => {
+          if (isMatchingEntityForUpdate(item, updatedData)) {
+            // For combined views, preserve relationship metadata
+            if (entityType === "combinedEntities" || entityType === "combined" || entityType === "prosjekt-combined") {
+              return {
+                ...item,
+                ...updatedData,
+                // Preserve the relationship metadata for duplicated entities
+                _displayedUnderKrav: item._displayedUnderKrav,
+                _relatedToKrav: item._relatedToKrav,
+                _parentKrav: item._parentKrav,
+                _orphaned: item._orphaned,
+              };
+            } else {
+              return { ...item, ...updatedData };
+            }
+          }
+          return item;
+        });
 
-        // Re-group by emne
+        // Re-group by emne with proper sorting
         const regroupedData = regroupByEmne(updatedFlatItems, entityType);
 
         return { ...oldGroupedData, items: regroupedData };
@@ -251,7 +329,7 @@ export const applyOptimisticUpdateGrouped = (queryClient, baseQueryKey, updatedD
 };
 
 /**
- * Apply optimistic update specifically for combined entities
+ * Apply optimistic update specifically for combined entities with flat structure
  * @param {Object} queryClient - React Query client
  * @param {Object} updatedData - Updated entity data
  * @param {Object} originalData - Original entity data (for comparison)
@@ -259,70 +337,170 @@ export const applyOptimisticUpdateGrouped = (queryClient, baseQueryKey, updatedD
 export const applyOptimisticUpdateCombined = (queryClient, updatedData, originalData) => {
   const emneChanged = updatedData.emneId !== originalData?.emneId;
   const kravChanged = JSON.stringify(updatedData.krav || []) !== JSON.stringify(originalData?.krav || []);
+  const prosjektKravChanged = JSON.stringify(updatedData.prosjektKrav || []) !== JSON.stringify(originalData?.prosjektKrav || []);
 
-  if (emneChanged || kravChanged) {
+  if (emneChanged || kravChanged || prosjektKravChanged) {
     // Update the combined entities workspace cache
     const combinedQueryKey = ["combinedEntities", "workspace", "paginated"];
 
     queryClient.setQueryData(combinedQueryKey, (oldData) => {
       if (oldData?.items) {
-        let needsComplexUpdate = false;
+        // Extract all flat entities from all groups
+        let allEntities = oldData.items.flatMap((group) => group.entities || []);
 
-        if (kravChanged && updatedData.entityType === "tiltak") {
-          // For krav changes in combined view, we need to restructure the nested relationships
-          // This is complex because tiltak need to move between krav.relatedTiltak arrays
-
-          // Extract all krav from all groups
-          const allKrav = oldData.items.flatMap((group) => group.entities?.filter((entity) => entity.entityType === "krav") || []);
-
-          // Remove the updated tiltak from all krav.relatedTiltak arrays
-          allKrav.forEach((krav) => {
-            if (krav.relatedTiltak) {
-              krav.relatedTiltak = krav.relatedTiltak.filter((tiltak) => tiltak.id !== updatedData.id);
-            }
-          });
-
-          // Add the updated tiltak to the correct krav.relatedTiltak arrays
-          const newKravIds = (updatedData.krav || []).map((k) => k.id);
-          allKrav.forEach((krav) => {
-            if (newKravIds.includes(krav.id)) {
-              if (!krav.relatedTiltak) {
-                krav.relatedTiltak = [];
-              }
-              // Add the updated tiltak with the correct metadata
-              const tiltakWithMetadata = {
-                ...updatedData,
-                _relatedToKrav: krav.id,
-                _displayedUnderKrav: true,
-              };
-              krav.relatedTiltak.push(tiltakWithMetadata);
-            }
-          });
-
-          needsComplexUpdate = true;
-        }
-
-        if (emneChanged && !needsComplexUpdate) {
-          // Handle emne changes with the existing logic
-          const allEntities = oldData.items.flatMap((group) => group.entities || []);
-          const updatedEntities = allEntities.map((entity) =>
-            entity.id === updatedData.id && entity.entityType === updatedData.entityType ? { ...entity, ...updatedData } : entity
+        // Handle Krav relationship changes for Tiltak
+        if ((kravChanged || prosjektKravChanged) && (updatedData.entityType === "tiltak" || updatedData.entityType === "prosjekttiltak")) {
+          // Remove all instances of this Tiltak (including duplicated ones)
+          allEntities = allEntities.filter(
+            (entity) =>
+              !(
+                entity.id === updatedData.id &&
+                (entity.entityType === updatedData.entityType ||
+                  (entity.entityType === "tiltak" && updatedData.entityType === "prosjekttiltak") ||
+                  (entity.entityType === "prosjekttiltak" && updatedData.entityType === "tiltak"))
+              )
           );
-          const regroupedData = regroupByEmne(updatedEntities, "combinedEntities");
-          return { ...oldData, items: regroupedData };
-        } else if (needsComplexUpdate) {
-          // For krav relationship changes, return the modified data structure
-          return { ...oldData };
+
+          // Determine which Krav this Tiltak should be related to
+          const relatedKravIds =
+            updatedData.entityType === "prosjekttiltak"
+              ? (updatedData.prosjektKrav || []).map((k) => k.id)
+              : (updatedData.krav || []).map((k) => k.id);
+
+          if (relatedKravIds.length > 0) {
+            // Add the Tiltak instance for each related Krav
+            relatedKravIds.forEach((kravId) => {
+              // Find the parent Krav entity in the data
+              const parentKrav = allEntities.find(
+                (entity) => entity.id === kravId && (entity.entityType === "krav" || entity.entityType === "prosjektkrav")
+              );
+
+              if (parentKrav) {
+                const tiltakWithMetadata = {
+                  ...updatedData,
+                  _displayedUnderKrav: true,
+                  _relatedToKrav: kravId,
+                  _parentKrav: {
+                    id: parentKrav.id,
+                    kravUID: parentKrav.kravUID || parentKrav.prosjektKravUID,
+                    tittel: parentKrav.tittel,
+                  },
+                };
+                allEntities.push(tiltakWithMetadata);
+              }
+            });
+          } else {
+            // No Krav relationships - add as orphaned Tiltak
+            const orphanedTiltak = {
+              ...updatedData,
+              _displayedUnderKrav: false,
+              _orphaned: true,
+            };
+            allEntities.push(orphanedTiltak);
+          }
+        } else {
+          // For other changes (emne changes, Krav updates), just update the matching entities
+          allEntities = allEntities.map((entity) => {
+            // Update all instances of this entity (including duplicated Tiltak instances)
+            const isMatchingEntity =
+              entity.id === updatedData.id &&
+              (entity.entityType === updatedData.entityType ||
+                (entity.entityType === "tiltak" && updatedData.entityType === "prosjekttiltak") ||
+                (entity.entityType === "prosjekttiltak" && updatedData.entityType === "tiltak") ||
+                (entity.entityType === "krav" && updatedData.entityType === "prosjektkrav") ||
+                (entity.entityType === "prosjektkrav" && updatedData.entityType === "krav"));
+
+            if (isMatchingEntity) {
+              return {
+                ...entity,
+                ...updatedData,
+                // Preserve the relationship metadata for duplicated Tiltak
+                _displayedUnderKrav: entity._displayedUnderKrav,
+                _relatedToKrav: entity._relatedToKrav,
+                _parentKrav: entity._parentKrav,
+                _orphaned: entity._orphaned,
+              };
+            }
+            return entity;
+          });
         }
+
+        // Re-group by emne with proper hierarchical sorting
+        const regroupedData = regroupByEmne(allEntities, "combinedEntities");
+        return { ...oldData, items: regroupedData };
+      }
+      return oldData;
+    });
+
+    // Also update project-specific combined view if it exists
+    const projectCombinedQueryKey = ["prosjekt-combined", "workspace", "paginated"];
+    queryClient.setQueryData(projectCombinedQueryKey, (oldData) => {
+      if (oldData?.items) {
+        // Apply the same logic for project-specific combined view
+        let allEntities = oldData.items.flatMap((group) => group.entities || []);
+
+        if (prosjektKravChanged && updatedData.entityType === "prosjekttiltak") {
+          // Handle ProsjektKrav relationship changes
+          allEntities = allEntities.filter((entity) => !(entity.id === updatedData.id && entity.entityType === "prosjekttiltak"));
+
+          const relatedKravIds = (updatedData.prosjektKrav || []).map((k) => k.id);
+
+          if (relatedKravIds.length > 0) {
+            relatedKravIds.forEach((kravId) => {
+              const parentKrav = allEntities.find((entity) => entity.id === kravId && entity.entityType === "prosjektkrav");
+
+              if (parentKrav) {
+                const tiltakWithMetadata = {
+                  ...updatedData,
+                  _displayedUnderKrav: true,
+                  _relatedToKrav: kravId,
+                  _parentKrav: {
+                    id: parentKrav.id,
+                    prosjektKravUID: parentKrav.prosjektKravUID,
+                    tittel: parentKrav.tittel,
+                  },
+                };
+                allEntities.push(tiltakWithMetadata);
+              }
+            });
+          } else {
+            const orphanedTiltak = { ...updatedData, _displayedUnderKrav: false, _orphaned: true };
+            allEntities.push(orphanedTiltak);
+          }
+        } else {
+          allEntities = allEntities.map((entity) => {
+            const isMatchingEntity = entity.id === updatedData.id && entity.entityType === updatedData.entityType;
+            if (isMatchingEntity) {
+              return {
+                ...entity,
+                ...updatedData,
+                _displayedUnderKrav: entity._displayedUnderKrav,
+                _relatedToKrav: entity._relatedToKrav,
+                _parentKrav: entity._parentKrav,
+                _orphaned: entity._orphaned,
+              };
+            }
+            return entity;
+          });
+        }
+
+        const regroupedData = regroupByEmne(allEntities, "prosjekt-combined");
+        return { ...oldData, items: regroupedData };
       }
       return oldData;
     });
 
     // Also update individual entity type caches
     const specificEntityType = updatedData.entityType || "unknown";
-    if (specificEntityType === "krav" || specificEntityType === "tiltak") {
-      const specificQueryKey = [specificEntityType, "workspace", "paginated"];
-      applyOptimisticUpdateGrouped(queryClient, [specificEntityType], updatedData, originalData, specificEntityType);
+    if (
+      specificEntityType === "krav" ||
+      specificEntityType === "tiltak" ||
+      specificEntityType === "prosjektkrav" ||
+      specificEntityType === "prosjekttiltak"
+    ) {
+      const baseEntityType = specificEntityType.replace("prosjekt", "");
+      const specificQueryKey = [baseEntityType, "workspace", "paginated"];
+      applyOptimisticUpdateGrouped(queryClient, [baseEntityType], updatedData, originalData, baseEntityType);
     }
   }
 };
@@ -609,4 +787,77 @@ export const handleOptimisticEntityUpdate = ({ queryClient, queryKey, updatedDat
       queryClient.invalidateQueries({ queryKey: [specificEntityType, "workspace"] });
     }
   }
+};
+
+/**
+ * Helper function to create Tiltak instances with proper metadata for combined views
+ * @param {Object} tiltakData - The base Tiltak data
+ * @param {Array} relatedKravList - List of Krav this Tiltak is related to
+ * @param {Array} allKravEntities - All available Krav entities for reference
+ * @returns {Array} - Array of Tiltak instances with proper metadata
+ */
+export const createTiltakInstancesForCombinedView = (tiltakData, relatedKravList, allKravEntities) => {
+  if (!relatedKravList || relatedKravList.length === 0) {
+    // Return orphaned Tiltak
+    return [
+      {
+        ...tiltakData,
+        _displayedUnderKrav: false,
+        _orphaned: true,
+      },
+    ];
+  }
+
+  // Create one instance for each related Krav
+  return relatedKravList.map((kravId) => {
+    const parentKrav = allKravEntities.find((k) => k.id === kravId);
+
+    return {
+      ...tiltakData,
+      _displayedUnderKrav: true,
+      _relatedToKrav: kravId,
+      _parentKrav: parentKrav
+        ? {
+            id: parentKrav.id,
+            kravUID: parentKrav.kravUID || parentKrav.prosjektKravUID,
+            tittel: parentKrav.tittel,
+          }
+        : null,
+    };
+  });
+};
+
+/**
+ * Helper function to determine if an entity matches for optimistic updates
+ * Handles both regular and project-specific entity types
+ * @param {Object} entity - The entity to check
+ * @param {Object} updatedData - The updated data to match against
+ * @returns {boolean} - Whether the entity matches
+ */
+export const isMatchingEntityForUpdate = (entity, updatedData) => {
+  if (entity.id !== updatedData.id) {
+    return false;
+  }
+
+  // Direct match
+  if (entity.entityType === updatedData.entityType) {
+    return true;
+  }
+
+  // Handle project/regular entity type variations
+  const entityTypeVariations = [
+    ["krav", "prosjektkrav"],
+    ["tiltak", "prosjekttiltak"],
+  ];
+
+  for (const [regular, project] of entityTypeVariations) {
+    if (
+      (entity.entityType === regular && updatedData.entityType === project) ||
+      (entity.entityType === project && updatedData.entityType === regular)
+    ) {
+      return true;
+    }
+  }
+
+  return false;
 };

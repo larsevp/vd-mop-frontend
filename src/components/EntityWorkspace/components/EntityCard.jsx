@@ -118,10 +118,10 @@ const EntityCard = ({
   let shouldIndent = false;
 
   if (isCombinedView) {
-    // Combined view: only indent tiltak that are displayed under a krav
-    shouldIndent = entity._displayedUnderKrav === true;
+    // Combined view: indent tiltak that are displayed under a krav or belong to a krav
+    shouldIndent = entity._displayedUnderKrav === true || (entity.prosjektKrav && entity.prosjektKrav.length > 0);
   } else {
-    // Regular views: use traditional indentation rules
+    // Regular views: use traditional indentation rules (only parent relationships)
     shouldIndent = entity.parentId;
   }
 
@@ -168,6 +168,32 @@ const EntityCard = ({
               </span>
             </div>
           )}
+
+          {/* Parent krav reference for tiltak in combined view */}
+          {entity._displayedUnderKrav && entity._parentKrav && (
+            <div className="pl-1 flex items-center gap-2 text-sm text-blue-600 bg-blue-50/50 px-3 py-2 rounded-lg border border-blue-100">
+              <ArrowUp size={14} className="text-blue-500" />
+              <span className="font-medium">
+                ↑ {entity._parentKrav.kravUID || entity._parentKrav.id} - {entity._parentKrav.tittel}
+              </span>
+            </div>
+          )}
+
+          {/* ProsjektKrav relationship for ProsjektTiltak when hierarchy is shown */}
+          {effectiveModelConfig?.ui?.showHierarchy &&
+            (entityType === "prosjektTiltak" ||
+              entityType === "ProsjektTiltak" ||
+              entity.entityType === "prosjektTiltak" ||
+              entity.entityType === "ProsjektTiltak") &&
+            entity.prosjektKrav &&
+            entity.prosjektKrav.length > 0 && (
+              <div className="pl-1 flex items-center gap-2 text-sm text-green-600 bg-green-50/50 px-3 py-2 rounded-lg border border-green-100">
+                <ArrowUp size={14} className="text-green-500" />
+                <span className="font-medium">
+                  Tilhører krav: {entity.prosjektKrav.map((krav) => `${krav.kravUID || krav.id} - ${krav.tittel || krav.navn}`).join(", ")}
+                </span>
+              </div>
+            )}
 
           {/* Description */}
           {description && (

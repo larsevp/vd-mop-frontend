@@ -73,11 +73,12 @@ export const prosjektTiltak = {
       grouping: true, // Enable grouping functionality (group records by specified field)
       search: true, // Enable search functionality across prosjekt tiltak records
       filters: true, // Enable filter controls (status, priority, etc.)
+      hierarchy: true, // Enable hierarchy functionality to show krav-tiltak relationships
     },
 
     // UI display preferences - Controls which UI elements are shown
     ui: {
-      showHierarchy: false,
+      showHierarchy: true,
       showMerknader: false,
       showStatus: false,
       showVurdering: false,
@@ -87,6 +88,7 @@ export const prosjektTiltak = {
     },
     // Fields to display in card view - These fields appear prominently on each prosjekt tiltak card
     cardFields: ["tiltakUID", "tittel", "beskrivelse", "obligatorisk"],
+    relationships: ["files", "prosjektKrav"],
 
     // EntityDetailPane-specific form configuration - Controls the detail view when clicking on a prosjekt tiltak
     detailForm: {
@@ -100,6 +102,7 @@ export const prosjektTiltak = {
         "beskrivelseSnippet",
         "implementasjonSnippet",
         "tilbakemeldingSnippet",
+        "generalTiltakId",
       ], // Fields to hide in view mode (when not editing)
       workspaceHiddenEdit: [
         "tiltakUID",
@@ -109,6 +112,7 @@ export const prosjektTiltak = {
         "beskrivelseSnippet",
         "implementasjonSnippet",
         "tilbakemeldingSnippet",
+        "generalTiltakId",
       ], // Fields to hide when editing existing records
       workspaceHiddenCreate: [
         "tiltakUID",
@@ -118,6 +122,7 @@ export const prosjektTiltak = {
         "beskrivelseSnippet",
         "implementasjonSnippet",
         "tilbakemeldingSnippet",
+        "generalTiltakId",
       ], // Fields to hide when creating new records
 
       // Section organization - Organizes form fields into collapsible sections
@@ -206,12 +211,6 @@ export const prosjektTiltak = {
         tilbakemelding: {
           section: "annet", // Feedback and results
           order: 10,
-        },
-
-        generalTiltakId: {
-          section: "references", // Reference to general tiltak
-          order: 11,
-          row: "reference-row", // Same row as parentId
         },
 
         // Administrative information - context and requirements
@@ -397,15 +396,6 @@ export const prosjektTiltak = {
       hiddenIndex: true,
       hiddenEdit: true,
       hiddenCreate: true,
-    },
-    {
-      name: "krav",
-      label: "Tilknyttet krav",
-      type: "multiselect",
-      entityType: "krav",
-      required: false,
-      field_info: "Velg hvilke krav dette prosjekttiltaket adresserer eller oppfyller",
-      suppressIndex: true, // Don't include this many-to-many relationship in index views
     },
     {
       name: "prosjektKrav",

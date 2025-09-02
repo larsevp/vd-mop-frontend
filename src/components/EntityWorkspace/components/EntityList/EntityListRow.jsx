@@ -212,12 +212,12 @@ const EntityListRow = ({
   const generateUniqueEntityId = (item) => {
     // Check if we're in a combined view context (matches EntitySplitView and EntityListPane)
     const isCombinedView = entityType === "combined" || entityType === "combinedEntities" || entityType === "prosjekt-combined";
-    
+
     // For regular (non-combined) views, always use simple numeric ID
     if (!isCombinedView) {
       return item.id?.toString();
     }
-    
+
     // Combined view logic - need complex IDs to avoid conflicts
     if (!item.entityType) {
       return item.id?.toString();
@@ -281,6 +281,14 @@ const EntityListRow = ({
               ↑ {entity.parent.tiltakUID || entity.parent.kravUID || entity.parent.id} -{" "}
               {(entity.parent.tittel || entity.parent.navn || "").substring(0, 10)}
               {(entity.parent.tittel || entity.parent.navn || "").length > 10 ? "..." : ""}
+            </span>
+          )}
+
+          {/* Parent krav reference for tiltak in combined view */}
+          {entity._displayedUnderKrav && entity._parentKrav && viewOptions.showHierarchy && (
+            <span className="text-xs text-blue-600 font-medium">
+              ↑ {entity._parentKrav.kravUID || entity._parentKrav.id} - {(entity._parentKrav.tittel || "").substring(0, 10)}
+              {(entity._parentKrav.tittel || "").length > 10 ? "..." : ""}
             </span>
           )}
         </div>

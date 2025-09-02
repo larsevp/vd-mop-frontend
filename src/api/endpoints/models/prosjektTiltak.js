@@ -60,17 +60,17 @@ export const createProsjektTiltak = async (prosjektTiltakData) => {
   const { useProjectStore } = await import("@/stores/userStore");
   const { currentProject } = useProjectStore.getState();
   const projectId = currentProject?.id;
-  
+
   if (!projectId || isNaN(Number(projectId))) {
-    throw new Error('Ingen gyldig prosjekt valgt. Vennligst velg et prosjekt før du oppretter tiltak.');
+    throw new Error("Ingen gyldig prosjekt valgt. Vennligst velg et prosjekt før du oppretter tiltak.");
   }
-  
+
   // Include projectId in the data
   const dataWithProjectId = {
     ...prosjektTiltakData,
-    projectId: Number(projectId)
+    projectId: Number(projectId),
   };
-  
+
   return API.post("/prosjekt-tiltak", dataWithProjectId);
 };
 
@@ -87,7 +87,7 @@ export const multiSelectProsjektTiltak = (config = {}) => {
 // Pagination endpoints
 export const getPaginatedProsjektTiltak = (page = 1, pageSize = 10, search = "", sortBy = "", sortOrder = "asc", projectId = null) => {
   const config = addProsjektTiltakFieldExclusion("index");
-  
+
   // Build params including projectId
   const params = new URLSearchParams({
     page: page.toString(),
@@ -104,7 +104,7 @@ export const getPaginatedProsjektTiltak = (page = 1, pageSize = 10, search = "",
 
 export const getPaginatedProsjektTiltakAll = (page = 1, pageSize = 10, search = "", sortBy = "", sortOrder = "asc", projectId = null) => {
   // No field exclusion - return all fields including heavy content
-  
+
   // Build params including projectId
   const params = new URLSearchParams({
     page: page.toString(),
@@ -119,9 +119,16 @@ export const getPaginatedProsjektTiltakAll = (page = 1, pageSize = 10, search = 
   return API.get(`/prosjekt-tiltak/paginated?${params}`);
 };
 
-export const getPaginatedProsjektTiltakGroupedByEmne = (page = 1, pageSize = 10, search = "", sortBy = "", sortOrder = "asc", projectId = null) => {
+export const getPaginatedProsjektTiltakGroupedByEmne = (
+  page = 1,
+  pageSize = 10,
+  search = "",
+  sortBy = "",
+  sortOrder = "asc",
+  projectId = null
+) => {
   const config = addProsjektTiltakFieldExclusion("index");
-  
+
   // Build params including projectId
   const params = new URLSearchParams({
     page: page.toString(),

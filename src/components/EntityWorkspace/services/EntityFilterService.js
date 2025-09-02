@@ -76,8 +76,9 @@ export class EntityFilterService {
         // Vurdering filter
         if (!this._matchesFilter(item.vurdering, filters.vurdering)) return false;
 
-        // Priority filter
-        if (!this._matchesPriorityFilter(item.prioritet, filters.prioritet)) return false;
+        // Priority filter - support both 'priority' and 'prioritet' parameter names
+        const priorityFilter = filters.priority || filters.prioritet;
+        if (!this._matchesPriorityFilter(item.prioritet, priorityFilter)) return false;
 
         // Main obligatory/optional filter
         if (!this._matchesObligatoryFilter(item.obligatorisk, filters.filterBy)) return false;
