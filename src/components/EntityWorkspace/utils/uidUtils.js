@@ -103,22 +103,12 @@ function getValueFromPath(obj, path) {
 export function getEntityUID(entity, entityType) {
   if (!entity) return null;
 
-  console.log("🔧 getEntityUID called:", {
-    entity: entity,
-    entityType,
-    entityEntityType: entity?.entityType,
-  });
-
   const normalizedType = EntityTypeTranslator.translate(entityType || entity.entityType, "camelCase");
   const config = ENTITY_UID_CONFIG[normalizedType];
 
   if (config?.uid) {
     const uid = getValueFromPath(entity, config.uid);
-    console.log("🔧 getEntityUID result:", {
-      normalizedType,
-      configPath: config.uid,
-      result: uid,
-    });
+
     if (uid) return uid;
   }
 
@@ -126,7 +116,7 @@ export function getEntityUID(entity, entityType) {
   const genericFields = ["kravUID", "tiltakUID", "prosjektKravUID", "prosjektTiltakUID", "enhetUID", "prosjektUID", "uid", "UID"];
   for (const field of genericFields) {
     if (entity[field]) {
-      console.log("🔧 getEntityUID fallback result:", entity[field]);
+      //console.log("🔧 getEntityUID fallback result:", entity[field]);
       return entity[field];
     }
   }
@@ -135,11 +125,11 @@ export function getEntityUID(entity, entityType) {
   if (entity.id && normalizedType) {
     const displayName = EntityTypeTranslator.getDisplayName(normalizedType, false);
     const generatedUID = `${displayName.toUpperCase().replace(/\s/g, "")}${entity.id}`;
-    console.log("🔧 getEntityUID generated result:", generatedUID);
+    //console.log("🔧 getEntityUID generated result:", generatedUID);
     return generatedUID;
   }
 
-  console.log("🔧 getEntityUID final fallback:", entity.id?.toString() || null);
+  //console.log("🔧 getEntityUID final fallback:", entity.id?.toString() || null);
   return entity.id?.toString() || null;
 }
 
@@ -195,12 +185,6 @@ export function getConnectedEntityUID(entity, entityType, isParentDisplay = fals
   if (config?.connectedEntityUID) {
     const result = getValueFromPath(entity, config.connectedEntityUID);
     if (isParentDisplay) {
-      console.log("🔍 Parent UID Config Result:", {
-        normalizedType,
-        configPath: config.connectedEntityUID,
-        result,
-        entityData: entity,
-      });
     }
     return result;
   }
@@ -208,7 +192,7 @@ export function getConnectedEntityUID(entity, entityType, isParentDisplay = fals
   // Fallback to regular UID
   const fallbackResult = getEntityUID(entity, entityType);
   if (isParentDisplay) {
-    console.log("🔍 Parent UID Fallback Result:", fallbackResult);
+    //console.log("🔍 Parent UID Fallback Result:", fallbackResult);
   }
   return fallbackResult;
 }

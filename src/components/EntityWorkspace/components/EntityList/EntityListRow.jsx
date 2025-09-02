@@ -271,8 +271,7 @@ const EntityListRow = ({
           {/* Parent reference for child elements */}
           {entity.parentId && entity.parent && viewOptions.showHierarchy && (
             <span className="text-xs text-blue-600 font-medium">
-              {console.log(entity)}
-              {console.log("HER!")}↑ {getConnectedEntityUID(entity.parent, entity.parent.entityType || actualEntityType, true)} -{" "}
+              ↑ {getConnectedEntityUID(entity.parent, entity.parent.entityType || actualEntityType, true)} -{" "}
               {getEntityDisplayName(entity.parent).substring(0, 10)}
               {getEntityDisplayName(entity.parent).length > 10 ? "..." : ""}
             </span>
@@ -280,19 +279,10 @@ const EntityListRow = ({
 
           {/* Parent krav reference for tiltak in combined view */}
           {/* Debug: Log entity data for tiltak entities */}
-          {(entity.entityType === "tiltak" || entity.entityType === "prosjekttiltak") &&
-            console.log("EntityListRow - Tiltak entity:", {
-              id: entity.id,
-              entityType: entity.entityType,
-              _displayedUnderKrav: entity._displayedUnderKrav,
-              _parentKrav: entity._parentKrav,
-              _relatedToKrav: entity._relatedToKrav,
-              hasParentKrav: !!entity._parentKrav,
-              keys: Object.keys(entity),
-            })}
+          {entity.entityType === "tiltak" || entity.entityType === "prosjekttiltak"}
           {entity._displayedUnderKrav && entity._parentKrav && viewOptions.showHierarchy && (
             <span className="text-xs text-blue-600 font-medium">
-              {console.log("HER! combined")}↑ {getConnectedEntityUID(entity._parentKrav, getKravEntityType(), true)} -{" "}
+              ↑ {getConnectedEntityUID(entity._parentKrav, getKravEntityType(), true)} -{" "}
               {getEntityDisplayName(entity._parentKrav).substring(0, 10)}
               {getEntityDisplayName(entity._parentKrav).length > 10 ? "..." : ""}
             </span>
