@@ -48,7 +48,7 @@ export async function storeTempImage(file, tempId = null) {
         const tempImages = { ...currentData, [id]: imageData };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(tempImages));
 
-        console.log("📦 Stored temp image:", { id, fileName: imageData.fileName, size: file.size });
+        //console.log("📦 Stored temp image:", { id, fileName: imageData.fileName, size: file.size });
 
         resolve({
           id,
@@ -96,7 +96,7 @@ export function removeTempImage(id) {
   const tempImages = getTempImages();
   delete tempImages[id];
   localStorage.setItem(STORAGE_KEY, JSON.stringify(tempImages));
-  console.log("🗑️ Removed temp image:", id);
+  //console.log("🗑️ Removed temp image:", id);
 }
 
 /**
@@ -104,7 +104,7 @@ export function removeTempImage(id) {
  */
 export function clearAllTempImages() {
   localStorage.removeItem(STORAGE_KEY);
-  console.log("🧹 Cleared all temp images");
+  //console.log("🧹 Cleared all temp images");
 }
 
 /**
@@ -166,17 +166,17 @@ export function getStorageStats() {
  */
 export async function prepareTempImagesForUpload(formData, uploadFunction, onToast) {
   try {
-    console.log("🔍 Frontend: Scanning form data for localStorage images...");
+    //console.log("🔍 Frontend: Scanning form data for localStorage images...");
 
     const tempImages = getTempImages();
     const tempImageIds = Object.keys(tempImages);
 
     if (tempImageIds.length === 0) {
-      console.log("ℹ️ Frontend: No localStorage images found");
+      //console.log("ℹ️ Frontend: No localStorage images found");
       return formData;
     }
 
-    console.log(`📋 Frontend: Found ${tempImageIds.length} localStorage images to process`);
+    //console.log(`📋 Frontend: Found ${tempImageIds.length} localStorage images to process`);
 
     // Create a deep copy of form data
     const updatedFormData = JSON.parse(JSON.stringify(formData));
@@ -190,25 +190,25 @@ export async function prepareTempImagesForUpload(formData, uploadFunction, onToa
       const fieldValue = updatedFormData[fieldName];
 
       if (typeof fieldValue === "string" && fieldValue.includes("data:image/")) {
-        console.log(`🔍 Frontend: Scanning field "${fieldName}" for localStorage images`);
+        //console.log(`🔍 Frontend: Scanning field "${fieldName}" for localStorage images`);
 
         // Check if this field contains any of our localStorage images
         tempImageIds.forEach((tempId) => {
           const imageData = tempImages[tempId];
           if (fieldValue.includes(imageData.base64Data)) {
             usedImageIds.push(tempId);
-            console.log(`✅ Frontend: Found localStorage image ${tempId} in field ${fieldName}`);
+            //console.log(`✅ Frontend: Found localStorage image ${tempId} in field ${fieldName}`);
           }
         });
       }
     });
 
     if (usedImageIds.length === 0) {
-      console.log("ℹ️ Frontend: No localStorage images are used in form content");
+      //console.log("ℹ️ Frontend: No localStorage images are used in form content");
       return formData;
     }
 
-    console.log(`📤 Frontend: Uploading ${usedImageIds.length} localStorage images...`);
+    //console.log(`📤 Frontend: Uploading ${usedImageIds.length} localStorage images...`);
     onToast(`Laster opp ${usedImageIds.length} bilder...`, "info");
 
     // Upload each used image
@@ -216,7 +216,7 @@ export async function prepareTempImagesForUpload(formData, uploadFunction, onToa
       const imageData = tempImages[tempId];
 
       try {
-        console.log(`🚀 Frontend: Uploading localStorage image: ${tempId} (${imageData.fileName})`);
+        //console.log(`🚀 Frontend: Uploading localStorage image: ${tempId} (${imageData.fileName})`);
 
         // Convert base64 back to File object
         const response = await fetch(imageData.base64Data);
@@ -235,7 +235,7 @@ export async function prepareTempImagesForUpload(formData, uploadFunction, onToa
         }
 
         const uploadedUrl = uploadResponse.data.digitalOceanUrl;
-        console.log(`✅ Frontend: Successfully uploaded ${tempId} to ${uploadedUrl}`);
+        //console.log(`✅ Frontend: Successfully uploaded ${tempId} to ${uploadedUrl}`);
 
         // Store the URL replacement mapping
         imageReplacements.set(imageData.base64Data, uploadedUrl);

@@ -61,6 +61,12 @@ export default function RowForm({
 }) {
   const editing = !!(row && row.id);
 
+  // Helper function to check if entity supports file uploads (has rich text fields)
+  const supportsFileUploads = (entityType) => {
+    const entitiesWithRichText = ["krav", "tiltak", "prosjektkrav", "prosjekttiltak", "prosjekt"];
+    return entitiesWithRichText.includes(entityType?.toLowerCase());
+  };
+
   // Initialize form state using FieldResolver
   const initialForm = fields.reduce((acc, field) => {
     acc[field.name] = FieldResolver.initializeFieldValue(field, row, editing, modelName);
@@ -210,29 +216,34 @@ export default function RowForm({
     setIsSubmitting(true);
 
     try {
-      console.log("🔄 Frontend: Checking for localStorage images to upload...");
+      let updatedForm = form;
 
-      // Show initial upload status
-      setToast({
-        show: true,
-        message: "Forbereder lagring...",
-        type: "info",
-        persistent: true,
-      });
+      // Only process file uploads for entities that support rich text fields
+      if (supportsFileUploads(modelName)) {
+        console.log("🔄 Frontend: Checking for localStorage images to upload...");
 
-      // Import the localStorage utility
-      const { prepareTempImagesForUpload } = await import("@/utils/tempImageStorage");
-      const { uploadImage } = await import("@/api/endpoints");
+        // Show initial upload status
+        setToast({
+          show: true,
+          message: "Forbereder lagring...",
+          type: "info",
+          persistent: true,
+        });
 
-      // Upload all localStorage images and replace URLs in form data
-      const updatedForm = await prepareTempImagesForUpload(form, uploadImage, (message, type) => {
-        setToast({ show: true, message, type, persistent: true });
-      });
+        // Import the localStorage utility
+        const { prepareTempImagesForUpload } = await import("@/utils/tempImageStorage");
+        const { uploadImage } = await import("@/api/endpoints");
 
-      console.log("✅ Frontend: All localStorage images uploaded successfully");
+        // Upload all localStorage images and replace URLs in form data
+        updatedForm = await prepareTempImagesForUpload(form, uploadImage, (message, type) => {
+          setToast({ show: true, message, type, persistent: true });
+        });
 
-      // Update the form state with the new URLs so user sees uploaded images
-      setForm(updatedForm);
+        console.log("✅ Frontend: All localStorage images uploaded successfully");
+
+        // Update the form state with the new URLs so user sees uploaded images
+        setForm(updatedForm);
+      }
 
       // Show saving status
       setToast({

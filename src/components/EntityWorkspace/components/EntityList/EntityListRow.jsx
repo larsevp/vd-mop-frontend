@@ -27,6 +27,16 @@ const EntityListRow = ({
     showRelations: true,
   },
 }) => {
+  // Helper function to determine the correct krav entity type based on context
+  const getKravEntityType = () => {
+    // In project combined view, krav entities are prosjektKrav
+    if (entityType === "prosjekt-combined") {
+      return "prosjektKrav";
+    }
+    // In general combined view or krav-specific views, krav entities are krav
+    return "krav";
+  };
+
   // Helper function to truncate text - defined early so it can be used throughout
   const truncateText = (text, maxLength = 60) => {
     if (!text) return "";
@@ -269,9 +279,20 @@ const EntityListRow = ({
           )}
 
           {/* Parent krav reference for tiltak in combined view */}
+          {/* Debug: Log entity data for tiltak entities */}
+          {(entity.entityType === "tiltak" || entity.entityType === "prosjekttiltak") &&
+            console.log("EntityListRow - Tiltak entity:", {
+              id: entity.id,
+              entityType: entity.entityType,
+              _displayedUnderKrav: entity._displayedUnderKrav,
+              _parentKrav: entity._parentKrav,
+              _relatedToKrav: entity._relatedToKrav,
+              hasParentKrav: !!entity._parentKrav,
+              keys: Object.keys(entity),
+            })}
           {entity._displayedUnderKrav && entity._parentKrav && viewOptions.showHierarchy && (
             <span className="text-xs text-blue-600 font-medium">
-              {console.log("HER! combined")}↑ {getConnectedEntityUID(entity._parentKrav, "krav", true)} -{" "}
+              {console.log("HER! combined")}↑ {getConnectedEntityUID(entity._parentKrav, getKravEntityType(), true)} -{" "}
               {getEntityDisplayName(entity._parentKrav).substring(0, 10)}
               {getEntityDisplayName(entity._parentKrav).length > 10 ? "..." : ""}
             </span>

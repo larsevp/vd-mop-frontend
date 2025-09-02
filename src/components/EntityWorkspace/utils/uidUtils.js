@@ -103,26 +103,43 @@ function getValueFromPath(obj, path) {
 export function getEntityUID(entity, entityType) {
   if (!entity) return null;
 
+  console.log("🔧 getEntityUID called:", {
+    entity: entity,
+    entityType,
+    entityEntityType: entity?.entityType,
+  });
+
   const normalizedType = EntityTypeTranslator.translate(entityType || entity.entityType, "camelCase");
   const config = ENTITY_UID_CONFIG[normalizedType];
 
   if (config?.uid) {
     const uid = getValueFromPath(entity, config.uid);
+    console.log("🔧 getEntityUID result:", {
+      normalizedType,
+      configPath: config.uid,
+      result: uid,
+    });
     if (uid) return uid;
   }
 
   // Generic fallback
   const genericFields = ["kravUID", "tiltakUID", "prosjektKravUID", "prosjektTiltakUID", "enhetUID", "prosjektUID", "uid", "UID"];
   for (const field of genericFields) {
-    if (entity[field]) return entity[field];
+    if (entity[field]) {
+      console.log("🔧 getEntityUID fallback result:", entity[field]);
+      return entity[field];
+    }
   }
 
   // Generate fallback UID if needed
   if (entity.id && normalizedType) {
     const displayName = EntityTypeTranslator.getDisplayName(normalizedType, false);
-    return `${displayName.toUpperCase().replace(/\s/g, "")}${entity.id}`;
+    const generatedUID = `${displayName.toUpperCase().replace(/\s/g, "")}${entity.id}`;
+    console.log("🔧 getEntityUID generated result:", generatedUID);
+    return generatedUID;
   }
 
+  console.log("🔧 getEntityUID final fallback:", entity.id?.toString() || null);
   return entity.id?.toString() || null;
 }
 
@@ -163,12 +180,13 @@ export function getKravUID(entity, entityType) {
  */
 export function getConnectedEntityUID(entity, entityType, isParentDisplay = false) {
   if (isParentDisplay) {
-    /*console.log("🔍 Parent/Related Entity UID Resolution:", {
+    /*
+    console.log("🔍 Parent/Related Entity UID Resolution:", {
       entity: entity,
       entityType,
       entityEntityType: entity?.entityType,
       hasEntity: !!entity,
-    });*/
+    }); */
   }
 
   const normalizedType = EntityTypeTranslator.translate(entityType || entity.entityType, "camelCase");
@@ -177,11 +195,12 @@ export function getConnectedEntityUID(entity, entityType, isParentDisplay = fals
   if (config?.connectedEntityUID) {
     const result = getValueFromPath(entity, config.connectedEntityUID);
     if (isParentDisplay) {
-      /*console.log("🔍 Parent UID Config Result:", {
+      console.log("🔍 Parent UID Config Result:", {
         normalizedType,
         configPath: config.connectedEntityUID,
         result,
-      }); */
+        entityData: entity,
+      });
     }
     return result;
   }
@@ -189,7 +208,7 @@ export function getConnectedEntityUID(entity, entityType, isParentDisplay = fals
   // Fallback to regular UID
   const fallbackResult = getEntityUID(entity, entityType);
   if (isParentDisplay) {
-    //console.log("🔍 Parent UID Fallback Result:", fallbackResult);
+    console.log("🔍 Parent UID Fallback Result:", fallbackResult);
   }
   return fallbackResult;
 }
