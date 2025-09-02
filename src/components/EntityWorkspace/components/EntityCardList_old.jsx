@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/primitives/button";
 import { Plus, Settings, ChevronDown, ChevronRight, FileText } from "lucide-react";
-import EntityCardController from "./EntityCardController";
+import EntityCardController from "./EntityCardController_old";
 import { EntityFilterService } from "@/components/EntityWorkspace/services/EntityFilterService";
 
 /**

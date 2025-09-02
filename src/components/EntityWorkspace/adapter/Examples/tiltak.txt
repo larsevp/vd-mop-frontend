@@ -1,0 +1,366 @@
+Get: http://localhost:3001/api/tiltak/grouped-by-emne/paginated?page=1&pageSize=50&sortBy=id&sortOrder=asc
+
+Response: {
+    "items": [
+        {
+            "emne": {
+                "id": 1,
+                "tittel": "Støy",
+                "icon": "Volume2",
+                "color": "#ef4444",
+                "sortIt": 1
+            },
+            "tiltak": [
+                {
+                    "id": 1,
+                    "tiltakUID": "GT1",
+                    "tittel": "Implementering av støyskjerming",
+                    "beskrivelse": {
+                        "type": "doc",
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "text": "Dette tiltaket innebærer oppføring av støyskjerming langs transportkorridoren for å redusere støybelastningen på omkringliggende områder.",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "implementasjon": {
+                        "type": "doc",
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "text": "Tiltaket implementeres gjennom oppføring av 2-3 meter høye støyskjermer i betong og glass langs kritiske strekninger. Arbeidet utføres i fase 2 av prosjektet.",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "tilbakemelding": {
+                        "type": "doc",
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "text": "Tilbakemelding fra lokale myndigheter er positiv. Naboer ønsker høyere skjermer på enkelte strekninger.",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "beskrivelsePlain": "Dette tiltaket innebærer oppføring av støyskjerming langs transportkorridoren for å redusere støybelastningen på omkringliggende områder.",
+                    "implementasjonPlain": "Tiltaket implementeres gjennom oppføring av 2-3 meter høye støyskjermer i betong og glass langs kritiske strekninger. Arbeidet utføres i fase 2 av prosjektet.",
+                    "tilbakemeldingPlain": "Tilbakemelding fra lokale myndigheter er positiv. Naboer ønsker høyere skjermer på enkelte strekninger.",
+                    "beskrivelseSnippet": "Dette tiltaket innebærer oppføring av støyskjerming langs transportkorridoren for å redusere støybelastningen på omkringliggende områder.",
+                    "implementasjonSnippet": "Tiltaket implementeres gjennom oppføring av 2-3 meter høye støyskjermer i betong og glass langs kritiske strekninger. Arbeidet utføres i fase 2 av prosjektet.",
+                    "tilbakemeldingSnippet": "Tilbakemelding fra lokale myndigheter er positiv. Naboer ønsker høyere skjermer på enkelte strekninger.",
+                    "merknad": "Viktig å koordinere med kommunens reguleringsplan",
+                    "prioritet": 10,
+                    "givenOrder": 1,
+                    "vurderingId": 1,
+                    "statusId": 1,
+                    "parentId": null,
+                    "obligatorisk": true,
+                    "emneId": 1,
+                    "enhetId": 1,
+                    "createdBy": 1,
+                    "updatedBy": 1,
+                    "createdAt": "2025-09-02T19:43:26.102Z",
+                    "updatedAt": "2025-09-02T19:43:26.109Z",
+                    "enhet": {
+                        "id": 1,
+                        "navn": "Veidekke"
+                    },
+                    "creator": {
+                        "id": 1,
+                        "navn": "Admin"
+                    },
+                    "updater": {
+                        "id": 1,
+                        "navn": "Admin"
+                    },
+                    "emne": {
+                        "id": 1,
+                        "tittel": "Støy",
+                        "icon": "Volume2",
+                        "color": "#ef4444",
+                        "sortIt": 1
+                    },
+                    "status": {
+                        "id": 1,
+                        "navn": "Ferdig",
+                        "sortIt": 1,
+                        "icon": "CheckCircle",
+                        "color": "#22c55e"
+                    },
+                    "vurdering": {
+                        "id": 1,
+                        "navn": "Bra",
+                        "sortIt": 1,
+                        "icon": "Star",
+                        "color": "#22c55e"
+                    },
+                    "parent": null,
+                    "children": [],
+                    "files": [],
+                    "krav": [
+                        {
+                            "id": 1,
+                            "kravUID": "GK1",
+                            "tittel": "TestKrav",
+                            "beskrivelseSnippet": "Dette er et testkrav med riktig TipTap JSON format",
+                            "emneId": 1
+                        }
+                    ],
+                    "favorittTiltak": [
+                        {
+                            "id": 1,
+                            "userId": 1
+                        }
+                    ],
+                    "favorittAvBrukere": [
+                        {
+                            "id": 1,
+                            "navn": "Admin",
+                            "epost": "admin_manual@colorizethis.no"
+                        }
+                    ]
+                },
+                {
+                    "id": 2,
+                    "tiltakUID": "GT2",
+                    "tittel": "Revegetering av anleggsområder",
+                    "beskrivelse": {
+                        "type": "doc",
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "text": "Tiltak for å gjenopprette vegetasjon i områder som er påvirket av anleggsvirksomhet, inkludert såing av gress og planting av trær og busker.",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "implementasjon": {
+                        "type": "doc",
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "text": "Revegetering utføres umiddelbart etter at anleggsarbeid er ferdigstilt i hvert delområde. Brukes lokale plantearter tilpasset klimaet.",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "tilbakemelding": null,
+                    "beskrivelsePlain": "Tiltak for å gjenopprette vegetasjon i områder som er påvirket av anleggsvirksomhet, inkludert såing av gress og planting av trær og busker.",
+                    "implementasjonPlain": "Revegetering utføres umiddelbart etter at anleggsarbeid er ferdigstilt i hvert delområde. Brukes lokale plantearter tilpasset klimaet.",
+                    "tilbakemeldingPlain": null,
+                    "beskrivelseSnippet": "Tiltak for å gjenopprette vegetasjon i områder som er påvirket av anleggsvirksomhet, inkludert såing av gress og planting av trær og busker.",
+                    "implementasjonSnippet": "Revegetering utføres umiddelbart etter at anleggsarbeid er ferdigstilt i hvert delområde. Brukes lokale plantearter tilpasset klimaet.",
+                    "tilbakemeldingSnippet": "",
+                    "merknad": "Koordinere med landskapsarkitekt og lokale miljøorganisasjoner",
+                    "prioritet": 15,
+                    "givenOrder": 2,
+                    "vurderingId": 2,
+                    "statusId": 2,
+                    "parentId": null,
+                    "obligatorisk": false,
+                    "emneId": 1,
+                    "enhetId": 1,
+                    "createdBy": 1,
+                    "updatedBy": 1,
+                    "createdAt": "2025-09-02T19:43:26.116Z",
+                    "updatedAt": "2025-09-02T19:43:26.147Z",
+                    "enhet": {
+                        "id": 1,
+                        "navn": "Veidekke"
+                    },
+                    "creator": {
+                        "id": 1,
+                        "navn": "Admin"
+                    },
+                    "updater": {
+                        "id": 1,
+                        "navn": "Admin"
+                    },
+                    "emne": {
+                        "id": 1,
+                        "tittel": "Støy",
+                        "icon": "Volume2",
+                        "color": "#ef4444",
+                        "sortIt": 1
+                    },
+                    "status": {
+                        "id": 2,
+                        "navn": "Under arbeid",
+                        "sortIt": 2,
+                        "icon": "Play",
+                        "color": "#f59e0b"
+                    },
+                    "vurdering": {
+                        "id": 2,
+                        "navn": "Trenger mer arbeid",
+                        "sortIt": 2,
+                        "icon": "AlertTriangle",
+                        "color": "#f59e0b"
+                    },
+                    "parent": null,
+                    "children": [
+                        {
+                            "id": 3,
+                            "tiltakUID": "GT3",
+                            "tittel": "Spesiell revegetering ved bekker",
+                            "obligatorisk": true,
+                            "prioritet": 12
+                        }
+                    ],
+                    "files": [],
+                    "krav": [
+                        {
+                            "id": 1,
+                            "kravUID": "GK1",
+                            "tittel": "TestKrav",
+                            "beskrivelseSnippet": "Dette er et testkrav med riktig TipTap JSON format",
+                            "emneId": 1
+                        },
+                        {
+                            "id": 2,
+                            "kravUID": "GK2",
+                            "tittel": "TestKrav_2",
+                            "beskrivelseSnippet": "Dette er et underkrav med TipTap JSON format",
+                            "emneId": 1
+                        }
+                    ],
+                    "favorittTiltak": [],
+                    "favorittAvBrukere": []
+                },
+                {
+                    "id": 3,
+                    "tiltakUID": "GT3",
+                    "tittel": "Spesiell revegetering ved bekker",
+                    "beskrivelse": {
+                        "type": "doc",
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "text": "Spesialisert revegetering ved bekker og våtområder med fokus på vannkvalitet og erosjonsbeskyttelse.",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "implementasjon": {
+                        "type": "doc",
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "text": "Planting av pil, bjørk og andre vannkjære arter. Etablering av filterstriper.",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "tilbakemelding": null,
+                    "beskrivelsePlain": "Spesialisert revegetering ved bekker og våtområder med fokus på vannkvalitet og erosjonsbeskyttelse.",
+                    "implementasjonPlain": "Planting av pil, bjørk og andre vannkjære arter. Etablering av filterstriper.",
+                    "tilbakemeldingPlain": null,
+                    "beskrivelseSnippet": "Spesialisert revegetering ved bekker og våtområder med fokus på vannkvalitet og erosjonsbeskyttelse.",
+                    "implementasjonSnippet": "Planting av pil, bjørk og andre vannkjære arter. Etablering av filterstriper.",
+                    "tilbakemeldingSnippet": "",
+                    "merknad": "Følge retningslinjer fra miljømyndighetene",
+                    "prioritet": 12,
+                    "givenOrder": 3,
+                    "vurderingId": 1,
+                    "statusId": 1,
+                    "parentId": 2,
+                    "obligatorisk": true,
+                    "emneId": 1,
+                    "enhetId": 1,
+                    "createdBy": 1,
+                    "updatedBy": 1,
+                    "createdAt": "2025-09-02T19:43:26.126Z",
+                    "updatedAt": "2025-09-02T19:43:26.149Z",
+                    "enhet": {
+                        "id": 1,
+                        "navn": "Veidekke"
+                    },
+                    "creator": {
+                        "id": 1,
+                        "navn": "Admin"
+                    },
+                    "updater": {
+                        "id": 1,
+                        "navn": "Admin"
+                    },
+                    "emne": {
+                        "id": 1,
+                        "tittel": "Støy",
+                        "icon": "Volume2",
+                        "color": "#ef4444",
+                        "sortIt": 1
+                    },
+                    "status": {
+                        "id": 1,
+                        "navn": "Ferdig",
+                        "sortIt": 1,
+                        "icon": "CheckCircle",
+                        "color": "#22c55e"
+                    },
+                    "vurdering": {
+                        "id": 1,
+                        "navn": "Bra",
+                        "sortIt": 1,
+                        "icon": "Star",
+                        "color": "#22c55e"
+                    },
+                    "parent": {
+                        "id": 2,
+                        "tiltakUID": "GT2",
+                        "tittel": "Revegetering av anleggsområder",
+                        "beskrivelseSnippet": "Tiltak for å gjenopprette vegetasjon i områder som er påvirket av anleggsvirksomhet, inkludert såing av gress og planting av trær og busker.",
+                        "emneId": 1
+                    },
+                    "children": [],
+                    "files": [],
+                    "krav": [
+                        {
+                            "id": 2,
+                            "kravUID": "GK2",
+                            "tittel": "TestKrav_2",
+                            "beskrivelseSnippet": "Dette er et underkrav med TipTap JSON format",
+                            "emneId": 1
+                        }
+                    ],
+                    "favorittTiltak": [],
+                    "favorittAvBrukere": []
+                }
+            ]
+        }
+    ],
+    "totalCount": 1,
+    "page": 1,
+    "pageSize": 50,
+    "totalPages": 1
+}

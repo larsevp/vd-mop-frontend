@@ -13,7 +13,7 @@ import { ArrowLeft } from "lucide-react";
 import { modelConfigs } from "@/modelConfigs";
 // Generic components
 import { SearchBar, HeaderSearchBar, EntityFilters, ViewOptionsMenu } from "./shared";
-import EntityCardList from "./components/EntityCardList";
+import EntityCardList from "./components/EntityCardList_old";
 import EntitySplitView from "./layouts/EntitySplitView";
 import { Toast } from "@/components/ui/editor/components/Toast.jsx";
 
@@ -68,28 +68,28 @@ const EntityWorkspace = ({ modelConfig, entityType, workspaceConfig = {} }) => {
       canBulkActions: false,
       editButtonText: "Rediger",
       createButtonText: modelConfig.newButtonLabel || `Nytt ${entityType}`,
-      deleteConfirmText: (entity) => `Er du sikker på at du vil slette "${entity?.tittel || entity?.navn || 'denne oppføringen'}"?`,
-      
+      deleteConfirmText: (entity) => `Er du sikker på at du vil slette "${entity?.tittel || entity?.navn || "denne oppføringen"}"?`,
+
       // Dynamic resolver for individual entities (used in combined views)
       resolveForEntity: (entity) => {
         const entityPermissions = { ...permissions };
-        
+
         // For combined views, resolve permissions per entity type
-        if (entityType === 'combinedEntities' || entityType === 'combined') {
+        if (entityType === "combinedEntities" || entityType === "combined") {
           // In combined view, disable creating since it's ambiguous which type to create
           entityPermissions.canCreate = false;
-          
+
           // For specific entity types within combined view, editing is allowed since we know the specific type
           if (entity?.entityType) {
-            const targetModelName = entity.entityType === 'krav' ? 'krav' : 
-                                   entity.entityType === 'tiltak' ? 'tiltak' : null;
-            
+            const targetModelName = entity.entityType === "krav" ? "krav" : entity.entityType === "tiltak" ? "tiltak" : null;
+
             if (targetModelName && modelConfigs[targetModelName]) {
               const targetConfig = modelConfigs[targetModelName];
               // Allow editing - we know the specific entity type
               entityPermissions.canEdit = targetConfig.workspace?.features?.inlineEdit !== false;
               entityPermissions.editButtonText = `Rediger ${targetConfig.title || entity.entityType}`;
-              entityPermissions.deleteConfirmText = (e) => `Er du sikker på at du vil slette "${e?.tittel || e?.navn || 'denne oppføringen'}"?`;
+              entityPermissions.deleteConfirmText = (e) =>
+                `Er du sikker på at du vil slette "${e?.tittel || e?.navn || "denne oppføringen"}"?`;
             }
           }
         }
@@ -98,7 +98,7 @@ const EntityWorkspace = ({ modelConfig, entityType, workspaceConfig = {} }) => {
         if (config.features?.inlineEdit === false) {
           entityPermissions.canEdit = false;
         }
-        
+
         if (config.features?.bulkActions === false) {
           entityPermissions.canBulkActions = false;
         }
@@ -111,20 +111,20 @@ const EntityWorkspace = ({ modelConfig, entityType, workspaceConfig = {} }) => {
         }
 
         return entityPermissions;
-      }
+      },
     };
 
     // Apply workspace-level restrictions
     if (config.features?.inlineEdit === false) {
       permissions.canEdit = false;
     }
-    
+
     if (config.features?.bulkActions === false) {
       permissions.canBulkActions = false;
     }
 
     // For combined views, disable creating at workspace level
-    if (entityType === 'combinedEntities' || entityType === 'combined') {
+    if (entityType === "combinedEntities" || entityType === "combined") {
       permissions.canCreate = false;
     }
 
@@ -369,12 +369,14 @@ const EntityWorkspace = ({ modelConfig, entityType, workspaceConfig = {} }) => {
   if (isLoading && !items.length) {
     return (
       <div className={config.layout === "split" ? "bg-neutral-50" : "min-h-screen bg-neutral-50 p-6"} style={{ scrollBehavior: "auto" }}>
-        <div className="max-w-[1600px] mx-auto"
-             style={{
-               minHeight: config.layout === "split" ? "100vh" : "auto",
-               width: "100%",
-               maxWidth: config.layout === "split" ? "1600px" : "80rem"
-             }}>
+        <div
+          className="max-w-[1600px] mx-auto"
+          style={{
+            minHeight: config.layout === "split" ? "100vh" : "auto",
+            width: "100%",
+            maxWidth: config.layout === "split" ? "1600px" : "80rem",
+          }}
+        >
           <div className="flex items-center justify-center h-96">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -390,12 +392,14 @@ const EntityWorkspace = ({ modelConfig, entityType, workspaceConfig = {} }) => {
   if (error && !items.length) {
     return (
       <div className={config.layout === "split" ? "bg-neutral-50" : "min-h-screen bg-neutral-50 p-6"} style={{ scrollBehavior: "auto" }}>
-        <div className="max-w-[1600px] mx-auto"
-             style={{
-               minHeight: config.layout === "split" ? "100vh" : "auto",
-               width: "100%",
-               maxWidth: config.layout === "split" ? "1600px" : "80rem"
-             }}>
+        <div
+          className="max-w-[1600px] mx-auto"
+          style={{
+            minHeight: config.layout === "split" ? "100vh" : "auto",
+            width: "100%",
+            maxWidth: config.layout === "split" ? "1600px" : "80rem",
+          }}
+        >
           <div className="flex items-center justify-center h-96">
             <div className="text-center">
               <p className="text-red-600 mb-4">Feil ved lasting av {modelConfig.title.toLowerCase()}</p>
@@ -413,12 +417,14 @@ const EntityWorkspace = ({ modelConfig, entityType, workspaceConfig = {} }) => {
 
   return (
     <div className={config.layout === "split" ? "bg-neutral-50" : "min-h-screen bg-neutral-50 p-6"} style={{ scrollBehavior: "auto" }}>
-      <div className="max-w-[1600px] mx-auto"
-           style={{
-             minHeight: config.layout === "split" ? "100vh" : "auto",
-             width: "100%",
-             maxWidth: config.layout === "split" ? "1600px" : "80rem" // 80rem = max-w-7xl
-           }}>
+      <div
+        className="max-w-[1600px] mx-auto"
+        style={{
+          minHeight: config.layout === "split" ? "100vh" : "auto",
+          width: "100%",
+          maxWidth: config.layout === "split" ? "1600px" : "80rem", // 80rem = max-w-7xl
+        }}
+      >
         {/* Header - Compact for split view */}
         {config.layout === "split" ? (
           <div className="sticky top-0 z-20 flex-shrink-0 bg-white border-b border-gray-200 px-6 py-4">

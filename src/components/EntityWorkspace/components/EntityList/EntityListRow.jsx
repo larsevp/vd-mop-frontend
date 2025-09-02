@@ -1,5 +1,6 @@
 import React from "react";
 import { EntityTypeResolver } from "@/components/EntityWorkspace/services/EntityTypeResolver";
+import { getEntityUID, getConnectedEntityUID, getEntityDisplayName } from "../../utils/uidUtils";
 
 /**
  * Ultra-clean two-line entity row with configurable display options
@@ -54,25 +55,8 @@ const EntityListRow = ({
   // Fix UID generation for combined views - use entity.entityType if available
   const actualEntityType = entity.entityType || entityType;
 
-  // Determine the correct UID field based on entity type
-  let uid;
-  if (uidField && entity[uidField]) {
-    uid = entity[uidField];
-  } else {
-    // Handle specific entity types with their own UID fields
-    if (actualEntityType === "prosjektkrav" && entity.kravUID) {
-      uid = entity.kravUID;
-    } else if (actualEntityType === "prosjekttiltak" && entity.tiltakUID) {
-      uid = entity.tiltakUID;
-    } else if (actualEntityType === "krav" && entity.kravUID) {
-      uid = entity.kravUID;
-    } else if (actualEntityType === "tiltak" && entity.tiltakUID) {
-      uid = entity.tiltakUID;
-    } else {
-      // Fallback to generated UID
-      uid = `${actualEntityType.toUpperCase()}${entity.id}`;
-    }
-  }
+  // Get UID using simple function
+  const uid = getEntityUID(entity, actualEntityType);
 
   // Improved description resolution - try snippet first, then process TipTap JSON
   let description = "";
@@ -253,9 +237,6 @@ const EntityListRow = ({
       <div className="flex items-center justify-between gap-2 mb-1">
         {/* Left side: UID + Entity type + Parent reference */}
         <div className="flex items-center gap-2 flex-shrink-0">
-          {/* UID always first */}
-          {uid && <span className="text-xs font-mono text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded font-medium">[{uid}]</span>}
-
           {/* Entity type indicator - always show when available */}
           {entity.entityType && (
             <span
@@ -274,21 +255,25 @@ const EntityListRow = ({
                 : entity.entityType.toUpperCase()}
             </span>
           )}
+          {/* UID always first */}
+          {uid && <span className="text-xs font-mono text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded font-medium">[{uid}]</span>}
 
           {/* Parent reference for child elements */}
           {entity.parentId && entity.parent && viewOptions.showHierarchy && (
             <span className="text-xs text-blue-600 font-medium">
-              ↑ {entity.parent.tiltakUID || entity.parent.kravUID || entity.parent.id} -{" "}
-              {(entity.parent.tittel || entity.parent.navn || "").substring(0, 10)}
-              {(entity.parent.tittel || entity.parent.navn || "").length > 10 ? "..." : ""}
+              {console.log(entity)}
+              {console.log("HER!")}↑ {getConnectedEntityUID(entity.parent, entity.parent.entityType || actualEntityType, true)} -{" "}
+              {getEntityDisplayName(entity.parent).substring(0, 10)}
+              {getEntityDisplayName(entity.parent).length > 10 ? "..." : ""}
             </span>
           )}
 
           {/* Parent krav reference for tiltak in combined view */}
           {entity._displayedUnderKrav && entity._parentKrav && viewOptions.showHierarchy && (
             <span className="text-xs text-blue-600 font-medium">
-              ↑ {entity._parentKrav.kravUID || entity._parentKrav.id} - {(entity._parentKrav.tittel || "").substring(0, 10)}
-              {(entity._parentKrav.tittel || "").length > 10 ? "..." : ""}
+              {console.log("HER! combined")}↑ {getConnectedEntityUID(entity._parentKrav, "krav", true)} -{" "}
+              {getEntityDisplayName(entity._parentKrav).substring(0, 10)}
+              {getEntityDisplayName(entity._parentKrav).length > 10 ? "..." : ""}
             </span>
           )}
         </div>
@@ -320,13 +305,13 @@ const EntityListRow = ({
       {/* Footer: Meta info */}
       <div className="flex justify-between items-center text-xs text-gray-500">
         <div className="flex items-center gap-3">
-          {entity.parentId && !entity.parent && <span className="text-blue-600">Under{entityType}</span>}
+          {entity.parentId && !entity.parent && <span className="text-blue-600">Datter{entityType}</span>}
           {viewOptions.showRelations && (entity.filesCount || entity.files?.length) > 0 && (
             <span> {entity.filesCount || entity.files?.length} vedlegg</span>
           )}
           {viewOptions.showRelations && (entity.childrenCount || entity.children?.length) > 0 && (
             <span className="text-emerald-600 font-medium">
-              {entity.childrenCount || entity.children?.length} under{entityType}
+              {entity.childrenCount || entity.children?.length} {isCombinedView ? "datter krav/tiltak" : `datter${entityType}`}
             </span>
           )}
           {viewOptions.showRelations &&

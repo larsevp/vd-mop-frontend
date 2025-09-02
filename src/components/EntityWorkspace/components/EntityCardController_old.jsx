@@ -1,12 +1,12 @@
 import React, { useEffect, useCallback } from "react";
-import EntityCard from "./EntityCard";
+import EntityCard from "./EntityCard_old";
 
 /**
  * Generic controller component that decides whether to display a compact EntityCard
  * or an expanded detail view based on the expansion state.
- * 
+ *
  * Based on KravCardController but made generic for any entity type.
- * 
+ *
  * Keyboard shortcuts:
  * - E: Enter edit mode (when in view mode)
  * - ESC: Exit edit mode (go to view) or collapse card (when in view mode)
@@ -46,9 +46,7 @@ const EntityCardController = ({
       const activeElement = document.activeElement;
       const isTyping =
         activeElement &&
-        (activeElement.tagName === "INPUT" || 
-         activeElement.tagName === "TEXTAREA" || 
-         activeElement.contentEditable === "true");
+        (activeElement.tagName === "INPUT" || activeElement.tagName === "TEXTAREA" || activeElement.contentEditable === "true");
 
       if (isTyping) return;
 
@@ -135,19 +133,13 @@ const EntityCardController = ({
             </span>
           )}
           <h3 className="font-semibold text-gray-900 text-lg">
-            {expandedMode === "create" 
-              ? `Opprett ny ${entityType}` 
-              : entity?.tittel || entity?.navn || "Uten tittel"}
+            {expandedMode === "create" ? `Opprett ny ${entityType}` : entity?.tittel || entity?.navn || "Uten tittel"}
           </h3>
           {(expandedMode === "edit" || expandedMode === "create") && (
-            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded ml-2">
-              ESC for å avbryte
-            </span>
+            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded ml-2">ESC for å avbryte</span>
           )}
           {expandedMode === "view" && (
-            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded ml-2">
-              E for å redigere • ESC for å lukke
-            </span>
+            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded ml-2">E for å redigere • ESC for å lukke</span>
           )}
         </div>
 
@@ -178,11 +170,9 @@ const EntityCardController = ({
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <h4 className="font-semibold text-yellow-800 mb-2">🚧 Expanded Entity View - Under Construction</h4>
           <p className="text-yellow-700 text-sm">
-            Expanded {entityType} view for "{entity?.tittel || entity?.navn || 'Unnamed'}" (Mode: {expandedMode})
+            Expanded {entityType} view for "{entity?.tittel || entity?.navn || "Unnamed"}" (Mode: {expandedMode})
           </p>
-          <p className="text-yellow-600 text-xs mt-2">
-            This will show the full entity details with inline editing capabilities.
-          </p>
+          <p className="text-yellow-600 text-xs mt-2">This will show the full entity details with inline editing capabilities.</p>
         </div>
       </div>
     </div>

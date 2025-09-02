@@ -252,10 +252,10 @@ const EntityCard = ({
                 className="text-xs bg-indigo-50 text-indigo-700 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 font-medium border border-indigo-100"
                 title={
                   entity.parent
-                    ? `Under${entityType} av: ${entity.parent.tiltakUID || entity.parent.kravUID || entity.parent.id} - ${
+                    ? `Datter${entityType} av: ${entity.parent.tiltakUID || entity.parent.kravUID || entity.parent.id} - ${
                         entity.parent.tittel || entity.parent.navn
                       }`
-                    : `Under${entityType}`
+                    : `Datter${entityType}`
                 }
               >
                 <ArrowUp size={11} />

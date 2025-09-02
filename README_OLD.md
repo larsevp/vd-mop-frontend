@@ -56,7 +56,8 @@ A modern React-based frontend application for the MOP (Environment and Project M
 ### HTTP Client
 - **Axios**: Promise-based HTTP client with interceptors
 
-## Project Structure
+## Project Structure OLD
+
 
 ```
 src/

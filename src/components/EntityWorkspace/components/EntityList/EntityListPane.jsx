@@ -34,12 +34,12 @@ const EntityListPane = ({
   const generateUniqueEntityId = (item) => {
     // Check if we're in a combined view context
     const isCombinedView = entityType === "combined" || entityType === "combinedEntities" || entityType === "prosjekt-combined";
-    
+
     // For regular (non-combined) views, always use simple numeric ID
     if (!isCombinedView) {
       return item.id?.toString();
     }
-    
+
     // Combined view logic - need complex IDs to avoid conflicts
     if (!item.entityType) {
       return item.id?.toString();
@@ -102,11 +102,10 @@ const EntityListPane = ({
   const listRef = useRef(null);
   const prevSelectedEntityId = useRef(null);
   const isInitialMount = useRef(true);
-  
+
   // Get the isEntityJustCreated flag from the store
   const isEntityJustCreated = useEntityWorkspaceStore((state) => state.isEntityJustCreated);
   const clearJustCreatedFlag = useEntityWorkspaceStore((state) => state.clearJustCreatedFlag);
-  
 
   // Map entityType to the actual property name in grouped data (same as EntityFilterService)
   const getGroupedDataPropertyName = (entityType) => {
@@ -193,24 +192,18 @@ const EntityListPane = ({
     const isEntityIdChanged = selectedEntityId !== prevSelectedEntityId.current;
     const isFromCreateNew = prevSelectedEntityId.current === "create-new";
     const isFromNull = prevSelectedEntityId.current === null;
-    
+
     // Don't auto-scroll on initial mount/page refresh - only on genuine null-to-entity transitions
     const isGenuineFromNull = isFromNull && !isInitialMount.current;
-    
-    const hasListRef = !!listRef.current;
-    
-    
 
-    if (
-      hasSelectedEntityId &&
-      isEntityJustCreated &&
-      hasListRef
-    ) {
+    const hasListRef = !!listRef.current;
+
+    if (hasSelectedEntityId && isEntityJustCreated && hasListRef) {
       // Small delay to ensure DOM is updated
       setTimeout(() => {
         // Try first with the full selectedEntityId
         let selectedElement = listRef.current.querySelector(`[data-entity-id="${selectedEntityId}"]`);
-        
+
         // If not found, try with lowercase version (handle case mismatch)
         if (!selectedElement) {
           const lowercaseId = selectedEntityId.toLowerCase();
@@ -230,33 +223,33 @@ const EntityListPane = ({
         // Check if the parent group is collapsed - if so, expand it first
         if (selectedElement) {
           const entityId = selectedEntityId;
-          const targetEntity = allItems.find(item => {
+          const targetEntity = allItems.find((item) => {
             const itemUniqueId = generateUniqueEntityId(item);
             return itemUniqueId === entityId?.toString();
           });
-          
+
           if (targetEntity) {
             // Find the group this entity belongs to and ensure it's not collapsed
             groupedItems.forEach((group, groupIndex) => {
               const groupKey = `${entityType}-group-${group.emne?.id || "no-emne"}-${groupIndex}`;
               const propertyName = getGroupedDataPropertyName(entityType);
               const isCombinedView = entityType === "combined" || entityType === "combinedEntities" || entityType === "prosjekt-combined";
-              
+
               let groupItems = [];
               if (isCombinedView) {
                 groupItems = group.entities || [];
               } else {
                 groupItems = group[propertyName] || group[entityType] || group.entities || group.tiltak || group.krav || [];
               }
-              
+
               // Check if our target entity is in this group
-              const entityInGroup = groupItems.some(item => {
+              const entityInGroup = groupItems.some((item) => {
                 const itemUniqueId = generateUniqueEntityId(item);
                 return itemUniqueId === entityId?.toString();
               });
-              
+
               if (entityInGroup && collapsedGroups.has(groupKey)) {
-                setCollapsedGroups(prev => {
+                setCollapsedGroups((prev) => {
                   const newSet = new Set(prev);
                   newSet.delete(groupKey);
                   return newSet;
@@ -272,10 +265,10 @@ const EntityListPane = ({
               }
             });
           }
-          
+
           selectedElement.scrollIntoView({ behavior: "smooth", block: "center" });
         }
-        
+
         // Clear the "just created" flag after scrolling
         if (isEntityJustCreated) {
           clearJustCreatedFlag();
@@ -335,7 +328,7 @@ const EntityListPane = ({
             // Handle combined entity groups that have both krav and tiltak arrays
             let groupItems = [];
             const isCombinedView = entityType === "combined" || entityType === "combinedEntities" || entityType === "prosjekt-combined";
-            
+
             if (isCombinedView) {
               // For combined views, use entities array which contains mixed krav/tiltak
               groupItems = group.entities || [];
@@ -366,7 +359,7 @@ const EntityListPane = ({
                       <div className="flex items-center justify-between">
                         <h3 className="text-sm font-medium text-gray-900 truncate">{group.emne?.tittel || "Uten emne"}</h3>
                         <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
-                          {groupItems.length} {entityType}
+                          {groupItems.length} oppføringer {/*entityType*/}
                         </span>
                       </div>
                       {group.emne?.beskrivelse && <p className="text-xs text-gray-600 mt-1 truncate">{group.emne.beskrivelse}</p>}

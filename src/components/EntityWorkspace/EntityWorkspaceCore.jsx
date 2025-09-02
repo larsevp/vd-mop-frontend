@@ -20,7 +20,7 @@ import { EntityTypeResolver } from "./services/EntityTypeResolver";
 // Components (keeping existing UI components)
 import { EntityFilters, ViewOptionsMenu } from "./shared";
 import SearchBar from "./components/SearchBar";
-import EntityCardList from "./components/EntityCardList";
+import EntityCardList from "./components/EntityCardList_old";
 import EntitySplitView from "./layouts/EntitySplitView";
 import { Toast } from "@/components/ui/editor/components/Toast.jsx";
 
