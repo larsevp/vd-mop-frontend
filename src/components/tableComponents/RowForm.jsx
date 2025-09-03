@@ -91,7 +91,7 @@ export default function RowForm({
     mutationFn: updateFn,
     onSuccess: (updatedData) => {
       // Import optimistic update utility
-      import("@/components/EntityWorkspace/utils/optimisticUpdates.js")
+      import("@/components/EntityWorkspace/shared/utils/optimisticUpdates.js")
         .then(({ handleOptimisticEntityUpdate }) => {
           // Handle optimistic updates with the enhanced utility
           handleOptimisticEntityUpdate({

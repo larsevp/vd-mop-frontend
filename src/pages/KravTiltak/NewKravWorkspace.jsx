@@ -21,6 +21,8 @@ const NewKravWorkspace = () => {
     <EntityWorkspace
       modelConfig={kravConfig}
       entityType="krav"
+      // Enable debug mode to test new interface system
+      debug={true}
       // Optional workspace-specific overrides
       workspaceConfig={{
         // Override any default workspace settings if needed

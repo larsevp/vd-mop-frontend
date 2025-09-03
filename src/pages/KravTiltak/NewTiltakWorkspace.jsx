@@ -19,6 +19,8 @@ const NewTiltakWorkspace = () => {
     <EntityWorkspace
       modelConfig={tiltakConfig}
       entityType="tiltak"
+      // Enable debug mode to test new interface system
+      debug={true}
       // Optional workspace-specific overrides
       workspaceConfig={{
         ui: {
