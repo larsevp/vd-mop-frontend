@@ -1,6 +1,8 @@
 import React from "react";
 import { EntityWorkspace } from "@/components/EntityWorkspace";
-import { prosjektCombined as prosjektCombinedConfig } from "@/modelConfigs/models/prosjektCombined";
+import { prosjektKrav as prosjektKravConfig } from "@/modelConfigs/models/prosjektKrav.js";
+import { prosjektTiltak as prosjektTiltakConfig } from "@/modelConfigs/models/prosjektTiltak.js";
+import { createKravTiltakCombinedDTO } from "./adapters/KravTiltakCombinedDTO.js";
 
 /**
  * ProsjektCombined Workspace - Shows unified view of ProsjektKrav and ProsjektTiltak
@@ -25,20 +27,21 @@ import { prosjektCombined as prosjektCombinedConfig } from "@/modelConfigs/model
  * - Managing project-specific adaptations of general requirements and measures
  */
 export default function ProsjektCombinedWorkspace() {
+  // Create combined DTO for ProsjektKrav + ProsjektTiltak
+  const combinedDTO = createKravTiltakCombinedDTO(prosjektKravConfig, prosjektTiltakConfig, {
+    title: "Prosjekt Krav og Tiltak",
+    mixingRules: {
+      defaultSort: 'updatedAt',
+      defaultSortOrder: 'desc',
+      separateByType: false, // Mix ProsjektKrav and ProsjektTiltak freely
+      searchFields: ['title', 'descriptionCard', 'uid']
+    }
+  });
+
   return (
     <EntityWorkspace
-      modelConfig={prosjektCombinedConfig}
-      entityType="prosjekt-combined"
+      combinedEntityDTO={combinedDTO}
       debug={true}
-      workspaceConfig={{
-        ui: {
-          showMerknader: true,
-          showStatus: true,
-          showVurdering: true,
-          showPrioritet: false, // ProsjektTiltak might not use priority
-          showEntityType: true, // Show entity type badges for ProsjektKrav/ProsjektTiltak
-        }
-      }}
     />
   );
 }

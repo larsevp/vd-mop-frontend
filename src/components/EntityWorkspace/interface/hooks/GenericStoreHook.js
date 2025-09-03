@@ -7,8 +7,8 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { createGenericActionService } from '../services/GenericActionService.js';
-import { useGenericEntityData } from './GenericDataHook.js';
+import { createGenericActionService } from '@/components/EntityWorkspace/interface/services/GenericActionService.js';
+import { useGenericEntityData } from '@/components/EntityWorkspace/interface/hooks/GenericDataHook.js';
 
 /**
  * Main hook for workspace store integration
@@ -105,8 +105,27 @@ export const useGenericWorkspace = (store, options = {}) => {
 
   useEffect(() => {
     if (dataHook.error && !storeState.error) {
+      // Extract meaningful error message
+      let errorMessage = 'Failed to load data';
+      
+      if (typeof dataHook.error === 'string') {
+        errorMessage = dataHook.error;
+      } else if (dataHook.error?.message) {
+        errorMessage = dataHook.error.message;
+      } else if (dataHook.error?.response?.data?.message) {
+        errorMessage = dataHook.error.response.data.message;
+      } else if (dataHook.error?.response?.statusText) {
+        errorMessage = `${dataHook.error.response.status}: ${dataHook.error.response.statusText}`;
+      }
+      
+      // Avoid showing large JSON objects as error messages
+      if (errorMessage.length > 200) {
+        errorMessage = 'Server error occurred. Check console for details.';
+        console.error('Full error details:', dataHook.error);
+      }
+      
       store.setState({ 
-        error: dataHook.error.message || 'Failed to load data',
+        error: errorMessage,
         loading: false 
       });
     }

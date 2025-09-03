@@ -1,6 +1,7 @@
 import React from "react";
 import { EntityWorkspace } from "@/components/EntityWorkspace";
 import { prosjektKrav as prosjektKravConfig } from "@/modelConfigs/models/prosjektKrav.js";
+import { createKravTiltakAdapter } from "./adapters/KravTiltakAdapter.js";
 import { useProjectStore } from "@/stores/userStore";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Building } from "lucide-react";
@@ -52,36 +53,20 @@ const ProsjektKravWorkspace = () => {
     );
   }
 
-  // Create dynamic title with current project info
+  // Create dynamic config with current project info
   const dynamicConfig = {
     ...prosjektKravConfig,
     title: `${currentProject.navn} - Krav`,
     desc: `Krav for prosjekt: ${currentProject.prosjektnummer || currentProject.navn}`,
   };
 
+  // Create domain-specific adapter for prosjekt-krav
+  const adapter = createKravTiltakAdapter(dynamicConfig);
+
   return (
     <EntityWorkspace
-      modelConfig={dynamicConfig}
-      entityType="prosjekt-krav"
-      // Workspace-specific configuration for project requirements
-      workspaceConfig={{
-        ui: {
-          showHierarchy: true,    // Project requirements can have hierarchies
-          showMerknader: true,    // Show notes/comments for project context
-          showStatus: true,       // Track status of project requirements
-          showVurdering: true,    // Assessment relevant for project requirements
-          showPrioritet: true,    // Priority important in project context
-          showObligatorisk: true, // Mandatory vs optional requirements
-          showRelations: true,    // Show relationships to ProsjektTiltak
-        },
-        features: {
-          grouping: true,         // Group by subject/topic
-          hierarchy: true,        // Support parent-child relationships
-          search: true,           // Full text search capabilities
-          filters: true,          // Advanced filtering options
-          inlineEdit: true,       // Quick editing without navigation
-        }
-      }}
+      adapter={adapter}
+      debug={true}
     />
   );
 };

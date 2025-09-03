@@ -1,6 +1,7 @@
 import React from "react";
 import { EntityWorkspace } from "@/components/EntityWorkspace";
 import { prosjektTiltak as prosjektTiltakConfig } from "@/modelConfigs/models/prosjektTiltak.js";
+import { createKravTiltakAdapter } from "./adapters/KravTiltakAdapter.js";
 import { useProjectStore } from "@/stores/userStore";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Building } from "lucide-react";
@@ -53,36 +54,20 @@ const ProsjektTiltakWorkspace = () => {
     );
   }
 
-  // Create dynamic title with current project info
+  // Create dynamic config with current project info
   const dynamicConfig = {
     ...prosjektTiltakConfig,
     title: `${currentProject.navn} - Tiltak`,
     desc: `Tiltak for prosjekt: ${currentProject.prosjektnummer || currentProject.navn}`,
   };
 
+  // Create domain-specific adapter for prosjekt-tiltak
+  const adapter = createKravTiltakAdapter(dynamicConfig);
+
   return (
     <EntityWorkspace
-      modelConfig={dynamicConfig}
-      entityType="prosjekt-tiltak"
-      // Workspace-specific configuration for project measures
-      workspaceConfig={{
-        ui: {
-          showHierarchy: true,    // Project measures can have hierarchies
-          showMerknader: true,    // Show notes/comments for project context
-          showStatus: true,       // Track implementation status
-          showVurdering: true,    // Assessment of measure effectiveness  
-          showPrioritet: true,    // Priority important for project planning
-          showObligatorisk: true, // Mandatory vs optional measures
-          showRelations: true,    // Show relationships to ProsjektKrav and general Krav
-        },
-        features: {
-          grouping: true,         // Group by subject/topic
-          hierarchy: false,       // Parent-child relationships for measures
-          search: true,           // Full text search across all fields
-          filters: true,          // Advanced filtering by status, priority, etc.
-          inlineEdit: true,       // Quick editing without navigation
-        }
-      }}
+      adapter={adapter}
+      debug={true}
     />
   );
 };

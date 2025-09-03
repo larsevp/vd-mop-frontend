@@ -1,45 +1,18 @@
 /**
- * EntityWorkspace - Modern interface system
+ * EntityWorkspace - Pure wrapper component
  * 
- * This component serves as the public API for EntityWorkspace using the new
- * interface system with improved state management, caching, and architecture.
+ * This is just a clean pass-through wrapper to EntityWorkspaceModern.
+ * It sets nothing and changes nothing - just forwards all props.
  */
 
 import React from 'react';
 import EntityWorkspaceModern from './EntityWorkspaceModern';
-import { WorkspaceCompatibilityWrapper } from './interface/wrappers/WorkspaceCompatibilityWrapper';
-
-// Export the modern implementation as the main component
-export { default as EntityWorkspaceModern } from './EntityWorkspaceModern';
-
-// Export new interface system hooks and services
-export { useGenericWorkspace } from './interface/hooks/GenericStoreHook';
-export { createGenericWorkspaceStore } from './interface/stores/GenericWorkspaceStore';
-export { GenericActionService } from './interface/services/GenericActionService';
-
-// Re-export shared components for convenience
-export * from './shared';
 
 /**
- * Main EntityWorkspace component using the modern interface system
+ * Pure wrapper - passes all props directly through
  */
-const EntityWorkspace = ({ entityType, modelConfig, workspaceConfig, debug, ...props }) => {
-  // Always use the new interface system with compatibility wrapper
-  return (
-    <WorkspaceCompatibilityWrapper
-      entityType={entityType}
-      forceNewInterface={true}
-      debug={debug}
-    >
-      <EntityWorkspaceModern
-        entityType={entityType}
-        modelConfig={modelConfig}
-        workspaceConfig={workspaceConfig}
-        debug={debug}
-        {...props}
-      />
-    </WorkspaceCompatibilityWrapper>
-  );
+const EntityWorkspace = (props) => {
+  return <EntityWorkspaceModern {...props} />;
 };
 
 export default EntityWorkspace;

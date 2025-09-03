@@ -5,8 +5,8 @@
  * Based on the INTERFACE-ANALYSIS.md recommendations and kravTiltak implementation.
  */
 
-import { EntityTypeResolver } from '../contracts/EntityTypeResolver.js';
-import { createEntityWorkspaceAdapter } from '../../adapter/index.js';
+import { EntityTypeResolver } from '@/components/EntityWorkspace/interface/contracts/EntityTypeResolver.js';
+import { createEntityWorkspaceAdapter } from '@/components/EntityWorkspace/adapter/index.js';
 
 export class EntityInterface {
   constructor(entityType, config = {}) {

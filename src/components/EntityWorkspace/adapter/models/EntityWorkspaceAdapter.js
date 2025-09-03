@@ -4,6 +4,7 @@
  */
 
 import { BaseAdapter } from '../core/BaseAdapter.js';
+import { EntityTypeResolver } from '@/components/EntityWorkspace/interface/contracts/EntityTypeResolver.js';
 
 export class EntityWorkspaceAdapter extends BaseAdapter {
   constructor(entityType, config = {}) {
@@ -90,28 +91,29 @@ export class EntityWorkspaceAdapter extends BaseAdapter {
    * Transform grouped response (emne-based grouping)
    */
   transformGroupedResponse(rawData) {
-    const transformedGroups = rawData.items.map(group => {
+    // Flatten all entities from all groups into a single array
+    const allEntities = [];
+    
+    rawData.items.forEach(group => {
       const emne = this.normalizeEmne(group.emne);
       
       // Extract entities from all possible entity arrays in the group
       const entities = this.extractEntitiesFromGroup(group);
       
-      return {
-        emne,
-        entities: entities.map(entity => this.transformEntity(entity)),
-        // Maintain backward compatibility with specific entity type arrays
-        krav: entities.filter(e => this.isEntityType(e, 'krav')).map(e => this.transformEntity(e)),
-        tiltak: entities.filter(e => this.isEntityType(e, 'tiltak')).map(e => this.transformEntity(e)),
-        prosjektkrav: entities.filter(e => this.isEntityType(e, 'prosjektKrav')).map(e => this.transformEntity(e)),
-        prosjekttiltak: entities.filter(e => this.isEntityType(e, 'prosjektTiltak')).map(e => this.transformEntity(e)),
-        
-        // Group metadata
-        _emneKey: group._emneKey || `emne-${emne?.id}`,
-        _entityCount: group._entityCount || entities.length
-      };
+      // Transform entities and add emne metadata
+      entities.forEach(entity => {
+        const transformedEntity = this.transformEntity(entity);
+        // Add emne information to each entity
+        if (emne) {
+          transformedEntity.emne = emne;
+          transformedEntity._emneId = emne.id;
+          transformedEntity._emneName = emne.navn || emne.name;
+        }
+        allEntities.push(transformedEntity);
+      });
     });
 
-    return this.createStandardResponse(transformedGroups, rawData, true);
+    return this.createStandardResponse(allEntities, rawData, false);
   }
 
   /**
@@ -163,10 +165,14 @@ export class EntityWorkspaceAdapter extends BaseAdapter {
   transformEntity(rawEntity) {
     if (!rawEntity) return null;
 
+    // If entity is already transformed (has 'title' field), return as-is
+    if (rawEntity.title !== undefined) {
+      return rawEntity;
+    }
+
     const entityType = this.detectEntityType(rawEntity);
     const mapping = this.entityFieldMappings[entityType] || this.entityFieldMappings.krav;
-
-    // Create standardized entity structure
+    
     const standardEntity = {
       // Core identifiers
       id: rawEntity.id,
@@ -175,7 +181,8 @@ export class EntityWorkspaceAdapter extends BaseAdapter {
       
       // Display fields
       title: this.extractTitle(rawEntity),
-      description: this.normalizeDescription(rawEntity),
+      descriptionCard: rawEntity.beskrivelseSnippet || '',
+      descriptionField: rawEntity.beskrivelse || '',
       
       // Status and metadata
       status: this.normalizeStatusObject(rawEntity.status),
@@ -325,4 +332,109 @@ export class EntityWorkspaceAdapter extends BaseAdapter {
 
     return backendData;
   }
+
+  /**
+   * Get the appropriate query function for the entity type
+   */
+  getQueryFunction(entityType, useGroupedFunction = false) {
+    const modelConfig = EntityTypeResolver.resolveModelConfig(entityType);
+    
+    if (!modelConfig) {
+      throw new Error(`No model config found for entity type: ${entityType}`);
+    }
+    
+    // Return grouped function if available and requested
+    if (useGroupedFunction && modelConfig.queryFnGroupedByEmne) {
+      return modelConfig.queryFnGroupedByEmne;
+    }
+    
+    // Return the main query function
+    if (modelConfig.queryFn) {
+      return modelConfig.queryFn;
+    }
+    
+    throw new Error(`No query function found in model config for entity type: ${entityType}`);
+  }
+
+  /**
+   * Get display name for entity type
+   */
+  getDisplayName(entityType, plural = false) {
+    const modelConfig = EntityTypeResolver.resolveModelConfig(entityType);
+    
+    if (modelConfig?.title) {
+      return plural ? modelConfig.title : modelConfig.modelPrintName || modelConfig.title;
+    }
+    
+    // Fallback to entity type with basic pluralization
+    if (plural) {
+      return entityType.endsWith('s') ? entityType : entityType + 'er';
+    }
+    
+    return entityType;
+  }
+
+  /**
+   * Check if entity type supports grouping by emne
+   */
+  supportsGroupByEmne(entityType) {
+    return EntityTypeResolver.supportsGroupByEmne(entityType);
+  }
+
+  /**
+   * Get workspace configuration for entity type
+   */
+  getWorkspaceConfig(entityType) {
+    return EntityTypeResolver.getWorkspaceConfig(entityType);
+  }
+
+  /**
+   * Create standardized response format
+   */
+  createStandardResponse(items, rawData = {}, isGrouped = false) {
+    return {
+      items: items || [],
+      total: rawData.total || items?.length || 0,
+      page: rawData.page || 1,
+      pageSize: rawData.pageSize || (items?.length || 50),
+      totalPages: rawData.totalPages || Math.ceil((rawData.total || items?.length || 0) / (rawData.pageSize || 50)),
+      hasNextPage: rawData.hasNextPage || false,
+      hasPreviousPage: rawData.hasPreviousPage || false,
+      isGrouped: isGrouped,
+      metadata: {
+        timestamp: new Date().toISOString(),
+        source: 'EntityWorkspaceAdapter'
+      }
+    };
+  }
+
+  /**
+   * Extract title from raw entity
+   */
+  extractTitle(rawEntity) {
+    if (!rawEntity) return 'Uten tittel';
+    
+    // Try different title fields in order of preference
+    return rawEntity.tittel || rawEntity.navn || rawEntity.title || rawEntity.name || 'Uten tittel';
+  }
+
+  /**
+   * Extract UID from raw entity based on type
+   */
+  extractUID(rawEntity, entityType = null) {
+    if (!rawEntity) return null;
+    
+    const detectedType = entityType || this.detectEntityType(rawEntity);
+    
+    // Try different UID fields based on entity type
+    if (detectedType.toLowerCase().includes('krav')) {
+      return rawEntity.kravUID || rawEntity.prosjektKravUID || rawEntity.id;
+    } else if (detectedType.toLowerCase().includes('tiltak')) {
+      return rawEntity.tiltakUID || rawEntity.prosjektTiltakUID || rawEntity.id;
+    }
+    
+    // Fallback to common UID fields
+    return rawEntity.uid || rawEntity.kravUID || rawEntity.tiltakUID || rawEntity.id;
+  }
+
 }

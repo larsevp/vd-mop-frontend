@@ -1,35 +1,25 @@
 import React from "react";
 import { EntityWorkspace } from "@/components/EntityWorkspace";
 import { tiltak as tiltakConfig } from "@/modelConfigs/models/tiltak.js";
+import { createKravTiltakAdapter } from "./adapters/KravTiltakAdapter.js";
 
 /**
- * Simplified TiltakWorkspace using the generic EntityWorkspace component
- * Same ~15 lines of code as KravWorkspace, but for Tiltak entities
+ * NewTiltakWorkspace - Domain-specific workspace using adapter injection
  * 
- * The EntityWorkspace automatically handles:
- * - Data fetching based on tiltak model config
- * - Search, filtering, sorting
- * - Grouping by emne (if configured)
- * - CRUD operations (create, update, delete)
- * - Responsive UI layout
- * - Loading and error states
+ * NEW ARCHITECTURE:
+ * - Creates KravTiltakAdapter with tiltak configuration
+ * - Adapter handles all tiltak-specific logic
+ * - Generic interface works with abstract entities
+ * - Clean separation of concerns
  */
 const NewTiltakWorkspace = () => {
+  // Create domain-specific adapter with tiltak configuration
+  const adapter = createKravTiltakAdapter(tiltakConfig);
+  
   return (
     <EntityWorkspace
-      modelConfig={tiltakConfig}
-      entityType="tiltak"
-      // Enable debug mode to test new interface system
+      adapter={adapter}
       debug={true}
-      // Optional workspace-specific overrides
-      workspaceConfig={{
-        ui: {
-          showMerknader: true, // Tiltak might want to show notes by default
-          showStatus: true,
-          showVurdering: true,
-          showPrioritet: false, // Maybe tiltak doesn't use priority
-        }
-      }}
     />
   );
 };

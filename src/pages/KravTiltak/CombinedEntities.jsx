@@ -1,31 +1,41 @@
 import React from "react";
 import { EntityWorkspace } from "@/components/EntityWorkspace";
-import { combined as combinedConfig } from "@/modelConfigs/models/combined";
+import { krav as kravConfig } from "@/modelConfigs/models/krav.js";
+import { tiltak as tiltakConfig } from "@/modelConfigs/models/tiltak.js";
+import { createKravTiltakCombinedDTO } from "./adapters/KravTiltakCombinedDTO.js";
 
 /**
- * Combined Entities Page - Shows unified view of Krav and Tiltak
+ * CombinedEntities - Krav + Tiltak unified workspace using Combined DTO
  *
+ * SPECIALIZED ARCHITECTURE:
+ * - Uses CombinedEntityDTO for multi-model data mixing
+ * - DTO handles model-specific combination logic
+ * - Generates unified view from separate model data
+ * - Maintains entity type distinction for UI
+ * 
  * Features:
- * - Mixed entity display with proper type detection
- * - Hierarchical relationships based on level
- * - Cross-entity relationships (Krav ↔ Tiltak)
- * - Multiple view modes (krav-first, tiltak-first, grouped by emne)
+ * - Mixed entity display with type badges  
+ * - Cross-model filtering and sorting
+ * - Unified search across both entity types
+ * - Proper type-specific configurations
  */
 export default function CombinedEntities() {
+  // Create combined DTO with both model configs
+  const combinedDTO = createKravTiltakCombinedDTO(kravConfig, tiltakConfig, {
+    title: "Krav og Tiltak",
+    mixingRules: {
+      defaultSort: 'updatedAt',
+      defaultSortOrder: 'desc',
+      separateByType: false, // Mix freely
+      searchFields: ['title', 'descriptionCard', 'uid']
+    }
+  });
+  
   return (
     <EntityWorkspace
-      modelConfig={combinedConfig}
-      entityType="combined"
+      // Pass combined DTO as specialized adapter
+      combinedEntityDTO={combinedDTO}
       debug={true}
-      workspaceConfig={{
-        ui: {
-          showMerknader: true,
-          showStatus: true,
-          showVurdering: true,
-          showPrioritet: true,
-          showEntityType: true, // Show entity type badges for Krav/Tiltak
-        }
-      }}
     />
   );
 }

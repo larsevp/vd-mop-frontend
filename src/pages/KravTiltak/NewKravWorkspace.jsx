@@ -1,38 +1,32 @@
 import React from "react";
 import { EntityWorkspace } from "@/components/EntityWorkspace";
 import { krav as kravConfig } from "@/modelConfigs/models/krav.js";
+import { createKravTiltakAdapter } from "./adapters/KravTiltakAdapter.js";
 
 /**
- * Simplified KravWorkspace using the generic EntityWorkspace component
- * This demonstrates how the EntityWorkspace reduces complexity:
+ * NewKravWorkspace - Domain-specific workspace using adapter injection
  * 
- * OLD: 600+ lines of complex state management and UI logic
- * NEW: ~15 lines - just configuration!
+ * NEW ARCHITECTURE:
+ * - Domain creates and configures adapter (KravTiltakAdapter)
+ * - Adapter contains all krav-specific logic (filters, sorting, display)
+ * - Generic interface receives adapter and works with abstract entities
+ * - Clean separation: Domain logic in KravTiltak, Generic logic in Interface
  * 
  * Benefits:
- * - Consistent behavior across all entity types
- * - Automatic workspace features (grouping, search, filters, etc.)
- * - Less code to maintain
- * - Easier to test and debug
- * - Better separation of concerns
+ * - True reusability of interface components
+ * - Domain encapsulation (all krav logic here)
+ * - Easy testing (mock adapters)
+ * - No magic string resolvers
  */
 const NewKravWorkspace = () => {
+  // Create domain-specific adapter with krav configuration
+  const adapter = createKravTiltakAdapter(kravConfig);
+  
   return (
     <EntityWorkspace
-      modelConfig={kravConfig}
-      entityType="krav"
-      // Enable debug mode to test new interface system
+      // Inject adapter instead of raw modelConfig/entityType
+      adapter={adapter}
       debug={true}
-      // Optional workspace-specific overrides
-      workspaceConfig={{
-        // Override any default workspace settings if needed
-        ui: {
-          showMerknader: false,
-          showStatus: true,
-          showVurdering: true,
-          showPrioritet: true,
-        }
-      }}
     />
   );
 };

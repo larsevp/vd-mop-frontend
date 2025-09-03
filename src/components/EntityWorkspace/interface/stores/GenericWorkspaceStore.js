@@ -7,10 +7,10 @@
 
 import { create } from 'zustand';
 import { devtools, subscribeWithSelector } from 'zustand/middleware';
-import { createEntityInterface } from '../utils/EntityInterface.js';
-import { createGenericCacheManager } from '../services/GenericCacheManager.js';
-import { createGenericPermissionService } from '../services/GenericPermissionService.js';
-import { createGenericFilterService } from '../services/GenericFilterService.js';
+import { createEntityInterface } from '@/components/EntityWorkspace/interface/utils/EntityInterface.js';
+import { createGenericCacheManager } from '@/components/EntityWorkspace/interface/services/GenericCacheManager.js';
+import { createGenericPermissionService } from '@/components/EntityWorkspace/interface/services/GenericPermissionService.js';
+import { createGenericFilterService } from '@/components/EntityWorkspace/interface/services/GenericFilterService.js';
 
 /**
  * Create a generic workspace store for any entity type

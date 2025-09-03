@@ -6,17 +6,32 @@
  */
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { createEntityInterface } from '../utils/EntityInterface.js';
-import { createGenericCacheManager } from '../services/GenericCacheManager.js';
+import { createEntityInterface } from '@/components/EntityWorkspace/interface/utils/EntityInterface.js';
+import { createGenericCacheManager } from '@/components/EntityWorkspace/interface/services/GenericCacheManager.js';
 
 /**
  * Generic hook for entity data fetching with adapter integration
  */
+// Circuit breaker storage - global to prevent re-attempts across re-renders
+const failureCache = new Map();
+
 export const useGenericEntityData = (entityType, options = {}) => {
+  console.log(`GenericDataHook[${entityType}]: Hook called with enabled:`, options.enabled);
+  
+  // Check circuit breaker - if this entity type has failed, disable completely
+  const cacheKey = `${entityType}-${JSON.stringify(options.queryParams)}`;
+  const hasFailed = failureCache.has(cacheKey);
+  
+  if (hasFailed) {
+    console.log(`GenericDataHook[${entityType}]: Circuit breaker activated - query disabled`);
+  } else {
+    console.log(`GenericDataHook[${entityType}]: Circuit breaker OK - proceeding with query`);
+  }
+  
   const {
     modelConfig,
     queryParams = {},
-    enabled = true,
+    enabled = true && !hasFailed, // Disable if circuit breaker is active
     staleTime = 30000, // 30 seconds
     cacheTime = 600000, // 10 minutes
   } = options;
@@ -82,17 +97,81 @@ export const useGenericEntityData = (entityType, options = {}) => {
 
   // Create the actual query function
   const queryFn = async () => {
-    // This would be replaced with actual API calls in real implementation
-    // For now, return mock data structure that matches expected format
-    throw new Error('GenericDataHook: API integration not implemented. This hook provides the interface structure.');
+    try {
+      console.log(`GenericDataHook[${entityType}]: Starting API call with params:`, requestParams);
+      
+      // Get the actual query function from the adapter
+      const apiQueryFn = entityInterface.adapter.getQueryFunction(entityType, entityInterface.supportsGroupByEmne(entityType));
+      
+      if (!apiQueryFn) {
+        throw new Error(`No query function found for entity type: ${entityType}`);
+      }
+      
+      // Special handling for project-based entities that need projectId
+      if (entityType.includes('prosjekt') && (entityType === 'prosjekt-tiltak' || entityType === 'prosjekt-krav')) {
+        // For project entities, we need to get the current project from userStore
+        const { useProjectStore } = await import('@/stores/userStore');
+        const currentProject = useProjectStore.getState().currentProject;
+        const projectId = currentProject?.id;
+        
+        if (!projectId) {
+          throw new Error(`Ingen prosjekt valgt for ${entityType}`);
+        }
+        
+        // Call with projectId as the last parameter
+        const response = await apiQueryFn(
+          requestParams.page,
+          requestParams.pageSize,
+          requestParams.search || '',
+          requestParams.sortBy,
+          requestParams.sortOrder,
+          projectId // Pass projectId for project entities
+        );
+        console.log(`GenericDataHook[${entityType}]: API response received:`, response);
+        return response?.data || response;
+      } else {
+        // Regular entities - call with standard parameters
+        const response = await apiQueryFn(
+          requestParams.page,
+          requestParams.pageSize,
+          requestParams.search || '',
+          requestParams.sortBy,
+          requestParams.sortOrder,
+          requestParams.filterBy || 'all',
+          requestParams.additionalFilters || {}
+        );
+        return response?.data || response;
+      }
+      
+      // Handle different response formats (some APIs return response.data, others return direct data)
+      return response?.data || response;
+    } catch (error) {
+      // Add to failure cache to activate circuit breaker
+      failureCache.set(cacheKey, true);
+      console.error(`GenericDataHook[${entityType}]: API call failed - circuit breaker activated:`, error);
+      
+      // Improve error messaging
+      const errorMessage = error?.response?.data?.message || 
+                          error?.message || 
+                          'Unknown error occurred while fetching data';
+      
+      throw new Error(errorMessage);
+    }
   };
 
+  console.log(`GenericDataHook[${entityType}]: useQuery setup - enabled: ${enabled}, queryKey:`, queryKey);
+  
   const query = useQuery({
     queryKey,
     queryFn,
     enabled,
     staleTime,
     cacheTime,
+    retry: false, // NO RETRIES - stop immediately on failure
+    refetchOnWindowFocus: false, // Prevent refetch on focus
+    refetchOnMount: false, // Prevent refetch on mount if data exists
+    refetchOnReconnect: false, // Prevent refetch on reconnect
+    refetchInterval: false, // No automatic refetching
     // Transform response using adapter
     select: (data) => {
       if (!data) return null;
