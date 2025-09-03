@@ -35,6 +35,8 @@ const EntityListPane = ({
   onCreateNew,
   modelConfig,
   enableKeyboardNav = true,
+  // NEW: Adapter for domain-specific logic
+  adapter = null,
 }) => {
   const [focusedIndex, setFocusedIndex] = useState(0);
   const [collapsedGroups, setCollapsedGroups] = useState(new Set());
@@ -72,9 +74,13 @@ const EntityListPane = ({
     return text.substring(0, maxLength) + "...";
   };
 
-  // Extract UID from entity
+  // Extract UID from entity using adapter
   const getEntityUID = (entity) => {
-    return entity.kravUID || entity.tiltakUID || entity.id;
+    if (adapter && adapter.extractUID) {
+      return adapter.extractUID(entity);
+    }
+    // Fallback for legacy compatibility
+    return entity.uid || entity.kravUID || entity.tiltakUID || entity.id;
   };
 
   // Extract text from TipTap JSON
@@ -129,11 +135,14 @@ const EntityListPane = ({
             <span className="font-medium text-gray-900 truncate">{title}</span>
             {entity.entityType && (
               <span className={`text-xs px-2 py-0.5 rounded-full ${
-                entity.entityType.toLowerCase().includes('krav') 
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'bg-green-100 text-green-700'
+                adapter && adapter.getBadgeColor 
+                  ? adapter.getBadgeColor(entity.entityType)
+                  : 'bg-gray-100 text-gray-700' // Generic fallback
               }`}>
-                {entity.entityType}
+                {adapter && adapter.getDisplayType 
+                  ? adapter.getDisplayType(entity.entityType)
+                  : entity.entityType
+                }
               </span>
             )}
           </div>

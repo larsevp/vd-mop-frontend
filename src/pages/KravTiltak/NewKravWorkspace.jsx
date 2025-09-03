@@ -2,30 +2,33 @@ import React from "react";
 import { EntityWorkspace } from "@/components/EntityWorkspace";
 import { krav as kravConfig } from "@/modelConfigs/models/krav.js";
 import { createKravTiltakAdapter } from "./adapters/KravTiltakAdapter.js";
+import { createSingleEntityDTO } from "./adapters/SingleEntityDTO.js";
 
 /**
- * NewKravWorkspace - Domain-specific workspace using adapter injection
+ * NewKravWorkspace - Unified DTO architecture
  * 
- * NEW ARCHITECTURE:
- * - Domain creates and configures adapter (KravTiltakAdapter)
- * - Adapter contains all krav-specific logic (filters, sorting, display)
- * - Generic interface receives adapter and works with abstract entities
- * - Clean separation: Domain logic in KravTiltak, Generic logic in Interface
+ * UNIFIED ARCHITECTURE:
+ * - Creates KravTiltakAdapter with krav configuration
+ * - Wraps adapter in SingleEntityDTO for consistent interface
+ * - EntityWorkspace always receives dto prop (never adapter directly)
+ * - Clean, consistent pattern across all workspaces
  * 
  * Benefits:
- * - True reusability of interface components
- * - Domain encapsulation (all krav logic here)
- * - Easy testing (mock adapters)
- * - No magic string resolvers
+ * - Consistent interface: all workspaces use dto prop
+ * - Clear separation: DTOs coordinate, Adapters handle domain logic
+ * - Future-proof: easy to add new DTO types (cached, filtered, etc.)
+ * - No interface inconsistencies between single and combined views
  */
 const NewKravWorkspace = () => {
   // Create domain-specific adapter with krav configuration
   const adapter = createKravTiltakAdapter(kravConfig);
   
+  // Wrap adapter in DTO for unified interface
+  const dto = createSingleEntityDTO(adapter);
+  
   return (
     <EntityWorkspace
-      // Inject adapter instead of raw modelConfig/entityType
-      adapter={adapter}
+      dto={dto}
       debug={true}
     />
   );

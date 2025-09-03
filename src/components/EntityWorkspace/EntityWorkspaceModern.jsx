@@ -46,60 +46,80 @@ const getWorkspaceStore = (entityType, config = {}) => {
 };
 
 /**
- * EntityWorkspaceModern - Generic interface using adapter injection
+ * EntityWorkspaceModern - Unified DTO interface
  */
 const EntityWorkspaceModern = ({ 
-  adapter = null, 
+  dto = null,
   // Legacy props for backward compatibility (will be deprecated)
+  adapter = null, 
   entityType = null, 
   modelConfig = null, 
+  combinedEntityDTO = null,
   workspaceConfig = {}, 
   debug = false 
 }) => {
   console.log('EntityWorkspaceModern: Component rendering with props:', {
+    hasDTO: !!dto,
     hasAdapter: !!adapter,
+    hasCombinedDTO: !!combinedEntityDTO,
     legacyEntityType: entityType,
-    debug,
-    hasModelConfig: !!modelConfig
+    debug
   });
+  
+  // Priority: dto > combinedEntityDTO > adapter (for backward compatibility)
+  const activeDTO = dto || combinedEntityDTO || (adapter ? { adapter } : null);
   
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useUserStore();
   const isAnyEntityEditing = useIsAnyEntityEditing();
 
-  // Validate adapter or fall back to legacy mode
-  if (!adapter && !entityType) {
-    throw new Error('EntityWorkspace requires either adapter prop or legacy entityType prop');
+  // Validate DTO or fall back to legacy mode
+  if (!activeDTO && !entityType) {
+    throw new Error('EntityWorkspace requires either dto prop or legacy entityType prop');
   }
 
-  // Get configuration from adapter (legacy fallback kept minimal)
-  const displayConfig = adapter ? adapter.getDisplayConfig() : {
-    title: modelConfig?.title || entityType,
-    entityTypes: [entityType],
-    supportsGroupByEmne: true, // Default to true for legacy
-    layout: workspaceConfig?.layout || modelConfig?.workspace?.layout || 'split'
-  };
+  // Get configuration from DTO (with backward compatibility)
+  let displayConfig, filterConfig;
+  
+  if (activeDTO && activeDTO.getDisplayConfig) {
+    // Modern DTO with methods
+    displayConfig = activeDTO.getDisplayConfig();
+    filterConfig = activeDTO.getFilterConfig();
+  } else if (activeDTO && activeDTO.adapter) {
+    // Legacy adapter wrapped in object
+    displayConfig = activeDTO.adapter.getDisplayConfig();
+    filterConfig = activeDTO.adapter.getFilterConfig();
+  } else {
+    // Legacy fallback
+    displayConfig = {
+      title: modelConfig?.title || entityType,
+      entityTypes: [entityType],
+      supportsGroupByEmne: true, // Default to true for legacy
+      layout: workspaceConfig?.layout || modelConfig?.workspace?.layout || 'split'
+    };
+    
+      filterConfig = {
+        // Fallback to hardcoded legacy config
+        fields: {
+          status: { enabled: true, label: 'Status', placeholder: 'Alle statuser' },
+          vurdering: { enabled: true, label: 'Vurdering', placeholder: 'Alle vurderinger' },
+          emne: { enabled: true, label: 'Emne', placeholder: 'Alle emner' }
+        },
+        sortFields: [
+          { key: 'updatedAt', label: 'Sist endret' },
+          { key: 'title', label: 'Tittel' }
+        ],
+        defaults: { sortBy: 'updatedAt', sortOrder: 'desc', filterBy: 'all' }
+      };
+    }
+  }
 
-  const filterConfig = adapter ? adapter.getFilterConfig() : {
-    // Fallback to hardcoded legacy config
-    fields: {
-      status: { enabled: true, label: 'Status', placeholder: 'Alle statuser' },
-      vurdering: { enabled: true, label: 'Vurdering', placeholder: 'Alle vurderinger' },
-      emne: { enabled: true, label: 'Emne', placeholder: 'Alle emner' }
-    },
-    sortFields: [
-      { key: 'updatedAt', label: 'Sist endret' },
-      { key: 'title', label: 'Tittel' }
-    ],
-    defaults: { sortBy: 'updatedAt', sortOrder: 'desc', filterBy: 'all' }
-  };
-
-  // Get or create workspace store (use adapter's primary entity type if available)
-  const storeEntityType = adapter ? displayConfig.entityTypes[0] : entityType;
+  // Get or create workspace store (use DTO's primary entity type if available)
+  const storeEntityType = displayConfig.entityTypes?.[0] || entityType;
   const store = useMemo(() => 
-    getWorkspaceStore(storeEntityType, { debug, adapter, ...workspaceConfig }), 
-    [storeEntityType, debug, adapter, workspaceConfig]
+    getWorkspaceStore(storeEntityType, { debug, dto: activeDTO, ...workspaceConfig }), 
+    [storeEntityType, debug, activeDTO, workspaceConfig]
   );
 
   // Use the interface system with adapter integration
@@ -107,7 +127,7 @@ const EntityWorkspaceModern = ({
     enableDataFetching: true,
     enableActions: true,
     autoInitialize: true,
-    adapter: adapter,
+    dto: activeDTO,
     userContext: user ? {
       userId: user.id,
       role: user.role,
@@ -364,18 +384,21 @@ const EntityWorkspaceModern = ({
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
                                 <span className="text-xs font-mono text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
-                                  {entity.uid || entity.id}
+                                  {activeDTO && activeDTO.extractUID ? activeDTO.extractUID(entity) : (entity.uid || entity.id)}
                                 </span>
                                 <span className="font-medium text-gray-900 truncate">
-                                  {entity.title || "Uten tittel"}
+                                  {activeDTO && activeDTO.extractTitle ? activeDTO.extractTitle(entity) : (entity.title || "Uten tittel")}
                                 </span>
                                 {entity.entityType && (
                                   <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                    entity.entityType.toLowerCase().includes('krav') 
-                                      ? 'bg-blue-100 text-blue-700'
-                                      : 'bg-green-100 text-green-700'
+                                    activeDTO && activeDTO.getBadgeColor 
+                                      ? activeDTO.getBadgeColor(entity.entityType)
+                                      : 'bg-gray-100 text-gray-700' // Generic fallback
                                   }`}>
-                                    {entity.entityType}
+                                    {activeDTO && activeDTO.getDisplayType 
+                                      ? activeDTO.getDisplayType(entity.entityType)
+                                      : entity.entityType
+                                    }
                                   </span>
                                 )}
                               </div>

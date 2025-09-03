@@ -28,7 +28,7 @@ import { createKravTiltakCombinedDTO } from "./adapters/KravTiltakCombinedDTO.js
  */
 export default function ProsjektCombinedWorkspace() {
   // Create combined DTO for ProsjektKrav + ProsjektTiltak
-  const combinedDTO = createKravTiltakCombinedDTO(prosjektKravConfig, prosjektTiltakConfig, {
+  const dto = createKravTiltakCombinedDTO(prosjektKravConfig, prosjektTiltakConfig, {
     title: "Prosjekt Krav og Tiltak",
     mixingRules: {
       defaultSort: 'updatedAt',
@@ -40,7 +40,7 @@ export default function ProsjektCombinedWorkspace() {
 
   return (
     <EntityWorkspace
-      combinedEntityDTO={combinedDTO}
+      dto={dto}
       debug={true}
     />
   );

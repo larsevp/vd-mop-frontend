@@ -2,6 +2,7 @@ import React from "react";
 import { EntityWorkspace } from "@/components/EntityWorkspace";
 import { prosjektTiltak as prosjektTiltakConfig } from "@/modelConfigs/models/prosjektTiltak.js";
 import { createKravTiltakAdapter } from "./adapters/KravTiltakAdapter.js";
+import { createSingleEntityDTO } from "./adapters/SingleEntityDTO.js";
 import { useProjectStore } from "@/stores/userStore";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Building } from "lucide-react";
@@ -63,10 +64,13 @@ const ProsjektTiltakWorkspace = () => {
 
   // Create domain-specific adapter for prosjekt-tiltak
   const adapter = createKravTiltakAdapter(dynamicConfig);
+  
+  // Wrap adapter in DTO for unified interface
+  const dto = createSingleEntityDTO(adapter);
 
   return (
     <EntityWorkspace
-      adapter={adapter}
+      dto={dto}
       debug={true}
     />
   );
