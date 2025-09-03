@@ -58,7 +58,7 @@ export const createPasteHandler = (editor, basic = false, onShowToast, uploadUrl
               })
               .run();
 
-            console.log("✅ Frontend: Image inserted from localStorage");
+            //console.log("✅ Frontend: Image inserted from localStorage");
             onShowToast?.("Bilde limt inn! Vil bli lastet opp ved lagring.", "success");
           } catch (insertError) {
             console.error("❌ Frontend: Failed to insert image from localStorage:", insertError);
@@ -180,6 +180,8 @@ export const createPasteHandler = (editor, basic = false, onShowToast, uploadUrl
     // STAGE 3: Check for PDF text (multi-line plain text)
     // Apply PDF cleaning if we have multi-line text that's NOT rich Word content
     if (textData && textData.includes("\n")) {
+      // DEBUG: Log clipboard data to understand browser differences
+
       const isRichWordContent =
         htmlData &&
         (htmlData.includes("MsoNormal") ||
@@ -187,10 +189,10 @@ export const createPasteHandler = (editor, basic = false, onShowToast, uploadUrl
           htmlData.includes("xmlns:") ||
           htmlData.includes("<!--[if") ||
           htmlData.includes("Microsoft") ||
-          htmlData.includes("<table") ||
-          (htmlData.includes("style=") && htmlData.length > 200)); // Rich styling
+          htmlData.includes("<table"));
 
       if (!isRichWordContent) {
+        //console.log("✅ Applying PDF text cleaning");
         event.preventDefault();
         const cleanedText = cleanPDFText(textData);
 
@@ -202,6 +204,8 @@ export const createPasteHandler = (editor, basic = false, onShowToast, uploadUrl
 
         onShowToast?.("Tekst limt inn og formatert.", "info");
         return true;
+      } else {
+        //console.log("❌ Skipping PDF cleaning - detected Word content");
       }
     }
 
