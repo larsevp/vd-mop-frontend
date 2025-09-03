@@ -5,7 +5,7 @@ import NumberInput from "../NumberInput";
 import { TiptapEditor } from "@/components/ui/editor/TiptapEditor";
 import { FileUpload } from "@/components/forms";
 import ColorPicker from "@/components/ui/form/ColorPicker";
-import { IconPicker } from "@/components/ui/icon-picker";
+import { IconPicker } from "@/components/ui/icon-picker/icon-picker";
 
 export const BASIC_FIELD_TYPES = {
   text: ({ field, value, onChange, error }) => (

@@ -1,5 +1,6 @@
 import { buildMinimalTableFromHTML, buildHTMLTableFromTSV } from "../utils/tablePaste";
 import { storeTempImage } from "@/utils/tempImageStorage";
+import { cleanPDFText } from "../utils/pdfTextCleaner";
 
 /**
  * Paste handler functions for TipTap editor
@@ -11,64 +12,25 @@ export const createPasteHandler = (editor, basic = false, onShowToast, uploadUrl
     const clipboardData = event.clipboardData || window.clipboardData;
     if (!clipboardData) return false;
 
+    // Get commonly used data early
+    const textData = clipboardData.getData("text/plain");
+    const htmlData = clipboardData.getData("text/html");
+    const items = Array.from(clipboardData.items || []);
+
     // Don't process tables in basic mode (no table extension)
     if (basic) return false;
 
-    // 1) Prefer HTML tables from Word/Excel: rebuild a minimal clean table (text-only)
-    const htmlData = clipboardData.getData("text/html");
-    if (htmlData && htmlData.includes("<table")) {
-      const tableHtml = buildMinimalTableFromHTML(htmlData);
-      if (tableHtml) {
-        event.preventDefault();
-        try {
-          editor.chain().focus().insertContent(tableHtml).run();
-          // Normalize structure just in case
-          editor.commands?.fixTables?.();
-          onShowToast?.("Tabell limt inn.", "info");
-          return true;
-        } catch (e) {
-          console.warn("Failed to insert rebuilt HTML table, will try TSV fallback.", e);
-        }
-      }
-    }
-
-    // 2) Fallback: TSV (Excel plain text)
-    const textData = clipboardData.getData("text/plain");
-    if (textData && textData.includes("\t")) {
-      const lines = textData.split(/\r?\n/).filter((l) => l.trim().length > 0);
-      if (lines.length > 0 && lines.some((l) => l.includes("\t"))) {
-        const tableHtml = buildHTMLTableFromTSV(textData);
-        if (tableHtml) {
-          event.preventDefault();
-          try {
-            editor.chain().focus().insertContent(tableHtml).run();
-            editor.commands?.fixTables?.();
-            onShowToast?.("Tabell limt inn fra Excel-tekst.", "info");
-            return true;
-          } catch (e) {
-            console.error("Failed to insert generated table:", e);
-            onShowToast?.("Kunne ikke opprette tabell.", "error");
-            return true;
-          }
-        }
-      }
-    }
-
-    // Handle image paste (only if no table data detected)
-    const items = Array.from(clipboardData.items || []);
+    // STAGE 1: Check for images - but only if there's no meaningful text content
+    // Word often includes both text and image data, prioritize text
     const imageItem = items.find((item) => item.type.indexOf("image") === 0);
+    const hasTextContent = textData && textData.trim().length > 0;
+    const hasHtmlContent = htmlData && htmlData.trim().length > 0;
 
-    if (imageItem) {
+    if (imageItem && !hasTextContent && !hasHtmlContent) {
       event.preventDefault();
 
       const file = imageItem.getAsFile();
       if (!file) return false;
-
-      console.log("🖼️ Frontend: Image pasted:", {
-        name: file.name || "pasted-image",
-        size: file.size,
-        type: file.type,
-      });
 
       // Check if we can insert an image at current position
       if (!editor.can || !editor.can().setImage({ src: "" })) {
@@ -79,17 +41,13 @@ export const createPasteHandler = (editor, basic = false, onShowToast, uploadUrl
       // Store image in localStorage and display immediately
       (async () => {
         try {
-          console.log("📦 Frontend: Storing pasted image in localStorage...");
           onShowToast?.("Lagrer bilde lokalt...", "info");
 
           // Store the image in localStorage
           const tempImageData = await storeTempImage(file);
 
-          console.log("✅ Frontend: Image stored in localStorage:", tempImageData.id);
-
           // Insert the image using the base64 data URL
           try {
-            console.log("📝 Frontend: Inserting image from localStorage...");
             editor
               .chain()
               .focus()
@@ -123,6 +81,131 @@ export const createPasteHandler = (editor, basic = false, onShowToast, uploadUrl
       return true;
     }
 
+    // STAGE 2: Check for tables - only intercept REAL table data
+    // TipTap industry practice: Let TipTap handle HTML naturally, only intercept special cases
+
+    // TSV data (Excel plain text) - this is a clear table indicator
+    // Be VERY strict: must look like actual tabular data, not just contain tabs
+    if (textData && textData.includes("\t")) {
+      const lines = textData.split(/\r?\n/).filter((l) => l.trim().length > 0);
+      const linesWithTabs = lines.filter((l) => l.includes("\t"));
+
+      // Check if this looks like Word content (exclude from TSV processing)
+      const looksLikeWordContent =
+        htmlData &&
+        (htmlData.includes("MsoNormal") ||
+          htmlData.includes("mso-") ||
+          htmlData.includes("xmlns:") ||
+          htmlData.includes("<!--[if") ||
+          htmlData.includes("Microsoft"));
+
+      // STRICT criteria for TSV:
+      // 1. Must have multiple lines with tabs (not just one line)
+      // 2. Most lines should have tabs (at least 50%)
+      // 3. Should have consistent column structure
+      // 4. Must NOT be Word content
+      const hasMultipleLinesWithTabs = linesWithTabs.length >= 2;
+      const mostLinesHaveTabs = linesWithTabs.length >= lines.length * 0.5;
+
+      if (hasMultipleLinesWithTabs && mostLinesHaveTabs && !looksLikeWordContent) {
+        const tableHtml = buildHTMLTableFromTSV(textData);
+        if (tableHtml) {
+          event.preventDefault();
+          try {
+            editor.chain().focus().insertContent(tableHtml).run();
+            editor.commands?.fixTables?.();
+            onShowToast?.("Tabell limt inn fra Excel-tekst.", "info");
+            return true;
+          } catch (e) {
+            onShowToast?.("Kunne ikke opprette tabell.", "error");
+            return true;
+          }
+        }
+      }
+    }
+
+    // HTML tables - ONLY intercept if we're absolutely certain it's structured data
+    if (htmlData && htmlData.includes("<table")) {
+      // FLIPPED LOGIC: Only intercept if we're 100% sure it's a data table
+      // Be extremely conservative - when in doubt, let TipTap handle it
+      const isDefinitelyDataTable = (() => {
+        const tableMatch = htmlData.match(/<table[^>]*>(.*?)<\/table>/is);
+        if (!tableMatch) return false;
+
+        const tableContent = tableMatch[1];
+        const rowCount = (tableContent.match(/<tr[^>]*>/gi) || []).length;
+        const cellCount = (tableContent.match(/<td[^>]*>|<th[^>]*>/gi) || []).length;
+        const hasHeaders = (tableContent.match(/<th[^>]*>/gi) || []).length > 0;
+
+        // STRICT criteria for data tables:
+        // 1. Must have table headers (th) - clear sign of structured data
+        // 2. OR multiple rows AND multiple columns (at least 2x2)
+        // 3. AND no signs of being a layout table
+
+        const hasMultipleRowsAndColumns = rowCount >= 2 && cellCount >= 4;
+        const hasStructuredHeaders = hasHeaders && cellCount >= 2;
+
+        // Red flags that suggest layout table (skip if any are present)
+        const layoutTableRedFlags = [
+          htmlData.includes('border="0"'),
+          htmlData.includes('cellpadding="0"'),
+          htmlData.includes('cellspacing="0"'),
+          rowCount === 1 && cellCount === 1, // Single cell = layout
+          !hasHeaders && rowCount === 1, // Single row without headers = layout
+        ];
+
+        const hasLayoutFlags = layoutTableRedFlags.some((flag) => flag);
+
+        return (hasStructuredHeaders || hasMultipleRowsAndColumns) && !hasLayoutFlags;
+      })();
+
+      if (isDefinitelyDataTable) {
+        const tableHtml = buildMinimalTableFromHTML(htmlData);
+        if (tableHtml) {
+          event.preventDefault();
+          try {
+            editor.chain().focus().insertContent(tableHtml).run();
+            editor.commands?.fixTables?.();
+            onShowToast?.("Tabell limt inn.", "info");
+            return true;
+          } catch (e) {
+            // Fallback to TipTap
+          }
+        }
+      } else {
+        return false; // Let TipTap handle it
+      }
+    }
+
+    // STAGE 3: Check for PDF text (multi-line plain text)
+    // Apply PDF cleaning if we have multi-line text that's NOT rich Word content
+    if (textData && textData.includes("\n")) {
+      const isRichWordContent =
+        htmlData &&
+        (htmlData.includes("MsoNormal") ||
+          htmlData.includes("mso-") ||
+          htmlData.includes("xmlns:") ||
+          htmlData.includes("<!--[if") ||
+          htmlData.includes("Microsoft") ||
+          htmlData.includes("<table") ||
+          (htmlData.includes("style=") && htmlData.length > 200)); // Rich styling
+
+      if (!isRichWordContent) {
+        event.preventDefault();
+        const cleanedText = cleanPDFText(textData);
+
+        // Insert the cleaned text as proper HTML paragraphs
+        const paragraphs = cleanedText.split("\n\n");
+        const htmlContent = paragraphs.map((paragraph) => `<p>${paragraph}</p>`).join("");
+
+        editor.chain().focus().insertContent(htmlContent).run();
+
+        onShowToast?.("Tekst limt inn og formatert.", "info");
+        return true;
+      }
+    }
+
+    // STAGE 4: Normal paste (single line text or anything else)
     return false;
   };
 };
