@@ -49,6 +49,16 @@ export const createKeyboardHandler = (editor, disabled = false) => {
       return true;
     }
 
+    // Handle Ctrl+H for highlight
+    if (event.key === "h" && (event.ctrlKey || event.metaKey) && !disabled) {
+      event.preventDefault();
+      event.stopPropagation(); // Override system shortcut (Hide window on macOS)
+      if (editor) {
+        editor.chain().focus().toggleHighlight().run();
+      }
+      return true;
+    }
+
     // Handle Tab key for proper indentation and table navigation
     if (event.key === "Tab" && !disabled) {
       if (editor) {

@@ -8,6 +8,7 @@ import { TableRow } from "@tiptap/extension-table-row";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
 import { Underline } from "@tiptap/extension-underline";
+import { Highlight } from "@tiptap/extension-highlight";
 import { Placeholder } from "@tiptap/extension-placeholder";
 import { Heading } from "@tiptap/extension-heading";
 import { createKeyboardHandler } from "./useEditorKeyboard";
@@ -108,6 +109,11 @@ export const useTiptapEditor = ({
             }),
           ]),
       Underline,
+      Highlight.configure({
+        HTMLAttributes: {
+          class: "bg-yellow-200 text-yellow-900 px-1 rounded",
+        },
+      }),
       Placeholder.configure({
         placeholder,
         emptyEditorClass: "text-muted-foreground",

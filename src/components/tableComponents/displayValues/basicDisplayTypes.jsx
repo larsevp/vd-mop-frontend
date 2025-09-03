@@ -115,7 +115,13 @@ export const BASIC_DISPLAY_TYPES = {
     if (context.format === "REACT") {
       // Use ExpandableRichText for React display, but don't collapse in detail views
       const maxLength = context.source === "DETAIL" ? Infinity : 100;
-      return <ExpandableRichText content={value} maxLength={maxLength} />;
+
+      // Apply styling with indent and border for full richtext fields
+      return (
+        <div className="ml-4 pl-3 border-l-2 border-gray-200">
+          <ExpandableRichText content={value} maxLength={maxLength} />
+        </div>
+      );
     }
 
     // For string format, strip HTML tags and return plain text
@@ -123,9 +129,29 @@ export const BASIC_DISPLAY_TYPES = {
     return plainText || "N/A";
   },
 
-  // Basic rich text fields (alias for richtext)
+  // Basic rich text fields (simpler styling, no indent/border)
   basicrichtext: (row, field, context) => {
-    return BASIC_DISPLAY_TYPES.richtext(row, field, context);
+    const value = row[field.name];
+    if (!value) {
+      const displayValue = "N/A";
+      return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
+    }
+
+    if (context.format === "REACT") {
+      // Use ExpandableRichText for React display, but don't collapse in detail views
+      const maxLength = context.source === "DETAIL" ? Infinity : 100;
+
+      // Simple styling for basic richtext fields - no special borders or indentation
+      return (
+        <div>
+          <ExpandableRichText content={value} maxLength={maxLength} />
+        </div>
+      );
+    }
+
+    // For string format, strip HTML tags and return plain text
+    const plainText = value.replace(/<[^>]*>/g, "").trim();
+    return plainText || "N/A";
   },
 
   // File upload field display

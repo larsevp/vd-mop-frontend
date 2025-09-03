@@ -97,6 +97,9 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
           case "underline":
             chain.toggleUnderline().run();
             break;
+          case "highlight":
+            chain.toggleHighlight().run();
+            break;
           default:
             break;
         }
@@ -116,6 +119,9 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
           break;
         case "underline":
           editor.chain().focus().toggleUnderline().run();
+          break;
+        case "highlight":
+          editor.chain().focus().toggleHighlight().run();
           break;
         default:
           break;
@@ -368,6 +374,9 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
         </ToolbarButton>
         <ToolbarButton onClick={() => toggleMarkAcrossCells("underline")} active={editor.isActive("underline")} title="Underline (Ctrl+U)">
           <u>U</u>
+        </ToolbarButton>
+        <ToolbarButton onClick={() => toggleMarkAcrossCells("highlight")} active={editor.isActive("highlight")} title="Highlight (Ctrl+H)">
+          <span className="bg-yellow-200 text-yellow-900 px-1 rounded font-semibold">H</span>
         </ToolbarButton>
 
         <ToolbarSeparator />

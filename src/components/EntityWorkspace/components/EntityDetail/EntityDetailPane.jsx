@@ -43,6 +43,19 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
     }
   }, [isNewEntity]);
 
+  // Helper function to scroll detail view to top
+  const scrollToTop = () => {
+    // Use setTimeout to ensure state updates are processed first
+    setTimeout(() => {
+      if (detailViewRef.current) {
+        detailViewRef.current.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        });
+      }
+    }, 10);
+  };
+
   // Dynamically resolve the correct model config for combined entities
   const resolvedModelConfig = useMemo(() => {
     if (entity?.entityType && entity.entityType !== entityType) {
@@ -394,15 +407,22 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
       // Use the API response data if available (should include populated relationships)
       // Otherwise fall back to form data
       if (updatedData) {
+        // Extract the actual entity data from the API response
+        const responseData = updatedData.data || updatedData;
+
         // Filter out undefined values to prevent controlled/uncontrolled input warnings
         const filteredUpdatedData = {};
-        Object.entries(updatedData).forEach(([key, value]) => {
+        Object.entries(responseData).forEach(([key, value]) => {
           if (value !== undefined) {
             filteredUpdatedData[key] = value;
           }
         });
 
+        // Update the entity object with fresh data from the API
         Object.assign(entity, filteredUpdatedData);
+
+        // Force a re-render by updating editData to reflect the saved state
+        setEditData({ ...filteredUpdatedData });
       } else {
         // Fallback: just update with form data (should rarely happen)
         Object.assign(entity, editData);
@@ -443,46 +463,44 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Don't trigger shortcuts if user is typing in an input
-      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.contentEditable === "true") {
-        // Handle Enter for save when in edit mode and in form fields
-        if (e.key === "Enter" && isEditing && !e.shiftKey) {
-          // Allow Shift+Enter for line breaks in textareas
-          if (e.target.tagName === "TEXTAREA") {
-            return;
-          }
-          e.preventDefault();
-          handleSave();
+      // Handle Enter key for saving in edit mode
+      if (e.key === "Enter" && isEditing && !e.shiftKey) {
+        // Special handling for different input types
+        if (e.target.tagName === "TEXTAREA") {
+          // Allow normal Enter in textareas (for line breaks)
           return;
         }
-        // Only handle Escape when in inputs during edit mode
-        if (e.key === "Escape" && isEditing) {
-          e.preventDefault();
-          handleCancel();
+
+        if (e.target.contentEditable === "true") {
+          // For TipTap editors, don't trigger save on Enter
+          return;
         }
+
+        // For all other cases (INPUT fields, or general form), save the form
+        e.preventDefault();
+        handleSave();
         return;
       }
 
+      // Handle Escape for canceling edit mode
+      if (e.key === "Escape" && isEditing) {
+        e.preventDefault();
+        handleCancel();
+        return;
+      }
+
+      // Don't trigger other shortcuts if user is typing in an input
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.contentEditable === "true") {
+        return;
+      }
+
+      // General shortcuts (when not in input fields)
       switch (e.key) {
         case "e":
         case "E":
-          if (!isEditing && actionPermissions.canEdit) {
-            e.preventDefault();
-            setIsEditing(true);
-            setEntityEditing(entity.id, true);
-          }
-          break;
-        case "Enter":
-          if (isEditing) {
-            e.preventDefault();
-            handleSave();
-          }
-          break;
-        case "Escape":
-          if (isEditing) {
-            e.preventDefault();
-            handleCancel();
-          }
+          setIsEditing(true);
+          setEntityEditing(entity.id, true);
+          scrollToTop(); // Scroll to top when entering edit mode
           break;
       }
     };
@@ -492,7 +510,7 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
   }, [isEditing, handleCancel, handleSave, actionPermissions.canEdit]);
 
   return (
-    <div ref={detailViewRef} className="flex flex-col h-full bg-white overflow-y-auto">
+    <div className="flex flex-col h-full bg-white overflow-y-auto">
       {/* Sticky Header */}
       <div className={`flex-shrink-0 px-6 py-4 border-b border-gray-200 transition-colors ${isEditing ? "bg-blue-50" : "bg-white"}`}>
         <div className="flex items-start justify-between">
@@ -550,6 +568,7 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
                   onClick={() => {
                     setIsEditing(true);
                     setEntityEditing(entity.id, true);
+                    scrollToTop(); // Scroll to top when entering edit mode
                   }}
                   tabIndex={-1}
                   className="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
@@ -584,7 +603,7 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 overflow-y-auto">
+      <div ref={detailViewRef} className="flex-1 overflow-y-auto">
         <div className="px-6 py-6">
           <EntityDetailForm
             entity={entity}

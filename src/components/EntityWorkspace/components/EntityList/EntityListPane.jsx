@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import { Loader2, ChevronDown, ChevronRight, FileText } from "lucide-react";
+import { Loader2, ChevronDown, ChevronRight, FileText, Minimize2, Maximize2 } from "lucide-react";
 import EntityListRow from "./EntityListRow";
 import EntityListViewOptions from "./EntityListViewOptions";
 
@@ -158,11 +158,41 @@ const EntityListPane = ({
     });
   };
 
+  // Collapse all groups
+  const collapseAll = () => {
+    const allGroupKeys = groupedItems.map((group, groupIndex) => `${entityType}-group-${group.emne?.id || "no-emne"}-${groupIndex}`);
+    setCollapsedGroups(new Set(allGroupKeys));
+  };
+
+  // Expand all groups
+  const expandAll = () => {
+    setCollapsedGroups(new Set());
+  };
+
+  // Check if all groups are collapsed
+  const allGroupsCollapsed =
+    groupedItems.length > 0 &&
+    groupedItems.every((group, groupIndex) => {
+      const groupKey = `${entityType}-group-${group.emne?.id || "no-emne"}-${groupIndex}`;
+      return collapsedGroups.has(groupKey);
+    });
+
   // Keyboard navigation
   useEffect(() => {
     if (!enableKeyboardNav) return;
 
     const handleKeyDown = (e) => {
+      // Ignore shortcuts if user is typing in an input field or editor
+      const activeElement = document.activeElement;
+      const isTyping =
+        activeElement &&
+        (activeElement.tagName === "INPUT" ||
+          activeElement.tagName === "TEXTAREA" ||
+          activeElement.contentEditable === "true" ||
+          activeElement.closest('[contenteditable="true"]')); // Also check for TipTap editors
+
+      if (isTyping) return;
+
       // Global shortcuts for list navigation
       switch (e.key) {
         case "ArrowDown":
@@ -286,8 +316,20 @@ const EntityListPane = ({
       <div ref={listRef} className="flex-1 overflow-y-auto  ">
         {/* List header with view options */}
         <div className="px-4 py-2 bg-white border-b border-gray-200 flex items-center justify-between">
-          <div className="text-xs font-medium text-gray-900">
-            {allItems.length} {allItems.length === 1 ? entityType : entityType}
+          <div className="flex items-center gap-2">
+            <div className="text-xs font-medium text-gray-900">
+              {allItems.length} {allItems.length === 1 ? entityType : entityType}
+            </div>
+            {/* Collapse/Expand all button - only show if there are grouped items */}
+            {groupedItems.length > 1 && (
+              <button
+                onClick={allGroupsCollapsed ? expandAll : collapseAll}
+                className="p-1 hover:bg-gray-100 rounded transition-colors"
+                title={allGroupsCollapsed ? "Vis alle emner" : "Skjul alle emner"}
+              >
+                {allGroupsCollapsed ? <Maximize2 className="w-3 h-3 text-gray-500" /> : <Minimize2 className="w-3 h-3 text-gray-500" />}
+              </button>
+            )}
           </div>
           <EntityListViewOptions viewOptions={viewOptions} onViewOptionsChange={setViewOptions} />
         </div>
