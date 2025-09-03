@@ -437,7 +437,20 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
     }
   };
   const handleCancel = () => {
-    // Reset to original entity values
+    // For new entities, clear editing state but don't close the view entirely
+    // Let the workspace handle returning to the previous entity
+    if (isNewEntity) {
+      setIsEditing(false);
+      setEntityEditing(entity.id, false);
+      setHasChanges(false);
+      setErrors({});
+      // Clear the new entity from workspace without calling onClose
+      setSelectedEntity(null);
+      setActiveEntity(null);
+      return;
+    }
+
+    // For existing entities, reset to original entity values
     const resetData = {};
     resolvedModelConfig.fields.forEach((field) => {
       resetData[field.name] = entity[field.name] || "";
@@ -447,6 +460,21 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
     setEntityEditing(entity.id, false);
     setHasChanges(false);
     setErrors({});
+  };
+
+  const handleClose = () => {
+    // Clear any local editing state when closing the view
+    setIsEditing(false);
+    setEntityEditing(entity.id, false);
+    setHasChanges(false);
+    setErrors({});
+
+    // Clear the workspace store state
+    setSelectedEntity(null);
+    setActiveEntity(null);
+
+    // Close the view
+    onClose();
   };
 
   const handleDelete = () => {
@@ -589,9 +617,11 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
                 )}
               </>
             )}
-            <button onClick={onClose} tabIndex={-1} className="p-2 text-gray-400 hover:text-gray-600 transition-colors" title="Lukk">
-              <X className="w-4 h-4" />
-            </button>
+            {!isEditing && (
+              <button onClick={handleClose} tabIndex={-1} className="p-2 text-gray-400 hover:text-gray-600 transition-colors" title="Lukk">
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
 
