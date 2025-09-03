@@ -2,7 +2,7 @@ import React from "react";
 import { BASIC_DISPLAY_TYPES } from "./basicDisplayTypes.jsx";
 import { ENTITY_DISPLAY_TYPES } from "./entityDisplayTypes.jsx";
 import { MODEL_SPECIFIC_DISPLAY } from "./modelSpecificDisplay.jsx";
-import { EntityTypeTranslator } from "@/components/EntityWorkspace/shared/utils/entityTypeTranslator";
+import { normalizeModelName } from "@/components/tableComponents/utils/modelNameUtils";
 
 /**
  * Display value resolution priority:
@@ -31,8 +31,8 @@ export class DisplayValueResolver {
       ...context,
     };
 
-    // Use EntityTypeTranslator for consistent naming conversion
-    const normalizedModelName = resolveContext.modelName ? EntityTypeTranslator.translate(resolveContext.modelName, "camelCase") : null;
+    // Use simple utility for consistent naming conversion
+    const normalizedModelName = normalizeModelName(resolveContext.modelName);
 
     const modelConfig = MODEL_SPECIFIC_DISPLAY[normalizedModelName];
 
