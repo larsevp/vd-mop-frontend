@@ -1,6 +1,6 @@
 import React from "react";
-import CombinedEntityWorkspace from "@/components/EntityWorkspace/CombinedEntityWorkspace";
-import { combinedEntityService } from "@/api/endpoints/models/combinedEntities";
+import { EntityWorkspace } from "@/components/EntityWorkspace";
+import { combined as combinedConfig } from "@/modelConfigs/models/combined";
 
 /**
  * Combined Entities Page - Shows unified view of Krav and Tiltak
@@ -13,16 +13,18 @@ import { combinedEntityService } from "@/api/endpoints/models/combinedEntities";
  */
 export default function CombinedEntities() {
   return (
-    <CombinedEntityWorkspace
-      combinedEntityService={combinedEntityService}
+    <EntityWorkspace
+      modelConfig={combinedConfig}
       entityType="combined"
-      viewOptions={{
-        primaryView: "krav-first",
-        showHierarchy: true,
-        showCrossRelations: true,
-        includeChildren: true,
-        includeRelated: true,
-        groupByEmne: false,
+      debug={true}
+      workspaceConfig={{
+        ui: {
+          showMerknader: true,
+          showStatus: true,
+          showVurdering: true,
+          showPrioritet: true,
+          showEntityType: true, // Show entity type badges for Krav/Tiltak
+        }
       }}
     />
   );

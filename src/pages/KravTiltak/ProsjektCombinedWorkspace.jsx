@@ -1,6 +1,6 @@
 import React from "react";
-import CombinedEntityWorkspace from "@/components/EntityWorkspace/CombinedEntityWorkspace";
-import { combinedProsjektEntityService } from "@/api/endpoints/models/combinedProsjektEntities";
+import { EntityWorkspace } from "@/components/EntityWorkspace";
+import { prosjektCombined as prosjektCombinedConfig } from "@/modelConfigs/models/prosjektCombined";
 
 /**
  * ProsjektCombined Workspace - Shows unified view of ProsjektKrav and ProsjektTiltak
@@ -26,20 +26,19 @@ import { combinedProsjektEntityService } from "@/api/endpoints/models/combinedPr
  */
 export default function ProsjektCombinedWorkspace() {
   return (
-    <CombinedEntityWorkspace
-      combinedEntityService={combinedProsjektEntityService}
+    <EntityWorkspace
+      modelConfig={prosjektCombinedConfig}
       entityType="prosjekt-combined"
-      viewOptions={{
-        primaryView: "prosjektkrav-first",  // Start with requirements view
-        showHierarchy: true,                // Show parent-child relationships
-        showCrossRelations: true,           // Show ProsjektKrav ↔ ProsjektTiltak links
-        includeChildren: true,              // Include child entities in display
-        includeRelated: true,               // Include related entities
-        groupByEmne: false,                 // Start ungrouped, allow user to toggle
+      debug={true}
+      workspaceConfig={{
+        ui: {
+          showMerknader: true,
+          showStatus: true,
+          showVurdering: true,
+          showPrioritet: false, // ProsjektTiltak might not use priority
+          showEntityType: true, // Show entity type badges for ProsjektKrav/ProsjektTiltak
+        }
       }}
-      // Workspace title and description
-      title="Prosjekt Krav & Tiltak"
-      description="Unified workspace for managing project-specific requirements and implementation measures"
     />
   );
 }
