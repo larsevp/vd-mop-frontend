@@ -31,6 +31,10 @@ const SearchBar = ({
   onAdditionalFiltersChange,
   availableStatuses = [],
   availableVurderinger = [],
+  
+  // NEW: Adapter configuration (when provided, overrides hardcoded options)
+  filterConfig = null,
+  availableFilters = {},
 }) => {
   const [showFilters, setShowFilters] = useState(false);
   const searchRef = useRef(null);
@@ -185,7 +189,7 @@ const SearchBar = ({
               </Select>
             </div>
 
-            {/* Sort */}
+            {/* Sort - use adapter config if available */}
             <div className="space-y-2">
               <label className="text-xs font-medium text-gray-700">Sortering</label>
               <Select 
@@ -200,20 +204,35 @@ const SearchBar = ({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="updatedAt-desc">Sist oppdatert (nyest)</SelectItem>
-                  <SelectItem value="updatedAt-asc">Sist oppdatert (eldst)</SelectItem>
-                  <SelectItem value="tittel-asc">Tittel A-Z</SelectItem>
-                  <SelectItem value="tittel-desc">Tittel Z-A</SelectItem>
-                  <SelectItem value="prioritet-asc">Prioritet (lav-høy)</SelectItem>
-                  <SelectItem value="prioritet-desc">Prioritet (høy-lav)</SelectItem>
+                  {filterConfig?.sortFields ? (
+                    filterConfig.sortFields.map(field => [
+                      <SelectItem key={`${field.key}-desc`} value={`${field.key}-desc`}>
+                        {field.label} (nyest/høyest)
+                      </SelectItem>,
+                      <SelectItem key={`${field.key}-asc`} value={`${field.key}-asc`}>
+                        {field.label} (eldst/lavest)
+                      </SelectItem>
+                    ]).flat()
+                  ) : (
+                    <>
+                      <SelectItem value="updatedAt-desc">Sist oppdatert (nyest)</SelectItem>
+                      <SelectItem value="updatedAt-asc">Sist oppdatert (eldst)</SelectItem>
+                      <SelectItem value="tittel-asc">Tittel A-Z</SelectItem>
+                      <SelectItem value="tittel-desc">Tittel Z-A</SelectItem>
+                      <SelectItem value="prioritet-asc">Prioritet (lav-høy)</SelectItem>
+                      <SelectItem value="prioritet-desc">Prioritet (høy-lav)</SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Status filter */}
-            {availableStatuses.length > 0 && (
+            {/* Status filter - use adapter config if available */}
+            {(filterConfig?.fields?.status?.enabled !== false && (availableFilters.statuses?.length > 0 || availableStatuses.length > 0)) && (
               <div className="space-y-2">
-                <label className="text-xs font-medium text-gray-700">Status</label>
+                <label className="text-xs font-medium text-gray-700">
+                  {filterConfig?.fields?.status?.label || 'Status'}
+                </label>
                 <Select 
                   value={additionalFilters.status || "all"} 
                   onValueChange={(status) => 
@@ -227,8 +246,10 @@ const SearchBar = ({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Alle statuser</SelectItem>
-                    {availableStatuses.map(status => (
+                    <SelectItem value="all">
+                      {filterConfig?.fields?.status?.placeholder || 'Alle statuser'}
+                    </SelectItem>
+                    {(availableFilters.statuses || availableStatuses).map(status => (
                       <SelectItem key={status} value={status}>{status}</SelectItem>
                     ))}
                   </SelectContent>
@@ -236,10 +257,12 @@ const SearchBar = ({
               </div>
             )}
 
-            {/* Vurdering filter */}
-            {availableVurderinger.length > 0 && (
+            {/* Vurdering filter - use adapter config if available */}
+            {(filterConfig?.fields?.vurdering?.enabled !== false && (availableFilters.vurderinger?.length > 0 || availableVurderinger.length > 0)) && (
               <div className="space-y-2">
-                <label className="text-xs font-medium text-gray-700">Vurdering</label>
+                <label className="text-xs font-medium text-gray-700">
+                  {filterConfig?.fields?.vurdering?.label || 'Vurdering'}
+                </label>
                 <Select 
                   value={additionalFilters.vurdering || "all"} 
                   onValueChange={(vurdering) => 
@@ -253,9 +276,73 @@ const SearchBar = ({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Alle vurderinger</SelectItem>
-                    {availableVurderinger.map(vurdering => (
+                    <SelectItem value="all">
+                      {filterConfig?.fields?.vurdering?.placeholder || 'Alle vurderinger'}
+                    </SelectItem>
+                    {(availableFilters.vurderinger || availableVurderinger).map(vurdering => (
                       <SelectItem key={vurdering} value={vurdering}>{vurdering}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Entity type filter for combined views */}
+            {filterConfig?.fields?.entityType?.enabled && availableFilters.entityTypes?.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-gray-700">
+                  {filterConfig.fields.entityType.label}
+                </label>
+                <Select 
+                  value={additionalFilters.entityType || "all"} 
+                  onValueChange={(entityType) => 
+                    onAdditionalFiltersChange({
+                      ...additionalFilters,
+                      entityType: entityType === "all" ? undefined : entityType
+                    })
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">
+                      {filterConfig.fields.entityType.placeholder}
+                    </SelectItem>
+                    {availableFilters.entityTypes.map(entityType => (
+                      <SelectItem key={entityType} value={entityType}>
+                        {entityType}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Emne filter */}
+            {filterConfig?.fields?.emne?.enabled && availableFilters.emner?.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-gray-700">
+                  {filterConfig.fields.emne.label}
+                </label>
+                <Select 
+                  value={additionalFilters.emne || "all"} 
+                  onValueChange={(emne) => 
+                    onAdditionalFiltersChange({
+                      ...additionalFilters,
+                      emne: emne === "all" ? undefined : emne
+                    })
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">
+                      {filterConfig.fields.emne.placeholder}
+                    </SelectItem>
+                    {availableFilters.emner.map(emne => (
+                      <SelectItem key={emne} value={emne}>{emne}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -279,9 +366,11 @@ const SearchBar = ({
               {hasActiveFilters && (
                 <button
                   onClick={() => {
-                    onFilterChange("all");
-                    onSortChange("updatedAt");
-                    onSortOrderChange("desc");
+                    // Use adapter defaults if available, otherwise fallback to hardcoded
+                    const defaults = filterConfig?.defaults || {};
+                    onFilterChange(defaults.filterBy || "all");
+                    onSortChange(defaults.sortBy || "updatedAt");
+                    onSortOrderChange(defaults.sortOrder || "desc");
                     onAdditionalFiltersChange({});
                     onSearch(); // Apply the reset immediately
                   }}

@@ -24,8 +24,7 @@ import SearchBar from "./interface/components/SearchBar";
 import GenericEntityDetailPane from "./interface/components/GenericEntityDetailPane";
 import { Toast } from "@/components/ui/editor/components/Toast.jsx";
 
-// Services
-import { EntityTypeResolver } from "./interface/contracts/EntityTypeResolver";
+// Services (EntityTypeResolver removed - using adapter pattern only)
 
 /**
  * Store cache for reusing stores across renders
@@ -74,11 +73,11 @@ const EntityWorkspaceModern = ({
     throw new Error('EntityWorkspace requires either adapter prop or legacy entityType prop');
   }
 
-  // Get configuration from adapter or legacy sources
+  // Get configuration from adapter (legacy fallback kept minimal)
   const displayConfig = adapter ? adapter.getDisplayConfig() : {
-    title: modelConfig?.title || EntityTypeResolver.getDisplayName(entityType),
+    title: modelConfig?.title || entityType,
     entityTypes: [entityType],
-    supportsGroupByEmne: EntityTypeResolver.supportsGroupByEmne(entityType),
+    supportsGroupByEmne: true, // Default to true for legacy
     layout: workspaceConfig?.layout || modelConfig?.workspace?.layout || 'split'
   };
 
@@ -286,9 +285,9 @@ const EntityWorkspaceModern = ({
                 isLoading={workspace.loading}
                 placeholder={`Søk i ${entityDisplayName.toLowerCase()}...`}
                 mode="advanced"
-                filterBy={workspace.filters?.filterBy || 'all'}
-                sortBy={workspace.filters?.sortBy || 'updatedAt'}
-                sortOrder={workspace.filters?.sortOrder || 'desc'}
+                filterBy={workspace.filters?.filterBy || filterConfig.defaults?.filterBy || 'all'}
+                sortBy={workspace.filters?.sortBy || filterConfig.defaults?.sortBy || 'updatedAt'}
+                sortOrder={workspace.filters?.sortOrder || filterConfig.defaults?.sortOrder || 'desc'}
                 onFilterChange={(filterBy) => workspace.actions.setFilters?.({ 
                   ...workspace.filters, 
                   filterBy 
@@ -309,6 +308,9 @@ const EntityWorkspaceModern = ({
                 })}
                 availableStatuses={workspace.availableFilters?.statuses || []}
                 availableVurderinger={workspace.availableFilters?.vurderinger || []}
+                // NEW: Pass adapter configuration
+                filterConfig={filterConfig}
+                availableFilters={workspace.availableFilters || {}}
               />
             </div>
 

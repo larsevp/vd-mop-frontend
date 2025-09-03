@@ -5,14 +5,14 @@
  * Based on the INTERFACE-ANALYSIS.md recommendations and kravTiltak implementation.
  */
 
-import { EntityTypeResolver } from '@/components/EntityWorkspace/interface/contracts/EntityTypeResolver.js';
+// EntityTypeResolver removed - using adapter pattern only
 import { createEntityWorkspaceAdapter } from '@/components/EntityWorkspace/adapter/index.js';
 
 export class EntityInterface {
   constructor(entityType, config = {}) {
     this.entityType = entityType;
     this.config = config;
-    this.modelConfig = config.modelConfig || EntityTypeResolver.getWorkspaceConfig(entityType);
+    this.modelConfig = config.modelConfig || {}; // Fallback to empty config
     
     // Create adapter for proper entity handling
     this.adapter = createEntityWorkspaceAdapter(entityType);
@@ -131,7 +131,8 @@ export class EntityInterface {
    * Check if entity type supports group by emne
    */
   supportsGroupByEmne(entityType = null) {
-    return EntityTypeResolver.supportsGroupByEmne(entityType || this.entityType);
+    // Default to true - adapters should provide specific configuration
+    return true;
   }
 
   /**

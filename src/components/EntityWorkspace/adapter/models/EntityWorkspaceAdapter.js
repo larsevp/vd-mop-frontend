@@ -4,7 +4,7 @@
  */
 
 import { BaseAdapter } from '../core/BaseAdapter.js';
-import { EntityTypeResolver } from '@/components/EntityWorkspace/interface/contracts/EntityTypeResolver.js';
+// EntityTypeResolver removed - using adapter pattern only
 
 export class EntityWorkspaceAdapter extends BaseAdapter {
   constructor(entityType, config = {}) {
