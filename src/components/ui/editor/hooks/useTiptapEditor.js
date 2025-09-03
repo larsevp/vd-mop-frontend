@@ -11,6 +11,7 @@ import { Underline } from "@tiptap/extension-underline";
 import { Highlight } from "@tiptap/extension-highlight";
 import { Placeholder } from "@tiptap/extension-placeholder";
 import { Heading } from "@tiptap/extension-heading";
+import { SafariBulletList } from "../extensions/SafariBulletList";
 import { createKeyboardHandler } from "./useEditorKeyboard";
 import { createPasteHandler } from "./useEditorPaste";
 import { getEditorStyles } from "../utils/editorStyles";
@@ -30,25 +31,26 @@ export const useTiptapEditor = ({
         heading: false, // Disable default heading to use custom one
         link: basic ? false : false, // Disable default link to use custom one (or completely disable in basic mode)
         underline: false, // Disable default underline to use custom one
-        bulletList: {
-          HTMLAttributes: {
-            class: "list-disc ml-6",
-          },
-        },
+        bulletList: false, // Disable default bulletList to use Safari-compatible one
         orderedList: {
           HTMLAttributes: {
-            class: "list-decimal ml-6",
+            class: "list-decimal ml-6 space-y-1",
           },
         },
         listItem: {
           HTMLAttributes: {
-            class: "mb-1",
+            class: "leading-relaxed",
           },
         },
         paragraph: {
           HTMLAttributes: {
             class: "mb-3 text-foreground",
           },
+        },
+      }),
+      SafariBulletList.configure({
+        HTMLAttributes: {
+          class: "list-disc ml-6 space-y-1",
         },
       }),
       Heading.configure({
@@ -119,11 +121,15 @@ export const useTiptapEditor = ({
         emptyEditorClass: "text-muted-foreground",
       }),
     ],
-    content: value,
+    content:
+      value ||
+      (typeof navigator !== "undefined" && /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent) ? "<p>A</p>" : ""),
     editable: !disabled,
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
-      onChange?.(html === "<p></p>" ? "" : html);
+      // Handle Safari's initial test letter and empty paragraph states
+      const isEmpty = html === "<p></p>" || html === "<p>&nbsp;</p>" || html === "<p> </p>" || html === "<p>A</p>" || html.trim() === "";
+      onChange?.(isEmpty ? "" : html);
     },
     editorProps: {
       attributes: {

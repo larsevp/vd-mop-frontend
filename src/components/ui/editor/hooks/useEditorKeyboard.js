@@ -110,61 +110,15 @@ export const createKeyboardHandler = (editor, disabled = false) => {
       }
     }
 
-    // Handle Enter key to create lists from patterns OR prevent form submission
+    // Handle Enter key ONLY for form submission prevention
+    // Let TipTap's built-in input rules handle list creation ("- ", "1. ", etc.)
     if (event.key === "Enter" && !disabled && editor) {
-      const { from, to } = editor.state.selection;
-      const textBefore = editor.state.doc.textBetween(Math.max(0, from - 10), from);
-
-      // Check for "- " or "* " at start of line to create bullet list
-      if (textBefore.match(/^- $/) || textBefore.match(/^\* $/)) {
-        event.preventDefault();
-        event.stopPropagation(); // Prevent bubbling to form
-        // Remove the "- " or "* " and create a bullet list
-        editor
-          .chain()
-          .focus()
-          .deleteRange({ from: from - 2, to: from })
-          .toggleBulletList()
-          .run();
-        return true;
-      }
-
-      // Check for "1. " or "1) " at start of line to create numbered list
-      const dotPattern = textBefore.match(/(\d+)\. $/);
-      const parenPattern = textBefore.match(/(\d+)\) $/);
-
-      if (dotPattern) {
-        event.preventDefault();
-        event.stopPropagation(); // Prevent bubbling to form
-        const fullMatch = dotPattern[0];
-        editor
-          .chain()
-          .focus()
-          .deleteRange({ from: from - fullMatch.length, to: from })
-          .toggleOrderedList()
-          .run();
-        return true;
-      }
-
-      if (parenPattern) {
-        event.preventDefault();
-        event.stopPropagation(); // Prevent bubbling to form
-        const fullMatch = parenPattern[0];
-        editor
-          .chain()
-          .focus()
-          .deleteRange({ from: from - fullMatch.length, to: from })
-          .toggleOrderedList()
-          .run();
-        return true;
-      }
-
       // IMPORTANT: Always prevent Enter from bubbling to form submission
       // This prevents the editor from triggering form submissions
       event.preventDefault();
       event.stopPropagation();
 
-      // Let TipTap handle the Enter key normally (create new paragraph, etc.)
+      // Let TipTap handle the Enter key normally (create new paragraph, list items, etc.)
       return false; // Return false to let TipTap's default Enter handling work
     }
 

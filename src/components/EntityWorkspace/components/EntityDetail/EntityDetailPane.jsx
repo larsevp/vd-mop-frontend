@@ -228,6 +228,9 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
     }
 
     try {
+      // Store the original entity ID for clearing editing state
+      const originalEntityId = entity.id;
+
       // Follow RowForm pattern but adapt for our API
       const isUpdate = entity && entity.id && !isNewEntity;
 
@@ -429,7 +432,8 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
       }
 
       setIsEditing(false);
-      setEntityEditing(entity.id, false);
+      // Clear editing state for the original entity ID (important for new entities that change ID)
+      setEntityEditing(originalEntityId, false);
       setHasChanges(false);
     } catch (error) {
       console.error("Error saving entity:", error);

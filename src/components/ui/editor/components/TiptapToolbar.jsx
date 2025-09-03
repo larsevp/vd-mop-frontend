@@ -362,6 +362,12 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
     input.click();
   }, [editor, uploadUrl, onShowToast]);
 
+  const toggleBulletList = useCallback(() => {
+    // Always just use the normal bullet list toggle
+    // The Safari issues should be prevented by the &nbsp; initialization in useTiptapEditor
+    editor.chain().focus().toggleBulletList().run();
+  }, [editor]);
+
   return (
     <>
       <div className="border-b border-border p-2 flex items-center gap-1 flex-wrap">
@@ -407,6 +413,13 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
           title="Heading 2"
         >
           H2
+        </ToolbarButton>
+
+        <ToolbarSeparator />
+
+        {/* Lists */}
+        <ToolbarButton onClick={toggleBulletList} active={editor.isActive("bulletList")} title="Bullet List">
+          • List
         </ToolbarButton>
 
         {!basic && (
