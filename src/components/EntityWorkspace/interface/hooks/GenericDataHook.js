@@ -5,8 +5,9 @@
  * Handles both grouped and paginated responses with unified query building.
  */
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createEntityInterface } from '../utils/EntityInterface.js';
+import { createGenericCacheManager } from '../services/GenericCacheManager.js';
 
 /**
  * Generic hook for entity data fetching with adapter integration
@@ -22,6 +23,15 @@ export const useGenericEntityData = (entityType, options = {}) => {
 
   // Create EntityInterface for adapter-based operations
   const entityInterface = createEntityInterface(entityType, { modelConfig });
+  
+  // Get queryClient for cache management
+  const queryClient = useQueryClient();
+  
+  // Create cache manager for advanced cache operations
+  const cacheManager = createGenericCacheManager(entityType, queryClient, { 
+    modelConfig,
+    debug: options.debug 
+  });
 
   // Build query key using adapter-aware cache key generation
   const queryKey = [
@@ -125,15 +135,15 @@ export const useGenericEntityData = (entityType, options = {}) => {
     
     // Methods
     refetch: query.refetch,
-    invalidate: () => {
-      // Would invalidate cache using queryClient
-      console.log('GenericDataHook: Cache invalidation not implemented');
+    invalidate: async (operation = 'update', data = null) => {
+      await cacheManager.invalidateByPattern(operation, data);
     },
     
     // Metadata
     queryKey,
     requestParams,
-    entityInterface
+    entityInterface,
+    cacheManager
   };
 };
 
@@ -149,6 +159,15 @@ export const useGenericEntity = (entityType, entityId, options = {}) => {
 
   // Create EntityInterface for adapter-based operations
   const entityInterface = createEntityInterface(entityType, { modelConfig });
+  
+  // Get queryClient for cache management
+  const queryClient = useQueryClient();
+  
+  // Create cache manager for advanced cache operations
+  const cacheManager = createGenericCacheManager(entityType, queryClient, { 
+    modelConfig,
+    debug: options.debug 
+  });
 
   const queryKey = [entityType, 'detail', entityId];
 
@@ -173,8 +192,12 @@ export const useGenericEntity = (entityType, entityId, options = {}) => {
     isError: query.isError,
     error: query.error,
     refetch: query.refetch,
+    invalidate: async (operation = 'update', data = query.data) => {
+      await cacheManager.invalidateByPattern(operation, data);
+    },
     queryKey,
-    entityInterface
+    entityInterface,
+    cacheManager
   };
 };
 
