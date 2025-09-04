@@ -10,7 +10,7 @@
  * The generic interface receives this via dependency injection.
  */
 
-import { EntityWorkspaceAdapter } from '@/components/EntityWorkspace/adapter/models/EntityWorkspaceAdapter.js';
+import { EntityWorkspaceAdapter } from './EntityWorkspaceAdapter.js';
 import { WorkspaceAdapterContract } from '@/components/EntityWorkspace/interface/contracts/WorkspaceAdapterContract.js';
 
 export class KravTiltakAdapter {

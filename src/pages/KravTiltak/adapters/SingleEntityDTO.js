@@ -135,6 +135,61 @@ export class SingleEntityDTO {
     return [this.entityType];
   }
 
+  // === DATA LOADING ===
+
+  /**
+   * Load data using adapter and query functions
+   */
+  async loadData(queryParams = {}) {
+    if (this.options.debug) {
+      console.log(`SingleEntityDTO[${this.entityType}]: Loading data with params:`, queryParams);
+    }
+
+    try {
+      // Get query functions from adapter
+      const queryFunctions = this.adapter.getQueryFunctions();
+      
+      // For individual entities, use the standard query function
+      const queryFn = queryFunctions[this.entityType]?.standard;
+      
+      if (!queryFn) {
+        throw new Error(`No query function found for entity type: ${this.entityType}`);
+      }
+
+      if (this.options.debug) {
+        console.log(`SingleEntityDTO[${this.entityType}]: Using query function:`, !!queryFn);
+      }
+
+      // Call the query function with parameters
+      const rawData = await queryFn(queryParams);
+      
+      if (this.options.debug) {
+        console.log(`SingleEntityDTO[${this.entityType}]: Raw data received:`, {
+          hasData: !!rawData,
+          type: typeof rawData,
+          keys: rawData ? Object.keys(rawData) : null
+        });
+      }
+
+      // Transform the response using the adapter
+      const transformedResponse = this.transformResponse(rawData);
+      
+      if (this.options.debug) {
+        console.log(`SingleEntityDTO[${this.entityType}]: Transformed response:`, {
+          itemCount: transformedResponse.items?.length || 0,
+          total: transformedResponse.total,
+          hasItems: !!transformedResponse.items
+        });
+      }
+
+      return transformedResponse;
+
+    } catch (error) {
+      console.error(`SingleEntityDTO[${this.entityType}]: Load data error:`, error);
+      throw error;
+    }
+  }
+
   // === UTILITY METHODS ===
 
   /**

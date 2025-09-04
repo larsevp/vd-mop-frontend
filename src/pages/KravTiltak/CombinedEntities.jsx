@@ -2,16 +2,18 @@ import React from "react";
 import { EntityWorkspace } from "@/components/EntityWorkspace";
 import { krav as kravConfig } from "@/modelConfigs/models/krav.js";
 import { tiltak as tiltakConfig } from "@/modelConfigs/models/tiltak.js";
-import { createKravTiltakCombinedDTO } from "./adapters/KravTiltakCombinedDTO.js";
+import { createKravTiltakAdapter } from "./adapters/KravTiltakAdapter.js";
+import { createSingleEntityDTO } from "./adapters/SingleEntityDTO.js";
+import { createCombinedEntityDTO } from "./adapters/CombinedEntityDTO.js";
 
 /**
- * CombinedEntities - Krav + Tiltak unified workspace using Combined DTO
+ * CombinedEntities - Krav + Tiltak unified workspace using NEW Combined DTO Architecture
  *
- * SPECIALIZED ARCHITECTURE:
- * - Uses CombinedEntityDTO for multi-model data mixing
- * - DTO handles model-specific combination logic
- * - Generates unified view from separate model data
- * - Maintains entity type distinction for UI
+ * NEW ARCHITECTURE:
+ * - CombinedEntityDTO -> SingleEntityDTOs -> KravTiltakAdapters
+ * - Each entity type gets its own SingleEntityDTO wrapping a KravTiltakAdapter
+ * - CombinedEntityDTO coordinates the SingleEntityDTOs for unified interface
+ * - Proper separation of concerns with dependency injection
  * 
  * Features:
  * - Mixed entity display with type badges  
@@ -20,21 +22,24 @@ import { createKravTiltakCombinedDTO } from "./adapters/KravTiltakCombinedDTO.js
  * - Proper type-specific configurations
  */
 export default function CombinedEntities() {
-  // Create combined DTO with both model configs
-  const combinedDTO = createKravTiltakCombinedDTO(kravConfig, tiltakConfig, {
-    title: "Krav og Tiltak",
-    mixingRules: {
-      defaultSort: 'updatedAt',
-      defaultSortOrder: 'desc',
-      separateByType: false, // Mix freely
-      searchFields: ['title', 'descriptionCard', 'uid']
-    }
+  // Create individual adapters for each entity type
+  const kravAdapter = createKravTiltakAdapter(kravConfig);
+  const tiltakAdapter = createKravTiltakAdapter(tiltakConfig);
+  
+  // Wrap adapters in SingleEntityDTOs
+  const kravDTO = createSingleEntityDTO(kravAdapter, { debug: true });
+  const tiltakDTO = createSingleEntityDTO(tiltakAdapter, { debug: true });
+  
+  // Create CombinedEntityDTO that coordinates the SingleEntityDTOs
+  const combinedDTO = createCombinedEntityDTO([kravDTO, tiltakDTO], {
+    debug: true,
+    title: "Krav og Tiltak"
   });
   
   return (
     <EntityWorkspace
-      // Pass combined DTO as specialized adapter
-      combinedEntityDTO={combinedDTO}
+      // Use unified DTO prop (new architecture)
+      dto={combinedDTO}
       debug={true}
     />
   );

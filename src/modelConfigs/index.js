@@ -14,8 +14,6 @@ import { kravreferansetype } from "./models/kravreferansetype";
 import { tiltak } from "./models/tiltak";
 import { prosjektKrav } from "./models/prosjektKrav";
 import { prosjektTiltak } from "./models/prosjektTiltak";
-import { combined } from "./models/combined";
-import { prosjektCombined } from "./models/prosjektCombined";
 // Object mapping for dynamic lookup
 export const modelConfigs = {
   /* PLOP_MODEL_MAPPINGS */
@@ -33,8 +31,6 @@ export const modelConfigs = {
   tiltak: tiltak,
   prosjektKrav: prosjektKrav,
   prosjektTiltak: prosjektTiltak,
-  combined: combined,
-  prosjektCombined: prosjektCombined,
 };
 
 // Helper function for dynamic model config access

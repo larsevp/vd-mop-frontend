@@ -3,7 +3,7 @@
  * Transforms various backend response formats into standardized entity structures
  */
 
-import { BaseAdapter } from '../core/BaseAdapter.js';
+import { BaseAdapter } from './BaseAdapter.js';
 // EntityTypeResolver removed - using adapter pattern only
 
 export class EntityWorkspaceAdapter extends BaseAdapter {
@@ -333,60 +333,6 @@ export class EntityWorkspaceAdapter extends BaseAdapter {
     return backendData;
   }
 
-  /**
-   * Get the appropriate query function for the entity type
-   */
-  getQueryFunction(entityType, useGroupedFunction = false) {
-    const modelConfig = EntityTypeResolver.resolveModelConfig(entityType);
-    
-    if (!modelConfig) {
-      throw new Error(`No model config found for entity type: ${entityType}`);
-    }
-    
-    // Return grouped function if available and requested
-    if (useGroupedFunction && modelConfig.queryFnGroupedByEmne) {
-      return modelConfig.queryFnGroupedByEmne;
-    }
-    
-    // Return the main query function
-    if (modelConfig.queryFn) {
-      return modelConfig.queryFn;
-    }
-    
-    throw new Error(`No query function found in model config for entity type: ${entityType}`);
-  }
-
-  /**
-   * Get display name for entity type
-   */
-  getDisplayName(entityType, plural = false) {
-    const modelConfig = EntityTypeResolver.resolveModelConfig(entityType);
-    
-    if (modelConfig?.title) {
-      return plural ? modelConfig.title : modelConfig.modelPrintName || modelConfig.title;
-    }
-    
-    // Fallback to entity type with basic pluralization
-    if (plural) {
-      return entityType.endsWith('s') ? entityType : entityType + 'er';
-    }
-    
-    return entityType;
-  }
-
-  /**
-   * Check if entity type supports grouping by emne
-   */
-  supportsGroupByEmne(entityType) {
-    return EntityTypeResolver.supportsGroupByEmne(entityType);
-  }
-
-  /**
-   * Get workspace configuration for entity type
-   */
-  getWorkspaceConfig(entityType) {
-    return EntityTypeResolver.getWorkspaceConfig(entityType);
-  }
 
   /**
    * Create standardized response format

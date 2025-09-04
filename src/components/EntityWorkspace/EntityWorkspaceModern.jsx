@@ -21,7 +21,6 @@ import { useGenericWorkspace } from "./interface/hooks/GenericStoreHook.js";
 import EntitySplitView from "./interface/components/EntitySplitView";
 import EntityListPane from "./interface/components/EntityListPane";
 import SearchBar from "./interface/components/SearchBar";
-import GenericEntityDetailPane from "./interface/components/GenericEntityDetailPane";
 import { Toast } from "@/components/ui/editor/components/Toast.jsx";
 
 // Services (EntityTypeResolver removed - using adapter pattern only)
@@ -99,22 +98,24 @@ const EntityWorkspaceModern = ({
       layout: workspaceConfig?.layout || modelConfig?.workspace?.layout || 'split'
     };
     
-      filterConfig = {
-        // Fallback to hardcoded legacy config
-        fields: {
-          status: { enabled: true, label: 'Status', placeholder: 'Alle statuser' },
-          vurdering: { enabled: true, label: 'Vurdering', placeholder: 'Alle vurderinger' },
-          emne: { enabled: true, label: 'Emne', placeholder: 'Alle emner' }
-        },
-        sortFields: [
-          { key: 'updatedAt', label: 'Sist endret' },
-          { key: 'title', label: 'Tittel' }
-        ],
-        defaults: { sortBy: 'updatedAt', sortOrder: 'desc', filterBy: 'all' }
-      };
-    }
+    filterConfig = {
+      // Fallback to hardcoded legacy config
+      fields: {
+        status: { enabled: true, label: 'Status', placeholder: 'Alle statuser' },
+        vurdering: { enabled: true, label: 'Vurdering', placeholder: 'Alle vurderinger' },
+        emne: { enabled: true, label: 'Emne', placeholder: 'Alle emner' }
+      },
+      sortFields: [
+        { key: 'updatedAt', label: 'Sist endret' },
+        { key: 'title', label: 'Tittel' }
+      ],
+      defaults: { sortBy: 'updatedAt', sortOrder: 'desc', filterBy: 'all' }
+    };
   }
 
+  // Extract display name from DTO/adapter
+  const entityDisplayName = displayConfig.title || 'Entities';
+  
   // Get or create workspace store (use DTO's primary entity type if available)
   const storeEntityType = displayConfig.entityTypes?.[0] || entityType;
   const store = useMemo(() => 
@@ -342,7 +343,7 @@ const EntityWorkspaceModern = ({
               disabled={isAnyEntityEditing}
             >
               <Plus className="h-4 w-4" />
-              {resolvedModelConfig?.newButtonLabel || `Ny ${entityDisplayName}`}
+              {displayConfig?.newButtonLabel || `Ny ${entityDisplayName}`}
             </Button>
           </div>
         </div>
@@ -422,15 +423,45 @@ const EntityWorkspaceModern = ({
             renderDetailPane={({ selectedEntity }) => (
               <div className="h-full overflow-auto bg-white">
                 {selectedEntity ? (
-                  <GenericEntityDetailPane
-                    entity={selectedEntity}
-                    onSave={(entity) => workspace.actions.updateEntity?.(entity.id, entity)}
-                    onDelete={(entity) => workspace.actions.deleteEntity?.(entity.id)}
-                    config={{
-                      entityType: entityType,
-                      modelConfig: resolvedModelConfig
-                    }}
-                  />
+                  <div className="p-6">
+                    <div className="border-b pb-4 mb-4">
+                      <h2 className="text-xl font-semibold text-gray-900">{selectedEntity.title}</h2>
+                      {selectedEntity.uid && (
+                        <p className="text-sm text-gray-600 mt-1">ID: {selectedEntity.uid}</p>
+                      )}
+                    </div>
+                    
+                    {selectedEntity.descriptionField && (
+                      <div className="mb-4">
+                        <h3 className="text-sm font-medium text-gray-700 mb-2">Beskrivelse</h3>
+                        <p className="text-sm text-gray-600">{selectedEntity.descriptionField}</p>
+                      </div>
+                    )}
+                    
+                    {selectedEntity.status && (
+                      <div className="mb-4">
+                        <h3 className="text-sm font-medium text-gray-700 mb-2">Status</h3>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                          {selectedEntity.status.name || selectedEntity.status.navn}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {selectedEntity.emne && (
+                      <div className="mb-4">
+                        <h3 className="text-sm font-medium text-gray-700 mb-2">Emne</h3>
+                        <span className="text-sm text-gray-600">
+                          {selectedEntity.emne.navn || selectedEntity.emne.name}
+                        </span>
+                      </div>
+                    )}
+                    
+                    <div className="mt-6 pt-4 border-t">
+                      <p className="text-xs text-gray-500">
+                        DTO Architecture - Detail pane stub
+                      </p>
+                    </div>
+                  </div>
                 ) : (
                   <div className="p-8 text-center text-gray-500 h-full flex items-center justify-center">
                     <div>
