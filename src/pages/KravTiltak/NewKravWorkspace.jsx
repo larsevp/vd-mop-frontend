@@ -24,7 +24,7 @@ const NewKravWorkspace = () => {
   const adapter = createKravTiltakAdapter(kravConfig);
   
   // Wrap adapter in DTO for unified interface
-  const dto = createSingleEntityDTO(adapter);
+  const dto = createSingleEntityDTO(adapter, { debug: true });
   
   return (
     <EntityWorkspace
