@@ -15,6 +15,8 @@ export const useGenericWorkspace = (store, options = {}) => {
   const queryClient = useQueryClient();
   const [failureCount, setFailureCount] = useState(0);
   const [loadAttempted, setLoadAttempted] = useState(false);
+  const errorRef = useRef(null);
+  const initializationRef = useRef(false);
   
   const config = {
     enableDataFetching: true,
@@ -33,23 +35,25 @@ export const useGenericWorkspace = (store, options = {}) => {
       entityType: storeState.entityType,
       hasDTO: !!storeState.dto,
       entities: storeState.entities?.length || 0,
+      entitiesArray: storeState.entities, // Show actual array
       loading: storeState.loading,
       error: storeState.error,
       loadAttempted
     });
   }
 
-  // Initialize store with queryClient on mount
+  // Initialize store with queryClient on mount - only once
   useEffect(() => {
-    if (config.autoInitialize && !storeState.queryClient) {
+    if (config.autoInitialize && !storeState.queryClient && !initializationRef.current) {
       if (config.debug) {
         console.log('GenericStoreHook: Initializing store with queryClient and DTO');
       }
+      initializationRef.current = true;
       storeState.initialize(queryClient, config.userContext);
     }
-  }, [queryClient]); // Fixed dependencies - only depend on queryClient
+  }, []); // Empty deps - run once on mount
 
-  // Auto-load data on mount if enabled and not failed too many times
+  // Auto-load data on mount if enabled - only once
   useEffect(() => {
     if (!config.enableDataFetching || loadAttempted || failureCount >= config.maxFailures) {
       return;
@@ -69,17 +73,18 @@ export const useGenericWorkspace = (store, options = {}) => {
         storeState.loadEntities();
       }
     }
-  }, [config.enableDataFetching, loadAttempted, failureCount, config.maxFailures]); // Fixed dependencies
+  }, []); // Empty deps - run once on mount
 
-  // Monitor for failures and increment failure count
+  // Monitor for failures and increment failure count - use ref to prevent loops
   useEffect(() => {
-    if (storeState.error && loadAttempted) {
+    if (storeState.error && loadAttempted && storeState.error !== errorRef.current) {
       if (config.debug) {
         console.log('GenericStoreHook: Error detected, incrementing failure count');
       }
+      errorRef.current = storeState.error;
       setFailureCount(prev => prev + 1);
     }
-  }, [loadAttempted]); // Only depend on loadAttempted, check error inside
+  }, [storeState.error, loadAttempted, config.debug]); // Check error changes
 
   // Enhanced actions with DTO integration
   const enhancedActions = {

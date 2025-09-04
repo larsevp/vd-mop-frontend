@@ -1,27 +1,11 @@
 /**
- * EntityWorkspaceModern - Clean implementation using new interface system
- *
- * This is the modern implementation that uses the new interface architecture
- * with clean separation of concerns and improved state management.
+ * EntityWorkspaceModern - Temporary simple implementation
+ * 
+ * Using the simple version to avoid infinite loops while we fix the complex state management.
  */
 
-import React, { useEffect, useMemo } from "react";
-import { Button } from "@/components/ui/primitives/button";
-import { Plus, ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
-import { useUserStore } from "@/stores/userStore";
-import { useIsAnyEntityEditing } from "@/stores/editingStateStore";
-
-// New interface system
-import { createGenericWorkspaceStore } from "./interface/stores/GenericWorkspaceStore.js";
-import { useGenericWorkspace } from "./interface/hooks/GenericStoreHook.js";
-
-// UI components (new design from main branch)
-import EntitySplitView from "./interface/components/EntitySplitView";
-import EntityListPane from "./interface/components/EntityListPane";
-import SearchBar from "./interface/components/SearchBar";
-import { Toast } from "@/components/ui/editor/components/Toast.jsx";
+// Import the simple version
+import EntityWorkspaceSimple from './EntityWorkspaceSimple.jsx';
 
 // Services (EntityTypeResolver removed - using adapter pattern only)
 
@@ -34,7 +18,11 @@ const storeCache = new Map();
  * Get or create a workspace store for the entity type
  */
 const getWorkspaceStore = (entityType, config = {}) => {
-  const cacheKey = `${entityType}-${config.debug ? 'debug' : 'prod'}`;
+  // Create a more specific cache key that includes DTO identity to prevent cross-contamination
+  const dtoId = config.dto?.constructor?.name || 'no-dto';
+  const dtoEntityType = config.dto?.entityType || config.dto?.primaryEntityType || 'unknown';
+  const cacheKey = `${entityType}-${dtoId}-${dtoEntityType}-${config.debug ? "debug" : "prod"}`;
+  
   if (!storeCache.has(cacheKey)) {
     const store = createGenericWorkspaceStore(entityType, {
       debug: config.debug || false,
@@ -73,6 +61,9 @@ const EntityWorkspaceModern = ({
   const queryClient = useQueryClient();
   const { user } = useUserStore();
   const isAnyEntityEditing = useIsAnyEntityEditing();
+  
+  // Unified state management
+  const stateHandler = useStateOperations();
 
   // Validate DTO or fall back to legacy mode
   if (!activeDTO && !entityType) {
@@ -116,13 +107,26 @@ const EntityWorkspaceModern = ({
 
   // Extract display name from DTO/adapter
   const entityDisplayName = displayConfig.title || "Entities";
+  
+  // Helper function for proper Norwegian pluralization
+  const getEntityDisplayName = (count) => {
+    if (count === 1) {
+      return entityDisplayName.toLowerCase();
+    } else {
+      // Use titlePlural if available, otherwise fallback to adding "er"
+      const plural = displayConfig.titlePlural || (entityDisplayName + "er");
+      return plural.toLowerCase();
+    }
+  };
 
   // Get or create workspace store (use DTO's primary entity type if available)
   const storeEntityType = displayConfig.entityTypes?.[0] || entityType;
-  const store = useMemo(
-    () => getWorkspaceStore(storeEntityType, { debug, dto: activeDTO, ...workspaceConfig }),
-    [storeEntityType, debug, activeDTO, workspaceConfig]
-  );
+  const store = useMemo(() => {
+    const newStore = getWorkspaceStore(storeEntityType, { debug, dto: activeDTO, ...workspaceConfig });
+    // Register with unified state handler
+    stateHandler.registerStore(storeEntityType, newStore, activeDTO);
+    return newStore;
+  }, [storeEntityType, debug, activeDTO, workspaceConfig]); // Remove stateHandler from deps
 
   // Use the interface system with adapter integration
   const workspace = useGenericWorkspace(store, {
@@ -145,6 +149,27 @@ const EntityWorkspaceModern = ({
   const [loadAttempted, setLoadAttempted] = React.useState(false);
   const [failureCount, setFailureCount] = React.useState(0);
   const MAX_FAILURES = 1; // Stop after 1 failure
+
+  // Scroll to top on component mount
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []); // Empty dependency array = only run on mount
+
+  // Handle workspace switching with unified state handler
+  useEffect(() => {
+    console.log("EntityWorkspaceModern: Managing workspace switch", {
+      storeEntityType,
+      activeDTO: activeDTO?.constructor?.name || 'no-dto',
+      currentWorkspace: stateHandler.currentEntityType
+    });
+    
+    // Use unified state handler for workspace switching
+    stateHandler.switchWorkspace(storeEntityType, activeDTO);
+    
+    // Reset circuit breaker state when switching
+    setLoadAttempted(false);
+    setFailureCount(0);
+  }, [storeEntityType, activeDTO]); // Remove stateHandler from deps
 
   // Force data loading on mount - but only once with circuit breaker
   useEffect(() => {
@@ -172,7 +197,7 @@ const EntityWorkspaceModern = ({
         workspace.actions.loadEntities();
       }
     }
-  }, [entityType, loadAttempted, failureCount, workspace.error]);
+  }, [entityType, loadAttempted, failureCount, workspace.error]); // Remove stateHandler.isProcessing
 
   // Monitor for failures and increment failure count
   useEffect(() => {
@@ -355,6 +380,12 @@ const EntityWorkspaceModern = ({
 
           {/* Main Content - EntitySplitView with proper design */}
           <div className="flex-1 overflow-hidden" style={{ height: "calc(100vh - 120px)" }}>
+            {debug &&
+              console.log("EntityWorkspaceModern: Passing entities to EntitySplitView:", {
+                entitiesLength: workspace.entities?.length || 0,
+                entitiesArray: workspace.entities,
+                isArray: Array.isArray(workspace.entities),
+              })}
             <EntitySplitView
               entities={workspace.entities || []}
               entityType={entityType}
@@ -365,7 +396,7 @@ const EntityWorkspaceModern = ({
                   <div className="p-4 border-b border-gray-100">
                     <div className="flex items-center justify-between">
                       <h3 className="font-medium text-gray-900">
-                        {entities.length} {entities.length === 1 ? entityDisplayName.toLowerCase() : entityDisplayName.toLowerCase() + "er"}
+                        {entities.length} {getEntityDisplayName(entities.length)}
                       </h3>
                       {workspace.loading && <div className="text-sm text-gray-500">Laster...</div>}
                     </div>

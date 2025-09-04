@@ -149,8 +149,8 @@ export class SingleEntityDTO {
       // Get query functions from adapter
       const queryFunctions = this.adapter.getQueryFunctions();
       
-      // For individual entities, use the standard query function
-      const queryFn = queryFunctions[this.entityType]?.standard;
+      // For individual entities, use the grouped query function (EntityWorkspaceAdapter expects grouped format)
+      const queryFn = queryFunctions[this.entityType]?.grouped;
       
       if (!queryFn) {
         throw new Error(`No query function found for entity type: ${this.entityType}`);
@@ -161,18 +161,25 @@ export class SingleEntityDTO {
       }
 
       // Call the query function with parameters
-      const rawData = await queryFn(queryParams);
+      const rawResponse = await queryFn(queryParams);
+      
+      // Extract data from Axios response
+      const rawData = rawResponse.data || rawResponse;
       
       if (this.options.debug) {
         console.log(`SingleEntityDTO[${this.entityType}]: Raw data received:`, {
           hasData: !!rawData,
           type: typeof rawData,
-          keys: rawData ? Object.keys(rawData) : null
+          keys: rawData ? Object.keys(rawData) : null,
+          wasAxiosResponse: !!rawResponse.data,
+          extractedData: rawData
         });
       }
 
       // Transform the response using the adapter
+      console.log(`SingleEntityDTO[${this.entityType}]: About to call transformResponse with:`, rawData);
       const transformedResponse = this.transformResponse(rawData);
+      console.log(`SingleEntityDTO[${this.entityType}]: Transform completed, result:`, transformedResponse);
       
       if (this.options.debug) {
         console.log(`SingleEntityDTO[${this.entityType}]: Transformed response:`, {

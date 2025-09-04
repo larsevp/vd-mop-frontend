@@ -1,0 +1,138 @@
+import { transformWorkspaceConfig } from "../../utils/workspaceConfigTransform.js";
+
+const workspaceConfigData = {
+  workspace: {
+    enabled: true,
+    layout: "split",
+    groupBy: "emne",
+    layoutConfig: {
+      listWidth: "40%",
+      enableKeyboardNav: true,
+    },
+    features: {
+      grouping: true,
+      search: true,
+      filters: true,
+      hierarchy: true,
+    },
+    ui: {
+      showHierarchy: true,
+      showMerknader: false,
+      showStatus: false,
+      showVurdering: false,
+      showPrioritet: false,
+      showObligatorisk: true,
+      showRelations: true,
+    },
+    cardFields: ["tiltakUID", "tittel", "beskrivelse", "obligatorisk"],
+    relationships: ["files", "prosjektKrav"],
+  },
+
+  workspaceHiddenIndex: [
+    "givenOrder",
+    "updatedBy",
+    "createdBy",
+    "tiltakUID",
+    "beskrivelseSnippet",
+    "implementasjonSnippet",
+    "tilbakemeldingSnippet",
+    "generalTiltakId",
+  ],
+  workspaceHiddenEdit: [
+    "tiltakUID",
+    "updatedBy",
+    "createdBy",
+    "givenOrder",
+    "beskrivelseSnippet",
+    "implementasjonSnippet",
+    "tilbakemeldingSnippet",
+    "generalTiltakId",
+  ],
+  workspaceHiddenCreate: [
+    "tiltakUID",
+    "updatedBy",
+    "createdBy",
+    "givenOrder",
+    "beskrivelseSnippet",
+    "implementasjonSnippet",
+    "tilbakemeldingSnippet",
+    "generalTiltakId",
+  ],
+
+  sections: {
+    info: {
+      title: "Grunnleggende informasjon",
+      defaultExpanded: true,
+      fieldOverrides: {
+        beskrivelse: { order: 2 },
+        merknad: { order: 2 },
+        implementasjon: { order: 3 },
+      },
+      rows: {
+        "main-row": {
+          navn: {},
+        },
+        "main-row-2": {
+          vurderingId: { order: 5 },
+          statusId: { order: 6 },
+          prioritet: { order: 7 },
+        },
+        "emne-row": {
+          emneId: { order: 3 },
+          prosjektKrav: { order: 4 },
+          parentId: { order: 5 },
+        },
+      },
+    },
+    status: {
+      title: "Status og vurdering",
+      defaultExpanded: true,
+      fieldOverrides: {},
+      rows: {},
+    },
+    implementation: {
+      title: "Implementasjon og tilbakemelding",
+      defaultExpanded: false,
+      fieldOverrides: {},
+      rows: {},
+    },
+    references: {
+      title: "Referanser",
+      defaultExpanded: false,
+      fieldOverrides: {},
+      rows: {},
+    },
+    admin: {
+      title: "Administrative detaljer",
+      defaultExpanded: false,
+      fieldOverrides: {
+        givenOrder: { order: 12 },
+      },
+      rows: {
+        "admin-row": {
+          obligatorisk: { order: 11 },
+          enhetId: { order: 11 },
+        },
+      },
+    },
+    metadata: {
+      title: "Metadata",
+      defaultExpanded: false,
+      fieldOverrides: {},
+      rows: {},
+    },
+    annet: {
+      title: "",
+      defaultExpanded: true,
+      noTitle: true,
+      fieldOverrides: {
+        tilbakemelding: { order: 10 },
+      },
+      rows: {},
+    },
+  },
+
+  fieldOverrides: {},
+};
+
+export const workspaceConfig = transformWorkspaceConfig(workspaceConfigData);

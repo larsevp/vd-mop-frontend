@@ -62,27 +62,41 @@ export class EntityWorkspaceAdapter extends BaseAdapter {
    * Transform backend response to standard format
    */
   transformResponse(rawData) {
+    console.log('EntityWorkspaceAdapter: transformResponse called with:', {
+      keys: rawData ? Object.keys(rawData) : null,
+      hasItems: !!rawData?.items,
+      hasCount: !!rawData?.count,
+      hasTotalCount: !!rawData?.totalCount,
+      isGrouped: this.isGroupedResponse(rawData),
+      isPaginated: this.isPaginatedResponse(rawData),
+      rawData: rawData
+    });
+
     if (!rawData || (typeof rawData === 'object' && Object.keys(rawData).length === 0)) {
       return this.createStandardResponse([], {});
     }
 
     // Handle grouped response (e.g., grouped-by-emne endpoints)
     if (this.isGroupedResponse(rawData)) {
+      console.log('EntityWorkspaceAdapter: Using grouped response path');
       return this.transformGroupedResponse(rawData);
     }
 
-    // Handle paginated response
-    if (this.isPaginatedResponse(rawData)) {
+    // Handle paginated response (check for both totalCount and count)
+    if (this.isPaginatedResponse(rawData) || (rawData?.items && (rawData?.count !== undefined || rawData?.totalCount !== undefined))) {
+      console.log('EntityWorkspaceAdapter: Using paginated response path');
       return this.transformPaginatedResponse(rawData);
     }
 
     // Handle plain array
     if (Array.isArray(rawData)) {
+      console.log('EntityWorkspaceAdapter: Using plain array path');
       const transformedItems = rawData.map(item => this.transformEntity(item));
       return this.createStandardResponse(transformedItems, { totalCount: rawData.length });
     }
 
     // Handle single entity
+    console.log('EntityWorkspaceAdapter: Using single entity path');
     const transformedEntity = this.transformEntity(rawData);
     return this.createStandardResponse([transformedEntity], { totalCount: 1 });
   }
@@ -91,14 +105,37 @@ export class EntityWorkspaceAdapter extends BaseAdapter {
    * Transform grouped response (emne-based grouping)
    */
   transformGroupedResponse(rawData) {
+    console.log('EntityWorkspaceAdapter: transformGroupedResponse - raw data:', {
+      hasItems: !!rawData.items,
+      itemCount: rawData.items?.length || 0,
+      firstGroupKeys: rawData.items?.[0] ? Object.keys(rawData.items[0]) : []
+    });
+
     // Flatten all entities from all groups into a single array
     const allEntities = [];
     
-    rawData.items.forEach(group => {
+    rawData.items.forEach((group, groupIndex) => {
+      console.log(`EntityWorkspaceAdapter: Processing group ${groupIndex}:`, {
+        hasEmne: !!group.emne,
+        hasKrav: !!group.krav,
+        kravCount: group.krav?.length || 0,
+        groupKeys: Object.keys(group)
+      });
+
       const emne = this.normalizeEmne(group.emne);
       
       // Extract entities from all possible entity arrays in the group
       const entities = this.extractEntitiesFromGroup(group);
+      
+      console.log(`EntityWorkspaceAdapter: Extracted ${entities.length} entities from group ${groupIndex}`);
+      if (entities.length > 0) {
+        console.log('EntityWorkspaceAdapter: First entity structure:', {
+          id: entities[0].id,
+          tittel: entities[0].tittel,
+          kravUID: entities[0].kravUID,
+          keys: Object.keys(entities[0])
+        });
+      }
       
       // Transform entities and add emne metadata
       entities.forEach(entity => {
@@ -120,6 +157,21 @@ export class EntityWorkspaceAdapter extends BaseAdapter {
    * Transform paginated response
    */
   transformPaginatedResponse(rawData) {
+    console.log('EntityWorkspaceAdapter: transformPaginatedResponse - raw data:', {
+      hasItems: !!rawData.items,
+      itemCount: rawData.items?.length || 0,
+      firstItemKeys: rawData.items?.[0] ? Object.keys(rawData.items[0]) : []
+    });
+    
+    if (rawData.items?.[0]) {
+      console.log('EntityWorkspaceAdapter: First item in paginated response:', {
+        id: rawData.items[0].id,
+        tittel: rawData.items[0].tittel,
+        kravUID: rawData.items[0].kravUID,
+        keys: Object.keys(rawData.items[0])
+      });
+    }
+    
     const transformedItems = rawData.items.map(item => this.transformEntity(item));
     return this.createStandardResponse(transformedItems, rawData, false);
   }
@@ -169,6 +221,15 @@ export class EntityWorkspaceAdapter extends BaseAdapter {
     if (rawEntity.title !== undefined) {
       return rawEntity;
     }
+
+    // Debug: Log raw entity structure
+    console.log('EntityWorkspaceAdapter: Raw entity before transform:', {
+      id: rawEntity.id,
+      tittel: rawEntity.tittel,
+      kravUID: rawEntity.kravUID,
+      hasExpectedFields: !!(rawEntity.id && rawEntity.tittel && rawEntity.kravUID),
+      allKeys: Object.keys(rawEntity)
+    });
 
     const entityType = this.detectEntityType(rawEntity);
     const mapping = this.entityFieldMappings[entityType] || this.entityFieldMappings.krav;

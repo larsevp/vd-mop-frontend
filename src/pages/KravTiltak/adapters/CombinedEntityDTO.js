@@ -9,19 +9,32 @@
 
 export class CombinedEntityDTO {
   constructor(entityDTOs, options = {}) {
-    if (!Array.isArray(entityDTOs) || entityDTOs.length === 0) {
-      throw new Error('CombinedEntityDTO requires an array of SingleEntityDTOs');
+    // Allow empty array if we have a backend adapter (backend mixing mode)
+    if (!Array.isArray(entityDTOs) || (entityDTOs.length === 0 && !options.backendAdapter)) {
+      throw new Error('CombinedEntityDTO requires either an array of SingleEntityDTOs or a backend adapter');
     }
     
     this.entityDTOs = entityDTOs;
     this.options = { debug: false, ...options };
     
-    // Extract primary types from DTOs
-    this.entityTypes = entityDTOs.map(dto => dto.entityType);
-    this.primaryEntityType = this.entityTypes[0];
-    
-    if (this.options.debug) {
-      console.log('CombinedEntityDTO: Initialized with DTOs for types:', this.entityTypes);
+    // Extract primary types from DTOs or backend adapter
+    if (this.options.backendAdapter) {
+      // Backend mixing mode - get types from adapter config
+      const displayConfig = this.options.backendAdapter.getDisplayConfig();
+      this.entityTypes = displayConfig.entityTypes || ['combined'];
+      this.primaryEntityType = displayConfig.primaryType || this.entityTypes[0];
+      
+      if (this.options.debug) {
+        console.log('CombinedEntityDTO: Initialized with backend adapter for types:', this.entityTypes);
+      }
+    } else {
+      // Frontend mixing mode - get types from DTOs
+      this.entityTypes = entityDTOs.map(dto => dto.entityType);
+      this.primaryEntityType = this.entityTypes[0];
+      
+      if (this.options.debug) {
+        console.log('CombinedEntityDTO: Initialized with DTOs for types:', this.entityTypes);
+      }
     }
   }
 
@@ -31,6 +44,12 @@ export class CombinedEntityDTO {
    * Get combined display configuration
    */
   getDisplayConfig() {
+    // Backend mixing mode - use adapter's display config
+    if (this.options.backendAdapter) {
+      return this.options.backendAdapter.getDisplayConfig();
+    }
+    
+    // Frontend mixing mode - combine DTO configs
     const configs = this.entityDTOs.map(dto => dto.getDisplayConfig());
     const primaryConfig = configs[0];
     
@@ -50,6 +69,12 @@ export class CombinedEntityDTO {
    * Get combined filter configuration
    */
   getFilterConfig() {
+    // Backend mixing mode - use adapter's filter config
+    if (this.options.backendAdapter) {
+      return this.options.backendAdapter.getFilterConfig();
+    }
+    
+    // Frontend mixing mode - combine DTO configs
     const configs = this.entityDTOs.map(dto => dto.getFilterConfig());
     const primaryConfig = configs[0];
     
@@ -95,7 +120,59 @@ export class CombinedEntityDTO {
   // === DATA TRANSFORMATION METHODS ===
 
   /**
-   * Load and combine data from all entity DTOs
+   * Load data using hybrid approach: backend mixing (preferred) or frontend mixing (fallback)
+   * This is the method expected by GenericWorkspaceStore
+   */
+  async loadData(queryParams = {}) {
+    if (this.options.backendAdapter) {
+      return this.loadDataFromBackend(queryParams);
+    } else {
+      return this.loadCombinedData(queryParams);
+    }
+  }
+
+  /**
+   * Load data from backend combined endpoint (preferred for complex hierarchy)
+   */
+  async loadDataFromBackend(queryParams = {}) {
+    if (this.options.debug) {
+      console.log('CombinedEntityDTO: Loading from backend adapter with params:', queryParams);
+    }
+    
+    try {
+      const backendAdapter = this.options.backendAdapter;
+      const rawData = await backendAdapter.getQueryFunctions().combined.grouped(queryParams);
+      
+      // Extract data from Axios response
+      const data = rawData.data || rawData;
+      
+      // Transform using the backend adapter
+      const transformedResponse = backendAdapter.transformResponse(data);
+      
+      if (this.options.debug) {
+        console.log('CombinedEntityDTO: Backend response transformed:', {
+          itemCount: transformedResponse.items?.length || 0,
+          total: transformedResponse.total
+        });
+      }
+      
+      return transformedResponse;
+      
+    } catch (error) {
+      console.error('CombinedEntityDTO: Backend load error:', error);
+      
+      // Fallback to frontend mixing if backend fails
+      if (this.entityDTOs?.length > 0) {
+        console.log('CombinedEntityDTO: Falling back to frontend mixing due to backend error');
+        return this.loadCombinedData(queryParams);
+      }
+      
+      throw error;
+    }
+  }
+
+  /**
+   * Load and combine data from all entity DTOs (frontend mixing fallback)
    */
   async loadCombinedData(queryParams = {}) {
     if (this.options.debug) {
@@ -357,10 +434,30 @@ export class CombinedEntityDTO {
 }
 
 /**
- * Factory function for creating combined DTOs
+ * Factory function for creating combined DTOs with optional backend adapter
+ * 
+ * @param {Array|Object} entityDTOsOrBackendAdapter - Either array of SingleEntityDTOs for frontend mixing,
+ *                                                    or a backend adapter for server-side mixing
+ * @param {Object} options - Configuration options
+ * @param {string} options.strategy - 'backend' (preferred) or 'frontend' (fallback)
+ * @param {Object} options.backendAdapter - Backend adapter instance for server-side mixing
+ * @returns {CombinedEntityDTO}
  */
-export const createCombinedEntityDTO = (entityDTOs, options = {}) => {
-  return new CombinedEntityDTO(entityDTOs, options);
+export const createCombinedEntityDTO = (entityDTOsOrBackendAdapter, options = {}) => {
+  // If first argument is an array, use frontend mixing
+  if (Array.isArray(entityDTOsOrBackendAdapter)) {
+    return new CombinedEntityDTO(entityDTOsOrBackendAdapter, options);
+  }
+  
+  // If first argument is an adapter object, use backend mixing
+  if (entityDTOsOrBackendAdapter && typeof entityDTOsOrBackendAdapter === 'object' && entityDTOsOrBackendAdapter.getQueryFunctions) {
+    return new CombinedEntityDTO([], {
+      ...options,
+      backendAdapter: entityDTOsOrBackendAdapter
+    });
+  }
+  
+  throw new Error('createCombinedEntityDTO requires either an array of DTOs or a backend adapter');
 };
 
 export default CombinedEntityDTO;

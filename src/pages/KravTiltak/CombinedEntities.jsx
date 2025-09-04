@@ -1,44 +1,65 @@
 import React from "react";
 import { EntityWorkspace } from "@/components/EntityWorkspace";
-import { krav as kravConfig } from "@/modelConfigs/models/krav.js";
-import { tiltak as tiltakConfig } from "@/modelConfigs/models/tiltak.js";
-import { createKravTiltakAdapter } from "./adapters/KravTiltakAdapter.js";
-import { createSingleEntityDTO } from "./adapters/SingleEntityDTO.js";
+import { getPaginatedCombinedEntities } from "@/api/endpoints/models/combinedEntities.js";
+import { createCombinedEntitiesAdapter } from "./adapters/CombinedEntitiesAdapter.js";
 import { createCombinedEntityDTO } from "./adapters/CombinedEntityDTO.js";
 
+// FRONTEND MIXING FALLBACK (for reference - currently not used)
+// import { krav as kravConfig } from "@/modelConfigs/models/krav.js";
+// import { tiltak as tiltakConfig } from "@/modelConfigs/models/tiltak.js";
+// import { createKravTiltakAdapter } from "./adapters/KravTiltakAdapter.js";
+// import { createSingleEntityDTO } from "./adapters/SingleEntityDTO.js";
+
 /**
- * CombinedEntities - Krav + Tiltak unified workspace using NEW Combined DTO Architecture
+ * CombinedEntities - Krav + Tiltak unified workspace
  *
- * NEW ARCHITECTURE:
- * - CombinedEntityDTO -> SingleEntityDTOs -> KravTiltakAdapters
- * - Each entity type gets its own SingleEntityDTO wrapping a KravTiltakAdapter
- * - CombinedEntityDTO coordinates the SingleEntityDTOs for unified interface
- * - Proper separation of concerns with dependency injection
+ * HYBRID ARCHITECTURE:
+ * - PRIMARY: Backend mixing via combined-entities API (complex hierarchy)
+ * - FALLBACK: Frontend mixing via SingleEntityDTOs (simple combination)
  * 
- * Features:
- * - Mixed entity display with type badges  
- * - Cross-model filtering and sorting
- * - Unified search across both entity types
- * - Proper type-specific configurations
+ * Backend mixing handles:
+ * - Complex parent-child relationships and leveling
+ * - Cross-entity business rules and constraints
+ * - Performance optimization for large datasets
+ * - Database-level joins and aggregations
+ * 
+ * Frontend mixing fallback:
+ * - Simple entity combination without complex hierarchy
+ * - Better for rapid prototyping and simple use cases
+ * - More UI flexibility but less business logic enforcement
  */
 export default function CombinedEntities() {
-  // Create individual adapters for each entity type
-  const kravAdapter = createKravTiltakAdapter(kravConfig);
-  const tiltakAdapter = createKravTiltakAdapter(tiltakConfig);
+  // APPROACH 1: Backend mixing (preferred for complex hierarchy)
+  const backendAdapter = createCombinedEntitiesAdapter({
+    title: "Krav og Tiltak",
+    entityTypes: ['krav', 'tiltak'],
+    primaryType: 'krav',
+    secondaryType: 'tiltak',
+    isProjectSpecific: false,
+    queryFn: getPaginatedCombinedEntities,
+    queryFnGrouped: getPaginatedCombinedEntities,
+    newButtonLabel: "Nytt Krav"
+  }, { debug: true });
   
-  // Wrap adapters in SingleEntityDTOs
-  const kravDTO = createSingleEntityDTO(kravAdapter, { debug: true });
-  const tiltakDTO = createSingleEntityDTO(tiltakAdapter, { debug: true });
-  
-  // Create CombinedEntityDTO that coordinates the SingleEntityDTOs
-  const combinedDTO = createCombinedEntityDTO([kravDTO, tiltakDTO], {
+  const combinedDTO = createCombinedEntityDTO(backendAdapter, {
     debug: true,
-    title: "Krav og Tiltak"
+    title: "Krav og Tiltak",
+    strategy: 'backend'
   });
+
+  // APPROACH 2: Frontend mixing (fallback - commented out)
+  // const kravAdapter = createKravTiltakAdapter(kravConfig);
+  // const tiltakAdapter = createKravTiltakAdapter(tiltakConfig);
+  // const kravDTO = createSingleEntityDTO(kravAdapter, { debug: true });
+  // const tiltakDTO = createSingleEntityDTO(tiltakAdapter, { debug: true });
+  // const combinedDTO = createCombinedEntityDTO([kravDTO, tiltakDTO], {
+  //   debug: true,
+  //   title: "Krav og Tiltak",
+  //   strategy: 'frontend'
+  // });
   
   return (
     <EntityWorkspace
-      // Use unified DTO prop (new architecture)
       dto={combinedDTO}
       debug={true}
     />

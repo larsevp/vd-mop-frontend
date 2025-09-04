@@ -53,6 +53,7 @@ export const prosjektTiltak = {
   deleteFn: deleteProsjektTiltak,
   modelPrintName: "prosjektTiltak",
   title: "Prosjekt Tiltak",
+  titlePlural: "Prosjekt Tiltak", // Norwegian: same form for plural
   desc: "Beskrivelse av prosjekt tiltak...",
   newButtonLabelText: "Nytt prosjekt tiltak",
 

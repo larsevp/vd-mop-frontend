@@ -267,6 +267,76 @@ export class KravTiltakCombinedDTO {
   }
 
   /**
+   * Load data for both entity types and combine them
+   */
+  async loadData(queryParams = {}) {
+    try {
+      const queryFunctions = this.getQueryFunctions();
+      
+      // Load data from both primary and secondary models
+      const [primaryData, secondaryData] = await Promise.all([
+        queryFunctions.primary.grouped(queryParams),
+        queryFunctions.secondary.grouped(queryParams)
+      ]);
+
+      // Extract actual data from Axios responses
+      const primaryRawData = primaryData.data || primaryData;
+      const secondaryRawData = secondaryData.data || secondaryData;
+      
+      // Transform both responses (assuming grouped format)
+      const primaryItems = this.extractItemsFromGroupedResponse(primaryRawData);
+      const secondaryItems = this.extractItemsFromGroupedResponse(secondaryRawData);
+      
+      // Combine the entities
+      const combinedItems = this.combineEntities(primaryItems, secondaryItems);
+      
+      // Return in standard format
+      return {
+        items: combinedItems,
+        total: combinedItems.length,
+        page: queryParams.page || 1,
+        pageSize: queryParams.pageSize || 50,
+        totalPages: Math.ceil(combinedItems.length / (queryParams.pageSize || 50)),
+        hasNextPage: false,
+        hasPreviousPage: false
+      };
+      
+    } catch (error) {
+      console.error('KravTiltakCombinedDTO: Load data error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Extract items from grouped response format
+   */
+  extractItemsFromGroupedResponse(rawData) {
+    if (!rawData?.items) return [];
+    
+    const allItems = [];
+    rawData.items.forEach(group => {
+      // Extract entities from all possible entity arrays in the group
+      const entityKeys = ['entities', 'krav', 'tiltak', 'prosjektkrav', 'prosjekttiltak'];
+      
+      entityKeys.forEach(key => {
+        if (group[key] && Array.isArray(group[key])) {
+          group[key].forEach(entity => {
+            // Add emne information to each entity
+            if (group.emne) {
+              entity.emne = group.emne;
+              entity._emneId = group.emne.id;
+              entity._emneName = group.emne.navn || group.emne.name;
+            }
+            allItems.push(entity);
+          });
+        }
+      });
+    });
+    
+    return allItems;
+  }
+
+  /**
    * Get debug information for troubleshooting
    */
   getDebugInfo() {

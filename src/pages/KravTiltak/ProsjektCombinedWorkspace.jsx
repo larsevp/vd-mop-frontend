@@ -1,46 +1,56 @@
 import React from "react";
 import { EntityWorkspace } from "@/components/EntityWorkspace";
-import { prosjektKrav as prosjektKravConfig } from "@/modelConfigs/models/prosjektKrav.js";
-import { prosjektTiltak as prosjektTiltakConfig } from "@/modelConfigs/models/prosjektTiltak.js";
-import { createKravTiltakCombinedDTO } from "./adapters/KravTiltakCombinedDTO.js";
+import { getPaginatedCombinedProsjektEntitiesWithOptions } from "@/api/endpoints/models/combinedProsjektEntities.js";
+import { createCombinedEntitiesAdapter } from "./adapters/CombinedEntitiesAdapter.js";
+import { createCombinedEntityDTO } from "./adapters/CombinedEntityDTO.js";
 
 /**
- * ProsjektCombined Workspace - Shows unified view of ProsjektKrav and ProsjektTiltak
+ * ProsjektCombined Workspace - Unified view of ProsjektKrav and ProsjektTiltak
  *
- * This workspace provides a comprehensive project management view by combining:
- * - ProsjektKrav: Project-specific requirements and constraints
- * - ProsjektTiltak: Project-specific measures and implementation actions
+ * BACKEND MIXING ARCHITECTURE:
+ * - Uses backend's combined-entities API with complex hierarchy handling
+ * - CombinedEntityDTO -> CombinedEntitiesAdapter -> Backend API
+ * - Backend handles parent-child relationships, leveling, and cross-entity logic
+ * - Frontend receives pre-combined, properly structured entities
  * 
- * Key Features:
- * - Mixed entity display with proper type detection (ProsjektKrav vs ProsjektTiltak)
- * - Hierarchical relationships within each entity type
- * - Cross-entity relationships (ProsjektKrav ↔ ProsjektTiltak)
+ * Features:
+ * - Complex hierarchical relationships handled by backend
+ * - Proper parent-child leveling and indentation
+ * - Cross-entity relationships (ProsjektKrav ↔ ProsjektTiltak)  
  * - Project-scoped filtering and organization
- * - Multiple view modes (requirements-first, measures-first, grouped by subject)
+ * - Multiple view modes (krav-first, tiltak-first, grouped by emne)
  * - Unified search across both entity types
- * - Consistent CRUD operations for both types in single interface
+ * - Backend-enforced business rules for entity combination
  * 
- * This is particularly useful for:
- * - Project managers who need to see requirements and their implementation measures together
- * - Understanding which requirements have corresponding measures
- * - Identifying gaps in project coverage
- * - Managing project-specific adaptations of general requirements and measures
+ * This approach is ideal for:
+ * - Complex hierarchical data that requires consistent business logic
+ * - Cross-entity relationships that need database-level joins
+ * - Performance optimization for large datasets
+ * - Ensuring consistent combination rules across all clients
  */
 export default function ProsjektCombinedWorkspace() {
-  // Create combined DTO for ProsjektKrav + ProsjektTiltak
-  const dto = createKravTiltakCombinedDTO(prosjektKravConfig, prosjektTiltakConfig, {
+  // Create backend adapter that uses the combined-entities API
+  const backendAdapter = createCombinedEntitiesAdapter({
     title: "Prosjekt Krav og Tiltak",
-    mixingRules: {
-      defaultSort: 'updatedAt',
-      defaultSortOrder: 'desc',
-      separateByType: false, // Mix ProsjektKrav and ProsjektTiltak freely
-      searchFields: ['title', 'descriptionCard', 'uid']
-    }
+    entityTypes: ['prosjektkrav', 'prosjekttiltak'],
+    primaryType: 'prosjektkrav',
+    secondaryType: 'prosjekttiltak',
+    isProjectSpecific: true,
+    queryFn: getPaginatedCombinedProsjektEntitiesWithOptions,
+    queryFnGrouped: getPaginatedCombinedProsjektEntitiesWithOptions,
+    newButtonLabel: "Nytt Prosjekt Krav"
+  }, { debug: true });
+  
+  // Create CombinedEntityDTO using backend mixing strategy
+  const combinedDTO = createCombinedEntityDTO(backendAdapter, {
+    debug: true,
+    title: "Prosjekt Krav og Tiltak",
+    strategy: 'backend'
   });
 
   return (
     <EntityWorkspace
-      dto={dto}
+      dto={combinedDTO}
       debug={true}
     />
   );
