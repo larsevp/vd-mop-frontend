@@ -1,8 +1,8 @@
 import React from "react";
 import { EntityWorkspace } from "@/components/EntityWorkspace";
 import { tiltak as tiltakConfig } from "@/modelConfigs/models/tiltak.js";
-import { createKravTiltakAdapter } from "./adapters/KravTiltakAdapter.js";
-import { createSingleEntityDTO } from "./adapters/SingleEntityDTO.js";
+import { createKravTiltakAdapter } from "./old/adapters/KravTiltakAdapter.js";
+import { createSingleEntityDTO } from "./old/adapters/SingleEntityDTO.js";
 
 /**
  * NewTiltakWorkspace - Unified DTO architecture

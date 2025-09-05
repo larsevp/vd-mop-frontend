@@ -45,9 +45,11 @@ export const useEntityData = (dto, options = {}) => {
         pagination,
       });
 
-      // Return standardized format
+      // Return the raw result - let the component decide how to use it
+      // The DTO should return grouped data structure for proper emne grouping
       return {
-        items: result.items || [],
+        items: result.items || result || [],  // Support both flat and grouped data
+        groups: result.groups || result.items || [],  // Grouped data if available
         total: result.total || 0,
         page: result.page || pagination.page,
         pageSize: result.pageSize || pagination.pageSize,

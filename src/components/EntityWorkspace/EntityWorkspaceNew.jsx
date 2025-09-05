@@ -12,7 +12,7 @@ import { Plus, ArrowLeft } from 'lucide-react';
 
 // Existing components (reuse these)
 import EntitySplitView from './interface/components/EntitySplitView';
-import EntityListPane from './interface/components/EntityListPane';
+import EntityListPane from './interface/components/EntityListPane/index.js';
 import SearchBar from './interface/components/SearchBar';
 
 // New hooks (TanStack Query + simple state)
@@ -23,7 +23,14 @@ import { useWorkspaceUI } from './interface/hooks/useWorkspaceUI';
  * Minimal EntityWorkspace component (~40 lines)
  * Uses existing components, adds TanStack Query integration
  */
-const EntityWorkspaceNew = ({ dto, debug = false }) => {
+const EntityWorkspaceNew = ({ 
+  dto, 
+  renderEntityCard,
+  renderGroupHeader,
+  renderListHeading,
+  viewOptions = {},
+  debug = false 
+}) => {
   const navigate = useNavigate();
   
   // Get UI state (search, filters, selection)
@@ -85,8 +92,8 @@ const EntityWorkspaceNew = ({ dto, debug = false }) => {
 
   // Main render - reuse existing EntitySplitView structure
   return (
-    <div className="bg-neutral-50">
-      <div className="max-w-[1600px] mx-auto" style={{ minHeight: "100vh", maxWidth: "1600px" }}>
+    <div className="bg-neutral-50 min-h-screen">
+      <div className="max-w-[1600px] mx-auto" style={{ maxWidth: "1600px" }}>
         
         {/* Header with search */}
         <div className="bg-white border-b border-neutral-200 px-6 py-4">
@@ -152,30 +159,16 @@ const EntityWorkspaceNew = ({ dto, debug = false }) => {
             onEntitySelect={handleEntitySelect}
             renderListPane={({ entities, selectedEntity, onEntitySelect }) => (
               <EntityListPane
-                entities={entities}
+                items={entities} // Pass entities as items (reference design pattern)
                 entityType={entityType}
                 selectedEntity={selectedEntity}
                 onEntitySelect={onEntitySelect}
-                searchInput={ui.searchQuery}
-                onSearchInputChange={ui.setSearchQuery}
-                onSearch={handleSearch}
-                onClearSearch={() => {
-                  ui.setSearchQuery('');
-                  ui.resetFilters();
-                }}
-                filterBy={ui.filters.filterBy}
-                sortBy={ui.filters.sortBy}
-                sortOrder={ui.filters.sortOrder}
-                onFilterChange={(filterBy) => ui.setFilters({ filterBy })}
-                onSortChange={(sortBy) => ui.setFilters({ sortBy })}
-                onSortOrderChange={(sortOrder) => ui.setFilters({ sortOrder })}
-                additionalFilters={ui.filters.additionalFilters}
-                onAdditionalFiltersChange={(additionalFilters) => 
-                  ui.setFilters({ additionalFilters })
-                }
                 isLoading={isLoading}
-                onCreateNew={handleCreateNew}
                 adapter={dto}
+                EntityListCard={renderEntityCard}
+                EntityListGroupHeader={renderGroupHeader}
+                EntityListHeading={renderListHeading}
+                viewOptions={viewOptions}
               />
             )}
             renderDetailPane={({ selectedEntity }) => (

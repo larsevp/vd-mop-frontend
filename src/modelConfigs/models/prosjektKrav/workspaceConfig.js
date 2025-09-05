@@ -1,6 +1,9 @@
 /**
  * ProsjektKrav Model Workspace Configuration - New Structure
  * Simplified, more intuitive configuration format
+ * 
+ * NOTE: This file may need to be moved to /pages/KravTiltak/prosjektkrav/
+ * as part of the new entity-specific folder structure
  */
 
 import { transformWorkspaceConfig } from "../../utils/workspaceConfigTransform.js";

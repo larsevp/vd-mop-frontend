@@ -1,0 +1,345 @@
+import React from "react";
+import { EntityTypeResolver } from "@/components/EntityWorkspace/services/EntityTypeResolver";
+import { getEntityUID, getConnectedEntityUID, getEntityDisplayName } from "../../utils/uidUtils";
+
+/**
+ * Ultra-clean two-line entity row with configurable display options
+ * Line 1: [Code] Title • Category + Status
+ * Line 2: Description preview + Status indicators
+ * Footer: Links • Updated • Owner
+ */
+const EntityListRow = ({
+  entity,
+  modelConfig,
+  entityType,
+  isSelected,
+  isFocused,
+  onClick,
+  onFocus,
+  renderIcon,
+  viewOptions = {
+    showHierarchy: true,
+    showVurdering: true,
+    showStatus: true,
+    showPrioritet: true,
+    showObligatorisk: true,
+    showMerknad: true,
+    showRelations: true,
+  },
+}) => {
+  // Helper function to determine the correct krav entity type based on context
+  const getKravEntityType = () => {
+    // In project combined view, krav entities are prosjektKrav
+    if (entityType === "prosjekt-combined") {
+      return "prosjektKrav";
+    }
+    // In general combined view or krav-specific views, krav entities are krav
+    return "krav";
+  };
+
+  // Helper function to truncate text - defined early so it can be used throughout
+  const truncateText = (text, maxLength = 60) => {
+    if (!text) return "";
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + "..";
+  };
+
+  // Check if this is a combined view
+  const isCombinedView = entityType === "combinedEntities" || entityType === "combined" || entityType === "prosjekt-combined";
+
+  // For combined views, resolve the specific model config for this entity
+  const resolvedModelConfig = isCombinedView && entity.entityType ? EntityTypeResolver.resolveModelConfig(entity.entityType) : modelConfig;
+
+  // Get display values from resolved model config
+  const titleField =
+    resolvedModelConfig.workspace?.cardFields?.find((f) => f === "tittel" || f === "title" || f === "navn" || f === "name") || "tittel";
+
+  const uidField = resolvedModelConfig.workspace?.cardFields?.find((f) => f.toLowerCase().includes("uid"));
+
+  const descField = resolvedModelConfig.workspace?.cardFields?.find(
+    (f) => f.toLowerCase().includes("beskrivelse") || f.toLowerCase().includes("description")
+  );
+
+  const title = entity[titleField] || "Uten tittel";
+
+  // Fix UID generation for combined views - use entity.entityType if available
+  const actualEntityType = entity.entityType || entityType;
+
+  // Get UID using simple function
+  const uid = getEntityUID(entity, actualEntityType);
+
+  // Improved description resolution - try snippet first, then process TipTap JSON
+  let description = "";
+  if (descField) {
+    // Try snippet field first
+    description = entity[`${descField}Snippet`];
+
+    // If no snippet, try to process TipTap JSON from the raw field
+    if (!description && entity[descField]) {
+      const rawDesc = entity[descField];
+      if (typeof rawDesc === "object" && rawDesc.type === "doc" && rawDesc.content) {
+        // Extract text from TipTap JSON structure
+        description = extractTextFromTipTap(rawDesc);
+      } else if (typeof rawDesc === "string") {
+        description = rawDesc;
+      }
+    }
+  }
+
+  // Fallback to common snippet field names if descField isn't found
+  if (!description) {
+    description =
+      entity.beskrivelseSnippet ||
+      extractTextFromTipTap(entity.beskrivelse) ||
+      entity.descriptionSnippet ||
+      extractTextFromTipTap(entity.description) ||
+      "";
+  }
+
+  // Ensure snippet fields are properly truncated (they might be long)
+  if (description && (entity.beskrivelseSnippet || entity.descriptionSnippet)) {
+    description = truncateText(description);
+  }
+
+  // Helper function to extract text from TipTap JSON
+  function extractTextFromTipTap(tipTapObj) {
+    if (!tipTapObj || typeof tipTapObj !== "object") return "";
+    if (typeof tipTapObj === "string") return tipTapObj;
+
+    let text = "";
+    if (tipTapObj.content && Array.isArray(tipTapObj.content)) {
+      tipTapObj.content.forEach((node) => {
+        if (node.type === "paragraph" && node.content) {
+          node.content.forEach((textNode) => {
+            if (textNode.type === "text" && textNode.text) {
+              text += textNode.text + " ";
+            }
+          });
+        }
+      });
+    }
+    return text.trim();
+  }
+
+  // Status display helpers
+  const getStatusDisplay = () => {
+    if (!entity.status) return null;
+    return {
+      text: entity.status.navn,
+      color: entity.status.color || "#6b7280",
+      icon: entity.status.icon,
+    };
+  };
+
+  const getVurderingDisplay = () => {
+    if (!entity.vurdering) return null;
+    return {
+      text: entity.vurdering.navn,
+      color: entity.vurdering.color || "#6b7280",
+      icon: entity.vurdering.icon,
+    };
+  };
+
+  const getPrioritetDisplay = () => {
+    if (!entity.prioritet) return null;
+    const prioritet = entity.prioritet;
+    if (prioritet >= 30) return { text: "Høy", color: "#dc2626", icon: "AlertTriangle" };
+    if (prioritet >= 20) return { text: "Middels", color: "#d97706", icon: "AlertCircle" };
+    return { text: "Lav", color: "#059669", icon: "Circle" };
+  };
+
+  // Status indicator component
+  const StatusIndicator = ({ display, iconName }) => {
+    if (!display) return null;
+
+    return (
+      <div className="flex items-center gap-1">
+        {display.icon && renderIcon && <div style={{ color: display.color }}>{renderIcon(display.icon, 12)}</div>}
+        <span className="text-xs" style={{}}>
+          {display.text}
+        </span>
+      </div>
+    );
+  };
+
+  // Obligatorisk status indicator with icons
+  const getObligatoriskIndicator = () => {
+    if (entity.obligatorisk === true) {
+      return (
+        <div className="text-blue-600" title="Obligatorisk">
+          {renderIcon && renderIcon("Check", 14)}
+        </div>
+      );
+    }
+    if (entity.obligatorisk === false) {
+      return (
+        <div className="text-green-600" title="Valgfri">
+          {renderIcon && renderIcon("Check", 14)}
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const handleClick = (e) => {
+    e.preventDefault(); // Prevent default anchor behavior
+    e.stopPropagation(); // Stop event bubbling
+    // EntityListRow DEBUG - clicked entity: entity
+    onClick();
+  };
+
+  // Check if this entity should be indented - logic depends on the view context
+  let shouldIndent = false;
+
+  if (isCombinedView) {
+    // Combined view: indent tiltak that are displayed under a krav, and child entities
+    shouldIndent = entity._displayedUnderKrav === true || entity.parentId;
+  } else {
+    // Regular views: use traditional indentation rules
+    const hasKravConnections =
+      (actualEntityType === "tiltak" || actualEntityType === "prosjekttiltak") && entity.krav && entity.krav.length > 0;
+    const hasParent = entity.parentId;
+    shouldIndent = hasKravConnections || hasParent;
+  }
+
+  // Generate unique ID for data attribute (matches EntitySplitView logic)
+  const generateUniqueEntityId = (item) => {
+    // Check if we're in a combined view context (matches EntitySplitView and EntityListPane)
+    const isCombinedView = entityType === "combined" || entityType === "combinedEntities" || entityType === "prosjekt-combined";
+
+    // For regular (non-combined) views, always use simple numeric ID
+    if (!isCombinedView) {
+      return item.id?.toString();
+    }
+
+    // Combined view logic - need complex IDs to avoid conflicts
+    if (!item.entityType) {
+      return item.id?.toString();
+    }
+
+    // Normalize entityType to lowercase for consistency (matches EntitySplitView and EntityListPane)
+    const normalizedEntityType = item.entityType.toLowerCase();
+
+    // For combined view items that might be duplicated (same tiltak under different krav)
+    if (item._relatedToKrav !== undefined) {
+      return `${normalizedEntityType}-${item.id}-krav-${item._relatedToKrav}`;
+    }
+
+    // Standard unique ID for combined view items
+    return `${normalizedEntityType}-${item.id}`;
+  };
+
+  const uniqueEntityId = generateUniqueEntityId(entity);
+
+  return (
+    <div
+      data-entity-id={uniqueEntityId}
+      onClick={handleClick}
+      onMouseEnter={onFocus}
+      onMouseLeave={() => onFocus && onFocus(-1)} // Clear focus when mouse leaves (use -1 to indicate no focus)
+      className={`
+        relative cursor-pointer transition-all duration-150
+        ${shouldIndent ? "pl-8 pr-4 py-3 ml-4 border-l-2 border-green-200" : "px-4 py-3"}
+        ${isSelected ? "bg-blue-50 text-blue-900" : isFocused ? "bg-gray-50" : "hover:bg-gray-50"}
+      `}
+    >
+      {/* Line 1: Complete metadata header - UID + Parent + Entity type + Status indicators */}
+      <div className="flex items-center justify-between gap-2 mb-1">
+        {/* Left side: UID + Entity type + Parent reference */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Entity type indicator - always show when available */}
+          {entity.entityType && (
+            <span
+              className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                entity.entityType === "krav" || entity.entityType === "prosjektkrav"
+                  ? "bg-blue-100 text-blue-700"
+                  : entity.entityType === "tiltak" || entity.entityType === "prosjekttiltak"
+                  ? "bg-green-100 text-green-700"
+                  : "bg-gray-100 text-gray-700"
+              }`}
+            >
+              {entity.entityType === "krav" || entity.entityType === "prosjektkrav"
+                ? "KRAV"
+                : entity.entityType === "tiltak" || entity.entityType === "prosjekttiltak"
+                ? "TILTAK"
+                : entity.entityType.toUpperCase()}
+            </span>
+          )}
+          {/* UID always first */}
+          {uid && <span className="text-xs font-mono text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded font-medium">[{uid}]</span>}
+
+          {/* Parent reference for child elements */}
+          {entity.parentId && entity.parent && viewOptions.showHierarchy && (
+            <span className="text-xs text-blue-600 font-medium">
+              ↑ {getConnectedEntityUID(entity.parent, entity.parent.entityType || actualEntityType, true)} -{" "}
+              {getEntityDisplayName(entity.parent).substring(0, 10)}
+              {getEntityDisplayName(entity.parent).length > 10 ? "..." : ""}
+            </span>
+          )}
+
+          {/* Parent krav reference for tiltak in combined view */}
+          {/* Debug: Log entity data for tiltak entities */}
+          {entity.entityType === "tiltak" || entity.entityType === "prosjekttiltak"}
+          {entity._displayedUnderKrav && entity._parentKrav && viewOptions.showHierarchy && (
+            <span className="text-xs text-blue-600 font-medium">
+              ↑ {getConnectedEntityUID(entity._parentKrav, getKravEntityType(), true)} -{" "}
+              {getEntityDisplayName(entity._parentKrav).substring(0, 10)}
+              {getEntityDisplayName(entity._parentKrav).length > 10 ? "..." : ""}
+            </span>
+          )}
+        </div>
+
+        {/* Right side: Status indicators */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {viewOptions.showVurdering && <StatusIndicator display={getVurderingDisplay()} />}
+          {viewOptions.showStatus && <StatusIndicator display={getStatusDisplay()} />}
+          {viewOptions.showPrioritet && <StatusIndicator display={getPrioritetDisplay()} />}
+          {viewOptions.showObligatorisk && getObligatoriskIndicator()}
+        </div>
+      </div>
+
+      {/* Line 2: Title (full width, prominent) */}
+      <div className="mb-1">
+        <span className="font-medium text-gray-900">{title}</span>
+      </div>
+
+      {/* Line 3: Description preview (full width, readable) */}
+      {description && <div className="text-sm text-gray-600 mb-2">{truncateText(description)}</div>}
+
+      {/* Merknad if defined and enabled */}
+      {viewOptions.showMerknad && (entity.merknad || entity.merknader) && (
+        <div className="text-sm text-amber-700 bg-amber-50 rounded px-2 py-1 mb-2">
+          <span className="text-xs font-medium text-amber-800">Merknad:</span> {truncateText(entity.merknad || entity.merknader, 100)}
+        </div>
+      )}
+
+      {/* Footer: Meta info */}
+      <div className="flex justify-between items-center text-xs text-gray-500">
+        <div className="flex items-center gap-3">
+          {entity.parentId && !entity.parent && <span className="text-blue-600">Datter{entityType}</span>}
+          {viewOptions.showRelations && (entity.filesCount || entity.files?.length) > 0 && (
+            <span> {entity.filesCount || entity.files?.length} vedlegg</span>
+          )}
+          {viewOptions.showRelations && (entity.childrenCount || entity.children?.length) > 0 && (
+            <span className="text-emerald-600 font-medium">
+              {entity.childrenCount || entity.children?.length} {isCombinedView ? "datter krav/tiltak" : `datter${entityType}`}
+            </span>
+          )}
+          {viewOptions.showRelations &&
+            entity.krav?.length > 0 &&
+            (actualEntityType === "tiltak" || actualEntityType === "prosjekttiltak") && (
+              <span className="text-blue-600 font-medium">→ {entity.krav.length} krav</span>
+            )}
+          {viewOptions.showRelations &&
+            entity.tiltak?.length > 0 &&
+            (actualEntityType === "krav" || actualEntityType === "prosjektkrav") && (
+              <span className="text-green-600 font-medium">→ {entity.tiltak.length} tiltak</span>
+            )}
+        </div>
+        <div className="flex items-center gap-1">{entity.createdBy && <span></span>}</div>
+      </div>
+    </div>
+  );
+};
+
+export default EntityListRow;

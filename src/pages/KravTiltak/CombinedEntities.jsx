@@ -1,14 +1,14 @@
 import React from "react";
 import { EntityWorkspace } from "@/components/EntityWorkspace";
 import { getPaginatedCombinedEntities } from "@/api/endpoints/models/combinedEntities.js";
-import { createCombinedEntitiesAdapter } from "./adapters/CombinedEntitiesAdapter.js";
-import { createCombinedEntityDTO } from "./adapters/CombinedEntityDTO.js";
+import { createCombinedEntitiesAdapter } from "./old/adapters/CombinedEntitiesAdapter.js";
+import { createCombinedEntityDTO } from "./old/adapters/CombinedEntityDTO.js";
 
 // FRONTEND MIXING FALLBACK (for reference - currently not used)
 // import { krav as kravConfig } from "@/modelConfigs/models/krav.js";
 // import { tiltak as tiltakConfig } from "@/modelConfigs/models/tiltak.js";
-// import { createKravTiltakAdapter } from "./adapters/KravTiltakAdapter.js";
-// import { createSingleEntityDTO } from "./adapters/SingleEntityDTO.js";
+// import { createKravTiltakAdapter } from "./old/adapters/KravTiltakAdapter.js";
+// import { createSingleEntityDTO } from "./old/adapters/SingleEntityDTO.js";
 
 /**
  * CombinedEntities - Krav + Tiltak unified workspace

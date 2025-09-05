@@ -1,8 +1,8 @@
 import React from "react";
 import { EntityWorkspace } from "@/components/EntityWorkspace";
 import { getPaginatedCombinedProsjektEntitiesWithOptions } from "@/api/endpoints/models/combinedProsjektEntities.js";
-import { createCombinedEntitiesAdapter } from "./adapters/CombinedEntitiesAdapter.js";
-import { createCombinedEntityDTO } from "./adapters/CombinedEntityDTO.js";
+import { createCombinedEntitiesAdapter } from "./old/adapters/CombinedEntitiesAdapter.js";
+import { createCombinedEntityDTO } from "./old/adapters/CombinedEntityDTO.js";
 
 /**
  * ProsjektCombined Workspace - Unified view of ProsjektKrav and ProsjektTiltak

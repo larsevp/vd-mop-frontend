@@ -25,7 +25,7 @@ import ProsjektTiltak from "@/pages/models/ProsjektTiltak";
 import Files from "@/pages/models/Files";
 import NewKravWorkspace from "@/pages/KravTiltak/NewKravWorkspace";
 import NewTiltakWorkspace from "@/pages/KravTiltak/NewTiltakWorkspace";
-import ProsjektKravWorkspace from "@/pages/KravTiltak/ProsjektKravWorkspace";
+import ProsjektKravWorkspace from "@/pages/KravTiltak/prosjektkrav/ProsjektKravWorkspace";
 import ProsjektTiltakWorkspace from "@/pages/KravTiltak/ProsjektTiltakWorkspace";
 import ProsjektCombinedWorkspace from "@/pages/KravTiltak/ProsjektCombinedWorkspace";
 import CombinedEntities from "@/pages/KravTiltak/CombinedEntities";
