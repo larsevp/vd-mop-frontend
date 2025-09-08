@@ -12,11 +12,11 @@ export class ProsjektKravAdapter {
 
   getDisplayConfig() {
     return {
-      title: this.config.title || 'Prosjektkrav',
-      entityTypes: ['prosjektKrav'],
-      supportsGroupByEmne: this.config.workspace?.groupBy === 'emne',
-      layout: this.config.workspace?.layout || 'split',
-      newButtonLabel: this.config.newButtonLabel || `Ny ${this.config.title}`
+      title: this.config.title || "Prosjektkrav",
+      entityTypes: ["prosjektKrav"],
+      supportsGroupByEmne: this.config.workspace?.groupBy === "emne",
+      layout: this.config.workspace?.layout || "split",
+      newButtonLabel: this.config.newButtonLabel || `Ny ${this.config.title}`,
     };
   }
 
@@ -25,41 +25,41 @@ export class ProsjektKravAdapter {
       fields: {
         status: {
           enabled: this.config.workspace?.ui?.showStatus !== false,
-          label: 'Status',
-          placeholder: 'Alle statuser'
+          label: "Status",
+          placeholder: "Alle statuser",
         },
         vurdering: {
           enabled: this.config.workspace?.ui?.showVurdering !== false,
-          label: 'Vurdering',
-          placeholder: 'Alle vurderinger'
+          label: "Vurdering",
+          placeholder: "Alle vurderinger",
         },
         emne: {
           enabled: this.config.workspace?.features?.grouping !== false,
-          label: 'Emne',
-          placeholder: 'Alle emner'
-        }
+          label: "Emne",
+          placeholder: "Alle emner",
+        },
       },
       sortFields: [
-        { key: 'updatedAt', label: 'Sist endret' },
-        { key: 'createdAt', label: 'Opprettet' },
-        { key: 'title', label: 'Tittel' },
-        { key: 'status', label: 'Status' },
-        { key: 'emne', label: 'Emne' }
+        { key: "updatedAt", label: "Sist endret" },
+        { key: "createdAt", label: "Opprettet" },
+        { key: "title", label: "Tittel" },
+        { key: "status", label: "Status" },
+        { key: "emne", label: "Emne" },
       ],
       defaults: {
-        sortBy: 'updatedAt',
-        sortOrder: 'desc',
-        filterBy: 'all'
-      }
+        sortBy: "updatedAt",
+        sortOrder: "desc",
+        filterBy: "all",
+      },
     };
   }
 
   getQueryFunctions() {
     return {
       prosjektKrav: {
-        standard: this.config.queryFn,
-        grouped: this.config.queryFnGroupedByEmne
-      }
+        standard: this.config.queryFnWorkspace || this.config.queryFn,
+        grouped: this.config.queryFnGroupedByEmneWorkspace || this.config.queryFnGroupedByEmne,
+      },
     };
   }
 
@@ -68,7 +68,7 @@ export class ProsjektKravAdapter {
    * Maps entity type to API property name
    */
   getGroupedPropertyName() {
-    return 'prosjektkrav';
+    return "prosjektkrav";
   }
 
   // === BUSINESS LOGIC METHODS ===
@@ -76,54 +76,51 @@ export class ProsjektKravAdapter {
   enhanceEntity(entity) {
     return {
       ...entity,
-      entityType: 'prosjektKrav',
+      entityType: "prosjektKrav",
       renderId: `prosjektkrav-${entity.id}`,
-      displayType: this.getDisplayType('prosjektKrav'),
-      badgeColor: this.getBadgeColor('prosjektKrav'),
+      displayType: this.getDisplayType("prosjektKrav"),
+      badgeColor: this.getBadgeColor("prosjektKrav"),
     };
   }
 
   getDisplayType() {
-    return 'Prosjektkrav';
+    return "Prosjektkrav";
   }
 
   getBadgeColor() {
-    return 'bg-blue-100 text-blue-700';
+    return "bg-blue-100 text-blue-700";
   }
 
   // === ENTITY FIELD EXTRACTION ===
 
   extractUID(entity) {
-    return entity.kravUID || entity.uid || entity.id || '';
+    return entity.kravUID || entity.uid || entity.id || "";
   }
 
   extractTitle(entity) {
-    return entity.tittel || entity.title || entity.navn || entity.name || 'Uten tittel';
+    return entity.tittel || entity.title || entity.navn || entity.name || "Uten tittel";
   }
 
   // === FILTERING AND SORTING ===
 
   filterEntities(entities, filters = {}) {
-    return entities.filter(entity => {
+    return entities.filter((entity) => {
       if (filters.search && filters.search.trim()) {
         const searchTerm = filters.search.toLowerCase();
-        const searchable = [
-          entity.title,
-          entity.descriptionCard,
-          entity.uid,
-          entity.emne?.navn || entity.emne?.name
-        ].join(' ').toLowerCase();
-        
+        const searchable = [entity.title, entity.descriptionCard, entity.uid, entity.emne?.navn || entity.emne?.name]
+          .join(" ")
+          .toLowerCase();
+
         if (!searchable.includes(searchTerm)) return false;
       }
 
-      if (filters.status && filters.status !== 'all') {
-        const entityStatus = entity.status?.name || entity.status?.navn || '';
+      if (filters.status && filters.status !== "all") {
+        const entityStatus = entity.status?.name || entity.status?.navn || "";
         if (entityStatus !== filters.status) return false;
       }
 
-      if (filters.vurdering && filters.vurdering !== 'all') {
-        const entityVurdering = entity.vurdering?.name || entity.vurdering?.navn || '';
+      if (filters.vurdering && filters.vurdering !== "all") {
+        const entityVurdering = entity.vurdering?.name || entity.vurdering?.navn || "";
         if (entityVurdering !== filters.vurdering) return false;
       }
 
@@ -131,48 +128,48 @@ export class ProsjektKravAdapter {
     });
   }
 
-  sortEntities(entities, sortBy = 'updatedAt', sortOrder = 'desc') {
+  sortEntities(entities, sortBy = "updatedAt", sortOrder = "desc") {
     return entities.sort((a, b) => {
       let aValue = this.getSortValue(a, sortBy);
       let bValue = this.getSortValue(b, sortBy);
-      
-      if (typeof aValue === 'string') {
+
+      if (typeof aValue === "string") {
         aValue = aValue.toLowerCase();
         bValue = bValue.toLowerCase();
       }
-      
+
       const comparison = aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-      return sortOrder === 'desc' ? -comparison : comparison;
+      return sortOrder === "desc" ? -comparison : comparison;
     });
   }
 
   getSortValue(entity, field) {
     switch (field) {
-      case 'title':
-        return entity.title || '';
-      case 'status':
-        return entity.status?.name || entity.status?.navn || '';
-      case 'emne':
-        return entity.emne?.navn || entity.emne?.name || '';
+      case "title":
+        return entity.title || "";
+      case "status":
+        return entity.status?.name || entity.status?.navn || "";
+      case "emne":
+        return entity.emne?.navn || entity.emne?.name || "";
       default:
-        return entity[field] || '';
+        return entity[field] || "";
     }
   }
 
   extractAvailableFilters(entities = []) {
     const filters = {
       statuses: new Set(),
-      vurderinger: new Set(), 
-      emner: new Set()
+      vurderinger: new Set(),
+      emner: new Set(),
     };
 
-    entities.forEach(entity => {
+    entities.forEach((entity) => {
       const status = entity.status?.name || entity.status?.navn;
       if (status) filters.statuses.add(status);
-      
+
       const vurdering = entity.vurdering?.name || entity.vurdering?.navn;
       if (vurdering) filters.vurderinger.add(vurdering);
-      
+
       const emne = entity.emne?.navn || entity.emne?.name;
       if (emne) filters.emner.add(emne);
     });
@@ -180,8 +177,33 @@ export class ProsjektKravAdapter {
     return {
       statuses: Array.from(filters.statuses).sort(),
       vurderinger: Array.from(filters.vurderinger).sort(),
-      emner: Array.from(filters.emner).sort()
+      emner: Array.from(filters.emner).sort(),
     };
+  }
+
+  // === POST-OPERATION HOOKS ===
+
+  onSaveComplete(result, isCreate, handleEntitySelect, dto) {
+    //console.log('ProsjektKravAdapter.onSaveComplete called with:', { result, isCreate, hasHandleEntitySelect: !!handleEntitySelect, hasDto: !!dto });
+
+    // ProsjektKrav-specific logic: Extract entity from Axios response
+    const entity = result?.data || result;
+    //console.log('Extracted entity:', entity);
+    //console.log('Entity has id?', !!entity?.id, 'ID value:', entity?.id);
+
+    // ProsjektKrav-specific post-save logic for both create and update
+    if (entity?.id) {
+      //console.log('Processing saved entity:', entity);
+
+      // Apply ProsjektKrav-specific enhancement
+      let processedEntity = this.enhanceEntity ? this.enhanceEntity(entity) : entity;
+      //console.log('Processed entity:', processedEntity);
+
+      if (processedEntity && handleEntitySelect) {
+        //console.log('Calling handleEntitySelect with updated entity:', processedEntity);
+        handleEntitySelect(processedEntity);
+      }
+    }
   }
 }
 

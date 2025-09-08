@@ -14,7 +14,9 @@ const ProsjektKravCard = ({
   entity,
   isSelected = false,
   onClick = () => {},
-  viewOptions = {}
+  viewOptions = {},
+  'data-entity-id': dataEntityId,
+  ...restProps
 }) => {
   const handleClick = () => {
     onClick(entity);
@@ -99,6 +101,7 @@ const ProsjektKravCard = ({
 
   return (
     <div
+      data-entity-id={dataEntityId}
       className={`
         relative cursor-pointer transition-all duration-150 border border-gray-200 block mb-1
         ${shouldIndent ? "pl-12 pr-4 py-3 w-[calc(100%+2rem)]" : "px-4 py-3 w-full"}

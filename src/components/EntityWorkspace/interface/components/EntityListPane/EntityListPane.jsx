@@ -1,16 +1,17 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { Loader2, FileText, Minimize2, Maximize2 } from "lucide-react";
 
 /**
  * EntityListPane - Generic list interface using render prop pattern
- * 
+ *
  * Features:
  * - Domain-controlled card rendering via EntityListCard
- * - Domain-controlled group headers via EntityListGroupHeader  
+ * - Domain-controlled group headers via EntityListGroupHeader
  * - Domain-controlled list heading via EntityListHeading
  * - Group collapse/expand controls
  * - Generic list behavior (keyboard nav, selection, loading states)
- * 
+ *
  * Requires render functions - no fallbacks, clean architecture only.
  */
 const EntityListPane = ({
@@ -27,32 +28,62 @@ const EntityListPane = ({
   EntityListHeading = null,
   viewOptions: externalViewOptions = {},
 }) => {
+  const location = useLocation();
   const [focusedIndex, setFocusedIndex] = useState(0);
   const [collapsedGroups, setCollapsedGroups] = useState(new Set());
+  const listContainerRef = useRef(null);
 
   // Check if we have grouped data structure (items contain emne objects)
   const hasGroupedData = items.length > 0 && items[0]?.group && items[0]?.items;
   const groupedItems = hasGroupedData ? items : [];
-  
-  console.log('EntityListPane debug:', {
-    itemsLength: items.length,
-    firstItem: items[0],
-    hasGroupedData,
-    groupedItemsLength: groupedItems.length
-  });
-  
-  
-  // Flatten all entities for keyboard navigation  
+
+  // Flatten all entities for keyboard navigation
   const allItems = useMemo(() => {
     if (hasGroupedData) {
-      return items.flatMap(groupData => groupData.items);
+      return items.flatMap((groupData) => groupData.items);
     }
     return items;
   }, [items, hasGroupedData]);
 
   // Get selected entity ID (use normalized renderId from adapter)
   const selectedEntityId = selectedEntity?.renderId;
-  
+
+  // Reset scroll position on navigation (multiple triggers for reliability)
+  useEffect(() => {
+    const resetScroll = () => {
+      if (listContainerRef.current) {
+        listContainerRef.current.scrollTop = 0;
+      }
+    };
+
+    // Immediate reset
+    resetScroll();
+    
+    // Delayed reset for cases where DOM isn't ready
+    const timeoutId = setTimeout(resetScroll, 50);
+    
+    return () => clearTimeout(timeoutId);
+  }, [location.pathname, entityType, items.length > 0]); // Multiple triggers to ensure reset
+
+  // Auto-scroll to selected entity when it changes
+  useEffect(() => {
+    if (selectedEntityId && listContainerRef.current) {
+      // Add a small delay to ensure DOM has updated
+      const timeoutId = setTimeout(() => {
+        const selectedElement = listContainerRef.current?.querySelector(`[data-entity-id="${selectedEntityId}"]`);
+        if (selectedElement) {
+          selectedElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+            inline: 'nearest'
+          });
+        }
+      }, 100); // Small delay to allow DOM updates
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [selectedEntityId]);
+
   // Group collapse/expand functions
   const toggleGroupCollapse = (groupKey) => {
     setCollapsedGroups((prev) => {
@@ -67,9 +98,7 @@ const EntityListPane = ({
   };
 
   const collapseAll = () => {
-    const allGroupKeys = groupedItems.map((group, groupIndex) => 
-      `${entityType}-group-${group.emne?.id || "no-emne"}-${groupIndex}`
-    );
+    const allGroupKeys = groupedItems.map((group, groupIndex) => `${entityType}-group-${group.emne?.id || "no-emne"}-${groupIndex}`);
     setCollapsedGroups(new Set(allGroupKeys));
   };
 
@@ -77,7 +106,9 @@ const EntityListPane = ({
     setCollapsedGroups(new Set());
   };
 
-  const allGroupsCollapsed = hasGroupedData && groupedItems.length > 0 &&
+  const allGroupsCollapsed =
+    hasGroupedData &&
+    groupedItems.length > 0 &&
     groupedItems.every((group, groupIndex) => {
       const groupKey = `${entityType}-group-${group.emne?.id || "no-emne"}-${groupIndex}`;
       return collapsedGroups.has(groupKey);
@@ -90,25 +121,22 @@ const EntityListPane = ({
   return (
     <div className="h-full flex flex-col bg-white">
       {/* Header - Domain-controlled via EntityListHeading */}
-      {EntityListHeading && EntityListHeading({
-        itemCount: allItems.length,
-        children: hasGroupedData && groupedItems.length > 1 && (
-          <button
-            onClick={allGroupsCollapsed ? expandAll : collapseAll}
-            className="p-1 hover:bg-gray-100 rounded transition-colors"
-            title={allGroupsCollapsed ? "Vis alle emner" : "Skjul alle emner"}
-          >
-            {allGroupsCollapsed ? (
-              <Maximize2 className="w-3 h-3 text-gray-500" />
-            ) : (
-              <Minimize2 className="w-3 h-3 text-gray-500" />
-            )}
-          </button>
-        )
-      })}
+      {EntityListHeading &&
+        EntityListHeading({
+          itemCount: allItems.length,
+          children: hasGroupedData && groupedItems.length > 1 && (
+            <button
+              onClick={allGroupsCollapsed ? expandAll : collapseAll}
+              className="p-1 hover:bg-gray-100 rounded transition-colors"
+              title={allGroupsCollapsed ? "Vis alle emner" : "Skjul alle emner"}
+            >
+              {allGroupsCollapsed ? <Maximize2 className="w-3 h-3 text-gray-500" /> : <Minimize2 className="w-3 h-3 text-gray-500" />}
+            </button>
+          ),
+        })}
 
       {/* Entity List */}
-      <div className="flex-1 overflow-y-auto">
+      <div ref={listContainerRef} className="flex-1 overflow-y-auto">
         {isLoading && allItems.length === 0 ? (
           <div className="flex items-center justify-center h-32 text-gray-500">
             <div className="text-center">
@@ -130,26 +158,30 @@ const EntityListPane = ({
               const groupKey = `${entityType}-group-${groupData.group.emne?.id || "no-emne"}-${groupIndex}`;
               const isCollapsed = collapsedGroups.has(groupKey);
               const groupItems = groupData.items;
-              
+
               return (
                 <div key={groupKey}>
                   {/* Group Header - Domain-controlled via EntityListGroupHeader */}
-                  {EntityListGroupHeader && EntityListGroupHeader(groupData, {
-                    isCollapsed,
-                    onToggle: () => toggleGroupCollapse(groupKey),
-                    itemCount: groupItems.length
-                  })}
-                  
+                  {EntityListGroupHeader &&
+                    EntityListGroupHeader(groupData, {
+                      isCollapsed,
+                      onToggle: () => toggleGroupCollapse(groupKey),
+                      itemCount: groupItems.length,
+                    })}
+
                   {/* Group items */}
                   {!isCollapsed &&
-                    groupItems.map((entity, index) => 
-                      EntityListCard && EntityListCard(entity, {
-                        key: entity.renderId,
-                        isSelected: entity.renderId === selectedEntityId,
-                        isFocused: focusedIndex === index,
-                        onClick: handleEntitySelect,
-                        viewOptions: externalViewOptions
-                      })
+                    groupItems.map(
+                      (entity, index) =>
+                        EntityListCard &&
+                        EntityListCard(entity, {
+                          key: entity.renderId,
+                          'data-entity-id': entity.renderId,
+                          isSelected: entity.renderId === selectedEntityId,
+                          isFocused: focusedIndex === index,
+                          onClick: handleEntitySelect,
+                          viewOptions: externalViewOptions,
+                        })
                     )}
                 </div>
               );
@@ -158,14 +190,17 @@ const EntityListPane = ({
         ) : (
           // Flat rendering (no emne groups)
           <div>
-            {allItems.map((entity, index) => 
-              EntityListCard && EntityListCard(entity, {
-                key: entity.renderId,
-                isSelected: entity.renderId === selectedEntityId,
-                isFocused: focusedIndex === index,
-                onClick: handleEntitySelect,
-                viewOptions: externalViewOptions
-              })
+            {allItems.map(
+              (entity, index) =>
+                EntityListCard &&
+                EntityListCard(entity, {
+                  key: entity.renderId,
+                  'data-entity-id': entity.renderId,
+                  isSelected: entity.renderId === selectedEntityId,
+                  isFocused: focusedIndex === index,
+                  onClick: handleEntitySelect,
+                  viewOptions: externalViewOptions,
+                })
             )}
           </div>
         )}

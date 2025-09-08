@@ -224,6 +224,25 @@ export class SingleEntityDTO {
     }
   }
 
+  // === POST-OPERATION HOOKS ===
+
+  onSaveComplete(result, isCreate, handleEntitySelect) {
+    // Delegate to adapter if it has post-save logic
+    if (this.adapter.onSaveComplete) {
+      return this.adapter.onSaveComplete(result, isCreate, handleEntitySelect, this);
+    }
+    
+    // Default fallback: select newly created entity
+    if (isCreate && result?.id) {
+      const transformedResponse = this.transformResponse({ items: [result] });
+      const processedEntity = transformedResponse.items?.[0];
+      
+      if (processedEntity && handleEntitySelect) {
+        handleEntitySelect(processedEntity);
+      }
+    }
+  }
+
   // === UTILITY METHODS ===
 
   getDebugInfo() {

@@ -48,6 +48,9 @@ const EntitySplitView = ({
 
   // Drag state for resizing
   const [isDragging, setIsDragging] = useState(false);
+  
+  // Hover state for showing collapse button
+  const [isHovering, setIsHovering] = useState(false);
 
   // Ref for the left panel to avoid DOM traversal issues
   const leftPanelRef = useRef(null);
@@ -68,7 +71,7 @@ const EntitySplitView = ({
     setIsDragging(true);
   };
 
-  const handleMouseMove = useRef((e) => {
+  const handleMouseMove = (e) => {
     if (!isDragging) return;
     
     const container = leftPanelRef.current?.parentElement;
@@ -83,11 +86,11 @@ const EntitySplitView = ({
     const constrainedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
     
     setPanelWidth(`${constrainedWidth}px`);
-  }).current;
+  };
 
-  const handleMouseUp = useRef(() => {
+  const handleMouseUp = () => {
     setIsDragging(false);
-  }).current;
+  };
 
   // Global mouse event handling during drag
   useEffect(() => {
@@ -100,7 +103,7 @@ const EntitySplitView = ({
         document.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging, handleMouseMove, handleMouseUp]);
+  }, [isDragging]);
 
   // Toggle collapsed state
   const toggleCollapsed = () => {
@@ -138,11 +141,24 @@ const EntitySplitView = ({
         }`}
         style={{ width: '6px' }}
         onMouseDown={handleMouseDown}
+        onMouseEnter={() => setIsHovering(true)}
+        onMouseLeave={() => setIsHovering(false)}
       >
         {/* Collapse/Expand Button */}
         <button
-          onClick={toggleCollapsed}
-          className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 bg-white border border-gray-300 rounded-full p-1 hover:bg-gray-50 hover:border-gray-400 transition-all duration-150 shadow-sm"
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            toggleCollapsed();
+          }}
+          className={`absolute left-1/2 transform -translate-x-1/2 z-10 bg-white border border-gray-300 rounded-full p-2 hover:bg-gray-50 hover:border-gray-400 transition-all duration-150 shadow-sm ${
+            isHovering || isCollapsed ? 'opacity-100' : 'opacity-0'
+          }`}
+          style={{ pointerEvents: 'auto', top: 'calc(50% - 40px)' }}
           title={isCollapsed ? "Vis liste" : "Skjul liste"}
         >
           {isCollapsed ? (

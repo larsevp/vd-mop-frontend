@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Edit, X, Save, RotateCcw, Trash2 } from "lucide-react";
 import { FieldResolver } from "@/components/tableComponents/fieldTypes/fieldResolver.jsx";
 import { DisplayValueResolver } from "@/components/tableComponents/displayValues/DisplayValueResolver.jsx";
@@ -167,6 +167,9 @@ const EntityDetailPane = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expandedSections, setExpandedSections] = useState(new Set());
 
+  // Ref for the detail view container to enable scrolling
+  const detailViewRef = useRef(null);
+
   // Get modelName and configuration
   const modelName = modelConfig?.modelPrintName || entityType;
   const detailFormConfig = modelConfig?.workspace?.detailForm || {};
@@ -175,6 +178,15 @@ const EntityDetailPane = ({
   const workspaceHiddenEdit = detailFormConfig.workspaceHiddenEdit || [];
   const workspaceHiddenIndex = detailFormConfig.workspaceHiddenIndex || [];
   const allFields = modelConfig?.fields || [];
+
+  // Handle new entity creation mode
+  useEffect(() => {
+    if (entity?.__isNew) {
+      setIsEditing(true);
+    } else {
+      setIsEditing(false);
+    }
+  }, [entity?.__isNew]);
 
   // Initialize form data using FieldResolver
   useEffect(() => {
@@ -187,7 +199,9 @@ const EntityDetailPane = ({
         const isSystemField = ["id", "createdAt", "updatedAt", "createdBy", "updatedBy"].includes(field.name);
 
         if (!isHidden && !isVirtual && !isRelationship && !isSystemField) {
-          initialForm[field.name] = FieldResolver.initializeFieldValue(field, entity, true, modelName);
+          // For critical fields like tittel, beskrivelse, use entity value directly as fallback
+          const fieldValue = FieldResolver.initializeFieldValue(field, entity, true, modelName);
+          initialForm[field.name] = fieldValue !== undefined ? fieldValue : entity[field.name] || "";
         }
       });
       setFormData(initialForm);
@@ -224,6 +238,18 @@ const EntityDetailPane = ({
     }
   }, [errors]);
 
+  // Scroll to top when entering edit mode
+  useEffect(() => {
+    if (isEditing && detailViewRef.current) {
+      setTimeout(() => {
+        detailViewRef.current.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      }, 100);
+    }
+  }, [isEditing]);
+
   // Get visible fields based on configuration
   const getVisibleFields = useCallback(() => {
     return allFields
@@ -241,7 +267,9 @@ const EntityDetailPane = ({
         const workspaceHiddenInEdit = isEditing && workspaceHiddenEdit.includes(field.name);
         const workspaceHiddenInIndex = !isEditing && workspaceHiddenIndex.includes(field.name);
         const workspaceHidden = workspaceHiddenInEdit || workspaceHiddenInIndex;
-        return !standardHidden && !workspaceHidden;
+        const isExcluded = field.name === "tittel"; // Title is handled in header
+
+        return !standardHidden && !workspaceHidden && !isExcluded;
       })
       .sort((a, b) => {
         if (a.detailOrder !== b.detailOrder) {
@@ -334,9 +362,31 @@ const EntityDetailPane = ({
 
     setIsSubmitting(true);
     try {
-      const updateData = { ...formData, id: entity.id };
-      await onSave(updateData, true);
-      setIsEditing(false);
+      const isNewEntity = entity?.__isNew;
+      let saveData;
+      
+      if (isNewEntity) {
+        // For new entities, don't include id
+        saveData = { ...formData };
+        delete saveData.id;
+      } else {
+        // For existing entities, include id
+        saveData = { ...formData, id: entity.id };
+      }
+      
+      if (onSave) {
+        const result = await onSave(saveData, !isNewEntity); // Pass false for create, true for update
+        setIsEditing(false);
+        // The EntityWorkspace will handle selecting the newly created entity
+      } else {
+        console.error('No onSave handler provided');
+        Swal.fire({
+          icon: "error",
+          title: "Konfigureringsfeil",
+          text: "Ingen lagringsfunksjon tilgjengelig",
+          confirmButtonText: "OK",
+        });
+      }
     } catch (error) {
       console.error('Save error:', error);
       Swal.fire({
@@ -385,7 +435,16 @@ const EntityDetailPane = ({
     if (entity) {
       const resetForm = {};
       allFields.forEach((field) => {
-        resetForm[field.name] = FieldResolver.initializeFieldValue(field, entity, false, modelName);
+        const isHidden = field.hiddenEdit || field.hiddenCreate;
+        const isVirtual = field.name.includes("Snippet") || field.name.includes("Plain");
+        const isRelationship = ["krav", "files", "favorittTiltak", "favorittAvBrukere", "children", "parent"].includes(field.name);
+        const isSystemField = ["id", "createdAt", "updatedAt", "createdBy", "updatedBy"].includes(field.name);
+
+        if (!isHidden && !isVirtual && !isRelationship && !isSystemField) {
+          // Use the same logic as initial form setup
+          const fieldValue = FieldResolver.initializeFieldValue(field, entity, true, modelName);
+          resetForm[field.name] = fieldValue !== undefined ? fieldValue : entity[field.name] || "";
+        }
       });
       setFormData(resetForm);
     }
@@ -432,31 +491,45 @@ const EntityDetailPane = ({
   }
 
   // Extract entity display info
-  const entityTitle = entity.tittel || entity.navn || `${entityType} ${entity.id}`;
-  const entityUID = entity.kravUID || entity.tiltakUID || entity.uid;
-  const emneTitle = entity.emne?.navn || entity.emneTittel;
+  const isNewEntity = entity?.__isNew;
+  const entityTitle = isNewEntity 
+    ? `Ny ${modelName}` 
+    : (entity.tittel || entity.navn || `${entityType} ${entity.id}`);
+  const entityUID = isNewEntity ? null : (entity.kravUID || entity.tiltakUID || entity.uid);
+  const emneTitle = isNewEntity ? null : (entity.emne?.navn || entity.emneTittel);
 
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Sticky Header */}
       <div className={`sticky top-0 bg-white border-b border-gray-200 px-6 py-4 z-10 transition-colors ${isEditing ? "bg-blue-50" : "bg-white"}`}>
-        <div className="flex items-center justify-between">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3 mb-1">
-              {entityUID && (
-                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-800">
-                  {entityUID}
-                </span>
-              )}
-              {emneTitle && (
-                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                  {emneTitle}
-                </span>
-              )}
-            </div>
-            <h2 className="text-xl font-semibold text-gray-900 truncate">
-              {entityTitle}
-            </h2>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex-1 min-w-0 flex items-center gap-3">
+            {/* Badges */}
+            {entityUID && (
+              <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-800 flex-shrink-0">
+                {entityUID}
+              </span>
+            )}
+            {emneTitle && (
+              <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 flex-shrink-0">
+                {emneTitle}
+              </span>
+            )}
+            
+            {/* Title/Input */}
+            {isEditing ? (
+              <input
+                type="text"
+                value={formData.tittel || ""}
+                onChange={(e) => handleFieldChange("tittel", e.target.value)}
+                className="text-xl font-semibold text-gray-900 leading-tight flex-1 min-w-0 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Tittel..."
+              />
+            ) : (
+              <h2 className="text-xl font-semibold text-gray-900 truncate flex-1 min-w-0">
+                {entityTitle}
+              </h2>
+            )}
           </div>
           
           <div className="flex items-center gap-2 ml-4">
@@ -523,7 +596,7 @@ const EntityDetailPane = ({
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <div ref={detailViewRef} className="flex-1 overflow-y-auto px-6 py-6">
         {/* Validation errors */}
         <ValidationErrorSummary errors={errors} fields={getVisibleFields()} />
         

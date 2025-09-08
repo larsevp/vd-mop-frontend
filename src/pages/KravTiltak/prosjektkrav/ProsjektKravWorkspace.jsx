@@ -75,6 +75,7 @@ const ProsjektKravWorkspace = () => {
 
   return (
     <EntityWorkspace
+      key={`${dto.entityType || 'workspace'}-${currentProject?.id || 'no-project'}`} // Force remount on project change
       dto={dto}
       renderEntityCard={renderEntityCard}
       renderGroupHeader={renderGroupHeader}
