@@ -101,7 +101,7 @@ const ProsjektKravCard = ({
     <div
       className={`
         relative cursor-pointer transition-all duration-150 border border-gray-200 block mb-1
-        ${shouldIndent ? "pl-12 pr-4 py-3 border-l-4 border-green-200 w-[calc(100%+2rem)]" : "px-4 py-3 w-full"}
+        ${shouldIndent ? "pl-12 pr-4 py-3 w-[calc(100%+2rem)]" : "px-4 py-3 w-full"}
         ${isSelected ? 'bg-blue-50 text-blue-900 border-blue-200' : 'hover:bg-gray-50 hover:border-gray-300'}
       `}
       onClick={handleClick}

@@ -3,7 +3,7 @@ import { EntityWorkspace } from "@/components/EntityWorkspace";
 import { prosjektKrav as prosjektKravConfig } from "@/modelConfigs/models/prosjektKrav.js";
 import { createSingleEntityDTO } from "@/components/EntityWorkspace/interface/data";
 import { createProsjektKravAdapter } from "./adapter";
-import { renderEntityCard, renderGroupHeader, getAvailableViewOptions } from "./renderer";
+import { renderEntityCard, renderGroupHeader, renderDetailPane, getAvailableViewOptions } from "./renderer";
 import { useProsjektKravViewStore } from "./store";
 import { RowListHeading } from "../shared";
 import { useProjectStore } from "@/stores/userStore";
@@ -78,6 +78,7 @@ const ProsjektKravWorkspace = () => {
       dto={dto}
       renderEntityCard={renderEntityCard}
       renderGroupHeader={renderGroupHeader}
+      renderDetailPane={renderDetailPane}
       renderListHeading={(props) => (
         <RowListHeading
           {...props}

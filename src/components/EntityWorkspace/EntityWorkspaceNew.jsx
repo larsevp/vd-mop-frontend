@@ -5,7 +5,7 @@
  * but replaces complex state management with TanStack Query + simple Zustand UI state.
  */
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/primitives/button';
 import { Plus, ArrowLeft } from 'lucide-react';
@@ -28,6 +28,7 @@ const EntityWorkspaceNew = ({
   renderEntityCard,
   renderGroupHeader,
   renderListHeading,
+  renderDetailPane,
   viewOptions = {},
   debug = false 
 }) => {
@@ -51,10 +52,34 @@ const EntityWorkspaceNew = ({
   const entities = result?.items || [];
   const entityType = dto?.entityType || dto?.getPrimaryEntityType?.() || 'entities';
 
+  // Restore selected entity from URL on mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const selectedId = urlParams.get('selected');
+    
+    if (selectedId && entities.length > 0) {
+      const selectedEntity = entities.find(entity => entity.id && entity.id.toString() === selectedId);
+      if (selectedEntity && selectedEntity !== ui.selectedEntity) {
+        ui.setSelectedEntity(selectedEntity);
+      }
+    }
+  }, [entities, ui.selectedEntity, ui.setSelectedEntity]);
+
   // Event handlers
   const handleEntitySelect = useCallback((entity) => {
     ui.setSelectedEntity(entity);
     if (debug) console.log('Selected entity:', entity?.id);
+    
+    // Update URL with selected entity ID
+    if (entity && entity.id) {
+      const currentPath = window.location.pathname;
+      const newUrl = `${currentPath}?selected=${entity.id}`;
+      window.history.pushState(null, '', newUrl);
+    } else {
+      // Clear selection from URL
+      const currentPath = window.location.pathname;
+      window.history.pushState(null, '', currentPath);
+    }
   }, [ui.setSelectedEntity, debug]);
 
   const handleSearch = useCallback(() => {
@@ -64,6 +89,31 @@ const EntityWorkspaceNew = ({
   const handleCreateNew = useCallback(() => {
     navigate(`/${entityType}/create`);
   }, [navigate, entityType]);
+
+  // CRUD handlers via DTO
+  const handleSave = useCallback(async (entityData, isUpdate) => {
+    try {
+      if (isUpdate) {
+        return await dto.updateEntity(entityData.id, entityData);
+      } else {
+        return await dto.createEntity(entityData);
+      }
+    } catch (error) {
+      console.error('Save error:', error);
+      throw error;
+    }
+  }, [dto]);
+
+  const handleDelete = useCallback(async (entity) => {
+    try {
+      await dto.deleteEntity(entity.id);
+      ui.setSelectedEntity(null); // Clear selection after delete
+      refetch(); // Refresh the list
+    } catch (error) {
+      console.error('Delete error:', error);
+      throw error;
+    }
+  }, [dto, ui.setSelectedEntity, refetch]);
 
   // Simple error handling
   if (error) {
@@ -157,6 +207,8 @@ const EntityWorkspaceNew = ({
             entityType={entityType}
             selectedEntity={ui.selectedEntity}
             onEntitySelect={handleEntitySelect}
+            onSave={handleSave}
+            onDelete={handleDelete}
             renderListPane={({ entities, selectedEntity, onEntitySelect }) => (
               <EntityListPane
                 items={entities} // Pass entities as items (reference design pattern)
@@ -171,7 +223,7 @@ const EntityWorkspaceNew = ({
                 viewOptions={viewOptions}
               />
             )}
-            renderDetailPane={({ selectedEntity }) => (
+            renderDetailPane={renderDetailPane ? renderDetailPane : ({ selectedEntity }) => (
               <div className="h-full overflow-auto bg-white">
                 {selectedEntity ? (
                   <div className="p-6">
@@ -184,7 +236,7 @@ const EntityWorkspaceNew = ({
                       )}
                     </div>
                     
-                    {/* Simple detail view - can be enhanced later */}
+                    {/* Simple detail view - fallback when no renderDetailPane provided */}
                     <div className="bg-neutral-50 p-4 rounded-lg">
                       <pre className="text-sm text-neutral-700 whitespace-pre-wrap overflow-auto">
                         {JSON.stringify(selectedEntity, null, 2)}

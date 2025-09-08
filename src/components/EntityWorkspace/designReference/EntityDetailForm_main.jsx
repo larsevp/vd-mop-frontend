@@ -500,4 +500,8 @@ const EntityDetailForm = ({
   );
 };
 
+<<<<<<< Updated upstream
 export default EntityDetailForm;
+=======
+export default EntityDetailForm;
+>>>>>>> Stashed changes

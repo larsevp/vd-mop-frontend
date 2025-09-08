@@ -17,6 +17,8 @@ const EntitySplitView = ({
   onEntitySelect,
   renderListPane,
   renderDetailPane,
+  onSave,
+  onDelete,
   listWidth = "35%",
 }) => {
   // Collapsible panel state - persistent with localStorage
@@ -160,10 +162,19 @@ const EntitySplitView = ({
 
       {/* Right Panel - Detail View */}
       <div className="flex-1 bg-white overflow-hidden">
-        {renderDetailPane && renderDetailPane({ 
-          selectedEntity, 
-          entities 
-        })}
+        {renderDetailPane && selectedEntity ? renderDetailPane(selectedEntity, {
+          onSave,
+          onDelete,
+          onClose: () => onEntitySelect(null),
+          entities
+        }) : (
+          renderDetailPane && renderDetailPane(null, {
+            onSave,
+            onDelete, 
+            onClose: () => onEntitySelect(null),
+            entities
+          })
+        )}
       </div>
 
       {/* Drag overlay during resize */}
