@@ -20,6 +20,7 @@ const EntityListPane = ({
   entityType,
   selectedEntity,
   onEntitySelect,
+  onEntityDoubleClick,
   isLoading = false,
   isFetching = false,
   enableKeyboardNav = true,
@@ -37,6 +38,9 @@ const EntityListPane = ({
   // Check if we have grouped data structure (items contain emne objects)
   const hasGroupedData = items.length > 0 && items[0]?.group && items[0]?.items;
   const groupedItems = hasGroupedData ? items : [];
+
+  // Check if we're in cards mode for grid layout
+  const isCardsMode = externalViewOptions.viewMode === "cards";
 
   // Flatten all entities for keyboard navigation
   const allItems = useMemo(() => {
@@ -117,11 +121,13 @@ const EntityListPane = ({
   };
 
   const collapseAll = () => {
-    const allGroupKeys = groupedItems.map((group, groupIndex) => `${entityType}-group-${group.emne?.id || "no-emne"}-${groupIndex}`);
+    const allGroupKeys = groupedItems.map((group, groupIndex) => `${entityType}-group-${group.group?.emne?.id || "no-emne"}-${groupIndex}`);
+    //console.log('collapseAll called, groupKeys:', allGroupKeys);
     setCollapsedGroups(new Set(allGroupKeys));
   };
 
   const expandAll = () => {
+    //console.log('expandAll called');
     setCollapsedGroups(new Set());
   };
 
@@ -129,12 +135,16 @@ const EntityListPane = ({
     hasGroupedData &&
     groupedItems.length > 0 &&
     groupedItems.every((group, groupIndex) => {
-      const groupKey = `${entityType}-group-${group.emne?.id || "no-emne"}-${groupIndex}`;
+      const groupKey = `${entityType}-group-${group.group?.emne?.id || "no-emne"}-${groupIndex}`;
       return collapsedGroups.has(groupKey);
     });
 
   const handleEntitySelect = (entity) => {
     onEntitySelect?.(entity);
+  };
+
+  const handleEntityDoubleClick = (entity) => {
+    onEntityDoubleClick?.(entity);
   };
 
   return (
@@ -143,59 +153,50 @@ const EntityListPane = ({
       {EntityListHeading &&
         EntityListHeading({
           itemCount: allItems.length,
-          children: hasGroupedData && groupedItems.length > 1 && (
-            <button
-              onClick={allGroupsCollapsed ? expandAll : collapseAll}
-              className="p-1 hover:bg-gray-100 rounded transition-colors"
-              title={allGroupsCollapsed ? "Vis alle emner" : "Skjul alle emner"}
-            >
-              {allGroupsCollapsed ? <Maximize2 className="w-3 h-3 text-gray-500" /> : <Minimize2 className="w-3 h-3 text-gray-500" />}
-            </button>
-          ),
+          hasGroups: hasGroupedData && groupedItems.length > 1,
+          allGroupsExpanded: !allGroupsCollapsed,
+          onToggleAllGroups: allGroupsCollapsed ? expandAll : collapseAll,
         })}
 
       {/* Entity List */}
-      <FlexScrollableContainer 
-        className="flex-1" 
-        dependencies={[allItems.length, collapsedGroups]}
-        fadeColor="from-white"
-      >
+      <FlexScrollableContainer className="flex-1" dependencies={[allItems.length, collapsedGroups]} fadeColor="from-white">
         <div ref={listContainerRef}>
-            {isLoading && allItems.length === 0 ? (
-              <div className="flex items-center justify-center h-32 text-gray-500">
-                <div className="text-center">
-                  <Loader2 className="w-8 h-8 mx-auto mb-2 text-gray-300 animate-spin" />
-                  <p className="text-sm">Laster...</p>
-                </div>
+          {isLoading && allItems.length === 0 ? (
+            <div className="flex items-center justify-center h-32 text-gray-500">
+              <div className="text-center">
+                <Loader2 className="w-8 h-8 mx-auto mb-2 text-gray-300 animate-spin" />
+                <p className="text-sm">Laster...</p>
               </div>
-            ) : allItems.length === 0 ? (
-              <div className="flex items-center justify-center h-32 text-gray-500">
-                <div className="text-center">
-                  <FileText className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                  <p className="text-sm">Ingen elementer</p>
-                </div>
+            </div>
+          ) : allItems.length === 0 ? (
+            <div className="flex items-center justify-center h-32 text-gray-500">
+              <div className="text-center">
+                <FileText className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                <p className="text-sm">Ingen elementer</p>
               </div>
-            ) : hasGroupedData ? (
-              // Grouped rendering (with emne headers)
-              <div>
-                {groupedItems.map((groupData, groupIndex) => {
-                  const groupKey = `${entityType}-group-${groupData.group.emne?.id || "no-emne"}-${groupIndex}`;
-                  const isCollapsed = collapsedGroups.has(groupKey);
-                  const groupItems = groupData.items;
+            </div>
+          ) : hasGroupedData ? (
+            // Grouped rendering (with emne headers)
+            <div>
+              {groupedItems.map((groupData, groupIndex) => {
+                const groupKey = `${entityType}-group-${groupData.group.emne?.id || "no-emne"}-${groupIndex}`;
+                const isCollapsed = collapsedGroups.has(groupKey);
+                const groupItems = groupData.items;
 
-                  return (
-                    <div key={groupKey}>
-                      {/* Group Header - Domain-controlled via EntityListGroupHeader */}
-                      {EntityListGroupHeader &&
-                        EntityListGroupHeader(groupData, {
-                          isCollapsed,
-                          onToggle: () => toggleGroupCollapse(groupKey),
-                          itemCount: groupItems.length,
-                        })}
+                return (
+                  <div key={groupKey}>
+                    {/* Group Header - Domain-controlled via EntityListGroupHeader */}
+                    {EntityListGroupHeader &&
+                      EntityListGroupHeader(groupData, {
+                        isCollapsed,
+                        onToggle: () => toggleGroupCollapse(groupKey),
+                        itemCount: groupItems.length,
+                      })}
 
-                      {/* Group items */}
-                      {!isCollapsed &&
-                        groupItems.map(
+                    {/* Group items */}
+                    {!isCollapsed && (
+                      <div className={isCardsMode ? "space-y-2 px-2 pb-2" : ""}>
+                        {groupItems.map(
                           (entity, index) =>
                             EntityListCard &&
                             EntityListCard(entity, {
@@ -204,31 +205,35 @@ const EntityListPane = ({
                               isSelected: entity.renderId === selectedEntityId,
                               isFocused: focusedIndex === index,
                               onClick: handleEntitySelect,
+                              onDoubleClick: handleEntityDoubleClick,
                               viewOptions: externalViewOptions,
                             })
                         )}
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              // Flat rendering (no emne groups)
-              <div>
-                {allItems.map(
-                  (entity, index) =>
-                    EntityListCard &&
-                    EntityListCard(entity, {
-                      key: entity.renderId,
-                      "data-entity-id": entity.renderId,
-                      isSelected: entity.renderId === selectedEntityId,
-                      isFocused: focusedIndex === index,
-                      onClick: handleEntitySelect,
-                      viewOptions: externalViewOptions,
-                    })
-                )}
-              </div>
-            )}
-          </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            // Flat rendering (no emne groups)
+            <div className={isCardsMode ? "space-y-2 p-2" : ""}>
+              {allItems.map(
+                (entity, index) =>
+                  EntityListCard &&
+                  EntityListCard(entity, {
+                    key: entity.renderId,
+                    "data-entity-id": entity.renderId,
+                    isSelected: entity.renderId === selectedEntityId,
+                    isFocused: focusedIndex === index,
+                    onClick: handleEntitySelect,
+                    onDoubleClick: handleEntityDoubleClick,
+                    viewOptions: externalViewOptions,
+                  })
+              )}
+            </div>
+          )}
+        </div>
       </FlexScrollableContainer>
     </div>
   );

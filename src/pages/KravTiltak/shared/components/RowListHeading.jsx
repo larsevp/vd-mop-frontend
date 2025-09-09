@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, Settings } from 'lucide-react';
+import { ChevronDown, Settings, Maximize2, Minimize2 } from 'lucide-react';
 import { Button } from '@/components/ui/primitives/button';
 
 /**
@@ -15,6 +15,10 @@ const RowListHeading = ({
   viewOptions = {},
   onViewOptionsChange = () => {},
   availableViewOptions = {},
+  // New props for expand/collapse all - always show when hasGroups is true
+  hasGroups = false,
+  allGroupsExpanded = true,
+  onToggleAllGroups = () => {},
   children
 }) => {
   const [showViewOptions, setShowViewOptions] = useState(false);
@@ -33,6 +37,22 @@ const RowListHeading = ({
           <div className="text-xs font-medium text-gray-900">
             {itemCount} {itemCount === 1 ? 'element' : 'elementer'}
           </div>
+          
+          {/* Expand/Collapse All Groups Button - Always visible */}
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onToggleAllGroups();
+            }}
+            className="flex items-center p-1 h-6 w-6"
+            title={allGroupsExpanded ? "Skjul alle grupper" : "Vis alle grupper"}
+          >
+            {allGroupsExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+          </Button>
+          
           {children}
         </div>
         

@@ -8,7 +8,7 @@
 import React, { useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/primitives/button";
-import { Plus, ArrowLeft } from "lucide-react";
+import { Plus, ArrowLeft, LayoutGrid, Columns } from "lucide-react";
 
 // Existing components (reuse these)
 import EntitySplitView from "./interface/components/EntitySplitView";
@@ -159,9 +159,8 @@ const EntityWorkspaceNew = ({
         // Use replaceState so we don't add a history entry for selecting an item.
         // This keeps the browser back button behavior intuitive (one press to leave the workspace).
         window.history.replaceState(null, "", newUrl);
-        // console.log('Updated URL to:', newUrl);
-      } else {
-        // Clear selection from URL without adding history entries
+      } else if (entity === null || (entity && !entity.__isNew)) {
+        // Clear URL for null selection or existing entities (but preserve URL for __isNew entities)
         const currentPath = window.location.pathname;
         window.history.replaceState(null, "", currentPath);
       }
@@ -178,6 +177,78 @@ const EntityWorkspaceNew = ({
     // Set selected entity to null to trigger create mode in detail pane
     ui.setSelectedEntity({ __isNew: true });
   }, [ui.setSelectedEntity]);
+
+  const handleDetailClose = useCallback(async () => {
+    // Check if we're closing a new entity creation
+    if (ui.selectedEntity?.__isNew) {
+      // Restore selection from URL if available
+      const urlParams = new URLSearchParams(window.location.search);
+      const selectedFromUrl = urlParams.get("selected");
+      
+      if (selectedFromUrl && dto) {
+        try {
+          // Use the DTO adapter to fetch the entity by ID
+          const adapter = dto.adapter;
+          const config = adapter?.config;
+          
+          // Try to fetch the entity using the DTO's getById methods
+          let fetchFn = null;
+          const candidates = [config, dto];
+          const fnNames = ["getByIdFn", "getById", "fetchById", "getOne"];
+          
+          for (const candidate of candidates) {
+            for (const fnName of fnNames) {
+              if (typeof candidate?.[fnName] === "function") {
+                fetchFn = candidate[fnName];
+                break;
+              }
+            }
+            if (fetchFn) break;
+          }
+          
+          if (fetchFn) {
+            const fetchedRaw = await fetchFn(selectedFromUrl);
+            const fetchedEntity = fetchedRaw?.data ? fetchedRaw.data : fetchedRaw;
+            
+            if (fetchedEntity) {
+              ui.setSelectedEntity(fetchedEntity);
+              return;
+            }
+          }
+        } catch (error) {
+          console.warn('Failed to fetch entity for restoration:', error);
+        }
+      }
+      
+      // Fallback: try to find in current entities array (handle grouped structure)
+      if (selectedFromUrl && entities.length > 0) {
+        // Check if entities are grouped (have items arrays)
+        const hasGroupedData = entities[0]?.items && Array.isArray(entities[0].items);
+        
+        let flatEntities = [];
+        if (hasGroupedData) {
+          // Flatten grouped entities
+          flatEntities = entities.flatMap(group => group.items || []);
+        } else {
+          flatEntities = entities;
+        }
+        
+        const found = flatEntities.find(entity => 
+          entity?.id?.toString() === selectedFromUrl
+        );
+        if (found) {
+          ui.setSelectedEntity(found);
+          return;
+        }
+      }
+      
+      // If no URL selection or entity not found, clear selection
+      ui.setSelectedEntity(null);
+    } else {
+      // For existing entities, just clear selection
+      ui.setSelectedEntity(null);
+    }
+  }, [ui.selectedEntity, ui.setSelectedEntity, entities, dto]);
 
   // CRUD handlers via DTO adapter config
   const handleSave = useCallback(
@@ -277,6 +348,28 @@ const EntityWorkspaceNew = ({
               </Button>
               <h1 className="text-2xl font-semibold text-neutral-900">{dto?.getDisplayConfig?.()?.title || entityType}</h1>
               <div className="text-sm text-neutral-600">{entities.length} totalt</div>
+              
+              {/* View Mode Toggle */}
+              <div className="flex items-center border rounded-lg p-1 bg-neutral-50">
+                <Button
+                  variant={ui.viewMode === 'split' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => ui.setViewMode('split')}
+                  className="h-8 w-8 p-0"
+                  title="Split View"
+                >
+                  <Columns className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={ui.viewMode === 'cards' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => ui.setViewMode('cards')}
+                  className="h-8 w-8 p-0"
+                  title="Cards View"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
 
             <div className="flex-1 max-w-md">
@@ -312,62 +405,90 @@ const EntityWorkspaceNew = ({
           </div>
         </div>
 
-        {/* Main content - reuse existing EntitySplitView */}
+        {/* Main content - conditional rendering based on viewMode */}
         <div className="flex-1" style={{ height: "calc(100vh - 120px)" }}>
-          <EntitySplitView
-            entities={entities}
-            entityType={entityType}
-            selectedEntity={ui.selectedEntity}
-            onEntitySelect={handleEntitySelect}
-            onSave={handleSave}
-            onDelete={handleDelete}
-            renderListPane={({ entities, selectedEntity, onEntitySelect }) => (
+          {ui.viewMode === 'cards' ? (
+            /* Cards Mode - Full width grid */
+            <div className="h-full bg-neutral-50 pt-4">
               <EntityListPane
-                items={entities} // Pass entities as items (reference design pattern)
+                items={entities}
                 entityType={entityType}
-                selectedEntity={selectedEntity}
-                onEntitySelect={onEntitySelect}
+                selectedEntity={ui.selectedEntity}
+                onEntitySelect={(entity) => {
+                  handleEntitySelect(entity);
+                  // Single click just selects - don't auto-switch to split view
+                }}
+                onEntityDoubleClick={(entity) => {
+                  handleEntitySelect(entity);
+                  // Double-click switches to split view for details
+                  ui.setViewMode('split');
+                }}
                 isLoading={isLoading}
                 adapter={dto}
                 EntityListCard={renderEntityCard}
                 EntityListGroupHeader={renderGroupHeader}
                 EntityListHeading={renderListHeading}
-                viewOptions={viewOptions}
+                viewOptions={{ ...viewOptions, viewMode: 'cards' }}
               />
-            )}
-            renderDetailPane={
-              renderDetailPane
-                ? renderDetailPane
-                : ({ selectedEntity }) => (
-                    <div className="h-full overflow-auto bg-white">
-                      {selectedEntity ? (
-                        <div className="p-6">
-                          <div className="border-b pb-4 mb-4">
-                            <h2 className="text-xl font-semibold text-gray-900">
-                              {selectedEntity.title || selectedEntity.tittel || "Detaljer"}
-                            </h2>
-                            {selectedEntity.uid && <p className="text-sm text-gray-600 mt-1">ID: {selectedEntity.uid}</p>}
-                          </div>
+            </div>
+          ) : (
+            /* Split Mode - EntitySplitView */
+            <EntitySplitView
+              entities={entities}
+              entityType={entityType}
+              selectedEntity={ui.selectedEntity}
+              onEntitySelect={handleEntitySelect}
+              onSave={handleSave}
+              onDelete={handleDelete}
+              onClose={handleDetailClose}
+              renderListPane={({ entities, selectedEntity, onEntitySelect }) => (
+                <EntityListPane
+                  items={entities}
+                  entityType={entityType}
+                  selectedEntity={selectedEntity}
+                  onEntitySelect={onEntitySelect}
+                  isLoading={isLoading}
+                  adapter={dto}
+                  EntityListCard={renderEntityCard}
+                  EntityListGroupHeader={renderGroupHeader}
+                  EntityListHeading={renderListHeading}
+                  viewOptions={{ ...viewOptions, viewMode: 'split' }}
+                />
+              )}
+              renderDetailPane={
+                renderDetailPane
+                  ? renderDetailPane
+                  : ({ selectedEntity }) => (
+                      <div className="h-full overflow-auto bg-white">
+                        {selectedEntity ? (
+                          <div className="p-6">
+                            <div className="border-b pb-4 mb-4">
+                              <h2 className="text-xl font-semibold text-gray-900">
+                                {selectedEntity.title || selectedEntity.tittel || "Detaljer"}
+                              </h2>
+                              {selectedEntity.uid && <p className="text-sm text-gray-600 mt-1">ID: {selectedEntity.uid}</p>}
+                            </div>
 
-                          {/* Simple detail view - fallback when no renderDetailPane provided */}
-                          <div className="bg-neutral-50 p-4 rounded-lg">
-                            <pre className="text-sm text-neutral-700 whitespace-pre-wrap overflow-auto">
-                              {JSON.stringify(selectedEntity, null, 2)}
-                            </pre>
+                            {/* Simple detail view - fallback when no renderDetailPane provided */}
+                            <div className="bg-neutral-50 p-4 rounded-lg">
+                              <pre className="text-sm text-neutral-700 whitespace-pre-wrap overflow-auto">
+                                {JSON.stringify(selectedEntity, null, 2)}
+                              </pre>
+                            </div>
                           </div>
-                        </div>
-                      ) : (
-                        <div className="p-8 text-center text-gray-500 h-full flex items-center justify-center">
-                          <div>
-                            <h3 className="text-lg font-medium mb-2">Velg et element</h3>
-                            <p>Klikk på et element i listen for å se detaljer</p>
+                        ) : (
+                          <div className="p-8 text-center text-gray-500 h-full flex items-center justify-center">
+                            <div>
+                              <h3 className="text-lg font-medium mb-2">Velg et element</h3>
+                              <p>Klikk på et element i listen for å se detaljer</p>
+                            </div>
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  )
-            }
-          />
+                        )}
+                      </div>
+                    )
+              }
+            />
+          )}
         </div>
 
         {/* Debug info */}
