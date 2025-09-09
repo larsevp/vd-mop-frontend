@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { GripVertical, ChevronLeft, ChevronRight } from "lucide-react";
+import FlexScrollableContainer from "./FlexScrollableContainer";
 
 /**
  * Modern EntitySplitView with draggable resizer (copied from main branch design)
@@ -124,7 +125,7 @@ const EntitySplitView = ({
         }}
       >
         {!isCollapsed && (
-          <div className="h-full overflow-hidden">
+          <div className="h-full">
             {renderListPane && renderListPane({ 
               entities, 
               selectedEntity, 
@@ -177,20 +178,26 @@ const EntitySplitView = ({
       </div>
 
       {/* Right Panel - Detail View */}
-      <div className="flex-1 bg-white overflow-hidden">
-        {renderDetailPane && selectedEntity ? renderDetailPane(selectedEntity, {
-          onSave,
-          onDelete,
-          onClose: () => onEntitySelect(null),
-          entities
-        }) : (
-          renderDetailPane && renderDetailPane(null, {
+      <div className="flex-1 bg-white">
+        <FlexScrollableContainer 
+          className="h-full" 
+          dependencies={[selectedEntity]}
+          fadeColor="from-white"
+        >
+          {renderDetailPane && selectedEntity ? renderDetailPane(selectedEntity, {
             onSave,
-            onDelete, 
+            onDelete,
             onClose: () => onEntitySelect(null),
             entities
-          })
-        )}
+          }) : (
+            renderDetailPane && renderDetailPane(null, {
+              onSave,
+              onDelete, 
+              onClose: () => onEntitySelect(null),
+              entities
+            })
+          )}
+        </FlexScrollableContainer>
       </div>
 
       {/* Drag overlay during resize */}

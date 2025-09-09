@@ -600,7 +600,7 @@ const EntityDetailPane = ({
       </div>
 
       {/* Content Area */}
-      <div ref={detailViewRef} className="flex-1 overflow-y-auto px-6 py-6">
+      <div ref={detailViewRef} className="flex-1 px-6 py-6">
         {/* Validation errors */}
         <ValidationErrorSummary errors={errors} fields={getVisibleFields()} />
         

@@ -12,13 +12,13 @@ import { ArrowLeft, Building } from "lucide-react";
 
 /**
  * ProsjektKrav Workspace using the generic EntityWorkspace component
- * 
+ *
  * This workspace handles project-specific requirements (ProsjektKrav) which are:
  * - Project-scoped versions of general requirements
- * - Linked to specific projects 
+ * - Linked to specific projects
  * - Can have relationships to ProsjektTiltak
  * - Support the same rich features as general Krav but in project context
- * 
+ *
  * Features automatically provided by EntityWorkspace:
  * - Project-specific data fetching and filtering
  * - Search, filtering, sorting within project scope
@@ -40,13 +40,8 @@ const ProsjektKravWorkspace = () => {
             <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 max-w-md mx-auto">
               <Building className="w-12 h-12 text-yellow-600 mx-auto mb-4" />
               <h3 className="text-lg font-bold text-yellow-800 mb-2">Ingen prosjekt valgt</h3>
-              <p className="text-yellow-700 mb-4">
-                Du må velge et prosjekt for å se prosjektspesifikke krav.
-              </p>
-              <Link 
-                to="/"
-                className="inline-flex items-center text-yellow-800 hover:text-yellow-900 font-medium"
-              >
+              <p className="text-yellow-700 mb-4">Du må velge et prosjekt for å se prosjektspesifikke krav.</p>
+              <Link to="/" className="inline-flex items-center text-yellow-800 hover:text-yellow-900 font-medium">
                 <ArrowLeft size={16} className="mr-2" />
                 Gå til prosjektliste
               </Link>
@@ -66,7 +61,7 @@ const ProsjektKravWorkspace = () => {
 
   // Create ProsjektKrav adapter
   const adapter = createProsjektKravAdapter(dynamicConfig);
-  
+
   // Wrap adapter in DTO for unified interface
   const dto = createSingleEntityDTO(adapter);
 
@@ -75,7 +70,7 @@ const ProsjektKravWorkspace = () => {
 
   return (
     <EntityWorkspace
-      key={`${dto.entityType || 'workspace'}-${currentProject?.id || 'no-project'}`} // Force remount on project change
+      key={`${dto.entityType || "workspace"}-${currentProject?.id || "no-project"}`} // Force remount on project change
       dto={dto}
       renderEntityCard={renderEntityCard}
       renderGroupHeader={renderGroupHeader}
@@ -89,7 +84,7 @@ const ProsjektKravWorkspace = () => {
         />
       )}
       viewOptions={viewOptions}
-      debug={true}
+      debug={false}
     />
   );
 };

@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { Loader2, FileText, Minimize2, Maximize2 } from "lucide-react";
+import FlexScrollableContainer from "../FlexScrollableContainer";
 
 /**
  * EntityListPane - Generic list interface using render prop pattern
@@ -154,75 +155,81 @@ const EntityListPane = ({
         })}
 
       {/* Entity List */}
-      <div ref={listContainerRef} className="flex-1 overflow-y-auto">
-        {isLoading && allItems.length === 0 ? (
-          <div className="flex items-center justify-center h-32 text-gray-500">
-            <div className="text-center">
-              <Loader2 className="w-8 h-8 mx-auto mb-2 text-gray-300 animate-spin" />
-              <p className="text-sm">Laster...</p>
-            </div>
-          </div>
-        ) : allItems.length === 0 ? (
-          <div className="flex items-center justify-center h-32 text-gray-500">
-            <div className="text-center">
-              <FileText className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-              <p className="text-sm">Ingen elementer</p>
-            </div>
-          </div>
-        ) : hasGroupedData ? (
-          // Grouped rendering (with emne headers)
-          <div>
-            {groupedItems.map((groupData, groupIndex) => {
-              const groupKey = `${entityType}-group-${groupData.group.emne?.id || "no-emne"}-${groupIndex}`;
-              const isCollapsed = collapsedGroups.has(groupKey);
-              const groupItems = groupData.items;
-
-              return (
-                <div key={groupKey}>
-                  {/* Group Header - Domain-controlled via EntityListGroupHeader */}
-                  {EntityListGroupHeader &&
-                    EntityListGroupHeader(groupData, {
-                      isCollapsed,
-                      onToggle: () => toggleGroupCollapse(groupKey),
-                      itemCount: groupItems.length,
-                    })}
-
-                  {/* Group items */}
-                  {!isCollapsed &&
-                    groupItems.map(
-                      (entity, index) =>
-                        EntityListCard &&
-                        EntityListCard(entity, {
-                          key: entity.renderId,
-                          "data-entity-id": entity.renderId,
-                          isSelected: entity.renderId === selectedEntityId,
-                          isFocused: focusedIndex === index,
-                          onClick: handleEntitySelect,
-                          viewOptions: externalViewOptions,
-                        })
-                    )}
+      <FlexScrollableContainer 
+        className="flex-1" 
+        dependencies={[allItems.length, collapsedGroups]}
+        fadeColor="from-white"
+      >
+        <div ref={listContainerRef}>
+            {isLoading && allItems.length === 0 ? (
+              <div className="flex items-center justify-center h-32 text-gray-500">
+                <div className="text-center">
+                  <Loader2 className="w-8 h-8 mx-auto mb-2 text-gray-300 animate-spin" />
+                  <p className="text-sm">Laster...</p>
                 </div>
-              );
-            })}
-          </div>
-        ) : (
-          // Flat rendering (no emne groups)
-          <div>
-            {allItems.map(
-              (entity, index) =>
-                EntityListCard &&
-                EntityListCard(entity, {
-                  key: entity.renderId,
-                  "data-entity-id": entity.renderId,
-                  isSelected: entity.renderId === selectedEntityId,
-                  isFocused: focusedIndex === index,
-                  onClick: handleEntitySelect,
-                  viewOptions: externalViewOptions,
-                })
+              </div>
+            ) : allItems.length === 0 ? (
+              <div className="flex items-center justify-center h-32 text-gray-500">
+                <div className="text-center">
+                  <FileText className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                  <p className="text-sm">Ingen elementer</p>
+                </div>
+              </div>
+            ) : hasGroupedData ? (
+              // Grouped rendering (with emne headers)
+              <div>
+                {groupedItems.map((groupData, groupIndex) => {
+                  const groupKey = `${entityType}-group-${groupData.group.emne?.id || "no-emne"}-${groupIndex}`;
+                  const isCollapsed = collapsedGroups.has(groupKey);
+                  const groupItems = groupData.items;
+
+                  return (
+                    <div key={groupKey}>
+                      {/* Group Header - Domain-controlled via EntityListGroupHeader */}
+                      {EntityListGroupHeader &&
+                        EntityListGroupHeader(groupData, {
+                          isCollapsed,
+                          onToggle: () => toggleGroupCollapse(groupKey),
+                          itemCount: groupItems.length,
+                        })}
+
+                      {/* Group items */}
+                      {!isCollapsed &&
+                        groupItems.map(
+                          (entity, index) =>
+                            EntityListCard &&
+                            EntityListCard(entity, {
+                              key: entity.renderId,
+                              "data-entity-id": entity.renderId,
+                              isSelected: entity.renderId === selectedEntityId,
+                              isFocused: focusedIndex === index,
+                              onClick: handleEntitySelect,
+                              viewOptions: externalViewOptions,
+                            })
+                        )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              // Flat rendering (no emne groups)
+              <div>
+                {allItems.map(
+                  (entity, index) =>
+                    EntityListCard &&
+                    EntityListCard(entity, {
+                      key: entity.renderId,
+                      "data-entity-id": entity.renderId,
+                      isSelected: entity.renderId === selectedEntityId,
+                      isFocused: focusedIndex === index,
+                      onClick: handleEntitySelect,
+                      viewOptions: externalViewOptions,
+                    })
+                )}
+              </div>
             )}
           </div>
-        )}
-      </div>
+      </FlexScrollableContainer>
     </div>
   );
 };
