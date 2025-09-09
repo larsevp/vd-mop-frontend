@@ -1,7 +1,7 @@
 /**
  * ProsjektKrav Model Workspace Configuration - New Structure
  * Simplified, more intuitive configuration format
- * 
+ *
  * NOTE: This file may need to be moved to /pages/KravTiltak/prosjektkrav/
  * as part of the new entity-specific folder structure
  */
@@ -50,6 +50,7 @@ const newProsjektKravWorkspaceConfig = {
     "kravUID",
     "beskrivelseSnippet",
     "informasjonSnippet",
+    "projectId",
   ],
   workspaceHiddenEdit: [
     "kravUID",
@@ -60,6 +61,7 @@ const newProsjektKravWorkspaceConfig = {
     "givenOrder",
     "beskrivelseSnippet",
     "informasjonSnippet",
+    "projectId",
   ],
   workspaceHiddenCreate: [
     "kravUID",
@@ -70,6 +72,7 @@ const newProsjektKravWorkspaceConfig = {
     "givenOrder",
     "beskrivelseSnippet",
     "informasjonSnippet",
+    "projectId",
   ],
 
   // Sections with their field overrides and row definitions

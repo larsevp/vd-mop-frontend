@@ -1,8 +1,8 @@
 /**
- * ProsjektKravAdapter - Specific adapter for ProsjektKrav entities
+ * KravAdapter - Specific adapter for Krav entities
  */
 
-export class ProsjektKravAdapter {
+export class KravAdapter {
   constructor(config, options = {}) {
     this.config = config;
     this.options = { debug: false, ...options };
@@ -12,8 +12,8 @@ export class ProsjektKravAdapter {
 
   getDisplayConfig() {
     return {
-      title: this.config.title || "Prosjektkrav",
-      entityTypes: ["prosjektKrav"],
+      title: this.config.title || "Krav",
+      entityTypes: ["krav"],
       supportsGroupByEmne: this.config.workspace?.groupBy === "emne",
       layout: this.config.workspace?.layout || "split",
       newButtonLabel: this.config.newButtonLabel || `Ny ${this.config.title}`,
@@ -56,7 +56,7 @@ export class ProsjektKravAdapter {
 
   getQueryFunctions() {
     return {
-      prosjektKrav: {
+      krav: {
         standard: this.config.queryFnWorkspace || this.config.queryFn,
         grouped: this.config.queryFnGroupedByEmneWorkspace || this.config.queryFnGroupedByEmne,
       },
@@ -68,7 +68,7 @@ export class ProsjektKravAdapter {
    * Maps entity type to API property name
    */
   getGroupedPropertyName() {
-    return "prosjektkrav";
+    return "krav";
   }
 
   // === BUSINESS LOGIC METHODS ===
@@ -76,15 +76,15 @@ export class ProsjektKravAdapter {
   enhanceEntity(entity) {
     return {
       ...entity,
-      entityType: "prosjektKrav",
-      renderId: `prosjektkrav-${entity.id}`,
-      displayType: this.getDisplayType("prosjektKrav"),
-      badgeColor: this.getBadgeColor("prosjektKrav"),
+      entityType: "krav",
+      renderId: `krav-${entity.id}`,
+      displayType: this.getDisplayType("krav"),
+      badgeColor: this.getBadgeColor("krav"),
     };
   }
 
   getDisplayType() {
-    return "Prosjektkrav";
+    return "Krav";
   }
 
   getBadgeColor() {
@@ -184,31 +184,23 @@ export class ProsjektKravAdapter {
   // === POST-OPERATION HOOKS ===
 
   onSaveComplete(result, isCreate, handleEntitySelect, dto) {
-    //console.log('ProsjektKravAdapter.onSaveComplete called with:', { result, isCreate, hasHandleEntitySelect: !!handleEntitySelect, hasDto: !!dto });
-
-    // ProsjektKrav-specific logic: Extract entity from Axios response
+    // Krav-specific logic: Extract entity from Axios response
     const entity = result?.data || result;
-    //console.log('Extracted entity:', entity);
-    //console.log('Entity has id?', !!entity?.id, 'ID value:', entity?.id);
 
-    // ProsjektKrav-specific post-save logic for both create and update
+    // Krav-specific post-save logic for both create and update
     if (entity?.id) {
-      //console.log('Processing saved entity:', entity);
-
-      // Apply ProsjektKrav-specific enhancement
+      // Apply Krav-specific enhancement
       let processedEntity = this.enhanceEntity ? this.enhanceEntity(entity) : entity;
-      //console.log('Processed entity:', processedEntity);
 
       if (processedEntity && handleEntitySelect) {
-        //console.log('Calling handleEntitySelect with updated entity:', processedEntity);
         handleEntitySelect(processedEntity);
       }
     }
   }
 }
 
-export const createProsjektKravAdapter = (config, options = {}) => {
-  return new ProsjektKravAdapter(config, options);
+export const createKravAdapter = (config, options = {}) => {
+  return new KravAdapter(config, options);
 };
 
-export default ProsjektKravAdapter;
+export default KravAdapter;

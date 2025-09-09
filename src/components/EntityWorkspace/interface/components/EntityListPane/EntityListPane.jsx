@@ -58,10 +58,10 @@ const EntityListPane = ({
 
     // Immediate reset
     resetScroll();
-    
+
     // Delayed reset for cases where DOM isn't ready
     const timeoutId = setTimeout(resetScroll, 50);
-    
+
     return () => clearTimeout(timeoutId);
   }, [location.pathname, entityType, items.length > 0]); // Multiple triggers to ensure reset
 
@@ -73,16 +73,34 @@ const EntityListPane = ({
         const selectedElement = listContainerRef.current?.querySelector(`[data-entity-id="${selectedEntityId}"]`);
         if (selectedElement) {
           selectedElement.scrollIntoView({
-            behavior: 'smooth',
-            block: 'nearest',
-            inline: 'nearest'
+            behavior: "smooth",
+            block: "nearest",
+            inline: "nearest",
           });
         }
       }, 100); // Small delay to allow DOM updates
 
       return () => clearTimeout(timeoutId);
     }
-  }, [selectedEntityId]);
+  }, [selectedEntityId, allItems.length]);
+
+  // If the selected entity is a newly created placeholder, scroll the list to the top
+  // so the user sees the create form / top of the list. This handles the case where
+  // a new entity has no id/renderId yet and therefore won't be scrolled-to by the
+  // selectedEntityId effect above.
+  useEffect(() => {
+    try {
+      if (selectedEntity?.__isNew && listContainerRef.current) {
+        // Small delay to ensure any DOM updates (e.g. form showing) have happened
+        const tid = setTimeout(() => {
+          listContainerRef.current.scrollTop = 0;
+        }, 50);
+        return () => clearTimeout(tid);
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, [selectedEntity?.__isNew]);
 
   // Group collapse/expand functions
   const toggleGroupCollapse = (groupKey) => {
@@ -176,7 +194,7 @@ const EntityListPane = ({
                         EntityListCard &&
                         EntityListCard(entity, {
                           key: entity.renderId,
-                          'data-entity-id': entity.renderId,
+                          "data-entity-id": entity.renderId,
                           isSelected: entity.renderId === selectedEntityId,
                           isFocused: focusedIndex === index,
                           onClick: handleEntitySelect,
@@ -195,7 +213,7 @@ const EntityListPane = ({
                 EntityListCard &&
                 EntityListCard(entity, {
                   key: entity.renderId,
-                  'data-entity-id': entity.renderId,
+                  "data-entity-id": entity.renderId,
                   isSelected: entity.renderId === selectedEntityId,
                   isFocused: focusedIndex === index,
                   onClick: handleEntitySelect,

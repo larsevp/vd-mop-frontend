@@ -44,7 +44,7 @@ const EntityWorkspaceNew = ({
     error,
     refetch,
   } = useEntityData(dto, {
-    searchQuery: ui.searchQuery,
+    searchQuery: ui.activeSearchQuery,
     filters: ui.filters,
     enabled: !!dto,
   });
@@ -54,34 +54,102 @@ const EntityWorkspaceNew = ({
 
   // Clear selections and scroll to top when entering workspace (fresh page load)
   useEffect(() => {
+    // Read selected id from URL once on mount
     const urlParams = new URLSearchParams(window.location.search);
-    const selectedId = urlParams.get("selected");
+    const desiredSelectedId = urlParams.get("selected");
+
+    // Helper to try restore from loaded entities
+    const tryRestoreFromEntities = () => {
+      // console.log('tryRestoreFromEntities called:', { desiredSelectedId, entitiesLength: entities.length });
+      if (!desiredSelectedId) return false;
+      if (entities.length === 0) return false;
+      const found = entities.find((entity) => {
+        // Support both numeric id and uid fields
+        return (entity.id && entity.id.toString() === desiredSelectedId) || (entity.uid && entity.uid.toString() === desiredSelectedId);
+      });
+      // console.log('tryRestoreFromEntities found:', found);
+      if (found) {
+        // Only set if we don't already have this entity selected (avoid overriding recent selections)
+        if (ui.selectedEntity?.id?.toString() !== found.id?.toString()) {
+          // console.log('Setting selected entity from URL restoration:', found);
+          ui.setSelectedEntity(found);
+        } else {
+          // console.log('Entity already selected, skipping URL restoration');
+        }
+        return true;
+      }
+      return false;
+    };
 
     // If no selection in URL, clear everything and scroll to top
-    if (!selectedId) {
+    if (!desiredSelectedId) {
       ui.setSelectedEntity(null);
       // Scroll all containers to top
       setTimeout(() => {
-        const scrollContainers = document.querySelectorAll('.overflow-y-auto');
-        scrollContainers.forEach(container => {
+        const scrollContainers = document.querySelectorAll(".overflow-y-auto");
+        scrollContainers.forEach((container) => {
           container.scrollTop = 0;
         });
       }, 100);
-    } else if (entities.length > 0) {
-      // Restore selected entity from URL
-      const selectedEntity = entities.find((entity) => entity.id && entity.id.toString() === selectedId);
-      if (selectedEntity && selectedEntity !== ui.selectedEntity) {
-        ui.setSelectedEntity(selectedEntity);
-      }
+      return;
     }
-  }, [entities.length > 0, ui.setSelectedEntity]);
+
+    // If entities are already loaded, try restore immediately
+    if (tryRestoreFromEntities()) return;
+
+    // Add a small delay before trying to fetch single entity (give time for recent refetch to complete)
+    const delayedRestore = setTimeout(() => {
+      if (tryRestoreFromEntities()) return;
+      
+      // If still not found locally, attempt to fetch single entity using DTO adapter if available
+      const fetchSingle = async () => {
+      try {
+        // Try common locations/names for a single-entity fetch function
+        const candidates = [];
+        if (dto) candidates.push(dto);
+        if (dto?.adapter?.config) candidates.push(dto.adapter.config);
+        // Collect common fn names from candidates
+        const names = ["getByIdFn", "getById", "fetchById", "getOne", "getByUID", "getByIdFn"];
+        let fetchFn = null;
+        for (const c of candidates) {
+          for (const n of names) {
+            if (typeof c?.[n] === "function") {
+              fetchFn = c[n];
+              break;
+            }
+          }
+          if (fetchFn) break;
+        }
+        if (fetchFn) {
+          const fetchedRaw = await fetchFn(desiredSelectedId);
+          // Some functions return { data: entity } while others return entity directly
+          const fetched = fetchedRaw && fetchedRaw.data ? fetchedRaw.data : fetchedRaw;
+          if (fetched) {
+            ui.setSelectedEntity(fetched);
+            return;
+          }
+        }
+      } catch (err) {
+        // Non-fatal — selection restore failing shouldn't break page
+        // eslint-disable-next-line no-console
+        console.warn("Failed to fetch entity for initial selection:", err);
+      }
+    };
+
+      fetchSingle();
+    }, 200); // 200ms delay to let refetch complete
+    
+    return () => clearTimeout(delayedRestore);
+
+    // Also try to restore whenever entities change (in case they load later)
+  }, [/* run once + when entities change */ entities.length, ui.setSelectedEntity, dto]);
 
   // Event handlers
   const handleEntitySelect = useCallback(
     (entity) => {
       ui.setSelectedEntity(entity);
-      //console.log('handleEntitySelect called with entity:', entity);
-      //console.log('Entity ID:', entity?.id, 'Type:', typeof entity?.id);
+      // console.log('handleEntitySelect called with entity:', entity);
+      // console.log('Entity ID:', entity?.id, 'Type:', typeof entity?.id);
       // if (debug) console.log('Selected entity:', entity?.id);
 
       // Update URL with selected entity ID
@@ -91,7 +159,7 @@ const EntityWorkspaceNew = ({
         // Use replaceState so we don't add a history entry for selecting an item.
         // This keeps the browser back button behavior intuitive (one press to leave the workspace).
         window.history.replaceState(null, "", newUrl);
-        //console.log('Updated URL to:', newUrl);
+        // console.log('Updated URL to:', newUrl);
       } else {
         // Clear selection from URL without adding history entries
         const currentPath = window.location.pathname;
@@ -102,8 +170,9 @@ const EntityWorkspaceNew = ({
   );
 
   const handleSearch = useCallback(() => {
-    refetch(); // TanStack Query handles the actual search via DTO
-  }, [refetch]);
+    ui.executeSearch(); // Update activeSearchQuery from searchInput
+    // TanStack Query will automatically refetch when activeSearchQuery changes
+  }, [ui.executeSearch]);
 
   const handleCreateNew = useCallback(() => {
     // Set selected entity to null to trigger create mode in detail pane
@@ -134,7 +203,7 @@ const EntityWorkspaceNew = ({
         }
 
         // Refresh the list after successful save
-        refetch();
+        await refetch();
 
         // Let DTO handle post-save logic (DTO receives raw result, decides how to handle it)
         if (dto.onSaveComplete) {
@@ -212,11 +281,12 @@ const EntityWorkspaceNew = ({
 
             <div className="flex-1 max-w-md">
               <SearchBar
-                searchInput={ui.searchQuery}
-                onSearchInputChange={ui.setSearchQuery}
+                searchInput={ui.searchInput}
+                onSearchInputChange={ui.setSearchInput}
                 onSearch={handleSearch}
                 onClearSearch={() => {
-                  ui.setSearchQuery("");
+                  ui.setSearchInput("");
+                  ui.setActiveSearchQuery("");
                   ui.resetFilters();
                 }}
                 isLoading={isLoading}
@@ -308,7 +378,8 @@ const EntityWorkspaceNew = ({
             <div>Loading: {isLoading.toString()}</div>
             <div>Error: {(!!error).toString()}</div>
             <div>Selected: {ui.selectedEntity?.id || "none"}</div>
-            <div>Search: {ui.searchQuery || "none"}</div>
+            <div>Search Input: {ui.searchInput || "none"}</div>
+            <div>Active Search: {ui.activeSearchQuery || "none"}</div>
           </div>
         )}
       </div>

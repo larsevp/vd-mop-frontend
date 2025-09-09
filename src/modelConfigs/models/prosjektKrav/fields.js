@@ -26,6 +26,15 @@ export const fields = [
     hiddenIndex: true,
   },
   {
+    name: "projectId",
+    label: "ProsjektId",
+    type: "number",
+    required: true,
+    placeholder: "",
+    field_info: "",
+    hiddenIndex: false,
+  },
+  {
     name: "informasjon",
     label: "Ytterligere informasjon",
     type: "richtext",

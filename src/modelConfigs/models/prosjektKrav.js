@@ -13,7 +13,7 @@ import { useProjectStore } from "@/stores/userStore";
 
 // Project-aware query functions that automatically include current project context
 const createProjectAwareQueryFn = (baseFn) => {
-  return (page, pageSize, search, sortBy, sortOrder) => {
+  return (queryParams) => {
     const { currentProject } = useProjectStore.getState();
     const projectId = currentProject?.id;
 
@@ -25,10 +25,17 @@ const createProjectAwareQueryFn = (baseFn) => {
           items: [],
           count: 0,
           totalPages: 0,
-          currentPage: page,
+          currentPage: queryParams?.pagination?.page || 1,
         },
       });
     }
+
+    // Extract individual parameters from queryParams object (EntityWorkspace format)
+    const page = queryParams?.pagination?.page || 1;
+    const pageSize = queryParams?.pagination?.pageSize || 50;
+    const search = queryParams?.searchQuery || "";
+    const sortBy = queryParams?.filters?.sortBy || "";
+    const sortOrder = queryParams?.filters?.sortOrder || "desc";
 
     return baseFn(page, pageSize, search, sortBy, sortOrder, Number(projectId));
   };

@@ -6,6 +6,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
+import { useProjectStore } from '@/stores/userStore';
 
 /**
  * Main hook for fetching entity data through DTOs
@@ -25,10 +26,14 @@ export const useEntityData = (dto, options = {}) => {
     ...queryOptions
   } = options;
 
+  // Include current project in query key to invalidate cache when project changes
+  const { currentProject } = useProjectStore();
+
   return useQuery({
     queryKey: [
       'entities',
       dto?.entityType || dto?.getPrimaryEntityType?.() || 'unknown',
+      currentProject?.id || null, // Include project ID for cache invalidation
       searchQuery,
       filters,
       pagination

@@ -173,7 +173,11 @@ const EntityDetailPane = ({
   // Get modelName and configuration
   const modelName = modelConfig?.modelPrintName || entityType;
   const detailFormConfig = modelConfig?.workspace?.detailForm || {};
-  const sections = detailFormConfig.sections || { main: { title: "Informasjon", defaultExpanded: true } };
+  
+  // Memoize sections to prevent infinite re-render
+  const sections = useMemo(() => {
+    return detailFormConfig.sections || { main: { title: "Informasjon", defaultExpanded: true } };
+  }, [detailFormConfig.sections]);
   const fieldOverrides = detailFormConfig.fieldOverrides || {};
   const workspaceHiddenEdit = detailFormConfig.workspaceHiddenEdit || [];
   const workspaceHiddenIndex = detailFormConfig.workspaceHiddenIndex || [];

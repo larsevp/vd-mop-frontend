@@ -21,7 +21,8 @@ export const useWorkspaceUIStore = create(
       focusedEntity: null,
       
       // ============ SEARCH & FILTER STATE ============
-      searchQuery: '',
+      searchInput: '', // What user types in search box
+      activeSearchQuery: '', // What actually gets sent to API
       filters: {
         filterBy: 'all',
         sortBy: 'updatedAt', 
@@ -74,8 +75,18 @@ export const useWorkspaceUIStore = create(
       },
       
       // Search & filter actions
-      setSearchQuery: (query) => {
-        set({ searchQuery: query });
+      setSearchInput: (input) => {
+        set({ searchInput: input });
+      },
+      
+      setActiveSearchQuery: (query) => {
+        set({ activeSearchQuery: query });
+      },
+      
+      executeSearch: () => {
+        set((state) => ({ 
+          activeSearchQuery: state.searchInput 
+        }));
       },
       
       setFilters: (newFilters) => {
@@ -86,7 +97,8 @@ export const useWorkspaceUIStore = create(
       
       resetFilters: () => {
         set({
-          searchQuery: '',
+          searchInput: '',
+          activeSearchQuery: '',
           filters: {
             filterBy: 'all',
             sortBy: 'updatedAt',

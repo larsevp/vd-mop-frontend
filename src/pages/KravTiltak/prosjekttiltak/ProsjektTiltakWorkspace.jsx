@@ -1,8 +1,11 @@
 import React from "react";
 import { EntityWorkspace } from "@/components/EntityWorkspace";
 import { prosjektTiltak as prosjektTiltakConfig } from "@/modelConfigs/models/prosjektTiltak.js";
-import { createKravTiltakAdapter } from "./old/adapters/KravTiltakAdapter.js";
-import { createSingleEntityDTO } from "./old/adapters/SingleEntityDTO.js";
+import { createSingleEntityDTO } from "@/components/EntityWorkspace/interface/data";
+import { createProsjektTiltakAdapter } from "./adapter";
+import { renderEntityCard, renderGroupHeader, renderDetailPane, getAvailableViewOptions } from "./renderer";
+import { useProsjektTiltakViewStore } from "./store";
+import { RowListHeading } from "../shared";
 import { useProjectStore } from "@/stores/userStore";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Building } from "lucide-react";
@@ -11,20 +14,20 @@ import { ArrowLeft, Building } from "lucide-react";
  * ProsjektTiltak Workspace using the generic EntityWorkspace component
  * 
  * This workspace handles project-specific measures/actions (ProsjektTiltak) which are:
- * - Project-scoped versions of general measures 
- * - Linked to specific projects
+ * - Project-scoped versions of general measures
+ * - Linked to specific projects 
+ * - Can reference general Tiltak (generalTiltakId)
  * - Can address both general Krav and ProsjektKrav
- * - Include implementation details and feedback specific to the project
+ * - Support project-specific implementation details and feedback
  * 
  * Features automatically provided by EntityWorkspace:
  * - Project-specific data fetching and filtering
- * - Search, filtering, sorting within project scope  
- * - Grouping by emne (subject/topic)
+ * - Search, filtering, sorting within project scope
+ * - Grouping by emne (if configured)
  * - CRUD operations for project measures
- * - Rich text editing for implementation and feedback
- * - File attachments and document management
- * - Responsive UI layout with detail panes
+ * - Responsive UI layout
  * - Loading and error states
+ * - File attachments and rich text editing
  */
 const ProsjektTiltakWorkspace = () => {
   const { currentProject } = useProjectStore();
@@ -62,15 +65,31 @@ const ProsjektTiltakWorkspace = () => {
     desc: `Tiltak for prosjekt: ${currentProject.prosjektnummer || currentProject.navn}`,
   };
 
-  // Create domain-specific adapter for prosjekt-tiltak
-  const adapter = createKravTiltakAdapter(dynamicConfig);
+  // Create ProsjektTiltak adapter
+  const adapter = createProsjektTiltakAdapter(dynamicConfig);
   
   // Wrap adapter in DTO for unified interface
   const dto = createSingleEntityDTO(adapter);
 
+  // Get view options state
+  const { viewOptions, setViewOptions } = useProsjektTiltakViewStore();
+
   return (
     <EntityWorkspace
+      key={`${dto.entityType || 'prosjekttiltak-workspace'}-${currentProject?.id || 'no-project'}`} // Force remount on project change
       dto={dto}
+      renderEntityCard={renderEntityCard}
+      renderGroupHeader={renderGroupHeader}
+      renderDetailPane={renderDetailPane}
+      renderListHeading={(props) => (
+        <RowListHeading
+          {...props}
+          viewOptions={viewOptions}
+          onViewOptionsChange={setViewOptions}
+          availableViewOptions={getAvailableViewOptions()}
+        />
+      )}
+      viewOptions={viewOptions}
       debug={true}
     />
   );

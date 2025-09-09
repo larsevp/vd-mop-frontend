@@ -17,7 +17,8 @@ export const useWorkspaceUI = () => {
   const focusedEntity = useWorkspaceUIStore(state => state.focusedEntity);
   
   // Search & filter state  
-  const searchQuery = useWorkspaceUIStore(state => state.searchQuery);
+  const searchInput = useWorkspaceUIStore(state => state.searchInput);
+  const activeSearchQuery = useWorkspaceUIStore(state => state.activeSearchQuery);
   const filters = useWorkspaceUIStore(state => state.filters);
   
   // UI state
@@ -36,7 +37,9 @@ export const useWorkspaceUI = () => {
   const toggleEntitySelection = useWorkspaceUIStore(state => state.toggleEntitySelection);
   const setFocusedEntity = useWorkspaceUIStore(state => state.setFocusedEntity);
   
-  const setSearchQuery = useWorkspaceUIStore(state => state.setSearchQuery);
+  const setSearchInput = useWorkspaceUIStore(state => state.setSearchInput);
+  const setActiveSearchQuery = useWorkspaceUIStore(state => state.setActiveSearchQuery);
+  const executeSearch = useWorkspaceUIStore(state => state.executeSearch);
   const setFilters = useWorkspaceUIStore(state => state.setFilters);
   const resetFilters = useWorkspaceUIStore(state => state.resetFilters);
   
@@ -59,7 +62,8 @@ export const useWorkspaceUI = () => {
     selectedEntity,
     selectedEntities,
     focusedEntity,
-    searchQuery,
+    searchInput,
+    activeSearchQuery,
     filters,
     showFilters,
     showBulkActions,
@@ -75,7 +79,9 @@ export const useWorkspaceUI = () => {
     setFocusedEntity,
     
     // Search & filter actions
-    setSearchQuery,
+    setSearchInput,
+    setActiveSearchQuery,
+    executeSearch,
     setFilters,
     resetFilters,
     
