@@ -327,12 +327,20 @@ export class ProsjektKravTiltakCombinedAdapter {
   async save(entityData, isUpdate) {
     const entityType = this.detectEntityType(entityData);
 
+    // More explicit stripping - create completely clean object without entityType
+    const cleanEntityData = {};
+    Object.keys(entityData).forEach((key) => {
+      if (key !== "entityType" && key !== "__entityType") {
+        cleanEntityData[key] = entityData[key];
+      }
+    });
+
     if (entityType === "prosjektkrav" && this.prosjektKravAdapter?.config) {
       const config = this.prosjektKravAdapter.config;
       if (isUpdate && config.updateFn) {
-        return await config.updateFn(entityData.id, entityData);
+        return await config.updateFn(cleanEntityData.id, cleanEntityData);
       } else if (!isUpdate && config.createFn) {
-        return await config.createFn(entityData);
+        return await config.createFn(cleanEntityData);
       }
       throw new Error(`${isUpdate ? "Update" : "Create"} function not available for prosjektkrav`);
     }
@@ -340,9 +348,9 @@ export class ProsjektKravTiltakCombinedAdapter {
     if (entityType === "prosjekttiltak" && this.prosjektTiltakAdapter?.config) {
       const config = this.prosjektTiltakAdapter.config;
       if (isUpdate && config.updateFn) {
-        return await config.updateFn(entityData.id, entityData);
+        return await config.updateFn(cleanEntityData.id, cleanEntityData);
       } else if (!isUpdate && config.createFn) {
-        return await config.createFn(entityData);
+        return await config.createFn(cleanEntityData);
       }
       throw new Error(`${isUpdate ? "Update" : "Create"} function not available for prosjekttiltak`);
     }
@@ -380,11 +388,6 @@ export class ProsjektKravTiltakCombinedAdapter {
     const entityType = this.detectEntityType(actualEntity);
 
     if (this.options.debug) {
-      console.log("ProsjektKravTiltakCombinedAdapter onSaveComplete:", {
-        result,
-        entityType,
-        isCreate,
-      });
     }
 
     // Enhance the entity and select it for both create and update operations
@@ -411,11 +414,6 @@ export class ProsjektKravTiltakCombinedAdapter {
               block: "center",
             });
           } else if (this.options.debug) {
-            console.log("ProsjektKravTiltakCombinedAdapter: Could not find DOM element for scrolling", {
-              renderId,
-              entityId,
-              enhancedEntity,
-            });
           }
         }, 300);
       }

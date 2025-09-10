@@ -13,9 +13,9 @@ import { EmneGroupHeader, RowListHeading, EntityDetailPane, KravTiltakSearchBar 
  * @param {Object} config.entityTypes - Entity type configuration
  * @param {string} config.entityTypes.primary - Primary entity type (e.g., 'krav', 'prosjektkrav')  
  * @param {string} config.entityTypes.secondary - Secondary entity type (e.g., 'tiltak', 'prosjekttiltak')
- * @param {Object} config.components - Component imports
- * @param {React.Component} config.components.primaryCard - Primary entity card component
- * @param {React.Component} config.components.secondaryCard - Secondary entity card component  
+ * @param {Object} config.cardRenderers - Card renderer functions
+ * @param {Function} config.cardRenderers.primaryCardRenderer - Primary entity card renderer function
+ * @param {Function} config.cardRenderers.secondaryCardRenderer - Secondary entity card renderer function  
  * @param {Object} config.renderers - Detail renderer functions
  * @param {Function} config.renderers.primaryDetailRenderer - Primary entity detail renderer
  * @param {Function} config.renderers.secondaryDetailRenderer - Secondary entity detail renderer
@@ -33,7 +33,7 @@ import { EmneGroupHeader, RowListHeading, EntityDetailPane, KravTiltakSearchBar 
 export const createCombinedRenderer = (config) => {
   const {
     entityTypes: { primary: primaryType, secondary: secondaryType },
-    components: { primaryCard: PrimaryCard, secondaryCard: SecondaryCard },
+    cardRenderers: { primaryCardRenderer, secondaryCardRenderer },
     renderers: { primaryDetailRenderer, secondaryDetailRenderer },
     labels: { primaryCreate, secondaryCreate, primaryCount: primaryCountLabel, secondaryCount: secondaryCountLabel, workspaceType },
     viewOptions,
@@ -42,23 +42,22 @@ export const createCombinedRenderer = (config) => {
 
   /**
    * Render a single combined entity card
-   * Uses the appropriate single entity card based on entity type
+   * Uses the appropriate single entity renderer function based on entity type
    */
-  const renderEntityCard = (entity, props) => {
-    const { key, ...restProps } = props;
+  const renderEntityCard = (entity, props, dto) => {
     const entityType = entity?.entityType?.toLowerCase();
     const primaryTypeLower = primaryType.toLowerCase();
     const secondaryTypeLower = secondaryType.toLowerCase();
 
-    // Use the appropriate single entity card (case-insensitive comparison)
+    // Use the appropriate single entity renderer function (case-insensitive comparison)
     if (entityType === primaryTypeLower) {
-      return <PrimaryCard key={key} entity={entity} {...restProps} />;
+      return primaryCardRenderer(entity, props, dto);
     } else if (entityType === secondaryTypeLower) {
-      return <SecondaryCard key={key} entity={entity} {...restProps} />;
+      return secondaryCardRenderer(entity, props, dto);
     }
 
-    // Fallback to primary card for unknown types
-    return <PrimaryCard key={key} entity={entity} {...restProps} />;
+    // Fallback to primary renderer for unknown types
+    return primaryCardRenderer(entity, props, dto);
   };
 
   /**

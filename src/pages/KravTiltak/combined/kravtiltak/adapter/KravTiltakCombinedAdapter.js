@@ -125,7 +125,7 @@ export class KravTiltakCombinedAdapter {
     if (rawEntity?.__entityType) {
       return rawEntity.__entityType;
     }
-    
+
     if (rawEntity?.entityType) {
       return rawEntity.entityType;
     }
@@ -306,27 +306,39 @@ export class KravTiltakCombinedAdapter {
    */
   async save(entityData, isUpdate) {
     const entityType = this.detectEntityType(entityData);
-    
-    if (entityType === 'krav' && this.kravAdapter?.config) {
+
+    // Strip entityType from data before passing to individual adapters
+    // Individual model backends don't allow entityType in update operations
+    const { entityType: _, ...cleanEntityData } = entityData;
+
+    // Debug: Check what we're sending to individual adapter
+    console.log("KravTiltakCombinedAdapter.save debug:", {
+      originalEntityData: entityData,
+      detectedEntityType: entityType,
+      cleanEntityData: cleanEntityData,
+      hasEntityTypeInClean: "entityType" in cleanEntityData,
+    });
+
+    if (entityType === "krav" && this.kravAdapter?.config) {
       const config = this.kravAdapter.config;
       if (isUpdate && config.updateFn) {
-        return await config.updateFn(entityData.id, entityData);
+        return await config.updateFn(cleanEntityData.id, cleanEntityData);
       } else if (!isUpdate && config.createFn) {
-        return await config.createFn(entityData);
+        return await config.createFn(cleanEntityData);
       }
-      throw new Error(`${isUpdate ? 'Update' : 'Create'} function not available for krav`);
+      throw new Error(`${isUpdate ? "Update" : "Create"} function not available for krav`);
     }
-    
-    if (entityType === 'tiltak' && this.tiltakAdapter?.config) {
+
+    if (entityType === "tiltak" && this.tiltakAdapter?.config) {
       const config = this.tiltakAdapter.config;
       if (isUpdate && config.updateFn) {
-        return await config.updateFn(entityData.id, entityData);
+        return await config.updateFn(cleanEntityData.id, cleanEntityData);
       } else if (!isUpdate && config.createFn) {
-        return await config.createFn(entityData);
+        return await config.createFn(cleanEntityData);
       }
-      throw new Error(`${isUpdate ? 'Update' : 'Create'} function not available for tiltak`);
+      throw new Error(`${isUpdate ? "Update" : "Create"} function not available for tiltak`);
     }
-    
+
     throw new Error(`Unknown entity type for save: ${entityType}`);
   }
 
@@ -335,15 +347,15 @@ export class KravTiltakCombinedAdapter {
    */
   async delete(entity) {
     const entityType = this.detectEntityType(entity);
-    
-    if (entityType === 'krav' && this.kravAdapter?.config?.deleteFn) {
+
+    if (entityType === "krav" && this.kravAdapter?.config?.deleteFn) {
       return await this.kravAdapter.config.deleteFn(entity.id);
     }
-    
-    if (entityType === 'tiltak' && this.tiltakAdapter?.config?.deleteFn) {
+
+    if (entityType === "tiltak" && this.tiltakAdapter?.config?.deleteFn) {
       return await this.tiltakAdapter.config.deleteFn(entity.id);
     }
-    
+
     throw new Error(`Delete function not available for entity type: ${entityType}`);
   }
 
@@ -352,9 +364,9 @@ export class KravTiltakCombinedAdapter {
   /**
    * onSaveComplete - Domain-specific business logic only
    * UI concerns (selection, scrolling) handled by DTO layer
-   * 
+   *
    * @param {Object} result - API response from save operation
-   * @param {boolean} isCreate - Whether this was a create or update operation  
+   * @param {boolean} isCreate - Whether this was a create or update operation
    * @param {Function} handleEntitySelect - Function to select the entity after save (unused by adapter)
    * @param {string} entityType - The entity type context from EntityWorkspace (proper DI)
    */
@@ -363,20 +375,20 @@ export class KravTiltakCombinedAdapter {
       console.log("KravTiltakCombinedAdapter onSaveComplete - domain business logic:", {
         result,
         entityType,
-        isCreate
+        isCreate,
       });
     }
 
     // Adapter responsibility: Domain-specific business logic only
     // Examples: cache invalidation, notifications, analytics, business rules
-    
+
     // Delegate to specific adapter for domain business logic
-    if (entityType === 'krav' && this.kravAdapter?.onSaveComplete) {
+    if (entityType === "krav" && this.kravAdapter?.onSaveComplete) {
       this.kravAdapter.onSaveComplete(result, isCreate, handleEntitySelect, entityType);
-    } else if (entityType === 'tiltak' && this.tiltakAdapter?.onSaveComplete) {
+    } else if (entityType === "tiltak" && this.tiltakAdapter?.onSaveComplete) {
       this.tiltakAdapter.onSaveComplete(result, isCreate, handleEntitySelect, entityType);
     }
-    
+
     // Add any KravTiltak combined-specific business logic here
     // (e.g., update relationship caches, trigger business events, etc.)
   }

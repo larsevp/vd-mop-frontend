@@ -99,9 +99,6 @@ export class FieldResolver {
   static initializeFieldValue(field, row, editing, modelName) {
     // Handle boolean fields
     if (field.type === "bool") {
-      if (field.default !== undefined) {
-        return field.default;
-      }
       if (editing && row && row[field.name] !== undefined) {
         // Convert string booleans to actual booleans
         const value = row[field.name];
@@ -109,6 +106,9 @@ export class FieldResolver {
           return value === "true" || value === "1";
         }
         return Boolean(value);
+      }
+      if (field.default !== undefined) {
+        return field.default;
       }
       return null;
     }

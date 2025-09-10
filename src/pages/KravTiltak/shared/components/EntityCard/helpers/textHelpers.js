@@ -21,5 +21,11 @@ export const truncateText = (text, maxLength = 60) => {
  * @returns {string} Entity title
  */
 export const getEntityTitle = (entity, config) => {
-  return entity.tittel || entity.navn || entity.name || entity.title || `${config.badgeText || 'Element'} ${entity.id}`;
+  // Add safety check for undefined entity
+  if (!entity) {
+    console.error('getEntityTitle: entity is undefined');
+    return `${config?.badgeText || 'Element'} [undefined]`;
+  }
+  
+  return entity.tittel || entity.navn || entity.name || entity.title || `${config?.badgeText || 'Element'} ${entity.id || '[no-id]'}`;
 };

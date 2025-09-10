@@ -26,8 +26,10 @@ export const renderEntityCard = (entity, props, dto) => {
 
       // Create minimal update object - only include id and the changed field
       // This matches the approach used by the detail view
+      // Include entityType for combined views that need to route saves
       const saveData = {
         id: entity.id,
+        entityType: entity.entityType, // Required for combined adapters to route correctly
         [fieldName]: actualValue,
       };
 

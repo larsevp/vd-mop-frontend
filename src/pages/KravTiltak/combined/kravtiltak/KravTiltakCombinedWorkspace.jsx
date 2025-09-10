@@ -7,8 +7,8 @@ import { useKravTiltakCombinedViewStore } from "./store";
 import { RowListHeading } from "../../shared";
 
 // Import individual components and renderers
-import KravCard from "../../krav/renderer/components/KravCard";
-import TiltakCard from "../../tiltak/renderer/components/TiltakCard";
+import { renderEntityCard as kravRenderEntityCard } from "../../krav/renderer/KravRenderer";
+import { renderEntityCard as tiltakRenderEntityCard } from "../../tiltak/renderer/TiltakRenderer";
 import { renderDetailPane as KravDetailRenderer } from "../../krav/renderer/KravDetailRenderer";
 import { renderDetailPane as TiltakDetailRenderer } from "../../tiltak/renderer/TiltakDetailRenderer";
 import { createKravAdapter } from "../../krav/adapter";
@@ -52,8 +52,8 @@ const KravTiltakCombinedWorkspace = () => {
       secondary: "tiltak"
     },
     components: {
-      primaryCard: KravCard,
-      secondaryCard: TiltakCard
+      primaryCard: kravRenderEntityCard,
+      secondaryCard: tiltakRenderEntityCard
     },
     renderers: {
       primaryDetailRenderer: KravDetailRenderer,

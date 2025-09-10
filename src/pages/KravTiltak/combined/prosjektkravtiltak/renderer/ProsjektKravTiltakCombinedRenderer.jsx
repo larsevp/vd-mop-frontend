@@ -1,5 +1,5 @@
-import ProsjektKravCard from "../../../prosjektkrav/renderer/components/ProsjektKravCard.jsx";
-import ProsjektTiltakCard from "../../../prosjekttiltak/renderer/components/ProsjektTiltakCard.jsx";
+import { renderEntityCard as prosjektKravRenderEntityCard } from "../../../prosjektkrav/renderer/ProsjektKravRenderer.jsx";
+import { renderEntityCard as prosjektTiltakRenderEntityCard } from "../../../prosjekttiltak/renderer/ProsjektTiltakRenderer.jsx";
 import { renderDetailPane as prosjektKravRenderDetailPane } from "../../../prosjektkrav/renderer/ProsjektKravDetailRenderer.jsx";
 import { renderDetailPane as prosjektTiltakRenderDetailPane } from "../../../prosjekttiltak/renderer/ProsjektTiltakDetailRenderer.jsx";
 import { createProsjektKravAdapter } from "../../../prosjektkrav/adapter";
@@ -22,8 +22,8 @@ const config = {
     secondary: "prosjektTiltak"
   },
   components: {
-    primaryCard: ProsjektKravCard,
-    secondaryCard: ProsjektTiltakCard
+    primaryCard: prosjektKravRenderEntityCard,
+    secondaryCard: prosjektTiltakRenderEntityCard
   },
   renderers: {
     primaryDetailRenderer: prosjektKravRenderDetailPane,

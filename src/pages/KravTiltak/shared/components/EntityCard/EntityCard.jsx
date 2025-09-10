@@ -78,7 +78,18 @@ const EntityCard = ({
     modelName
   );
 
-  const handleClick = () => {
+  const handleClick = (event) => {
+    // Don't handle clicks on form inputs and interactive elements
+    const target = event.target;
+    const interactiveElements = ['INPUT', 'SELECT', 'BUTTON', 'TEXTAREA'];
+    const isInteractiveElement = interactiveElements.includes(target.tagName);
+    const isInsideSelect = target.closest('[role="combobox"], [role="listbox"], [data-radix-select-trigger], [data-radix-select-content]');
+    const isInsideRadixSelect = target.closest('[data-radix-collection-item], [data-state], .obligatorisk-field');
+    
+    if (isInteractiveElement || isInsideSelect || isInsideRadixSelect) {
+      return;
+    }
+    
     onClick(entity);
   };
 

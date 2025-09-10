@@ -6,9 +6,9 @@ import { createCombinedRenderer } from "../shared/CombinedRenderer";
 import { useProsjektKravTiltakCombinedViewStore } from "./store";
 import { RowListHeading } from "../../shared";
 
-// Import individual components and renderers
-import ProsjektKravCard from "../../prosjektkrav/renderer/components/ProsjektKravCard";
-import ProsjektTiltakCard from "../../prosjekttiltak/renderer/components/ProsjektTiltakCard";
+// Import individual renderers
+import { renderEntityCard as ProsjektKravCardRenderer } from "../../prosjektkrav/renderer/ProsjektKravRenderer";
+import { renderEntityCard as ProsjektTiltakCardRenderer } from "../../prosjekttiltak/renderer/ProsjektTiltakRenderer";
 import { renderDetailPane as ProsjektKravDetailRenderer } from "../../prosjektkrav/renderer/ProsjektKravDetailRenderer";
 import { renderDetailPane as ProsjektTiltakDetailRenderer } from "../../prosjekttiltak/renderer/ProsjektTiltakDetailRenderer";
 import { createProsjektKravAdapter } from "../../prosjektkrav/adapter";
@@ -52,9 +52,9 @@ const ProsjektKravTiltakCombinedWorkspace = () => {
       primary: "prosjektKrav",
       secondary: "prosjektTiltak",
     },
-    components: {
-      primaryCard: ProsjektKravCard,
-      secondaryCard: ProsjektTiltakCard,
+    cardRenderers: {
+      primaryCardRenderer: ProsjektKravCardRenderer,
+      secondaryCardRenderer: ProsjektTiltakCardRenderer,
     },
     renderers: {
       primaryDetailRenderer: ProsjektKravDetailRenderer,

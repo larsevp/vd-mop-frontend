@@ -1,5 +1,5 @@
-import KravCard from "../../../krav/renderer/components/KravCard.jsx";
-import TiltakCard from "../../../tiltak/renderer/components/TiltakCard.jsx";
+import { renderEntityCard as kravRenderEntityCard } from "../../../krav/renderer/KravRenderer.jsx";
+import { renderEntityCard as tiltakRenderEntityCard } from "../../../tiltak/renderer/TiltakRenderer.jsx";
 import { renderDetailPane as kravRenderDetailPane } from "../../../krav/renderer/KravDetailRenderer.jsx";
 import { renderDetailPane as tiltakRenderDetailPane } from "../../../tiltak/renderer/TiltakDetailRenderer.jsx";
 import { createKravAdapter } from "../../../krav/adapter";
@@ -22,8 +22,8 @@ const config = {
     secondary: "tiltak"
   },
   components: {
-    primaryCard: KravCard,
-    secondaryCard: TiltakCard
+    primaryCard: kravRenderEntityCard,
+    secondaryCard: tiltakRenderEntityCard
   },
   renderers: {
     primaryDetailRenderer: kravRenderDetailPane,

@@ -23,31 +23,25 @@ import ProsjektKravCard from "./components/ProsjektKravCard.jsx";
  */
 export const renderEntityCard = (entity, props, dto) => {
   const { key, onSave, ...restProps } = props;
-  
-  // Debug selection
-  console.log('ProsjektKrav renderEntityCard:', {
-    entityId: entity.id,
-    renderId: entity.renderId,
-    isSelected: props.isSelected,
-    hasOnSave: !!onSave
-  });
-  
+
   // Use the same save handler as detail view - standard edit logic
   const handleFieldSave = async (fieldName, newValue, entity) => {
     try {
       // Extract the actual value (field components might return objects)
       let actualValue = newValue;
-      if (typeof newValue === 'object' && newValue !== null) {
+      if (typeof newValue === "object" && newValue !== null) {
         actualValue = newValue.value ?? newValue.id ?? newValue;
       }
-      
+
       // Create minimal update object - only include id and the changed field
       // This matches the approach used by the detail view
+      // Include entityType for combined views that need to route saves
       const saveData = {
         id: entity.id,
-        [fieldName]: actualValue
+        entityType: entity.entityType, // Required for combined adapters to route correctly
+        [fieldName]: actualValue,
       };
-      
+
       // Use the same onSave handler that detail view uses
       if (onSave) {
         await onSave(saveData, true); // true = isUpdate
@@ -56,10 +50,10 @@ export const renderEntityCard = (entity, props, dto) => {
         await dto.save(saveData, true);
       }
     } catch (error) {
-      console.error('Failed to save entity:', error);
+      console.error("Failed to save entity:", error);
     }
   };
-  
+
   return <ProsjektKravCard key={key} entity={entity} onFieldSave={handleFieldSave} {...restProps} />;
 };
 

@@ -45,14 +45,25 @@ export function BooleanSelect({
 
   // Convert boolean value to string for Select component
   const stringValue = value === null ? "null" : value?.toString();
+  
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
 
   return (
-    <div className={className}>
+    <div 
+      className={className}
+      onClick={handleClick}
+      onMouseDown={handleMouseDown}
+    >
       <Select value={stringValue} onValueChange={handleValueChange} disabled={disabled} name={name}>
-        <SelectTrigger>
-          <SelectValue placeholder={placeholder}>
-            {value === null || value === undefined ? placeholder : (value ? "Ja" : "Nei")}
-          </SelectValue>
+        <SelectTrigger onClick={handleClick} onMouseDown={handleMouseDown}>
+          <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
           {!required && (

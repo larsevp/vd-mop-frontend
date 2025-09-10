@@ -51,6 +51,8 @@ const EntityListPane = ({
     return items;
   }, [items, hasGroupedData]);
 
+  // Debug: Check if allItems contains undefined entities
+
   // Get selected entity ID (use normalized renderId from adapter)
   const selectedEntityId = selectedEntity?.renderId;
 
