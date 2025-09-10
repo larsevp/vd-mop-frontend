@@ -1,15 +1,18 @@
 /**
- * ProsjektKrav Renderer - Main exports
+ * ProsjektKrav renderer exports
+ *
+ * These functions are passed to EntityWorkspace to render ProsjektKrav-specific UI components
  */
 
 export {
   renderEntityCard,
   renderGroupHeader,
+  renderSearchBar,
   getAvailableViewOptions,
-  getDefaultViewOptions
-} from './ProsjektKravRenderer.jsx';
+  getDefaultViewOptions,
+} from "./ProsjektKravRenderer.jsx";
 
-export { renderDetailPane } from './ProsjektKravDetailRenderer.jsx';
+export { renderDetailPane } from "./ProsjektKravDetailRenderer.jsx";
 
 // Export components for advanced usage
-export { default as ProsjektKravCard } from './components/ProsjektKravCard.jsx';
+export { default as ProsjektKravCard } from "./components/ProsjektKravCard.jsx";

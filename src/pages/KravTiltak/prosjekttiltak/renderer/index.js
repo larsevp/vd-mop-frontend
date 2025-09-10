@@ -2,7 +2,8 @@ export {
   renderEntityCard,
   renderGroupHeader,
   renderListHeading,
-  getAvailableViewOptions
-} from './ProsjektTiltakRenderer.jsx';
+  renderSearchBar,
+  getAvailableViewOptions,
+} from "./ProsjektTiltakRenderer.jsx";
 
-export { renderDetailPane } from './ProsjektTiltakDetailRenderer.jsx';
+export { renderDetailPane } from "./ProsjektTiltakDetailRenderer.jsx";

@@ -3,7 +3,7 @@ import { EntityWorkspace } from "@/components/EntityWorkspace";
 import { prosjektTiltak as prosjektTiltakConfig } from "@/modelConfigs/models/prosjektTiltak.js";
 import { createSingleEntityDTO } from "@/components/EntityWorkspace/interface/data";
 import { createProsjektTiltakAdapter } from "./adapter";
-import { renderEntityCard, renderGroupHeader, renderDetailPane, getAvailableViewOptions } from "./renderer";
+import { renderEntityCard, renderGroupHeader, renderDetailPane, renderSearchBar, getAvailableViewOptions } from "./renderer";
 import { useProsjektTiltakViewStore } from "./store";
 import { RowListHeading } from "../shared";
 import { useProjectStore } from "@/stores/userStore";
@@ -12,14 +12,14 @@ import { ArrowLeft, Building } from "lucide-react";
 
 /**
  * ProsjektTiltak Workspace using the generic EntityWorkspace component
- * 
+ *
  * This workspace handles project-specific measures/actions (ProsjektTiltak) which are:
  * - Project-scoped versions of general measures
- * - Linked to specific projects 
+ * - Linked to specific projects
  * - Can reference general Tiltak (generalTiltakId)
  * - Can address both general Krav and ProsjektKrav
  * - Support project-specific implementation details and feedback
- * 
+ *
  * Features automatically provided by EntityWorkspace:
  * - Project-specific data fetching and filtering
  * - Search, filtering, sorting within project scope
@@ -41,13 +41,8 @@ const ProsjektTiltakWorkspace = () => {
             <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 max-w-md mx-auto">
               <Building className="w-12 h-12 text-yellow-600 mx-auto mb-4" />
               <h3 className="text-lg font-bold text-yellow-800 mb-2">Ingen prosjekt valgt</h3>
-              <p className="text-yellow-700 mb-4">
-                Du må velge et prosjekt for å se prosjektspesifikke tiltak.
-              </p>
-              <Link 
-                to="/"
-                className="inline-flex items-center text-yellow-800 hover:text-yellow-900 font-medium"
-              >
+              <p className="text-yellow-700 mb-4">Du må velge et prosjekt for å se prosjektspesifikke tiltak.</p>
+              <Link to="/" className="inline-flex items-center text-yellow-800 hover:text-yellow-900 font-medium">
                 <ArrowLeft size={16} className="mr-2" />
                 Gå til prosjektliste
               </Link>
@@ -67,7 +62,7 @@ const ProsjektTiltakWorkspace = () => {
 
   // Create ProsjektTiltak adapter
   const adapter = createProsjektTiltakAdapter(dynamicConfig);
-  
+
   // Wrap adapter in DTO for unified interface
   const dto = createSingleEntityDTO(adapter);
 
@@ -76,11 +71,12 @@ const ProsjektTiltakWorkspace = () => {
 
   return (
     <EntityWorkspace
-      key={`${dto.entityType || 'prosjekttiltak-workspace'}-${currentProject?.id || 'no-project'}`} // Force remount on project change
+      key={`${dto.entityType || "prosjekttiltak-workspace"}-${currentProject?.id || "no-project"}`} // Force remount on project change
       dto={dto}
-      renderEntityCard={renderEntityCard}
+      renderEntityCard={(entity, props) => renderEntityCard(entity, props, dto)}
       renderGroupHeader={renderGroupHeader}
       renderDetailPane={renderDetailPane}
+      renderSearchBar={renderSearchBar}
       renderListHeading={(props) => (
         <RowListHeading
           {...props}

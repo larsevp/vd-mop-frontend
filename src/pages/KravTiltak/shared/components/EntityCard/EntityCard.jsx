@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Eye } from 'lucide-react';
 import { DisplayValueResolver } from "@/components/tableComponents/displayValues/DisplayValueResolver.jsx";
 
@@ -10,6 +10,9 @@ import { getSpecialReference, getParentReference } from './helpers/referenceHelp
 
 // Import components
 import StatusIndicator from '../StatusIndicator';
+import { FieldResolver } from "@/components/tableComponents/fieldTypes/fieldResolver";
+import { getModelConfig } from '@/modelConfigs';
+import { useEntityForm } from '../EntityDetailPane/helpers';
 
 /**
  * EntityCard - Shared card component for all KravTiltak entities
@@ -28,9 +31,53 @@ const EntityCard = ({
   onDoubleClick = () => {},
   viewOptions = {},
   config = {},
+  onFieldSave,
+  editingDisabled = false,
   'data-entity-id': dataEntityId,
   ...restProps
 }) => {
+  // Helper to map backend entityType to modelConfig key
+  const getModelConfigKey = (entityType) => {
+    if (!entityType) return null;
+    
+    // Map backend lowercase types to modelConfig camelCase keys
+    const entityTypeMap = {
+      'prosjektkrav': 'prosjektKrav',
+      'prosjekttiltak': 'prosjektTiltak',
+      'krav': 'krav',
+      'tiltak': 'tiltak',
+      'prosjekt': 'prosjekt',
+      'emne': 'emne',
+      'files': 'files',
+      'users': 'users',
+      'enheter': 'enheter',
+      'status': 'status',
+      'vurderinger': 'vurdering'
+    };
+    
+    const lowercaseType = entityType.toLowerCase();
+    return entityTypeMap[lowercaseType] || entityType;
+  };
+
+  // Get model configuration for form management
+  let modelConfig = null;
+  try {
+    const modelConfigKey = getModelConfigKey(entity?.entityType);
+    modelConfig = modelConfigKey ? getModelConfig(modelConfigKey) : null;
+  } catch (error) {
+    console.warn("EntityCard: Failed to get model config for entity type:", entity?.entityType, error);
+    // Continue with null modelConfig - the component should still render
+  }
+  const allFields = modelConfig?.fields || [];
+  const modelName = modelConfig?.modelPrintName || entity?.entityType || 'entity';
+  
+  // Use shared form hook when inline editing is active
+  const { formData, handleFieldChange } = useEntityForm(
+    isSelected && onFieldSave ? entity : null, 
+    allFields, 
+    modelName
+  );
+
   const handleClick = () => {
     onClick(entity);
   };
@@ -64,11 +111,136 @@ const EntityCard = ({
     }
   };
 
+  /**
+   * Helper functions for inline editing
+   */
+  const getFieldConfig = (fieldName) => {
+    if (!entity.entityType || !modelConfig) return null;
+    try {
+      return modelConfig.fields.find(field => field.name === fieldName);
+    } catch (error) {
+      console.warn("EntityCard: Failed to get field config for field:", fieldName, error);
+      return null;
+    }
+  };
+
+  // Helper to get the correct merknad field name (merknad vs merknader)
+  const getMerknadFieldName = () => {
+    const merknadConfig = getFieldConfig('merknad');
+    const merknaderConfig = getFieldConfig('merknader');
+    if (merknadConfig) return 'merknad';
+    if (merknaderConfig) return 'merknader';
+    return 'merknad'; // fallback
+  };
+
+  const merknadFieldName = getMerknadFieldName();
+  const merknadValue = entity[merknadFieldName];
+
+  // Debounced save for text fields
+  const saveTimeoutRef = useRef(null);
+  const debouncedSave = useCallback((fieldName, value, entity) => {
+    // Clear existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    // Set new timeout
+    saveTimeoutRef.current = setTimeout(() => {
+      onFieldSave(fieldName, value, entity);
+    }, 1500); // Save after 1.5 seconds of no typing
+  }, [onFieldSave]);
+
+  // Immediate save (for blur events and non-text fields)
+  const immediateSave = useCallback((fieldName, value, entity) => {
+    // Clear any pending debounced save
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+    onFieldSave(fieldName, value, entity);
+  }, [onFieldSave]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const renderStatusField = (fieldName, displayFn, label) => {
+    const display = displayFn(entity);
+    // Show field if it's selected and editable, even if no current value
+    const shouldShowField = display || (isSelected && onFieldSave && !editingDisabled);
+    if (!shouldShowField) return null;
+
+    // When selected and onFieldSave is available, render the form field
+    if (isSelected && onFieldSave && !editingDisabled) {
+      const fieldConfig = getFieldConfig(fieldName);
+      if (fieldConfig) {
+        const FieldComponent = FieldResolver.getFieldComponent(fieldConfig, entity.entityType);
+        
+        return (
+          <div 
+            className="flex items-center gap-1 py-1"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className="text-gray-500 w-16 flex-shrink-0 font-medium">{label}:</span>
+            <div className="flex-1">
+              <FieldComponent
+                field={fieldConfig}
+                value={formData[fieldName] ?? entity[fieldName] ?? ""}
+                onChange={(eventOrValue) => {
+                  // Update form data immediately (same pattern as detail view)
+                  handleFieldChange(eventOrValue);
+                  
+                  // Extract actual value and save to server
+                  let actualValue;
+                  if (typeof eventOrValue === "object" && eventOrValue?.target) {
+                    actualValue = eventOrValue.target.value;
+                  } else {
+                    actualValue = eventOrValue;
+                  }
+                  
+                  onFieldSave(fieldName, actualValue, entity);
+                }}
+                className="text-xs"
+                error={null}
+              />
+            </div>
+          </div>
+        );
+      }
+    }
+
+    // Default display mode - handle case where display might be null
+    if (!display) {
+      // Show "Not set" or similar for fields without values
+      return (
+        <div className="flex items-center gap-1">
+          <span className="text-gray-500 w-16 flex-shrink-0 font-medium">{label}:</span>
+          <span className="text-gray-400 text-sm italic">Ikke satt</span>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="flex items-center gap-1">
+        <span className="text-gray-500 w-16 flex-shrink-0 font-medium">{label}:</span>
+        <div style={{ color: display.color }}>
+          {getIcon(display.icon, 12)}
+        </div>
+        <span className="text-gray-900 font-medium">{display.text}</span>
+      </div>
+    );
+  };
+
   return (
     <div
       data-entity-id={dataEntityId}
       className={`
-        relative cursor-pointer transition-all duration-200 block w-full
+        relative cursor-pointer block w-full
         ${isExpandedCards 
           ? `bg-white rounded-xl shadow-sm hover:shadow-md mb-8 p-8 ${isSelected ? 'border-2 border-blue-300 bg-blue-50' : 'border border-gray-200'}`
           : `mb-1 px-4 py-3 ${isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'} ${shouldIndent ? 'relative' : ''}`
@@ -118,10 +290,64 @@ const EntityCard = ({
             )}
 
             {/* Merknad */}
-            {viewOptions.showMerknad && entity.merknad && (
-              <div className="text-sm text-amber-700 bg-amber-50 rounded px-2 py-1 mb-3">
-                <span className="text-xs font-medium text-amber-800">Merknad:</span> {truncateText(entity.merknad, 100)}
-              </div>
+            {viewOptions.showMerknad && (
+              isSelected && onFieldSave && !editingDisabled && isExpandedCards ? (
+                <div className="text-sm bg-amber-50 rounded px-2 py-1 mb-3" onClick={(e) => e.stopPropagation()}>
+                  <span className="text-xs font-medium text-amber-800">Merknad:</span>
+                  <div className="mt-1">
+                    {(() => {
+                      const fieldConfig = getFieldConfig(merknadFieldName);
+                      if (fieldConfig) {
+                        const FieldComponent = FieldResolver.getFieldComponent(fieldConfig, entity.entityType);
+                        return (
+                          <FieldComponent
+                            field={fieldConfig}
+                            value={formData[merknadFieldName] ?? merknadValue ?? ""}
+                            onChange={(eventOrValue) => {
+                              // Update form data immediately (same pattern as detail view)
+                              handleFieldChange(eventOrValue);
+                              
+                              // Extract actual value
+                              let actualValue;
+                              if (typeof eventOrValue === "object" && eventOrValue?.target) {
+                                actualValue = eventOrValue.target.value;
+                              } else {
+                                actualValue = eventOrValue;
+                              }
+                              
+                              // Use debounced save for text fields
+                              debouncedSave(merknadFieldName, actualValue, entity);
+                            }}
+                            onBlur={(eventOrValue) => {
+                              // Save immediately on blur (click outside)
+                              let actualValue;
+                              if (typeof eventOrValue === "object" && eventOrValue?.target) {
+                                actualValue = eventOrValue.target.value;
+                              } else {
+                                actualValue = formData[merknadFieldName] ?? merknadValue ?? "";
+                              }
+                              immediateSave(merknadFieldName, actualValue, entity);
+                            }}
+                            className="text-sm"
+                            error={null}
+                          />
+                        );
+                      }
+                      return null;
+                    })()}
+                  </div>
+                </div>
+              ) : (
+                merknadValue ? (
+                  <div className="text-sm text-amber-700 bg-amber-50 rounded px-2 py-1 mb-3">
+                    <span className="text-xs font-medium text-amber-800">Merknad:</span> {truncateText(merknadValue, 100)}
+                  </div>
+                ) : (
+                  <div className="text-sm text-amber-700 bg-amber-50 rounded px-2 py-1 mb-3 opacity-60">
+                    <span className="text-xs font-medium text-amber-800">Merknad:</span> <span className="italic">Ingen merknad</span>
+                  </div>
+                )
+              )
             )}
 
             {/* Footer: Meta info and relations */}
@@ -165,48 +391,68 @@ const EntityCard = ({
           {/* Status section on the right */}
           <div className="pl-6 min-w-[160px] relative">
             <div className="space-y-2 text-xs">
-              {viewOptions.showVurdering && getVurderingDisplay(entity) && (
-                <div className="flex items-center gap-1">
-                  <span className="text-gray-500 w-16 flex-shrink-0 font-medium">Vurdering:</span>
-                  <div style={{ color: getVurderingDisplay(entity).color }}>
-                    {getIcon(getVurderingDisplay(entity).icon, 12)}
-                  </div>
-                  <span className="text-gray-900 font-medium">{getVurderingDisplay(entity).text}</span>
-                </div>
-              )}
-              
-              {viewOptions.showStatus && getStatusDisplay(entity) && (
-                <div className="flex items-center gap-1">
-                  <span className="text-gray-500 w-16 flex-shrink-0 font-medium">Status:</span>
-                  <div style={{ color: getStatusDisplay(entity).color }}>
-                    {getIcon(getStatusDisplay(entity).icon, 12)}
-                  </div>
-                  <span className="text-gray-900 font-medium">{getStatusDisplay(entity).text}</span>
-                </div>
-              )}
-              
-              {viewOptions.showPrioritet && getPrioritetDisplay(entity) && (
-                <div className="flex items-center gap-1">
-                  <span className="text-gray-500 w-16 flex-shrink-0 font-medium">Prioritet:</span>
-                  <div style={{ color: getPrioritetDisplay(entity).color }}>
-                    {getIcon(getPrioritetDisplay(entity).icon, 12)}
-                  </div>
-                  <span className="text-gray-900 font-medium">{getPrioritetDisplay(entity).text}</span>
-                </div>
-              )}
+              {viewOptions.showVurdering && renderStatusField('vurderingId', getVurderingDisplay, 'Vurdering')}
+              {viewOptions.showStatus && renderStatusField('statusId', getStatusDisplay, 'Status')}
+              {viewOptions.showPrioritet && renderStatusField('prioritet', getPrioritetDisplay, 'Prioritet')}
               
               {viewOptions.showObligatorisk && entity.obligatorisk !== undefined && (
-                <div className="flex items-center gap-1">
-                  <span className="text-gray-500 w-16 flex-shrink-0 font-medium">Type:</span>
+                isSelected && onFieldSave && !editingDisabled ? (
                   <div 
-                    className={`flex-shrink-0 ${entity.obligatorisk ? 'text-blue-600' : 'text-green-600'}`}
+                    className="flex items-center gap-1 py-1"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    {getIcon("Check", 12)}
+                    <span className="text-gray-500 w-20 flex-shrink-0 font-medium">{(() => {
+                      const fieldConfig = getFieldConfig('obligatorisk');
+                      return fieldConfig?.label || 'Type';
+                    })()}:</span>
+                    <div className="flex-1">
+                      {(() => {
+                        const fieldConfig = getFieldConfig('obligatorisk');
+                        if (fieldConfig) {
+                          const FieldComponent = FieldResolver.getFieldComponent(fieldConfig, entity.entityType);
+                          return (
+                            <FieldComponent
+                              field={fieldConfig}
+                              value={formData.obligatorisk ?? entity.obligatorisk ?? ""}
+                              onChange={(eventOrValue) => {
+                                // Update form data immediately (same pattern as detail view)
+                                handleFieldChange(eventOrValue);
+                                
+                                // Extract actual value and save to server
+                                let actualValue;
+                                if (typeof eventOrValue === "object" && eventOrValue?.target) {
+                                  actualValue = eventOrValue.target.value;
+                                } else {
+                                  actualValue = eventOrValue;
+                                }
+                                
+                                onFieldSave('obligatorisk', actualValue, entity);
+                              }}
+                              className="text-xs"
+                              error={null}
+                            />
+                          );
+                        }
+                        return null;
+                      })()}
+                    </div>
                   </div>
-                  <span className="text-gray-900 font-medium">
-                    {entity.obligatorisk ? "Obligatorisk" : "Valgfri"}
-                  </span>
-                </div>
+                ) : (
+                  <div className="flex items-center gap-1">
+                    <span className="text-gray-500 w-20 flex-shrink-0 font-medium">{(() => {
+                      const fieldConfig = getFieldConfig('obligatorisk');
+                      return fieldConfig?.label || 'Type';
+                    })()}:</span>
+                    <div 
+                      className={`flex-shrink-0 ${entity.obligatorisk ? 'text-blue-600' : 'text-green-600'}`}
+                    >
+                      {getIcon("Check", 12)}
+                    </div>
+                    <span className="text-gray-900 font-medium">
+                      {entity.obligatorisk ? "Ja" : "Nei"}
+                    </span>
+                  </div>
+                )
               )}
             </div>
             
@@ -284,10 +530,64 @@ const EntityCard = ({
           )}
 
           {/* Merknad if defined and enabled */}
-          {viewOptions.showMerknad && entity.merknad && (
-            <div className="text-sm text-amber-700 bg-amber-50 rounded px-2 py-1 mb-2">
-              <span className="text-xs font-medium text-amber-800">Merknad:</span> {truncateText(entity.merknad, 100)}
-            </div>
+          {viewOptions.showMerknad && (
+            isSelected && onFieldSave && !editingDisabled && isExpandedCards ? (
+              <div className="text-sm bg-amber-50 rounded px-2 py-1 mb-2" onClick={(e) => e.stopPropagation()}>
+                <span className="text-xs font-medium text-amber-800">Merknad:</span>
+                <div className="mt-1">
+                  {(() => {
+                    const fieldConfig = getFieldConfig(merknadFieldName);
+                    if (fieldConfig) {
+                      const FieldComponent = FieldResolver.getFieldComponent(fieldConfig, entity.entityType);
+                      return (
+                        <FieldComponent
+                          field={fieldConfig}
+                          value={formData[merknadFieldName] ?? merknadValue ?? ""}
+                          onChange={(eventOrValue) => {
+                            // Update form data immediately (same pattern as detail view)
+                            handleFieldChange(eventOrValue);
+                            
+                            // Extract actual value
+                            let actualValue;
+                            if (typeof eventOrValue === "object" && eventOrValue?.target) {
+                              actualValue = eventOrValue.target.value;
+                            } else {
+                              actualValue = eventOrValue;
+                            }
+                            
+                            // Use debounced save for text fields
+                            debouncedSave(merknadFieldName, actualValue, entity);
+                          }}
+                          onBlur={(eventOrValue) => {
+                            // Save immediately on blur (click outside)
+                            let actualValue;
+                            if (typeof eventOrValue === "object" && eventOrValue?.target) {
+                              actualValue = eventOrValue.target.value;
+                            } else {
+                              actualValue = formData[merknadFieldName] ?? merknadValue ?? "";
+                            }
+                            immediateSave(merknadFieldName, actualValue, entity);
+                          }}
+                          className="text-sm"
+                          error={null}
+                        />
+                      );
+                    }
+                    return null;
+                  })()}
+                </div>
+              </div>
+            ) : (
+              merknadValue ? (
+                <div className="text-sm text-amber-700 bg-amber-50 rounded px-2 py-1 mb-2">
+                  <span className="text-xs font-medium text-amber-800">Merknad:</span> {truncateText(merknadValue, 100)}
+                </div>
+              ) : (
+                <div className="text-sm text-amber-700 bg-amber-50 rounded px-2 py-1 mb-2 opacity-60">
+                  <span className="text-xs font-medium text-amber-800">Merknad:</span> <span className="italic">Ingen merknad</span>
+                </div>
+              )
+            )
           )}
 
           {/* Footer: Meta info and relations */}

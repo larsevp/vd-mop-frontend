@@ -1,11 +1,18 @@
 /**
- * EntityWorkspaceNew - Minimal implementation using existing components + TanStack Query
+ * EntityWorkspaceNew - Minimal implementation us  const entities = result?.items || [];
+  const entityType = dto?.entityType || dto?.getPrimaryEntityType?.() || "entities"; components  const handleSearch = useCallback(() => {
+    ui.executeSearch(); // Update activeSearchQuery from searchInput
+    // TanStack Query will automatically refetch when activeSearchQuery changes
+  }, [ui.executeSearch]);nst handleSearch = useCallback(() => {
+    ui.executeSearch(); // Update activeSearchQuery from searchInput
+    // TanStack Query will automatically refetch when activeSearchQuery changes
+  }, [ui.executeSearch]);k Query
  *
  * This component reuses existing EntitySplitView, SearchBar, and EntityListPane
  * but replaces complex state management with TanStack Query + simple Zustand UI state.
  */
 
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/primitives/button";
 import { Plus, ArrowLeft, LayoutGrid, Columns } from "lucide-react";
@@ -13,11 +20,14 @@ import { Plus, ArrowLeft, LayoutGrid, Columns } from "lucide-react";
 // Existing components (reuse these)
 import EntitySplitView from "./interface/components/EntitySplitView";
 import EntityListPane from "./interface/components/EntityListPane/index.js";
-import SearchBar from "./interface/components/SearchBar";
+import SearchBarPlaceholder from "./interface/components/SearchBarPlaceholder";
 
 // New hooks (TanStack Query + simple state)
 import { useEntityData } from "./interface/hooks/useEntityData";
 import { useWorkspaceUI } from "./interface/hooks/useWorkspaceUI";
+
+// DTO Interface validation
+import { validateEntityDTO } from "./interface/data/EntityDTOInterface";
 
 /**
  * Minimal EntityWorkspace component (~40 lines)
@@ -29,10 +39,28 @@ const EntityWorkspaceNew = ({
   renderGroupHeader,
   renderListHeading,
   renderDetailPane,
+  renderSearchBar, // NEW: Allow domains to provide their own search implementation
+  renderActionButtons, // NEW: Allow domains to provide custom action buttons
   viewOptions = {},
   debug = false,
 }) => {
   const navigate = useNavigate();
+  const cardsContainerRef = useRef(null);
+
+  // Validate DTO implements required interface
+  useEffect(() => {
+    if (dto) {
+      try {
+        validateEntityDTO(dto);
+        if (debug) {
+          //console.log("EntityWorkspace: DTO validation passed", dto.getDebugInfo());
+        }
+      } catch (error) {
+        console.error("EntityWorkspace: DTO validation failed", error.message);
+        throw error;
+      }
+    }
+  }, [dto, debug]);
 
   // Get UI state (search, filters, selection)
   const ui = useWorkspaceUI();
@@ -52,6 +80,7 @@ const EntityWorkspaceNew = ({
   const entities = result?.items || [];
   const entityType = dto?.entityType || dto?.getPrimaryEntityType?.() || "entities";
 
+
   // Clear selections and scroll to top when entering workspace (fresh page load)
   useEffect(() => {
     // Read selected id from URL once on mount
@@ -60,30 +89,29 @@ const EntityWorkspaceNew = ({
 
     // Helper to try restore from loaded entities
     const tryRestoreFromEntities = () => {
-      // console.log('tryRestoreFromEntities called:', { desiredSelectedId, entitiesLength: entities.length });
       if (!desiredSelectedId) return false;
       if (entities.length === 0) return false;
       const found = entities.find((entity) => {
         // Support both numeric id and uid fields
         return (entity.id && entity.id.toString() === desiredSelectedId) || (entity.uid && entity.uid.toString() === desiredSelectedId);
       });
-      // console.log('tryRestoreFromEntities found:', found);
       if (found) {
         // Only set if we don't already have this entity selected (avoid overriding recent selections)
         if (ui.selectedEntity?.id?.toString() !== found.id?.toString()) {
-          // console.log('Setting selected entity from URL restoration:', found);
           ui.setSelectedEntity(found);
-        } else {
-          // console.log('Entity already selected, skipping URL restoration');
         }
         return true;
       }
       return false;
     };
 
-    // If no selection in URL, clear everything and scroll to top
+    // If no selection in URL, just clear any existing selection
     if (!desiredSelectedId) {
-      ui.setSelectedEntity(null);
+      // Clear selection if user navigated without specific entity selection
+      if (ui.selectedEntity) {
+        ui.setSelectedEntity(null);
+      }
+
       // Scroll all containers to top
       setTimeout(() => {
         const scrollContainers = document.querySelectorAll(".overflow-y-auto");
@@ -92,53 +120,51 @@ const EntityWorkspaceNew = ({
         });
       }, 100);
       return;
-    }
-
-    // If entities are already loaded, try restore immediately
+    } // If entities are already loaded, try restore immediately
     if (tryRestoreFromEntities()) return;
 
     // Add a small delay before trying to fetch single entity (give time for recent refetch to complete)
     const delayedRestore = setTimeout(() => {
       if (tryRestoreFromEntities()) return;
-      
+
       // If still not found locally, attempt to fetch single entity using DTO adapter if available
       const fetchSingle = async () => {
-      try {
-        // Try common locations/names for a single-entity fetch function
-        const candidates = [];
-        if (dto) candidates.push(dto);
-        if (dto?.adapter?.config) candidates.push(dto.adapter.config);
-        // Collect common fn names from candidates
-        const names = ["getByIdFn", "getById", "fetchById", "getOne", "getByUID", "getByIdFn"];
-        let fetchFn = null;
-        for (const c of candidates) {
-          for (const n of names) {
-            if (typeof c?.[n] === "function") {
-              fetchFn = c[n];
-              break;
+        try {
+          // Try common locations/names for a single-entity fetch function
+          const candidates = [];
+          if (dto) candidates.push(dto);
+          if (dto?.adapter?.config) candidates.push(dto.adapter.config);
+          // Collect common fn names from candidates
+          const names = ["getByIdFn", "getById", "fetchById", "getOne", "getByUID", "getByIdFn"];
+          let fetchFn = null;
+          for (const c of candidates) {
+            for (const n of names) {
+              if (typeof c?.[n] === "function") {
+                fetchFn = c[n];
+                break;
+              }
+            }
+            if (fetchFn) break;
+          }
+          if (fetchFn) {
+            const fetchedRaw = await fetchFn(desiredSelectedId);
+            // Some functions return { data: entity } while others return entity directly
+            const fetched = fetchedRaw && fetchedRaw.data ? fetchedRaw.data : fetchedRaw;
+            if (fetched) {
+              ui.setSelectedEntity(fetched);
+              return;
             }
           }
-          if (fetchFn) break;
+        } catch (err) {
+          // Non-fatal — selection restore failing shouldn't break page
+          // eslint-disable-next-line no-console
+          console.warn("Failed to fetch entity for initial selection:", err);
         }
-        if (fetchFn) {
-          const fetchedRaw = await fetchFn(desiredSelectedId);
-          // Some functions return { data: entity } while others return entity directly
-          const fetched = fetchedRaw && fetchedRaw.data ? fetchedRaw.data : fetchedRaw;
-          if (fetched) {
-            ui.setSelectedEntity(fetched);
-            return;
-          }
-        }
-      } catch (err) {
-        // Non-fatal — selection restore failing shouldn't break page
-        // eslint-disable-next-line no-console
-        console.warn("Failed to fetch entity for initial selection:", err);
-      }
-    };
+      };
 
       fetchSingle();
     }, 200); // 200ms delay to let refetch complete
-    
+
     return () => clearTimeout(delayedRestore);
 
     // Also try to restore whenever entities change (in case they load later)
@@ -147,10 +173,9 @@ const EntityWorkspaceNew = ({
   // Event handlers
   const handleEntitySelect = useCallback(
     (entity) => {
-      ui.setSelectedEntity(entity);
-      // console.log('handleEntitySelect called with entity:', entity);
-      // console.log('Entity ID:', entity?.id, 'Type:', typeof entity?.id);
-      // if (debug) console.log('Selected entity:', entity?.id);
+      // Ensure entity goes through DTO enhancement before selection
+      const enhancedEntity = entity ? dto.enhanceEntity(entity) : null;
+      ui.setSelectedEntity(enhancedEntity);
 
       // Update URL with selected entity ID
       if (entity && entity.id) {
@@ -173,10 +198,16 @@ const EntityWorkspaceNew = ({
     // TanStack Query will automatically refetch when activeSearchQuery changes
   }, [ui.executeSearch]);
 
-  const handleCreateNew = useCallback(() => {
-    // Set selected entity to null to trigger create mode in detail pane
-    ui.setSelectedEntity({ __isNew: true });
-  }, [ui.setSelectedEntity]);
+  const handleCreateNew = useCallback(
+    (entityType = null) => {
+      // Use DTO to create properly structured new entity
+      const newEntity = dto.createNewEntity(entityType);
+      // Enhance the new entity through DTO normalization
+      const enhancedNewEntity = dto.enhanceEntity(newEntity);
+      ui.setSelectedEntity(enhancedNewEntity);
+    },
+    [ui.setSelectedEntity, dto]
+  );
 
   const handleDetailClose = useCallback(async () => {
     // Check if we're closing a new entity creation
@@ -184,18 +215,18 @@ const EntityWorkspaceNew = ({
       // Restore selection from URL if available
       const urlParams = new URLSearchParams(window.location.search);
       const selectedFromUrl = urlParams.get("selected");
-      
+
       if (selectedFromUrl && dto) {
         try {
           // Use the DTO adapter to fetch the entity by ID
           const adapter = dto.adapter;
           const config = adapter?.config;
-          
+
           // Try to fetch the entity using the DTO's getById methods
           let fetchFn = null;
           const candidates = [config, dto];
           const fnNames = ["getByIdFn", "getById", "fetchById", "getOne"];
-          
+
           for (const candidate of candidates) {
             for (const fnName of fnNames) {
               if (typeof candidate?.[fnName] === "function") {
@@ -205,43 +236,41 @@ const EntityWorkspaceNew = ({
             }
             if (fetchFn) break;
           }
-          
+
           if (fetchFn) {
             const fetchedRaw = await fetchFn(selectedFromUrl);
             const fetchedEntity = fetchedRaw?.data ? fetchedRaw.data : fetchedRaw;
-            
+
             if (fetchedEntity) {
               ui.setSelectedEntity(fetchedEntity);
               return;
             }
           }
         } catch (error) {
-          console.warn('Failed to fetch entity for restoration:', error);
+          console.warn("Failed to fetch entity for restoration:", error);
         }
       }
-      
+
       // Fallback: try to find in current entities array (handle grouped structure)
       if (selectedFromUrl && entities.length > 0) {
         // Check if entities are grouped (have items arrays)
         const hasGroupedData = entities[0]?.items && Array.isArray(entities[0].items);
-        
+
         let flatEntities = [];
         if (hasGroupedData) {
           // Flatten grouped entities
-          flatEntities = entities.flatMap(group => group.items || []);
+          flatEntities = entities.flatMap((group) => group.items || []);
         } else {
           flatEntities = entities;
         }
-        
-        const found = flatEntities.find(entity => 
-          entity?.id?.toString() === selectedFromUrl
-        );
+
+        const found = flatEntities.find((entity) => entity?.id?.toString() === selectedFromUrl);
         if (found) {
           ui.setSelectedEntity(found);
           return;
         }
       }
-      
+
       // If no URL selection or entity not found, clear selection
       ui.setSelectedEntity(null);
     } else {
@@ -250,40 +279,33 @@ const EntityWorkspaceNew = ({
     }
   }, [ui.selectedEntity, ui.setSelectedEntity, entities, dto]);
 
-  // CRUD handlers via DTO adapter config
+  // CRUD handlers via DTO interface methods
   const handleSave = useCallback(
     async (entityData, isUpdate) => {
-      //console.log('handleSave called with:', { entityData, isUpdate, selectedEntity: ui.selectedEntity });
       try {
-        const adapter = dto.adapter;
-        const config = adapter.config; // Access the original modelConfig
-
-        let result;
-        if (isUpdate) {
-          if (config.updateFn) {
-            result = await config.updateFn(entityData.id, entityData);
-          } else {
-            throw new Error("Update function not available");
-          }
-        } else {
-          if (config.createFn) {
-            result = await config.createFn(entityData);
-          } else {
-            throw new Error("Create function not available");
-          }
+        // For new entities, preserve entity type information from selected entity
+        let entityDataToSave = { ...entityData };
+        if (!isUpdate && ui.selectedEntity?.__entityType) {
+          entityDataToSave.__entityType = ui.selectedEntity.__entityType;
+        } else if (isUpdate && ui.selectedEntity?.entityType) {
+          entityDataToSave.entityType = ui.selectedEntity.entityType;
         }
+
+        // Validate that DTO can determine entity type (DTO handles normalization)
+        const entityType = dto.getEntityType(entityDataToSave);
+
+        // Use DTO's save method (DTO handles the complexity)
+        const result = await dto.save(entityDataToSave, isUpdate);
 
         // Refresh the list after successful save
         await refetch();
 
-        // Let DTO handle post-save logic (DTO receives raw result, decides how to handle it)
-        if (dto.onSaveComplete) {
-          dto.onSaveComplete(result, !isUpdate, handleEntitySelect);
-        }
+        // Let DTO handle post-save logic (selection, scrolling, etc.)
+        // Pass the entity type context for proper dependency injection (DTO normalized)
+        dto.onSaveComplete(result, !isUpdate, handleEntitySelect, entityType);
 
         return result;
       } catch (error) {
-        console.error("Save error:", error);
         throw error;
       }
     },
@@ -293,16 +315,14 @@ const EntityWorkspaceNew = ({
   const handleDelete = useCallback(
     async (entity) => {
       try {
-        const adapter = dto.adapter;
-        const config = adapter.config; // Access the original modelConfig
+        // Use DTO's delete method (DTO handles the complexity)
+        await dto.delete(entity);
 
-        if (config.deleteFn) {
-          await config.deleteFn(entity.id);
-          ui.setSelectedEntity(null); // Clear selection after delete
-          refetch(); // Refresh the list
-        } else {
-          throw new Error("Delete function not available");
-        }
+        // Refresh the list after successful delete
+        await refetch();
+
+        // Let DTO handle post-delete logic (deselection, etc.)
+        dto.onDeleteComplete(entity, () => ui.setSelectedEntity(null));
       } catch (error) {
         console.error("Delete error:", error);
         throw error;
@@ -310,6 +330,24 @@ const EntityWorkspaceNew = ({
     },
     [dto, ui.setSelectedEntity, refetch]
   );
+
+  // Click outside handler for cards mode to deselect
+  useEffect(() => {
+    if (ui.viewMode !== "cards" || !ui.selectedEntity) return;
+
+    const handleClickOutside = (event) => {
+      // Only deselect if clicking outside the cards container
+      if (cardsContainerRef.current && !cardsContainerRef.current.contains(event.target)) {
+        ui.setSelectedEntity(null);
+        // Clear URL selection as well
+        const currentPath = window.location.pathname;
+        window.history.replaceState(null, "", currentPath);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [ui.viewMode, ui.selectedEntity, ui.setSelectedEntity]);
 
   // Simple error handling
   if (error) {
@@ -348,22 +386,22 @@ const EntityWorkspaceNew = ({
               </Button>
               <h1 className="text-2xl font-semibold text-neutral-900">{dto?.getDisplayConfig?.()?.title || entityType}</h1>
               <div className="text-sm text-neutral-600">{entities.length} totalt</div>
-              
+
               {/* View Mode Toggle */}
               <div className="flex items-center border rounded-lg p-1 bg-neutral-50">
                 <Button
-                  variant={ui.viewMode === 'split' ? 'default' : 'ghost'}
+                  variant={ui.viewMode === "split" ? "default" : "ghost"}
                   size="sm"
-                  onClick={() => ui.setViewMode('split')}
+                  onClick={() => ui.setViewMode("split")}
                   className="h-8 w-8 p-0"
                   title="Split View"
                 >
                   <Columns className="w-4 h-4" />
                 </Button>
                 <Button
-                  variant={ui.viewMode === 'cards' ? 'default' : 'ghost'}
+                  variant={ui.viewMode === "cards" ? "default" : "ghost"}
                   size="sm"
-                  onClick={() => ui.setViewMode('cards')}
+                  onClick={() => ui.setViewMode("cards")}
                   className="h-8 w-8 p-0"
                   title="Cards View"
                 >
@@ -373,7 +411,7 @@ const EntityWorkspaceNew = ({
             </div>
 
             <div className="flex-1 max-w-md">
-              <SearchBar
+              <SearchBarPlaceholder
                 searchInput={ui.searchInput}
                 onSearchInputChange={ui.setSearchInput}
                 onSearch={handleSearch}
@@ -384,6 +422,8 @@ const EntityWorkspaceNew = ({
                 }}
                 isLoading={isLoading}
                 placeholder={`Søk i ${entityType}...`}
+                renderSearchBar={renderSearchBar}
+                // Pass through additional props for domain-specific search
                 mode="advanced"
                 filterBy={ui.filters.filterBy}
                 sortBy={ui.filters.sortBy}
@@ -395,21 +435,26 @@ const EntityWorkspaceNew = ({
                 additionalFilters={ui.filters.additionalFilters}
                 onAdditionalFiltersChange={(additionalFilters) => ui.setFilters({ additionalFilters })}
                 filterConfig={dto?.getFilterConfig?.()}
+                availableFilters={result?.availableFilters || {}}
               />
             </div>
 
-            <Button onClick={handleCreateNew} className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Opprett ny
-            </Button>
+            {renderActionButtons ? (
+              renderActionButtons({ handleCreateNew })
+            ) : (
+              <Button onClick={handleCreateNew} className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Opprett ny
+              </Button>
+            )}
           </div>
         </div>
 
         {/* Main content - conditional rendering based on viewMode */}
         <div className="flex-1" style={{ height: "calc(100vh - 120px)" }}>
-          {ui.viewMode === 'cards' ? (
+          {ui.viewMode === "cards" ? (
             /* Cards Mode - Full width grid */
-            <div className="h-full bg-neutral-50 pt-4">
+            <div ref={cardsContainerRef} className="h-full bg-neutral-50 pt-4">
               <EntityListPane
                 items={entities}
                 entityType={entityType}
@@ -421,14 +466,15 @@ const EntityWorkspaceNew = ({
                 onEntityDoubleClick={(entity) => {
                   handleEntitySelect(entity);
                   // Double-click switches to split view for details
-                  ui.setViewMode('split');
+                  ui.setViewMode("split");
                 }}
                 isLoading={isLoading}
                 adapter={dto}
                 EntityListCard={renderEntityCard}
                 EntityListGroupHeader={renderGroupHeader}
                 EntityListHeading={renderListHeading}
-                viewOptions={{ ...viewOptions, viewMode: 'cards' }}
+                viewOptions={{ ...viewOptions, viewMode: "cards" }}
+                onSave={handleSave} // Pass onSave for card editing
               />
             </div>
           ) : (
@@ -452,7 +498,8 @@ const EntityWorkspaceNew = ({
                   EntityListCard={renderEntityCard}
                   EntityListGroupHeader={renderGroupHeader}
                   EntityListHeading={renderListHeading}
-                  viewOptions={{ ...viewOptions, viewMode: 'split' }}
+                  viewOptions={{ ...viewOptions, viewMode: "split" }}
+                  onSave={handleSave} // Pass onSave for split mode editing too
                 />
               )}
               renderDetailPane={

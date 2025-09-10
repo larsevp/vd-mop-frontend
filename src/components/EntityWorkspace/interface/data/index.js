@@ -9,44 +9,40 @@ import { SingleEntityDTO, createSingleEntityDTO } from './SingleEntityDTO.js';
 import { CombinedEntityDTO, createCombinedEntityDTO } from './CombinedEntityDTO.js';
 
 /**
- * Factory function to create appropriate DTO based on adapters
+ * Factory function to create appropriate DTO based on adapter
  * 
- * @param {Object|Array} adapters - Single adapter or array of adapters
+ * @param {Object} adapter - Single adapter instance
  * @param {Object} options - Additional options for DTO creation
  * @returns {SingleEntityDTO|CombinedEntityDTO} Appropriate DTO instance
  */
-export const createDTO = (adapters, options = {}) => {
-  if (!adapters) {
-    throw new Error('createDTO requires adapter(s)');
+export const createDTO = (adapter, options = {}) => {
+  if (!adapter) {
+    throw new Error('createDTO requires an adapter');
   }
 
-  // Single adapter case
-  if (!Array.isArray(adapters)) {
-    return createSingleEntityDTO(adapters, options);
+  // Check if adapter supports combined views
+  const displayConfig = adapter.getDisplayConfig();
+  if (displayConfig.isCombinedView) {
+    return createCombinedEntityDTO(adapter, options);
   }
 
-  // Multiple adapters case
-  if (adapters.length === 1) {
-    return createSingleEntityDTO(adapters[0], options);
-  }
-
-  // Combined case
-  return createCombinedEntityDTO(adapters, options);
+  // Default to single entity DTO
+  return createSingleEntityDTO(adapter, options);
 };
 
 /**
  * Hook to create DTO with proper memoization
  * 
- * @param {Object|Array} adapters - Single adapter or array of adapters  
+ * @param {Object} adapter - Single adapter instance
  * @param {Object} options - Additional options for DTO creation
  * @returns {SingleEntityDTO|CombinedEntityDTO} Memoized DTO instance
  */
-export const useDTO = (adapters, options = {}) => {
+export const useDTO = (adapter, options = {}) => {
   const React = require('react');
   
   return React.useMemo(() => {
-    return createDTO(adapters, options);
-  }, [adapters, options]);
+    return createDTO(adapter, options);
+  }, [adapter, options]);
 };
 
 // Export DTO classes

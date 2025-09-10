@@ -1,8 +1,3 @@
-export {
-  renderEntityCard,
-  renderGroupHeader,
-  renderListHeading,
-  getAvailableViewOptions
-} from './TiltakRenderer.jsx';
+export { renderEntityCard, renderGroupHeader, renderListHeading, renderSearchBar, getAvailableViewOptions } from "./TiltakRenderer.jsx";
 
-export { renderDetailPane } from './TiltakDetailRenderer.jsx';
+export { renderDetailPane } from "./TiltakDetailRenderer.jsx";

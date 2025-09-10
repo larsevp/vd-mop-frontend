@@ -23,29 +23,29 @@ const EntitySplitView = ({
   onClose,
   listWidth = "35%",
 }) => {
-  // Collapsible panel state - persistent with localStorage
+  // Collapsible panel state - persistent with localStorage (global preference)
   const [isCollapsed, setIsCollapsed] = useState(() => {
-    const saved = localStorage.getItem(`${entityType}-listPaneCollapsed`);
+    const saved = localStorage.getItem('splitView-listPaneCollapsed');
     return saved ? JSON.parse(saved) : false;
   });
 
-  // Resizable width state - persistent with localStorage  
+  // Resizable width state - persistent with localStorage (global preference)
   const [panelWidth, setPanelWidth] = useState(() => {
-    const saved = localStorage.getItem(`${entityType}-listPaneWidth`);
+    const saved = localStorage.getItem('splitView-listPaneWidth');
     // Ensure we have a reasonable default and validate saved value
     if (saved) {
       const parsedWidth = parseFloat(saved);
       // If it's a reasonable pixel value, use it; otherwise reset to default
-      if (saved.includes("px") && parsedWidth >= 200 && parsedWidth <= 500) {
+      if (saved.includes("px") && parsedWidth >= 200 && parsedWidth <= 600) {
         return saved;
       }
       // If it's a percentage, convert to reasonable pixel default
       if (saved.includes("%") && parsedWidth > 0 && parsedWidth <= 50) {
-        return "350px"; // Reasonable default
+        return "420px"; // Reasonable default
       }
     }
     // Fallback to reasonable pixel default
-    return "350px";
+    return "420px";
   });
 
   // Drag state for resizing
@@ -57,15 +57,15 @@ const EntitySplitView = ({
   // Ref for the left panel to avoid DOM traversal issues
   const leftPanelRef = useRef(null);
 
-  // Persistent collapsed state
+  // Persistent collapsed state (global preference)
   useEffect(() => {
-    localStorage.setItem(`${entityType}-listPaneCollapsed`, JSON.stringify(isCollapsed));
-  }, [isCollapsed, entityType]);
+    localStorage.setItem('splitView-listPaneCollapsed', JSON.stringify(isCollapsed));
+  }, [isCollapsed]);
 
-  // Persistent width state  
+  // Persistent width state (global preference)
   useEffect(() => {
-    localStorage.setItem(`${entityType}-listPaneWidth`, panelWidth);
-  }, [panelWidth, entityType]);
+    localStorage.setItem('splitView-listPaneWidth', panelWidth);
+  }, [panelWidth]);
 
   // Mouse handlers for dragging
   const handleMouseDown = (e) => {

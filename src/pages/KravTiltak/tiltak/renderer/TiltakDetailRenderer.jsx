@@ -21,14 +21,18 @@ import { tiltak as tiltakConfig } from '@/modelConfigs/models/tiltak.js';
  * @returns {JSX.Element} Tiltak detail pane
  */
 export const renderDetailPane = (entity, props) => {
-  const { key, ...restProps } = props;
+  const { key, onSave, onDelete, ...restProps } = props;
   
+  // Pass onSave to integrate with EntityWorkspace's post-save logic
+  // EntityDetailPane will use this if provided, otherwise fall back to modelConfig
   return (
     <EntityDetailPane
       key={key || `detail-${entity?.id || 'no-id'}`}
       entity={entity}
       modelConfig={tiltakConfig}
       entityType="tiltak"
+      onSave={onSave} // Pass through to enable post-save selection
+      onDelete={onDelete} // Pass through for consistency
       {...restProps}
     />
   );

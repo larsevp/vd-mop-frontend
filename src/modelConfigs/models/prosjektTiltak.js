@@ -81,9 +81,9 @@ export const prosjektTiltak = {
     ui: {
       showHierarchy: true,
       showMerknader: false,
-      showStatus: false,
-      showVurdering: false,
-      showPrioritet: false,
+      showStatus: true,
+      showVurdering: true,
+      showPrioritet: true,
       showObligatorisk: true,
       showRelations: true,
     },

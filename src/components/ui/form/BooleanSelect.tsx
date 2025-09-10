@@ -50,7 +50,9 @@ export function BooleanSelect({
     <div className={className}>
       <Select value={stringValue} onValueChange={handleValueChange} disabled={disabled} name={name}>
         <SelectTrigger>
-          <SelectValue placeholder={placeholder} />
+          <SelectValue placeholder={placeholder}>
+            {value === null || value === undefined ? placeholder : (value ? "Ja" : "Nei")}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {!required && (

@@ -1,14 +1,17 @@
 import React from 'react';
 import { EntityCard } from '../../../shared';
+import { getEntityTypeConfig } from '../../../shared/utils/entityTypeBadges';
 
 /**
  * TiltakCard - Entity-specific card for Tiltak using shared EntityCard
  */
 const TiltakCard = (props) => {
+  const entityConfig = getEntityTypeConfig('tiltak');
+  
   const config = {
     uidField: 'tiltakUID',
-    badgeText: 'TILTAK',
-    badgeColor: 'bg-blue-100 text-blue-700',
+    badgeText: entityConfig.shortLabel,
+    badgeColor: entityConfig.badgeColor,
     childrenLabel: 'undertiltak',
     relations: [
       {

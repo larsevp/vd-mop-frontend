@@ -1,9 +1,9 @@
 import React from "react";
-import { EntityWorkspace } from "@/components/EntityWorkspace";
+import { EntityWorkspaceNew } from "@/components/EntityWorkspace";
 import { prosjektKrav as prosjektKravConfig } from "@/modelConfigs/models/prosjektKrav.js";
 import { createSingleEntityDTO } from "@/components/EntityWorkspace/interface/data";
 import { createProsjektKravAdapter } from "./adapter";
-import { renderEntityCard, renderGroupHeader, renderDetailPane, getAvailableViewOptions } from "./renderer";
+import { renderEntityCard, renderGroupHeader, renderSearchBar, renderDetailPane, getAvailableViewOptions } from "./renderer";
 import { useProsjektKravViewStore } from "./store";
 import { RowListHeading } from "../shared";
 import { useProjectStore } from "@/stores/userStore";
@@ -69,11 +69,12 @@ const ProsjektKravWorkspace = () => {
   const { viewOptions, setViewOptions } = useProsjektKravViewStore();
 
   return (
-    <EntityWorkspace
+    <EntityWorkspaceNew
       key={`${dto.entityType || "workspace"}-${currentProject?.id || "no-project"}`} // Force remount on project change
       dto={dto}
-      renderEntityCard={renderEntityCard}
+      renderEntityCard={(entity, props) => renderEntityCard(entity, props, dto)}
       renderGroupHeader={renderGroupHeader}
+      renderSearchBar={renderSearchBar}
       renderDetailPane={renderDetailPane}
       renderListHeading={(props) => (
         <RowListHeading

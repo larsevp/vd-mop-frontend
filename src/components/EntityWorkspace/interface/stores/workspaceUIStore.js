@@ -33,7 +33,11 @@ export const useWorkspaceUIStore = create(
       // ============ UI STATE ============
       showFilters: false,
       showBulkActions: false,
-      viewMode: 'split', // 'split', 'list', 'cards'
+      viewMode: (() => {
+        // Initialize viewMode from localStorage, default to 'split'
+        const saved = localStorage.getItem('entityWorkspace-viewMode');
+        return saved && ['split', 'cards', 'list'].includes(saved) ? saved : 'split';
+      })(),
       
       // ============ EXPANSION STATE ============
       expandedEntities: new Set(),
@@ -122,6 +126,8 @@ export const useWorkspaceUIStore = create(
       },
       
       setViewMode: (mode) => {
+        // Persist viewMode to localStorage
+        localStorage.setItem('entityWorkspace-viewMode', mode);
         set({ viewMode: mode });
       },
       

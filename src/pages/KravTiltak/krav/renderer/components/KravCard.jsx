@@ -1,14 +1,17 @@
 import React from 'react';
 import { EntityCard } from '../../../shared';
+import { getEntityTypeConfig } from '../../../shared/utils/entityTypeBadges';
 
 /**
  * KravCard - Entity-specific card for Krav using shared EntityCard
  */
 const KravCard = (props) => {
+  const entityConfig = getEntityTypeConfig('krav');
+  
   const config = {
     uidField: 'kravUID',
-    badgeText: 'KRAV',
-    badgeColor: 'bg-green-100 text-green-700',
+    badgeText: entityConfig.shortLabel,
+    badgeColor: entityConfig.badgeColor,
     childrenLabel: 'underkrav',
     relations: [
       {

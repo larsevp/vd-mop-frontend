@@ -1,14 +1,17 @@
 import React from 'react';
 import { EntityCard } from '../../../shared';
+import { getEntityTypeConfig } from '../../../shared/utils/entityTypeBadges';
 
 /**
  * ProsjektTiltakCard - Entity-specific card for ProsjektTiltak using shared EntityCard
  */
 const ProsjektTiltakCard = (props) => {
+  const entityConfig = getEntityTypeConfig('prosjekttiltak');
+  
   const config = {
     uidField: 'tiltakUID',
-    badgeText: 'P-TILTAK',
-    badgeColor: 'bg-blue-100 text-blue-700',
+    badgeText: 'Tiltak', // Keep as "Tiltak" as requested by user
+    badgeColor: entityConfig.badgeColor,
     childrenLabel: 'undertiltak',
     specialReference: {
       field: 'generalTiltak',

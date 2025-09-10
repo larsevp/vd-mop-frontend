@@ -27,6 +27,7 @@ import KravWorkspace from "@/pages/KravTiltak/krav";
 import TiltakWorkspace from "@/pages/KravTiltak/tiltak";
 import ProsjektKravWorkspace from "@/pages/KravTiltak/prosjektkrav";
 import ProsjektTiltakWorkspace from "@/pages/KravTiltak/prosjekttiltak";
+import { KravTiltakCombinedWorkspace, ProsjektKravTiltakCombinedWorkspace } from "@/pages/KravTiltak";
 
 export default function AuthenticatedRoutes() {
   return (
@@ -100,6 +101,11 @@ export default function AuthenticatedRoutes() {
         <Route path="/prosjekt-krav-workspace/:entityId" element={<ProsjektKravWorkspace />} />
         <Route path="/prosjekt-tiltak-workspace" element={<ProsjektTiltakWorkspace />} />
         <Route path="/prosjekt-tiltak-workspace/:entityId" element={<ProsjektTiltakWorkspace />} />
+        {/* Combined workspace routes */}
+        <Route path="/krav-tiltak-combined" element={<KravTiltakCombinedWorkspace />} />
+        <Route path="/krav-tiltak-combined/:entityId" element={<KravTiltakCombinedWorkspace />} />
+        <Route path="/prosjekt-krav-tiltak-combined" element={<ProsjektKravTiltakCombinedWorkspace />} />
+        <Route path="/prosjekt-krav-tiltak-combined/:entityId" element={<ProsjektKravTiltakCombinedWorkspace />} />
         {/* Admin routes */}
         {adminRoutes}
         {/* Redirect any other route (including /login) to home when authenticated */}

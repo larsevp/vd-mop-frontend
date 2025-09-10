@@ -29,6 +29,7 @@ const EntityListPane = ({
   EntityListGroupHeader = null,
   EntityListHeading = null,
   viewOptions: externalViewOptions = {},
+  onSave = null, // Add onSave prop to pass through to renderers
 }) => {
   const location = useLocation();
   const [focusedIndex, setFocusedIndex] = useState(0);
@@ -207,6 +208,7 @@ const EntityListPane = ({
                               onClick: handleEntitySelect,
                               onDoubleClick: handleEntityDoubleClick,
                               viewOptions: externalViewOptions,
+                              onSave: onSave, // Pass onSave to renderer
                             })
                         )}
                       </div>
@@ -229,6 +231,7 @@ const EntityListPane = ({
                     onClick: handleEntitySelect,
                     onDoubleClick: handleEntityDoubleClick,
                     viewOptions: externalViewOptions,
+                    onSave: onSave, // Pass onSave to renderer
                   })
               )}
             </div>

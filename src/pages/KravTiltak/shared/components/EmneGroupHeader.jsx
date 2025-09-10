@@ -1,5 +1,6 @@
 import React from 'react';
 import { ChevronDown, ChevronRight, FileText } from 'lucide-react';
+import { generateTypeCountBadges } from '../utils/entityTypeBadges';
 
 /**
  * EmneGroupHeader - Shared component for emne group headers
@@ -11,9 +12,15 @@ const EmneGroupHeader = ({
   groupData,
   isCollapsed = false,
   onToggle = () => {},
-  itemCount = 0
+  itemCount = 0,
+  entityType,
+  subtitle
 }) => {
   const emne = groupData?.group?.emne || groupData?.emne;
+  
+  // For combined views, extract type counts
+  const typeCounts = groupData?._typeCounts;
+  const isCombinedView = entityType?.includes('combined');
   
   return (
     <div
@@ -41,9 +48,21 @@ const EmneGroupHeader = ({
         {/* Emne Title and Item Count */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-gray-900 truncate">
-              {emne?.tittel || "Uten emne"}
-            </h3>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-medium text-gray-900 truncate">
+                {emne?.tittel || "Uten emne"}
+              </h3>
+              {/* Combined view: Show colored type breakdown */}
+              {isCombinedView && typeCounts && (
+                <div className="flex items-center gap-2 mt-1">
+                  {generateTypeCountBadges(typeCounts).map((badge, index) => (
+                    <span key={index} className={badge.classes}>
+                      {badge.count} {badge.label}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
             <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
               {itemCount} oppføringer
             </span>

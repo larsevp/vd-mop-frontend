@@ -1,22 +1,22 @@
 import React from "react";
-import { EntityWorkspace } from "@/components/EntityWorkspace";
+import { EntityWorkspaceNew } from "@/components/EntityWorkspace";
 import { tiltak as tiltakConfig } from "@/modelConfigs/models/tiltak.js";
 import { createSingleEntityDTO } from "@/components/EntityWorkspace/interface/data";
 import { createTiltakAdapter } from "./adapter";
-import { renderEntityCard, renderGroupHeader, renderDetailPane, getAvailableViewOptions } from "./renderer";
+import { renderEntityCard, renderGroupHeader, renderSearchBar, renderDetailPane, getAvailableViewOptions } from "./renderer";
 import { useTiltakViewStore } from "./store";
 import { RowListHeading } from "../shared";
 
 /**
  * Tiltak Workspace using the generic EntityWorkspace component
- * 
+ *
  * This workspace handles general measures/actions (Tiltak) which are:
  * - Base-level measures not tied to specific projects
  * - Templates that can be used to create ProsjektTiltak
  * - Can have relationships to general Krav
  * - Support rich text for implementation details and feedback
  * - Include file attachments and hierarchical structure
- * 
+ *
  * Features automatically provided by EntityWorkspace:
  * - General data fetching and filtering (no project context)
  * - Search, filtering, sorting across all general measures
@@ -30,7 +30,7 @@ import { RowListHeading } from "../shared";
 const TiltakWorkspace = () => {
   // Create Tiltak adapter
   const adapter = createTiltakAdapter(tiltakConfig);
-  
+
   // Wrap adapter in DTO for unified interface
   const dto = createSingleEntityDTO(adapter);
 
@@ -38,11 +38,12 @@ const TiltakWorkspace = () => {
   const { viewOptions, setViewOptions } = useTiltakViewStore();
 
   return (
-    <EntityWorkspace
-      key={`${dto.entityType || 'tiltak-workspace'}`}
+    <EntityWorkspaceNew
+      key={`${dto.entityType || "tiltak-workspace"}`}
       dto={dto}
       renderEntityCard={renderEntityCard}
       renderGroupHeader={renderGroupHeader}
+      renderSearchBar={renderSearchBar}
       renderDetailPane={renderDetailPane}
       renderListHeading={(props) => (
         <RowListHeading

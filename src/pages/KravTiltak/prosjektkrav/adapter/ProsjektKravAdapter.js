@@ -33,6 +33,11 @@ export class ProsjektKravAdapter {
           label: "Vurdering",
           placeholder: "Alle vurderinger",
         },
+        prioritet: {
+          enabled: this.config.workspace?.ui?.showPrioritet !== false,
+          label: "Prioritet",
+          placeholder: "Alle prioriteter",
+        },
         emne: {
           enabled: this.config.workspace?.features?.grouping !== false,
           label: "Emne",
@@ -44,6 +49,7 @@ export class ProsjektKravAdapter {
         { key: "createdAt", label: "Opprettet" },
         { key: "title", label: "Tittel" },
         { key: "status", label: "Status" },
+        { key: "prioritet", label: "Prioritet" },
         { key: "emne", label: "Emne" },
       ],
       defaults: {

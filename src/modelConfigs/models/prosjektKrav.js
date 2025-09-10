@@ -88,7 +88,7 @@ export const prosjektKrav = {
     ui: {
       showHierarchy: true,
       showMerknader: true,
-      showStatus: false,
+      showStatus: true,
       showVurdering: true,
       showPrioritet: true,
       showObligatorisk: false,

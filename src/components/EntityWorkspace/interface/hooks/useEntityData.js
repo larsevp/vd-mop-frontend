@@ -1,23 +1,23 @@
 /**
  * useEntityData - TanStack Query hook for entity data fetching
- * 
+ *
  * Integrates TanStack Query with existing DTO pattern.
  * Replaces complex state management with industry-standard server state handling.
  */
 
-import { useQuery } from '@tanstack/react-query';
-import { useProjectStore } from '@/stores/userStore';
+import { useQuery } from "@tanstack/react-query";
+import { useProjectStore } from "@/stores/userStore";
 
 /**
  * Main hook for fetching entity data through DTOs
- * 
+ *
  * @param {Object} dto - DTO instance (SingleEntityDTO, CombinedEntityDTO, etc.)
  * @param {Object} options - Additional query options
  * @returns {Object} TanStack Query result with entities data
  */
 export const useEntityData = (dto, options = {}) => {
   const {
-    searchQuery = '',
+    searchQuery = "",
     filters = {},
     pagination = { page: 1, pageSize: 50 },
     enabled = true,
@@ -31,17 +31,17 @@ export const useEntityData = (dto, options = {}) => {
 
   return useQuery({
     queryKey: [
-      'entities',
-      dto?.entityType || dto?.getPrimaryEntityType?.() || 'unknown',
+      "entities",
+      dto?.entityType || dto?.getPrimaryEntityType?.() || "unknown",
       currentProject?.id || null, // Include project ID for cache invalidation
       searchQuery,
       filters,
-      pagination
+      pagination,
     ],
-    
+
     queryFn: async () => {
       if (!dto || !dto.loadData) {
-        throw new Error('Invalid DTO or missing loadData method');
+        throw new Error("Invalid DTO or missing loadData method");
       }
 
       const result = await dto.loadData({
@@ -53,13 +53,13 @@ export const useEntityData = (dto, options = {}) => {
       // Return the raw result - let the component decide how to use it
       // The DTO should return grouped data structure for proper emne grouping
       return {
-        items: result.items || result || [],  // Support both flat and grouped data
-        groups: result.groups || result.items || [],  // Grouped data if available
+        items: result.items || result || [], // Support both flat and grouped data
+        groups: result.groups || result.items || [], // Grouped data if available
         total: result.total || 0,
         page: result.page || pagination.page,
         pageSize: result.pageSize || pagination.pageSize,
         hasMore: result.hasMore || false,
-        ...result
+        ...result,
       };
     },
 
@@ -68,21 +68,21 @@ export const useEntityData = (dto, options = {}) => {
     cacheTime,
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-    
+
     // Keep previous data while loading new results (better UX)
     keepPreviousData: true,
-    
+
     // Refetch on window focus for real-time updates
     refetchOnWindowFocus: true,
-    
-    ...queryOptions
+
+    ...queryOptions,
   });
 };
 
 /**
  * Hook for combined entity data (multi-entity DTOs)
- * 
- * @param {Object} combinedDTO - CombinedEntityDTO instance  
+ *
+ * @param {Object} combinedDTO - CombinedEntityDTO instance
  * @param {Object} options - Additional query options
  * @returns {Object} TanStack Query result with combined entities
  */
@@ -96,23 +96,23 @@ export const useCombinedEntityData = (combinedDTO, options = {}) => {
   return useEntityData(combinedDTO, {
     staleTime,
     refetchInterval,
-    ...restOptions
+    ...restOptions,
   });
 };
 
 /**
  * Hook for project-specific entity data
- * 
+ *
  * @param {Object} dto - DTO instance
  * @param {string} projectId - Project identifier
- * @param {Object} options - Additional query options  
+ * @param {Object} options - Additional query options
  * @returns {Object} TanStack Query result with project entities
  */
 export const useProjectEntityData = (dto, projectId, options = {}) => {
   return useEntityData(dto, {
     filters: { projectId, ...(options.filters || {}) },
-    enabled: !!projectId && (options.enabled !== false),
-    ...options
+    enabled: !!projectId && options.enabled !== false,
+    ...options,
   });
 };
 

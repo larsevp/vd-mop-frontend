@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Edit, X, Save, RotateCcw, Trash2 } from "lucide-react";
+import { useQueryClient } from '@tanstack/react-query';
 import { ValidationErrorSummary, FieldRenderer, FieldSection } from "./components";
 import {
   getVisibleFields,
@@ -29,17 +30,20 @@ const EntityDetailPane = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expandedSections, setExpandedSections] = useState(new Set());
   const detailViewRef = useRef(null);
+  
+  // Query client for cache invalidation
+  const queryClient = useQueryClient();
 
   // Configuration
   const modelName = modelConfig?.modelPrintName || entityType;
-  const detailFormConfig = modelConfig?.workspace?.detailForm || {};
+  const detailFormConfig = useMemo(() => modelConfig?.workspace?.detailForm || {}, [modelConfig?.workspace?.detailForm]);
   const sections = useMemo(() => {
     return detailFormConfig.sections || { main: { title: "Informasjon", defaultExpanded: true } };
   }, [detailFormConfig.sections]);
-  const fieldOverrides = detailFormConfig.fieldOverrides || {};
-  const workspaceHiddenEdit = detailFormConfig.workspaceHiddenEdit || [];
-  const workspaceHiddenIndex = detailFormConfig.workspaceHiddenIndex || [];
-  const allFields = modelConfig?.fields || [];
+  const fieldOverrides = useMemo(() => detailFormConfig.fieldOverrides || {}, [detailFormConfig.fieldOverrides]);
+  const workspaceHiddenEdit = useMemo(() => detailFormConfig.workspaceHiddenEdit || [], [detailFormConfig.workspaceHiddenEdit]);
+  const workspaceHiddenIndex = useMemo(() => detailFormConfig.workspaceHiddenIndex || [], [detailFormConfig.workspaceHiddenIndex]);
+  const allFields = useMemo(() => modelConfig?.fields || [], [modelConfig?.fields]);
 
   // Get visible fields using helper
   const visibleFields = useMemo(() => 
@@ -110,18 +114,68 @@ const EntityDetailPane = ({
     }
   }, [errors]);
 
+  // Create save handler from modelConfig if onSave is not provided or is null
+  const createSaveHandler = useCallback(async (saveData, isUpdate) => {
+    let result;
+    
+    if (onSave && typeof onSave === 'function') {
+      // Use provided onSave if available
+      result = await onSave(saveData, isUpdate);
+    } else if (modelConfig) {
+      // Create save handler from modelConfig
+      if (isUpdate && modelConfig.updateFn) {
+        result = await modelConfig.updateFn(saveData.id, saveData);
+      } else if (!isUpdate && modelConfig.createFn) {
+        result = await modelConfig.createFn(saveData);
+      } else {
+        throw new Error(`${isUpdate ? 'Update' : 'Create'} function not available in modelConfig`);
+      }
+      
+      // Invalidate relevant query caches to refresh data
+      await queryClient.invalidateQueries({ 
+        queryKey: ['entities'] 
+      });
+    } else {
+      throw new Error('No save handler available');
+    }
+    
+    return result;
+  }, [onSave, modelConfig, queryClient]);
+
   // Save handler using helper
   const handleSave = useCallback(async () => {
-    const result = await handleSaveAction(validateFormData, formData, entity, onSave, setIsSubmitting, setIsEditing);
+    const result = await handleSaveAction(validateFormData, formData, entity, createSaveHandler, setIsSubmitting, setIsEditing);
     if (!result.success && result.errors) {
       setErrors(result.errors);
     }
-  }, [validateFormData, formData, entity, onSave]);
+  }, [validateFormData, formData, entity, createSaveHandler]);
+
+  // Create delete handler from modelConfig if onDelete is not provided or is null
+  const createDeleteHandler = useCallback(async (entityToDelete) => {
+    let result;
+    
+    if (onDelete && typeof onDelete === 'function') {
+      // Use provided onDelete if available
+      result = await onDelete(entityToDelete);
+    } else if (modelConfig && modelConfig.deleteFn) {
+      // Create delete handler from modelConfig
+      result = await modelConfig.deleteFn(entityToDelete.id, entityToDelete);
+      
+      // Invalidate relevant query caches to refresh data
+      await queryClient.invalidateQueries({ 
+        queryKey: ['entities'] 
+      });
+    } else {
+      throw new Error('Delete function not available');
+    }
+    
+    return result;
+  }, [onDelete, modelConfig, queryClient]);
 
   // Delete handler using helper
   const handleDelete = useCallback(async () => {
-    await handleDeleteAction(entity, onDelete);
-  }, [entity, onDelete]);
+    await handleDeleteAction(entity, createDeleteHandler);
+  }, [entity, createDeleteHandler]);
 
   // Cancel editing
   const handleCancel = useCallback(() => {

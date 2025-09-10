@@ -1,8 +1,3 @@
-export {
-  renderEntityCard,
-  renderGroupHeader,
-  renderListHeading,
-  getAvailableViewOptions
-} from './KravRenderer.jsx';
+export { renderEntityCard, renderGroupHeader, renderListHeading, renderSearchBar, getAvailableViewOptions } from "./KravRenderer.jsx";
 
-export { renderDetailPane } from './KravDetailRenderer.jsx';
+export { renderDetailPane } from "./KravDetailRenderer.jsx";
