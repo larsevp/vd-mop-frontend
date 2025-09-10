@@ -89,6 +89,7 @@ export function transformWorkspaceConfig(newConfig) {
             transformed.workspace.detailForm.fieldOverrides[fieldName] = {
               ...transformed.workspace.detailForm.fieldOverrides[fieldName],
               ...fieldConfig,
+              row: rowName, // Preserve the row assignment
             };
           });
           // Keep only supported properties in rows

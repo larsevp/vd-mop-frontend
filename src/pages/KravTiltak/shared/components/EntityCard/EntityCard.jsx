@@ -445,16 +445,13 @@ const EntityCard = ({
                   </div>
                 </div>
               ) : (
-                (formData[merknadFieldName] || merknadValue) ? (
+                // View mode: only show merknad if it has content
+                (formData[merknadFieldName] || merknadValue) && (
                   <div className="text-sm text-amber-700 bg-amber-50 rounded px-2 py-1 mb-3">
                     <span className="text-xs font-medium text-amber-800">Merknad:</span>
                     <div className="mt-1 whitespace-pre-wrap">
                       {formatCardText(formData[merknadFieldName] || merknadValue, isExpandedCards)}
                     </div>
-                  </div>
-                ) : (
-                  <div className="text-sm text-amber-700 bg-amber-50 rounded px-2 py-1 mb-3 opacity-60">
-                    <span className="text-xs font-medium text-amber-800">Merknad:</span> <span className="italic">Ingen merknad</span>
                   </div>
                 )
               )
@@ -690,13 +687,10 @@ const EntityCard = ({
                 </div>
               </div>
             ) : (
-              (formData[merknadFieldName] || merknadValue) ? (
+              // View mode: only show merknad if it has content
+              (formData[merknadFieldName] || merknadValue) && (
                 <div className="text-sm text-amber-700 bg-amber-50 rounded px-2 py-1 mb-2">
                   <span className="text-xs font-medium text-amber-800">Merknad:</span> {truncateText(formData[merknadFieldName] || merknadValue, 100)}
-                </div>
-              ) : (
-                <div className="text-sm text-amber-700 bg-amber-50 rounded px-2 py-1 mb-2 opacity-60">
-                  <span className="text-xs font-medium text-amber-800">Merknad:</span> <span className="italic">Ingen merknad</span>
                 </div>
               )
             )

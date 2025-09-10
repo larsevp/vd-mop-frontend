@@ -22,6 +22,14 @@ const FieldRenderer = ({ field, value, onChange, error, form, entity, modelName,
   }
 
   if (!isEditing) {
+    // For merknad fields in view mode, only show if there's content
+    const isMerknadField = field.name === 'merknad' || field.name === 'merknader';
+    const fieldValue = value || entity[field.name];
+    
+    if (isMerknadField && (!fieldValue || fieldValue.trim() === '')) {
+      return null; // Don't render empty merknad fields in view mode
+    }
+
     const displayValue = DisplayValueResolver.getDisplayComponent(
       entity,
       field,

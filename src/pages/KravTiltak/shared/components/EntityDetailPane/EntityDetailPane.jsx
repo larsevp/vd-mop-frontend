@@ -35,7 +35,7 @@ const EntityDetailPane = ({
   // Query client for cache invalidation
   const queryClient = useQueryClient();
 
-  // Configuration
+  // Configuration  
   const modelName = modelConfig?.modelPrintName || entityType;
   const detailFormConfig = useMemo(() => modelConfig?.workspace?.detailForm || {}, [modelConfig?.workspace?.detailForm]);
   const sections = useMemo(() => {
@@ -48,8 +48,8 @@ const EntityDetailPane = ({
 
   // Get visible fields using helper
   const visibleFields = useMemo(() => 
-    getVisibleFields(allFields, fieldOverrides, isEditing, workspaceHiddenEdit, workspaceHiddenIndex),
-    [allFields, fieldOverrides, isEditing, workspaceHiddenEdit, workspaceHiddenIndex]
+    getVisibleFields(allFields, fieldOverrides, isEditing, workspaceHiddenEdit, workspaceHiddenIndex, sections),
+    [allFields, fieldOverrides, isEditing, workspaceHiddenEdit, workspaceHiddenIndex, sections]
   );
 
   // Validation function using helper

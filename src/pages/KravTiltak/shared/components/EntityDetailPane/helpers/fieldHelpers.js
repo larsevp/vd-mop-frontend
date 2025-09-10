@@ -1,14 +1,40 @@
 import { FieldResolver } from "@/components/tableComponents/fieldTypes/fieldResolver.jsx";
 
-export const getVisibleFields = (allFields, fieldOverrides, isEditing, workspaceHiddenEdit, workspaceHiddenIndex) => {
+export const getVisibleFields = (allFields, fieldOverrides, isEditing, workspaceHiddenEdit, workspaceHiddenIndex, sections = {}) => {
   return allFields
     .map(field => {
       const detailOverrides = fieldOverrides[field.name] || {};
+      
+      // Find which section and row this field belongs to
+      let detailSection = detailOverrides.section || "main";
+      let detailRow = detailOverrides.row || null;
+      let detailOrder = detailOverrides.order || 0;
+      
+      // Check sections for this field's configuration
+      for (const [sectionName, sectionConfig] of Object.entries(sections)) {
+        // Check section-level fieldOverrides
+        const sectionFieldOverrides = sectionConfig.fieldOverrides || {};
+        if (sectionFieldOverrides[field.name]) {
+          detailSection = sectionName;
+          detailOrder = sectionFieldOverrides[field.name].order || detailOrder;
+        }
+        
+        // Check rows for this field
+        const rows = sectionConfig.rows || {};
+        for (const [rowName, rowFields] of Object.entries(rows)) {
+          if (rowFields[field.name]) {
+            detailSection = sectionName;
+            detailRow = rowName;
+            detailOrder = rowFields[field.name].order || detailOrder;
+          }
+        }
+      }
+      
       return {
         ...field,
-        detailSection: detailOverrides.section || "main",
-        detailOrder: detailOverrides.order || 0,
-        detailRow: detailOverrides.row || null,
+        detailSection,
+        detailOrder,
+        detailRow,
       };
     })
     .filter((field) => {
