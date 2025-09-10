@@ -12,6 +12,7 @@ import { createKravAdapter } from "../../../krav/adapter";
 import { createTiltakAdapter } from "../../../tiltak/adapter";
 import { krav as kravConfig } from "@/modelConfigs/models/krav";
 import { tiltak as tiltakConfig } from "@/modelConfigs/models/tiltak";
+import { extractAvailableFilters } from "../../../shared/utils/filterUtils.js";
 
 export class KravTiltakCombinedAdapter {
   constructor(options = {}) {
@@ -270,32 +271,8 @@ export class KravTiltakCombinedAdapter {
   }
 
   extractAvailableFilters(entities = []) {
-    const filters = {
-      entityTypes: new Set(),
-      statuses: new Set(),
-      vurderinger: new Set(),
-      emner: new Set(),
-    };
-
-    entities.forEach((entity) => {
-      if (entity.entityType) filters.entityTypes.add(entity.entityType);
-
-      const status = entity.status?.name || entity.status?.navn;
-      if (status) filters.statuses.add(status);
-
-      const vurdering = entity.vurdering?.name || entity.vurdering?.navn;
-      if (vurdering) filters.vurderinger.add(vurdering);
-
-      const emne = entity.emne?.navn || entity.emne?.name;
-      if (emne) filters.emner.add(emne);
-    });
-
-    return {
-      entityTypes: Array.from(filters.entityTypes).sort(),
-      statuses: Array.from(filters.statuses).sort(),
-      vurderinger: Array.from(filters.vurderinger).sort(),
-      emner: Array.from(filters.emner).sort(),
-    };
+    // Use shared logic from utilities with entityTypes for combined views
+    return extractAvailableFilters(entities, { includeEntityTypes: true });
   }
 
   // === CRUD OPERATIONS FOR DTO INTERFACE ===

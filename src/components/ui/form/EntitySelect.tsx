@@ -29,6 +29,8 @@ interface EntitySelectProps<T extends EntityWithIcon> {
   displayField: "navn" | "tittel"; // Which field to use for display text
   sortField?: "sortIt" | "navn" | "tittel"; // How to sort the options
   entityName: string; // For fallback display (e.g., "Status", "Vurdering")
+  // Dynamic filtering support
+  availableIds?: number[]; // Optional: limit to only these IDs (for dynamic filtering)
 }
 
 export function EntitySelect<T extends EntityWithIcon>({
@@ -47,6 +49,7 @@ export function EntitySelect<T extends EntityWithIcon>({
   displayField,
   sortField,
   entityName,
+  availableIds,
 }: EntitySelectProps<T>) {
   const {
     data: entityList = [],
@@ -58,18 +61,24 @@ export function EntitySelect<T extends EntityWithIcon>({
     select: (response: any): T[] => {
       const data = Array.isArray(response) ? response : response.data || [];
 
-      // Sort the data based on sortField
+      // Filter by available IDs if provided (for dynamic filtering)
+      let filteredData = data;
+      if (availableIds && availableIds.length > 0) {
+        filteredData = data.filter((item: T) => availableIds.includes(item.id));
+      }
+
+      // Sort the filtered data based on sortField
       if (sortField === "sortIt") {
-        return data.sort((a: T, b: T) => (a.sortIt || 0) - (b.sortIt || 0));
+        return filteredData.sort((a: T, b: T) => (a.sortIt || 0) - (b.sortIt || 0));
       } else if (sortField === "navn" || sortField === "tittel") {
-        return data.sort((a: T, b: T) => {
+        return filteredData.sort((a: T, b: T) => {
           const aText = a[sortField] || "";
           const bText = b[sortField] || "";
           return aText.localeCompare(bText);
         });
       }
 
-      return data;
+      return filteredData;
     },
   });
 

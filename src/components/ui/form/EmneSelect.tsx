@@ -24,6 +24,8 @@ interface EmneSelectProps {
   className?: string;
   allowEmpty?: boolean;
   emptyLabel?: string;
+  // Dynamic filtering support
+  availableIds?: number[]; // Optional: limit to only these IDs (for dynamic filtering)
 }
 
 interface EmneCheckboxGroupProps {
@@ -47,6 +49,7 @@ export function EmneSelect({
   allowEmpty = true,
   emptyLabel = "Ingen emne",
   className = "",
+  availableIds,
 }: EmneSelectProps) {
   const {
     data: emneList = [],
@@ -58,8 +61,14 @@ export function EmneSelect({
     select: (response: any): Emne[] => {
       const data = Array.isArray(response) ? response : response.data || [];
 
+      // Filter by available IDs if provided (for dynamic filtering)
+      let filteredData = data;
+      if (availableIds && availableIds.length > 0) {
+        filteredData = data.filter((item: Emne) => availableIds.includes(item.id));
+      }
+
       // Sort by sortIt first, then by id as fallback (respect backend ordering)
-      return data.sort((a: Emne, b: Emne) => {
+      return filteredData.sort((a: Emne, b: Emne) => {
         const aSortIt = a.sortIt;
         const bSortIt = b.sortIt;
 

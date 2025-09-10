@@ -2,6 +2,8 @@
  * KravAdapter - Specific adapter for Krav entities
  */
 
+import { extractAvailableFilters } from "../../shared/utils/filterUtils.js";
+
 export class KravAdapter {
   constructor(config, options = {}) {
     this.config = config;
@@ -168,28 +170,8 @@ export class KravAdapter {
   }
 
   extractAvailableFilters(entities = []) {
-    const filters = {
-      statuses: new Set(),
-      vurderinger: new Set(),
-      emner: new Set(),
-    };
-
-    entities.forEach((entity) => {
-      const status = entity.status?.name || entity.status?.navn;
-      if (status) filters.statuses.add(status);
-
-      const vurdering = entity.vurdering?.name || entity.vurdering?.navn;
-      if (vurdering) filters.vurderinger.add(vurdering);
-
-      const emne = entity.emne?.navn || entity.emne?.name;
-      if (emne) filters.emner.add(emne);
-    });
-
-    return {
-      statuses: Array.from(filters.statuses).sort(),
-      vurderinger: Array.from(filters.vurderinger).sort(),
-      emner: Array.from(filters.emner).sort(),
-    };
+    // Use shared logic from utilities (no entityTypes for single views)
+    return extractAvailableFilters(entities, { includeEntityTypes: false });
   }
 
   // === POST-OPERATION HOOKS ===

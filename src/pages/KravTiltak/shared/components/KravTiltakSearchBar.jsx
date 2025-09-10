@@ -48,6 +48,7 @@ const KravTiltakSearchBar = ({
 }) => {
   
   const [showFilters, setShowFilters] = useState(false);
+  const [pulseFilter, setPulseFilter] = useState(false);
   const searchRef = useRef(null);
 
 
@@ -69,6 +70,25 @@ const KravTiltakSearchBar = ({
   const shouldDisableSorting = () => {
     const projectEntityTypes = ["prosjektKrav", "prosjektTiltak", "combined-prosjektkrav-prosjekttiltak"];
     return projectEntityTypes.includes(entityType);
+  };
+
+  // Check if any filters are currently active
+  const hasActiveFilters = () => {
+    return filterBy !== "all" ||
+      additionalFilters.statusId ||
+      additionalFilters.vurderingId ||
+      additionalFilters.emneId ||
+      additionalFilters.prioritet ||
+      additionalFilters.obligatorisk ||
+      additionalFilters.entityType;
+  };
+
+  // Trigger pulse animation when searching with active filters
+  const triggerFilterPulse = () => {
+    if (hasActiveFilters() && searchInput?.trim()) {
+      setPulseFilter(true);
+      setTimeout(() => setPulseFilter(false), 3000); // Pulse for 3 seconds
+    }
   };
 
   // Global keyboard shortcuts for advanced mode
@@ -95,6 +115,7 @@ const KravTiltakSearchBar = ({
     switch (e.key) {
       case "Enter":
         e.preventDefault();
+        triggerFilterPulse(); // Pulse filter button if filters are active
         onSearch();
         break;
       case "Escape":
@@ -134,7 +155,10 @@ const KravTiltakSearchBar = ({
               type="button"
               variant="ghost"
               size="sm"
-              onClick={onSearch}
+              onClick={() => {
+                triggerFilterPulse(); // Pulse filter button if filters are active
+                onSearch();
+              }}
               className="h-6 px-2 text-xs hover:bg-neutral-100"
               disabled={isLoading}
             >
@@ -147,14 +171,6 @@ const KravTiltakSearchBar = ({
   }
 
   // Advanced mode - KravTiltak-specific filtering
-  const hasActiveFilters =
-    filterBy !== "all" ||
-    additionalFilters.status ||
-    additionalFilters.vurdering ||
-    additionalFilters.emne ||
-    additionalFilters.prioritet ||
-    additionalFilters.obligatorisk ||
-    additionalFilters.entityType;
 
   return (
     <div className="relative flex-1 max-w-lg">
@@ -183,7 +199,10 @@ const KravTiltakSearchBar = ({
 
           {/* Search button */}
           <button
-            onClick={onSearch}
+            onClick={() => {
+              triggerFilterPulse(); // Pulse filter button if filters are active
+              onSearch();
+            }}
             className="p-1 text-gray-500 hover:text-blue-600 rounded transition-colors"
             title="Søk"
           >
@@ -194,8 +213,8 @@ const KravTiltakSearchBar = ({
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`p-1 rounded transition-colors ${
-              showFilters || hasActiveFilters ? "text-blue-600 bg-blue-50" : "text-gray-400 hover:text-gray-600"
-            }`}
+              showFilters || hasActiveFilters() ? "text-blue-600 bg-blue-50" : "text-gray-400 hover:text-gray-600"
+            } ${pulseFilter ? "animate-pulse ring-2 ring-blue-400 ring-opacity-60" : ""}`}
             title="Vis filter"
           >
             <Filter className="w-4 h-4" />
@@ -223,6 +242,26 @@ const KravTiltakSearchBar = ({
           {/* Filter Content */}
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Emne filter - Always first position for consistency */}
+              {filterConfig?.fields?.emne?.enabled !== false && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{filterConfig?.fields?.emne?.label || "Emne"}</label>
+                  <EmneSelect
+                    name="emneId"
+                    value={additionalFilters.emneId || null}
+                    onChange={(event) => {
+                      onAdditionalFiltersChange({
+                        ...additionalFilters,
+                        emneId: event.target.value,
+                      });
+                    }}
+                    allowEmpty={true}
+                    emptyLabel="Alle emner"
+                    availableIds={availableFilters?.emneIds}
+                  />
+                </div>
+              )}
+
               {/* Status filter */}
               {filterConfig?.fields?.status?.enabled !== false && 
                viewOptions?.showStatus !== false && (
@@ -239,6 +278,7 @@ const KravTiltakSearchBar = ({
                     }}
                     allowEmpty={true}
                     emptyLabel="Alle statuser"
+                    availableIds={availableFilters?.statusIds}
                   />
                 </div>
               )}
@@ -259,25 +299,7 @@ const KravTiltakSearchBar = ({
                     }}
                     allowEmpty={true}
                     emptyLabel="Alle vurderinger"
-                  />
-                </div>
-              )}
-
-              {/* Emne filter */}
-              {filterConfig?.fields?.emne?.enabled !== false && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{filterConfig.fields.emne.label}</label>
-                  <EmneSelect
-                    name="emneId"
-                    value={additionalFilters.emneId || null}
-                    onChange={(event) => {
-                      onAdditionalFiltersChange({
-                        ...additionalFilters,
-                        emneId: event.target.value,
-                      });
-                    }}
-                    allowEmpty={true}
-                    emptyLabel="Alle emner"
+                    availableIds={availableFilters?.vurderingIds}
                   />
                 </div>
               )}

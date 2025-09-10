@@ -115,7 +115,7 @@ export const renderSearchBar = (props) => {
  */
 export const getAvailableViewOptions = () => {
   const uiConfig = prosjektKravConfig?.workspace?.ui || {};
-  console.log("ProsjektKrav uiConfig:", uiConfig); // Debug log
+  //console.log("ProsjektKrav uiConfig:", uiConfig); // Debug log
 
   const allOptions = {
     showHierarchy: "Hierarki og relasjoner",
@@ -135,7 +135,7 @@ export const getAvailableViewOptions = () => {
     }
   });
 
-  console.log("ProsjektKrav availableOptions:", availableOptions); // Debug log
+  //console.log("ProsjektKrav availableOptions:", availableOptions); // Debug log
   return availableOptions;
 };
 
