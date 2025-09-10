@@ -1,0 +1,1 @@
+export { TiltakAdapter, createTiltakAdapter } from './TiltakAdapter.js';

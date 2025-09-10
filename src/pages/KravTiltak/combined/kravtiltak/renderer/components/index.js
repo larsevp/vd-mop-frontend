@@ -1,0 +1,1 @@
+export { default as KravTiltakCombinedCard } from './KravTiltakCombinedCard.jsx';

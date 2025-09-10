@@ -40,17 +40,6 @@ export const getPaginatedCombinedEntities = (
     includeRelated: "true",
   });
 
-  console.log("[DEBUG] Combined entity API call with parameters:", {
-    page: actualPage,
-    pageSize,
-    search,
-    sortBy,
-    sortOrder,
-    filterBy,
-    additionalFilters,
-    queryParams: queryParams.toString(),
-  });
-
   // Use the dedicated grouped route like Krav service
   return API.get(`/combined-entities/grouped-by-emne?${queryParams}`);
 };

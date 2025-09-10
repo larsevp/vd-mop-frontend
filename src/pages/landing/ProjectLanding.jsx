@@ -113,7 +113,7 @@ export default function ProjectLanding() {
       {
         title: "Prosjekt Krav & Tiltak Combined",
         desc: "Unified view av prosjektspesifikke krav og tiltak med hierarkiske forhold og kryssreferanser",
-        link: `/prosjekt-combined-workspace`,
+        link: `/prosjekt-krav-tiltak-combined`,
         icon: Briefcase,
         color: "from-violet-500 to-purple-600",
         available: true, // Now implemented

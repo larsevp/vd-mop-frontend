@@ -111,23 +111,27 @@ export default function RowForm({
   const updateMutation = useMutation({
     mutationFn: updateFn,
     onSuccess: (updatedData) => {
-      // Import optimistic update utility
-      import("@/components/EntityWorkspace/utils/optimisticUpdates.js")
-        .then(({ handleOptimisticEntityUpdate }) => {
-          // Handle optimistic updates with the enhanced utility
-          handleOptimisticEntityUpdate({
-            queryClient,
-            queryKey,
-            updatedData,
-            originalData: row,
-            entityType: modelName || "unknown",
-          });
-        })
-        .catch((error) => {
-          console.warn("Could not apply optimistic updates:", error);
-          // Fallback to simple invalidation
-          queryClient.invalidateQueries({ queryKey });
-        });
+      // Standard TanStack Query cache update
+      queryClient.setQueryData(queryKey, (oldData) => {
+        if (!oldData) return oldData;
+        
+        // Update the specific item in cache
+        if (Array.isArray(oldData)) {
+          return oldData.map(item => 
+            item.id === updatedData.id ? { ...item, ...updatedData } : item
+          );
+        }
+        
+        // Single item update
+        if (oldData.id === updatedData.id) {
+          return { ...oldData, ...updatedData };
+        }
+        
+        return oldData;
+      });
+      
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey });
 
       // Generic cache invalidation for all entity types in table components
       // This ensures edit forms get fresh data after updates

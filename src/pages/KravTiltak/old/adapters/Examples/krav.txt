@@ -1,0 +1,283 @@
+Get: 
+http://localhost:3001/api/krav/grouped-by-emne/paginated?page=1&pageSize=50&sortBy=id&sortOrder=asc
+
+Response -> 
+
+{
+    "items": [
+        {
+            "emne": {
+                "id": 1,
+                "tittel": "Støy",
+                "icon": "Volume2",
+                "color": "#ef4444",
+                "sortIt": 1
+            },
+            "krav": [
+                {
+                    "id": 1,
+                    "kravUID": "GK1",
+                    "tittel": "TestKrav",
+                    "beskrivelse": {
+                        "type": "doc",
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "text": "Dette er et testkrav med riktig TipTap JSON format",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "informasjon": {
+                        "type": "doc",
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "text": "Dette er en meget lang tekst, Dette er en meget lang tekst,Dette er en meget lang tekstDette er en meget lang tekstDette er en meget lang tekstDette er en meget lang tekstDette er en meget lang tekstDette er en meget lang tekstDette er en meget lang tekst Og mitt eget søkeord: Eplekake",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "beskrivelsePlain": "Dette er et testkrav med riktig TipTap JSON format",
+                    "informasjonPlain": "Dette er en meget lang tekst, Dette er en meget lang tekst,Dette er en meget lang tekstDette er en meget lang tekstDette er en meget lang tekstDette er en meget lang tekstDette er en meget lang tekstDette er en meget lang tekstDette er en meget lang tekst Og mitt eget søkeord: Eplekake",
+                    "beskrivelseSnippet": "Dette er et testkrav med riktig TipTap JSON format",
+                    "informasjonSnippet": "Dette er en meget lang tekst, Dette er en meget lang tekst,Dette er en meget lang tekstDette er en meget lang tekstDette er en meget lang tekstDette er en meget lang tekstDette er en meget lang tekstDette er en meget lang tekstDette er en m…",
+                    "kravreferansetypeId": 1,
+                    "kravreferanse": "Forurensingsforskriften kap2",
+                    "obligatorisk": false,
+                    "prioritet": 15,
+                    "givenOrder": 1,
+                    "parentId": null,
+                    "versjon": "V 1.0.0",
+                    "kravStatus": "baseline",
+                    "merknader": "Testmerknad for kravet",
+                    "vurderingId": 1,
+                    "statusId": 1,
+                    "emneId": 1,
+                    "enhetId": 1,
+                    "createdBy": 1,
+                    "updatedBy": 1,
+                    "createdAt": "2025-09-02T19:43:26.067Z",
+                    "updatedAt": "2025-09-02T19:43:26.075Z",
+                    "enhet": {
+                        "id": 1,
+                        "navn": "Veidekke"
+                    },
+                    "emne": {
+                        "id": 1,
+                        "tittel": "Støy",
+                        "icon": "Volume2",
+                        "color": "#ef4444",
+                        "sortIt": 1
+                    },
+                    "status": {
+                        "id": 1,
+                        "navn": "Ferdig",
+                        "sortIt": 1,
+                        "icon": "CheckCircle",
+                        "color": "#22c55e"
+                    },
+                    "vurdering": {
+                        "id": 1,
+                        "navn": "Bra",
+                        "sortIt": 1,
+                        "icon": "Star",
+                        "color": "#22c55e"
+                    },
+                    "kravreferanseType": {
+                        "id": 1,
+                        "tittel": "Kontraktskrav"
+                    },
+                    "parent": null,
+                    "children": [
+                        {
+                            "id": 2,
+                            "kravUID": "GK2",
+                            "tittel": "TestKrav_2",
+                            "beskrivelse": {
+                                "type": "doc",
+                                "content": [
+                                    {
+                                        "type": "paragraph",
+                                        "content": [
+                                            {
+                                                "text": "Dette er et underkrav med TipTap JSON format",
+                                                "type": "text"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            "obligatorisk": false,
+                            "prioritet": 15
+                        }
+                    ],
+                    "creator": {
+                        "id": 1,
+                        "navn": "Admin"
+                    },
+                    "updater": {
+                        "id": 1,
+                        "navn": "Admin"
+                    },
+                    "lover": [
+                        {
+                            "id": 1,
+                            "tittel": "Forurensningsforskriften kap2 paragraf 4",
+                            "KravLovJunction": {
+                                "id": 1,
+                                "kravId": 1,
+                                "kravType": "Krav",
+                                "lovId": 1,
+                                "createdAt": "2025-09-02T19:43:26.139Z",
+                                "updatedAt": "2025-09-02T19:43:26.139Z"
+                            }
+                        }
+                    ],
+                    "kravpakker": [
+                        {
+                            "id": 1,
+                            "tittel": "BREEAM NOR",
+                            "KravKravpakkerJunction": {
+                                "id": 1,
+                                "kravId": 1,
+                                "kravType": "Krav",
+                                "kravpakkeId": 1,
+                                "createdAt": "2025-09-02T19:43:26.136Z",
+                                "updatedAt": "2025-09-02T19:43:26.136Z"
+                            }
+                        }
+                    ],
+                    "files": []
+                },
+                {
+                    "id": 2,
+                    "kravUID": "GK2",
+                    "tittel": "TestKrav_2",
+                    "beskrivelse": {
+                        "type": "doc",
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "text": "Dette er et underkrav med TipTap JSON format",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "informasjon": {
+                        "type": "doc",
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "text": "Informasjon om underkravet",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "beskrivelsePlain": "Dette er et underkrav med TipTap JSON format",
+                    "informasjonPlain": "Informasjon om underkravet",
+                    "beskrivelseSnippet": "Dette er et underkrav med TipTap JSON format",
+                    "informasjonSnippet": "Informasjon om underkravet",
+                    "kravreferansetypeId": 1,
+                    "kravreferanse": "Forurensingsforskriften kap2",
+                    "obligatorisk": false,
+                    "prioritet": 15,
+                    "givenOrder": 1,
+                    "parentId": 1,
+                    "versjon": "V 1.0.0",
+                    "kravStatus": "baseline",
+                    "merknader": "Testmerknad for kravet",
+                    "vurderingId": 1,
+                    "statusId": 1,
+                    "emneId": 1,
+                    "enhetId": 1,
+                    "createdBy": 1,
+                    "updatedBy": 1,
+                    "createdAt": "2025-09-02T19:43:26.089Z",
+                    "updatedAt": "2025-09-02T19:43:26.095Z",
+                    "enhet": {
+                        "id": 1,
+                        "navn": "Veidekke"
+                    },
+                    "emne": {
+                        "id": 1,
+                        "tittel": "Støy",
+                        "icon": "Volume2",
+                        "color": "#ef4444",
+                        "sortIt": 1
+                    },
+                    "status": {
+                        "id": 1,
+                        "navn": "Ferdig",
+                        "sortIt": 1,
+                        "icon": "CheckCircle",
+                        "color": "#22c55e"
+                    },
+                    "vurdering": {
+                        "id": 1,
+                        "navn": "Bra",
+                        "sortIt": 1,
+                        "icon": "Star",
+                        "color": "#22c55e"
+                    },
+                    "kravreferanseType": {
+                        "id": 1,
+                        "tittel": "Kontraktskrav"
+                    },
+                    "parent": {
+                        "id": 1,
+                        "kravUID": "GK1",
+                        "tittel": "TestKrav",
+                        "beskrivelse": {
+                            "type": "doc",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "text": "Dette er et testkrav med riktig TipTap JSON format",
+                                            "type": "text"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        "emneId": 1
+                    },
+                    "children": [],
+                    "creator": {
+                        "id": 1,
+                        "navn": "Admin"
+                    },
+                    "updater": {
+                        "id": 1,
+                        "navn": "Admin"
+                    },
+                    "lover": [],
+                    "kravpakker": [],
+                    "files": []
+                }
+            ]
+        }
+    ],
+    "totalCount": 1,
+    "page": 1,
+    "pageSize": 50,
+    "totalPages": 1
+}

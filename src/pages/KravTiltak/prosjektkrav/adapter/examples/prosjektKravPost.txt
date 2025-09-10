@@ -1,0 +1,59 @@
+{
+    "beskrivelseSnippet": "ads",
+    "informasjonSnippet": "",
+    "id": 11,
+    "kravUID": "PK11",
+    "tittel": "asdf",
+    "beskrivelse": "<p class=\"mb-3 text-foreground\">ads</p>",
+    "informasjon": null,
+    "beskrivelsePlain": "ads",
+    "informasjonPlain": null,
+    "kravreferansetypeId": null,
+    "kravreferanse": null,
+    "obligatorisk": false,
+    "prioritet": null,
+    "givenOrder": null,
+    "parentId": null,
+    "versjon": null,
+    "kravStatus": null,
+    "merknader": null,
+    "vurderingId": null,
+    "statusId": null,
+    "emneId": 5,
+    "enhetId": 2,
+    "createdBy": 2,
+    "updatedBy": 2,
+    "projectId": 1,
+    "generalKravId": null,
+    "createdAt": "2025-09-08T21:53:40.381Z",
+    "updatedAt": "2025-09-08T21:53:40.395Z",
+    "enhet": {
+        "id": 2,
+        "navn": "Infrastruktur"
+    },
+    "emne": {
+        "id": 5,
+        "tittel": "Vibrasjoner2",
+        "icon": "Activity",
+        "color": "#10b981",
+        "sortIt": 5
+    },
+    "status": null,
+    "vurdering": null,
+    "kravreferanseType": null,
+    "parent": null,
+    "children": [],
+    "creator": {
+        "id": 2,
+        "navn": "Testbruker ikke restricted"
+    },
+    "updater": {
+        "id": 2,
+        "navn": "Testbruker ikke restricted"
+    },
+    "files": [],
+    "generalKrav": null,
+    "prosjektTiltak": [],
+    "lover": [],
+    "kravpakker": []
+}

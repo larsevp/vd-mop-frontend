@@ -6,14 +6,19 @@ export default function ScrollToTop() {
   const prevPathnameRef = useRef(pathname);
 
   useEffect(() => {
-    // Only scroll to top if the pathname actually changed (not just hash)
-    // and the hash is not "#" (which is used by pagination)
-    // and it's not a workspace route (to preserve scroll position on entity selection)
-    const isWorkspaceRoute = pathname.includes('-workspace');
+    // Industry standard: scroll to top on route navigation
+    // Only skip scrolling if:
+    // 1. Hash navigation (same page, different section)
+    // 2. Same pathname (hash-only changes)
     
-    if (prevPathnameRef.current !== pathname && hash !== "#" && !isWorkspaceRoute) {
+    const pathnameChanged = prevPathnameRef.current !== pathname;
+    const isHashNavigation = hash && hash !== "#";
+    
+    if (pathnameChanged && !isHashNavigation) {
+      // Industry standard: instant scroll to top on route change
       window.scrollTo(0, 0);
     }
+    
     prevPathnameRef.current = pathname;
   }, [pathname, hash]);
 

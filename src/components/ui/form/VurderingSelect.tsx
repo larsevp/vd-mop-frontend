@@ -14,6 +14,8 @@ interface VurderingSelectProps {
   className?: string;
   allowEmpty?: boolean;
   emptyLabel?: string;
+  // Dynamic filtering support
+  availableIds?: number[]; // Optional: limit to only these IDs (for dynamic filtering)
 }
 
 interface VurderingCheckboxGroupProps {

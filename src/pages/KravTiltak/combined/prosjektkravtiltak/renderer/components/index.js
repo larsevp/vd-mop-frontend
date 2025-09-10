@@ -1,0 +1,1 @@
+export { default as ProsjektKravTiltakCombinedCard } from './ProsjektKravTiltakCombinedCard.jsx';

@@ -1,15 +1,7 @@
 // Main exports for EntityWorkspace system
-export { default as EntityWorkspace } from "./EntityWorkspace.jsx";
-export { default as EntityWorkspaceCore } from "./EntityWorkspaceCore.jsx";
+export { default as EntityWorkspace } from "./EntityWorkspaceNew.jsx";
+export { default as EntityWorkspaceNew } from "./EntityWorkspaceNew.jsx";
 
-// Export remaining hooks
-export { useEntityData } from "./hooks/useEntityData.js";
-export { useEntityPermissions } from "./hooks/useEntityPermissions.js";
-
-// Export services
-export { EntityFilterService } from "./services/EntityFilterService.js";
-export { EntityPermissionService } from "./services/EntityPermissionService.js";
-export { EntityTypeResolver } from "./services/EntityTypeResolver.js";
-
-// Re-export shared components for convenience
-export * from "./shared";
+// Simple interface hooks  
+export { useEntityData, useCombinedEntityData, useProjectEntityData } from "./interface/hooks/useEntityData.js";
+export { useWorkspaceUI, useEntitySelection, useSearchFilters } from "./interface/hooks/useWorkspaceUI.js";

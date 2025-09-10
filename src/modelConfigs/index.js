@@ -40,3 +40,6 @@ export function getModelConfig(modelType) {
   }
   return modelConfigs[modelType];
 }
+
+// Export workspace config utilities
+export { transformWorkspaceConfig, validateWorkspaceConfig, createWorkspaceConfigBuilder } from "./utils/workspaceConfigTransform.js";

@@ -1,0 +1,1 @@
+export { ProsjektTiltakAdapter, createProsjektTiltakAdapter } from './ProsjektTiltakAdapter.js';

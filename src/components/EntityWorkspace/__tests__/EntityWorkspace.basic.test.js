@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { ConfigProcessor } from '../services/ConfigProcessor';
+import { ConfigProcessor } from '../implementations/kravTiltak/services/ConfigProcessor';
 
 describe('EntityWorkspace Refactored Components', () => {
   
@@ -39,8 +39,8 @@ describe('EntityWorkspace Refactored Components', () => {
 
   describe('Services Integration', () => {
     it('should have all required services available', async () => {
-      const { EntityTypeResolver } = await import('../services/EntityTypeResolver');
-      const { useCacheService } = await import('../services/CacheService');
+      const { EntityTypeResolver } = await import('../implementations/kravTiltak/services/EntityTypeResolver');
+      const { useCacheService } = await import('../implementations/kravTiltak/services/CacheService');
       
       expect(EntityTypeResolver).toBeDefined();
       expect(useCacheService).toBeDefined();
@@ -57,7 +57,7 @@ describe('EntityWorkspace Refactored Components', () => {
 
 describe('EntityWorkspace Store', () => {
   it('should be importable', async () => {
-    const { default: useEntityWorkspaceStore } = await import('../stores/entityWorkspaceStore');
+    const { default: useEntityWorkspaceStore } = await import('../implementations/kravTiltak/stores/entityWorkspaceStore');
     expect(useEntityWorkspaceStore).toBeDefined();
   });
 });
