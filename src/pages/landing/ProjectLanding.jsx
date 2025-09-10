@@ -1,11 +1,12 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowRight, FolderOpen, Plus, Book, Users, CheckSquare, Briefcase, Download, ArrowLeft, Calendar, Building2 } from "lucide-react";
+import { ArrowRight, FolderOpen, Plus, Book, Users, CheckSquare, Briefcase, Download, ArrowLeft, Calendar, Building2, FileText, X } from "lucide-react";
 import { getProsjekter, getProsjektById } from "@/api/endpoints";
 import { useQuery } from "@tanstack/react-query";
 import { useUserStore, useProjectStore } from "@/stores/userStore";
 import { SimpleCard } from "@/components/ui";
 import { useRecentProjectsStore } from "@/stores/recentProjectsStore";
+import { ExpandableRichText } from "@/components/tableComponents/displayValues/ExpandableRichText";
 
 export default function ProjectLanding() {
   const { user } = useUserStore();
@@ -13,6 +14,7 @@ export default function ProjectLanding() {
   const navigate = useNavigate();
   const { prosjektId } = useParams();
   const isAdmin = user?.rolle === "ADMIN";
+  const [showFullDescription, setShowFullDescription] = useState(false);
 
   // Use the store for consistent project visit tracking
   const { trackProjectVisit } = useRecentProjectsStore();
@@ -57,6 +59,25 @@ export default function ProjectLanding() {
       }
     }
   }, [isIndividualProjectView, projectData, trackProjectVisit]);
+
+  // Handle escape key for closing modal
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && showFullDescription) {
+        setShowFullDescription(false);
+      }
+    };
+    
+    if (showFullDescription) {
+      document.addEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'hidden'; // Prevent background scroll
+    }
+    
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'unset';
+    };
+  }, [showFullDescription]);
 
   const projects = data || [];
 
@@ -139,11 +160,30 @@ export default function ProjectLanding() {
                     Tilbake til prosjekter
                   </Link>
                 </div>
-                <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{project.navn || "Uten navn"}</h1>
-                <p className="text-primary-100 mt-2">Prosjektnummer: {project.prosjektnummer || "N/A"}</p>
-                {project.beskrivelse && (
-                  <p className="text-primary-200 mt-2 max-w-2xl">{project.beskrivelseSnippet || project.beskrivelse}</p>
-                )}
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{project.navn || "Uten navn"}</h1>
+                    <p className="text-primary-100 mt-2">Prosjektnummer: {project.prosjektnummer || "N/A"}</p>
+                    {project.beskrivelse && (
+                      <div className="mt-2 max-w-2xl">
+                        <p className="text-primary-200">{project.beskrivelseSnippet || 
+                          (typeof project.beskrivelse === 'string' ? 
+                            project.beskrivelse.replace(/<[^>]*>/g, '').substring(0, 100) + '...' : 
+                            'Se fullstendig beskrivelse')
+                        }</p>
+                      </div>
+                    )}
+                  </div>
+                  {project.beskrivelse && (
+                    <button
+                      onClick={() => setShowFullDescription(true)}
+                      className="ml-4 inline-flex items-center gap-2 px-3 py-2 bg-primary-800 hover:bg-primary-700 text-white rounded-lg transition-colors text-sm font-medium"
+                    >
+                      <FileText size={16} />
+                      Vis fullstendig beskrivelse
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="hidden md:flex items-center space-x-4 text-primary-200">
                 {project.enhet && (
@@ -160,6 +200,38 @@ export default function ProjectLanding() {
             </div>
           </div>
         </section>
+
+        {/* Full Description Modal */}
+        {showFullDescription && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+            onClick={() => setShowFullDescription(false)}
+          >
+            <div 
+              className="bg-white rounded-xl max-w-4xl w-full max-h-[80vh] overflow-hidden shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <h2 className="text-xl font-bold text-gray-900">Prosjektbeskrivelse</h2>
+                <button
+                  onClick={() => setShowFullDescription(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X size={20} className="text-gray-500" />
+                </button>
+              </div>
+              <div className="p-6 overflow-y-auto max-h-[calc(80vh-120px)]">
+                <div className="prose max-w-none">
+                  <ExpandableRichText 
+                    content={project.beskrivelse} 
+                    maxLength={Infinity}
+                    className="text-gray-900"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Main content */}
         <section className="max-w-screen-xl mx-auto px-4 py-12 sm:px-6 md:px-8">
