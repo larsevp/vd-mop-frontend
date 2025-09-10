@@ -57,13 +57,18 @@ export const useLastVisitedProjects = () => {
 
       // Optimistically update the cache
       queryClient.setQueryData(["lastVisitedProjects"], (old) => {
-        if (!old?.data) return old;
-
         const currentTime = new Date().toISOString();
         const projectWithTimestamp = {
           ...visitedProject,
           lastVisited: currentTime
         };
+
+        // If no existing data, create new structure
+        if (!old?.data || !Array.isArray(old.data)) {
+          return {
+            data: [{ project: projectWithTimestamp, updatedAt: currentTime }]
+          };
+        }
 
         // Remove the project if it already exists in the list
         const filteredProjects = old.data
@@ -94,6 +99,10 @@ export const useLastVisitedProjects = () => {
     },
     onSuccess: () => {
       // Invalidate and refetch after successful backend update
+      queryClient.invalidateQueries({ queryKey: ["lastVisitedProjects"] });
+    },
+    onSettled: () => {
+      // Force re-render by invalidating cache regardless of success/failure
       queryClient.invalidateQueries({ queryKey: ["lastVisitedProjects"] });
     },
   });

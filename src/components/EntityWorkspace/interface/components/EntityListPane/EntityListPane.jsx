@@ -142,8 +142,8 @@ const EntityListPane = ({
       return collapsedGroups.has(groupKey);
     });
 
-  const handleEntitySelect = (entity) => {
-    onEntitySelect?.(entity);
+  const handleEntitySelect = (entity, action) => {
+    onEntitySelect?.(entity, action);
   };
 
   const handleEntityDoubleClick = (entity) => {
@@ -182,7 +182,9 @@ const EntityListPane = ({
             // Grouped rendering (with emne headers)
             <div>
               {groupedItems.map((groupData, groupIndex) => {
-                const groupKey = `${entityType}-group-${groupData.group.emne?.id || "no-emne"}-${groupIndex}`;
+                // Create a more unique groupKey by including item IDs to handle duplicate emne contexts
+                const itemIds = (groupData.items || []).map(item => item.id || item.renderId).join('-');
+                const groupKey = `${entityType}-group-${groupData.group.emne?.id || "no-emne"}-${groupIndex}-${itemIds.substring(0, 20)}`;
                 const isCollapsed = collapsedGroups.has(groupKey);
                 const groupItems = groupData.items;
 
@@ -200,18 +202,27 @@ const EntityListPane = ({
                     {!isCollapsed && (
                       <div className={isCardsMode ? "space-y-2 px-2 pb-2" : ""}>
                         {groupItems.map(
-                          (entity, index) =>
-                            EntityListCard &&
+                          (entity, index) => {
+                            // Create truly unique key using related krav context when available
+                            // _relatedToKrav is a string number, not an object
+                            const relatedKravId = entity._relatedToKrav || entity.parentId || '';
+                            const uniqueKey = relatedKravId 
+                              ? `${groupKey}-${entity.renderId}-related-${relatedKravId}`
+                              : `${groupKey}-${entity.renderId}`;
+                              
+                            return EntityListCard &&
                             EntityListCard(entity, {
-                              key: entity.renderId,
+                              key: uniqueKey,
                               "data-entity-id": entity.renderId,
-                              isSelected: entity.renderId === selectedEntityId,
+                              isSelected: entity.renderId === selectedEntityId || `${groupKey}-${entity.renderId}` === selectedEntityId,
+                              editMode: entity.renderId === selectedEntityId && new URLSearchParams(window.location.search).get("editCard") === "true",
                               isFocused: focusedIndex === index,
                               onClick: handleEntitySelect,
                               onDoubleClick: handleEntityDoubleClick,
                               viewOptions: externalViewOptions,
                               onSave: onSave, // Pass onSave to renderer
-                            })
+                            });
+                          }
                         )}
                       </div>
                     )}
@@ -223,18 +234,24 @@ const EntityListPane = ({
             // Flat rendering (no emne groups)
             <div className={isCardsMode ? "space-y-2 p-2" : ""}>
               {allItems.map(
-                (entity, index) =>
-                  EntityListCard &&
+                (entity, index) => {
+                  // For non-grouped view, only select first occurrence of duplicate entities
+                  const isFirstOccurrence = allItems.findIndex(e => e.renderId === entity.renderId) === index;
+                  const isEntitySelected = entity.renderId === selectedEntityId;
+                  
+                  return EntityListCard &&
                   EntityListCard(entity, {
                     key: entity.renderId,
                     "data-entity-id": entity.renderId,
-                    isSelected: entity.renderId === selectedEntityId,
+                    isSelected: isEntitySelected && isFirstOccurrence,
+                    editMode: entity.renderId === selectedEntityId && new URLSearchParams(window.location.search).get("editCard") === "true",
                     isFocused: focusedIndex === index,
                     onClick: handleEntitySelect,
                     onDoubleClick: handleEntityDoubleClick,
                     viewOptions: externalViewOptions,
                     onSave: onSave, // Pass onSave to renderer
-                  })
+                  });
+                }
               )}
             </div>
           )}

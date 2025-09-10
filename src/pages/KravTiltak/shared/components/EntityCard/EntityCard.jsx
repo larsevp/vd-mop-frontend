@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Eye } from 'lucide-react';
+import { Eye, Edit, Trash2 } from 'lucide-react';
 import { DisplayValueResolver } from "@/components/tableComponents/displayValues/DisplayValueResolver.jsx";
 
 // Import helpers
-import { truncateText, getEntityTitle } from './helpers/textHelpers';
+import { truncateText, getEntityTitle, formatCardText } from './helpers/textHelpers';
 import { getIcon } from './helpers/iconHelpers.jsx';
 import { getStatusDisplay, getVurderingDisplay, getPrioritetDisplay } from '../../utils/statusHelpers';
 import { getSpecialReference, getParentReference } from './helpers/referenceHelpers.jsx';
@@ -33,6 +33,7 @@ const EntityCard = ({
   config = {},
   onFieldSave,
   editingDisabled = false,
+  editMode = false,
   'data-entity-id': dataEntityId,
   ...restProps
 }) => {
@@ -73,7 +74,7 @@ const EntityCard = ({
   
   // Use shared form hook when inline editing is active
   const { formData, handleFieldChange } = useEntityForm(
-    isSelected && onFieldSave ? entity : null, 
+    editMode && onFieldSave ? entity : null, 
     allFields, 
     modelName
   );
@@ -86,11 +87,15 @@ const EntityCard = ({
     const isInsideSelect = target.closest('[role="combobox"], [role="listbox"], [data-radix-select-trigger], [data-radix-select-content]');
     const isInsideRadixSelect = target.closest('[data-radix-collection-item], [data-state], .obligatorisk-field');
     
-    if (isInteractiveElement || isInsideSelect || isInsideRadixSelect) {
+    // Also check if the click originated from our action buttons specifically
+    const isActionButton = target.closest('button[title="Rediger (trykk E)"], button[title="Slett"]');
+    
+    if (isInteractiveElement || isInsideSelect || isInsideRadixSelect || isActionButton) {
       return;
     }
     
-    onClick(entity);
+    // Just select the card, don't go into edit mode
+    onClick(entity, 'select');
   };
 
   const handleDoubleClick = () => {
@@ -101,7 +106,7 @@ const EntityCard = ({
   const title = getEntityTitle(entity, config);
   const uid = entity[config.uidField] || entity.uid;
   const isExpandedCards = viewOptions.viewMode === 'cards';
-  const shouldIndent = entity.parentId;
+  const shouldIndent = entity.parentId || entity._relatedToKrav;
 
   /**
    * Get description content based on view mode
@@ -180,14 +185,63 @@ const EntityCard = ({
     };
   }, []);
 
+  // Keyboard shortcut handling - "e" for edit when selected
+  useEffect(() => {
+    if (!isSelected) return;
+
+    const handleKeyPress = (event) => {
+      const activeElement = document.activeElement;
+      const isInputFocused = ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeElement?.tagName) || 
+                            activeElement?.contentEditable === 'true';
+      const isTextareaFocused = activeElement?.tagName === 'TEXTAREA';
+      
+      // Handle Enter key for single-line inputs in edit mode
+      if (event.key === 'Enter' && editMode && viewOptions?.viewMode === 'cards' && isInputFocused && !isTextareaFocused) {
+        event.preventDefault();
+        onClick(entity, 'select'); // Exit edit mode with Enter
+        return;
+      }
+
+      // Handle Escape key in edit mode (works regardless of focus)
+      if (event.key === 'Escape' && editMode && viewOptions?.viewMode === 'cards') {
+        event.preventDefault();
+        onClick(entity, 'select'); // Exit edit mode with ESC
+        return;
+      }
+
+      // For other keys, only handle if no input/textarea is focused and no modifiers are pressed
+      if (isInputFocused || event.ctrlKey || event.metaKey || event.altKey) {
+        return;
+      }
+
+      if (event.key.toLowerCase() === 'e') {
+        event.preventDefault();
+        if (viewOptions?.viewMode === 'cards') {
+          // Toggle edit mode in cards view
+          if (editMode) {
+            onClick(entity, 'select'); // Exit edit mode
+          } else {
+            onClick(entity, 'editCard'); // Enter edit mode
+          }
+        } else {
+          // In split mode, always use 'edit' action (opens detail pane)
+          onClick(entity, 'edit');
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, [isSelected, onClick, entity]);
+
   const renderStatusField = (fieldName, displayFn, label) => {
     const display = displayFn(entity);
-    // Show field if it's selected and editable, even if no current value
-    const shouldShowField = display || (isSelected && onFieldSave && !editingDisabled);
+    // Show field if it's in edit mode and editable, even if no current value
+    const shouldShowField = display || (editMode && onFieldSave && !editingDisabled);
     if (!shouldShowField) return null;
 
-    // When selected and onFieldSave is available, render the form field
-    if (isSelected && onFieldSave && !editingDisabled) {
+    // When in edit mode and onFieldSave is available, render the form field
+    if (editMode && onFieldSave && !editingDisabled) {
       const fieldConfig = getFieldConfig(fieldName);
       if (fieldConfig) {
         const FieldComponent = FieldResolver.getFieldComponent(fieldConfig, entity.entityType);
@@ -251,36 +305,25 @@ const EntityCard = ({
     <div
       data-entity-id={dataEntityId}
       className={`
-        relative cursor-pointer block w-full
+        relative cursor-pointer block ${shouldIndent && isExpandedCards ? '' : 'w-full'}
         ${isExpandedCards 
-          ? `bg-white rounded-xl shadow-sm hover:shadow-md mb-8 p-8 ${isSelected ? 'border-2 border-blue-300 bg-blue-50' : 'border border-gray-200'}`
+          ? `bg-white rounded-xl shadow-sm hover:shadow-md mb-8 p-8 ${shouldIndent ? 'ml-8' : ''} ${isSelected ? 'border-2 border-blue-300 bg-blue-50' : 'border border-gray-200'}`
           : `mb-1 px-4 py-3 ${isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'} ${shouldIndent ? 'relative' : ''}`
         }
       `}
+      style={shouldIndent && isExpandedCards ? { width: 'calc(100% - 2rem)' } : undefined}
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
     >
 
-      <div className={shouldIndent ? 'ml-8' : ''}>
+      <div className={isExpandedCards ? '' : (shouldIndent ? 'ml-8' : '')}>
         {isExpandedCards ? (
           /* 🎨 CARDS MODE - Main content on left, status box on right */
         <div className="flex gap-4">
           {/* Main content area */}
           <div className="flex-1">
-            {/* Line 1: Complete metadata header */}
+            {/* Line 1: Special and parent references */}
             <div className="flex items-center gap-2 mb-1 min-w-0 overflow-hidden">
-              {/* Entity type indicator */}
-              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${config.badgeColor}`}>
-                {config.badgeText}
-              </span>
-              
-              {/* UID */}
-              {uid && (
-                <span className={`text-xs font-mono px-1.5 py-0.5 rounded font-medium ${config.badgeColor}`}>
-                  [{uid}]
-                </span>
-              )}
-
               {/* Special reference (e.g., generalTiltak) */}
               {getSpecialReference(entity)}
 
@@ -288,9 +331,62 @@ const EntityCard = ({
               {getParentReference(entity)}
             </div>
 
-            {/* Line 2: Title */}
-            <div className="mb-2">
-              <span className="font-medium text-gray-900 text-base">{title}</span>
+            {/* Line 2: Badge, UID, Title, and action buttons */}
+            <div className="mb-2 flex items-center justify-between">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                {/* Entity type indicator - bigger */}
+                <span className={`text-sm font-medium px-2.5 py-1 rounded ${config.badgeColor}`}>
+                  {config.badgeText}
+                </span>
+                
+                {/* UID - bigger */}
+                {uid && (
+                  <span className={`text-sm font-mono px-2 py-1 rounded font-medium ${config.badgeColor}`}>
+                    [{uid}]
+                  </span>
+                )}
+                
+                <span className="font-medium text-gray-900 text-base">{title}</span>
+              </div>
+              {/* Action buttons for cards mode - Only show when selected */}
+              {isSelected && (
+                <div className="flex gap-1 ml-4">
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (editMode) {
+                        // Exit edit mode by selecting without edit
+                        onClick(entity, 'select');
+                      } else {
+                        // Enter edit mode
+                        onClick(entity, 'editCard');
+                      }
+                    }}
+                    className={`px-2 py-1 text-xs font-medium rounded hover:bg-blue-100 transition-colors duration-150 flex items-center gap-1 ${
+                      editMode 
+                        ? 'text-green-600 bg-green-50 hover:bg-green-100' 
+                        : 'text-blue-600 bg-blue-50'
+                    }`}
+                    title={editMode ? "Avslutt redigering" : "Rediger (trykk E)"}
+                  >
+                    <Edit className="w-3 h-3" />
+                    {editMode ? 'Avslutt redigering' : 'Rediger'}
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onClick(entity, 'delete');
+                    }}
+                    className="px-2 py-1 text-xs font-medium text-red-600 bg-red-50 rounded hover:bg-red-100 transition-colors duration-150 flex items-center gap-1"
+                    title="Slett"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    Slett
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Line 3: Rich description - MAIN DIFFERENCE: Full rich text in cards */}
@@ -302,7 +398,7 @@ const EntityCard = ({
 
             {/* Merknad */}
             {viewOptions.showMerknad && (
-              isSelected && onFieldSave && !editingDisabled && isExpandedCards ? (
+              editMode && onFieldSave && !editingDisabled && isExpandedCards ? (
                 <div className="text-sm bg-amber-50 rounded px-2 py-1 mb-3" onClick={(e) => e.stopPropagation()}>
                   <span className="text-xs font-medium text-amber-800">Merknad:</span>
                   <div className="mt-1">
@@ -349,9 +445,12 @@ const EntityCard = ({
                   </div>
                 </div>
               ) : (
-                merknadValue ? (
+                (formData[merknadFieldName] || merknadValue) ? (
                   <div className="text-sm text-amber-700 bg-amber-50 rounded px-2 py-1 mb-3">
-                    <span className="text-xs font-medium text-amber-800">Merknad:</span> {truncateText(merknadValue, 100)}
+                    <span className="text-xs font-medium text-amber-800">Merknad:</span>
+                    <div className="mt-1 whitespace-pre-wrap">
+                      {formatCardText(formData[merknadFieldName] || merknadValue, isExpandedCards)}
+                    </div>
                   </div>
                 ) : (
                   <div className="text-sm text-amber-700 bg-amber-50 rounded px-2 py-1 mb-3 opacity-60">
@@ -407,7 +506,7 @@ const EntityCard = ({
               {viewOptions.showPrioritet && renderStatusField('prioritet', getPrioritetDisplay, 'Prioritet')}
               
               {viewOptions.showObligatorisk && entity.obligatorisk !== undefined && (
-                isSelected && onFieldSave && !editingDisabled ? (
+                editMode && onFieldSave && !editingDisabled ? (
                   <div 
                     className="flex items-center gap-1 py-1"
                     onClick={(e) => e.stopPropagation()}
@@ -475,7 +574,7 @@ const EntityCard = ({
                     e.stopPropagation(); // Prevent triggering the card click
                     handleDoubleClick();
                   }}
-                  className="w-full px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-150 flex items-center justify-center gap-2"
+                  className="w-full px-3 py-2 text-sm font-medium text-gray-600 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-150 flex items-center justify-center gap-2"
                 >
                   <Eye className="w-4 h-4" />
                   Vis detaljer
@@ -487,22 +586,10 @@ const EntityCard = ({
       ) : (
         /* 📋 SPLIT MODE - Compact table-like layout */
         <>
-          {/* Line 1: Complete metadata header - Entity type + UID + Status indicators */}
+          {/* Line 1: Special and parent references with status indicators */}
           <div className="flex items-center justify-between gap-2 mb-1 min-w-0">
-            {/* Left side: Entity type + UID + References */}
+            {/* Left side: References */}
             <div className="flex items-center gap-2 flex-shrink-0 min-w-0 overflow-hidden">
-              {/* Entity type indicator */}
-              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${config.badgeColor}`}>
-                {config.badgeText}
-              </span>
-              
-              {/* UID */}
-              {uid && (
-                <span className={`text-xs font-mono px-1.5 py-0.5 rounded font-medium ${config.badgeColor}`}>
-                  [{uid}]
-                </span>
-              )}
-
               {/* Special reference (e.g., generalTiltak) */}
               {getSpecialReference(entity)}
 
@@ -528,9 +615,23 @@ const EntityCard = ({
             </div>
           </div>
 
-          {/* Line 2: Title (full width, prominent) */}
-          <div className="mb-1">
-            <span className="font-medium text-gray-900">{title}</span>
+          {/* Line 2: Badge, UID, Title, and action buttons */}
+          <div className="mb-1 flex items-center justify-between">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              {/* Entity type indicator - bigger */}
+              <span className={`text-sm font-medium px-2.5 py-1 rounded ${config.badgeColor}`}>
+                {config.badgeText}
+              </span>
+              
+              {/* UID - bigger */}
+              {uid && (
+                <span className={`text-sm font-mono px-2 py-1 rounded font-medium ${config.badgeColor}`}>
+                  [{uid}]
+                </span>
+              )}
+              
+              <span className="font-medium text-gray-900">{title}</span>
+            </div>
           </div>
 
           {/* Line 3: Description preview (full width, readable) */}
@@ -542,7 +643,7 @@ const EntityCard = ({
 
           {/* Merknad if defined and enabled */}
           {viewOptions.showMerknad && (
-            isSelected && onFieldSave && !editingDisabled && isExpandedCards ? (
+            editMode && onFieldSave && !editingDisabled && isExpandedCards ? (
               <div className="text-sm bg-amber-50 rounded px-2 py-1 mb-2" onClick={(e) => e.stopPropagation()}>
                 <span className="text-xs font-medium text-amber-800">Merknad:</span>
                 <div className="mt-1">
@@ -589,9 +690,9 @@ const EntityCard = ({
                 </div>
               </div>
             ) : (
-              merknadValue ? (
+              (formData[merknadFieldName] || merknadValue) ? (
                 <div className="text-sm text-amber-700 bg-amber-50 rounded px-2 py-1 mb-2">
-                  <span className="text-xs font-medium text-amber-800">Merknad:</span> {truncateText(merknadValue, 100)}
+                  <span className="text-xs font-medium text-amber-800">Merknad:</span> {truncateText(formData[merknadFieldName] || merknadValue, 100)}
                 </div>
               ) : (
                 <div className="text-sm text-amber-700 bg-amber-50 rounded px-2 py-1 mb-2 opacity-60">

@@ -177,8 +177,53 @@ const EntityWorkspaceNew = ({
 
   // Event handlers
   const handleEntitySelect = useCallback(
-    (entity) => {
-      // Ensure entity goes through DTO enhancement before selection
+    (entity, action = 'select') => {
+      if (action === 'delete') {
+        // Handle delete action - call delete directly to avoid dependency issues
+        dto.delete(entity).then(() => {
+          refetch(); // Refresh the list after successful delete
+          // Clear selection if we deleted the selected entity
+          if (ui.selectedEntity?.id === entity.id) {
+            ui.setSelectedEntity(null);
+          }
+        }).catch(error => {
+          console.error("Delete failed:", error);
+          // You might want to show a toast notification here
+        });
+        return;
+      }
+      
+      if (action === 'edit') {
+        // Handle edit action - select entity and switch to split view
+        const enhancedEntity = entity ? dto.enhanceEntity(entity) : null;
+        ui.setSelectedEntity(enhancedEntity);
+        ui.setViewMode("split");
+        
+        // Update URL with selected entity ID
+        if (entity && entity.id) {
+          const currentPath = window.location.pathname;
+          const newUrl = `${currentPath}?selected=${entity.id}`;
+          window.history.replaceState(null, "", newUrl);
+        }
+        return;
+      }
+      
+      if (action === 'editCard') {
+        // Handle editCard action - select entity and enable inline card editing
+        const enhancedEntity = entity ? dto.enhanceEntity(entity) : null;
+        ui.setSelectedEntity(enhancedEntity);
+        // Stay in current view mode but enable card editing
+        
+        // Update URL with selected entity ID
+        if (entity && entity.id) {
+          const currentPath = window.location.pathname;
+          const newUrl = `${currentPath}?selected=${entity.id}&editCard=true`;
+          window.history.replaceState(null, "", newUrl);
+        }
+        return;
+      }
+      
+      // Default 'select' action - just select without changing view
       const enhancedEntity = entity ? dto.enhanceEntity(entity) : null;
       ui.setSelectedEntity(enhancedEntity);
 
@@ -195,7 +240,7 @@ const EntityWorkspaceNew = ({
         window.history.replaceState(null, "", currentPath);
       }
     },
-    [ui.setSelectedEntity, debug]
+    [ui.setSelectedEntity, ui.setViewMode, dto, refetch, ui.selectedEntity, debug]
   );
 
   const handleSearch = useCallback(() => {
@@ -307,7 +352,21 @@ const EntityWorkspaceNew = ({
 
         // Let DTO handle post-save logic (selection, scrolling, etc.)
         // Pass the entity type context for proper dependency injection (DTO normalized)
-        dto.onSaveComplete(result, !isUpdate, handleEntitySelect, entityType);
+        // Check if we're in edit card mode before letting DTO override selection
+        const urlParams = new URLSearchParams(window.location.search);
+        const isInEditCardMode = urlParams.get("editCard") === "true";
+        
+        if (isInEditCardMode) {
+          // If we're in edit card mode, preserve it after save by not letting DTO change selection
+          // Just refresh the selected entity without changing URL
+          // Extract the actual data from the response if it's an Axios response
+          const entityData = result?.data || result;
+          const updatedEntity = dto.enhanceEntity(entityData);
+          ui.setSelectedEntity(updatedEntity);
+        } else {
+          // Normal post-save behavior
+          dto.onSaveComplete(result, !isUpdate, handleEntitySelect, entityType);
+        }
 
         return result;
       } catch (error) {
@@ -465,8 +524,8 @@ const EntityWorkspaceNew = ({
                 items={entities}
                 entityType={entityType}
                 selectedEntity={ui.selectedEntity}
-                onEntitySelect={(entity) => {
-                  handleEntitySelect(entity);
+                onEntitySelect={(entity, action) => {
+                  handleEntitySelect(entity, action);
                   // Single click just selects - don't auto-switch to split view
                 }}
                 onEntityDoubleClick={(entity) => {
