@@ -1,6 +1,6 @@
 import React from "react";
 import { EntityWorkspace } from "@/components/EntityWorkspace";
-import { prosjektTiltak as prosjektTiltakConfig } from "@/modelConfigs/models/prosjektTiltak.js";
+import { prosjektTiltak as prosjektTiltakConfig } from "@/modelConfigs/models/prosjektTiltak";
 import { createSingleEntityDTO } from "@/components/EntityWorkspace/interface/data";
 import { createProsjektTiltakAdapter } from "./adapter";
 import { renderEntityCard, renderGroupHeader, renderDetailPane, renderSearchBar, getAvailableViewOptions } from "./renderer";
@@ -86,7 +86,7 @@ const ProsjektTiltakWorkspace = () => {
         />
       )}
       viewOptions={viewOptions}
-      debug={true}
+      debug={false}
     />
   );
 };

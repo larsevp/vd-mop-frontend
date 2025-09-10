@@ -77,6 +77,7 @@ const EntityWorkspaceNew = ({
     enabled: !!dto,
   });
 
+
   const entities = result?.items || [];
   const entityType = dto?.entityType || dto?.getPrimaryEntityType?.() || "entities";
 
@@ -436,6 +437,7 @@ const EntityWorkspaceNew = ({
                 onAdditionalFiltersChange={(additionalFilters) => ui.setFilters({ additionalFilters })}
                 filterConfig={dto?.getFilterConfig?.()}
                 availableFilters={result?.availableFilters || {}}
+                viewOptions={viewOptions}
               />
             </div>
 

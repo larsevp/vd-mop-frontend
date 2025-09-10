@@ -1,6 +1,6 @@
 import React from 'react';
 import { EntityDetailPane } from '../../shared';
-import { tiltak as tiltakConfig } from '@/modelConfigs/models/tiltak.js';
+import { tiltak as tiltakConfig } from '@/modelConfigs/models/tiltak';
 
 /**
  * TiltakDetailRenderer - Domain-specific detail renderer

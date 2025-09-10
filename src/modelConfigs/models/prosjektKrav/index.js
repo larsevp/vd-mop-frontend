@@ -1,15 +1,15 @@
 /**
- * Krav Model Configuration - Barrel Export
- * Combines all krav model configuration parts into a unified export
+ * ProsjektKrav Model Configuration - Barrel Export
+ * Combines all prosjektKrav model configuration parts into a unified export
  */
 
 import { metadata } from "./metadata.js";
-import { queryFunctions } from "./queryFunctions.js";
+import { prosjektKrav as queryFunctions } from "./queryFunctions.js";
 import { workspaceConfig } from "./workspaceConfig.js";
 import { fields } from "./fields.js";
 
 // Combine all configuration parts
-export const prosjektTiltak = {
+export const prosjektKrav = {
   ...metadata,
   ...queryFunctions,
   ...workspaceConfig,

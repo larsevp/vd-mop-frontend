@@ -11,12 +11,13 @@
  * - Clean, consistent interface across all workspaces
  */
 
-import { EntityDTOInterface } from './EntityDTOInterface.js';
+import { EntityDTOInterface } from "./EntityDTOInterface.js";
+import { applyEntityFilters } from "@/utils/entityFilters.js";
 
 export class SingleEntityDTO extends EntityDTOInterface {
   constructor(adapter, options = {}) {
     super();
-    
+
     if (!adapter) {
       throw new Error("SingleEntityDTO requires an adapter");
     }
@@ -27,7 +28,7 @@ export class SingleEntityDTO extends EntityDTOInterface {
   }
 
   // === REQUIRED INTERFACE PROPERTIES ===
-  
+
   get entityType() {
     return this._entityType;
   }
@@ -188,11 +189,17 @@ export class SingleEntityDTO extends EntityDTOInterface {
     }
 
     const flattened = [];
-    const propertyName = this.getGroupedPropertyName();
 
     groupedData.forEach((group) => {
-      const groupItems = group[propertyName] || group.entities || [];
-      flattened.push(...groupItems);
+      // Handle normalized grouped format: { group: {...}, items: [...] }
+      if (group.items && Array.isArray(group.items)) {
+        flattened.push(...group.items);
+      } else {
+        // Handle original grouped format with property names
+        const propertyName = this.getGroupedPropertyName();
+        const groupItems = group[propertyName] || group.entities || [];
+        flattened.push(...groupItems);
+      }
     });
 
     return flattened;
@@ -209,10 +216,30 @@ export class SingleEntityDTO extends EntityDTOInterface {
         throw new Error(`No query function found for entity type: ${this.entityType}`);
       }
 
-      const rawResponse = await queryFn(queryParams);
+      // Extract individual parameters from queryParams object
+      // API functions expect individual parameters, not an object
+      const { page = 1, pageSize = 50, searchQuery = "", filters = {}, pagination = {} } = queryParams;
+
+      const actualPage = pagination.page || page;
+      const actualPageSize = pagination.pageSize || pageSize;
+      const search = searchQuery || "";
+      const sortBy = filters.sortBy || "";
+      const sortOrder = filters.sortOrder || "asc";
+      const filterBy = filters.filterBy || "all";
+      const additionalFilters = filters.additionalFilters || {};
+
+      // Call API function with individual parameters (only search supported by backend for now)
+      const rawResponse = await queryFn(actualPage, actualPageSize, search, sortBy, sortOrder);
       const rawData = rawResponse.data || rawResponse;
 
+      // Transform the response first
       const transformedResponse = this.transformResponse(rawData);
+
+      // Apply client-side filtering to the transformed data
+      if (filterBy !== "all" || Object.keys(additionalFilters).length > 0) {
+        transformedResponse.items = applyEntityFilters(transformedResponse.items, filterBy, additionalFilters);
+        transformedResponse.total = transformedResponse.items.length;
+      }
 
       // Extract available filters from the loaded data if adapter supports it
       let availableFilters = {};
@@ -240,7 +267,7 @@ export class SingleEntityDTO extends EntityDTOInterface {
    */
   getEntityType(entityData) {
     // Single entity DTOs always return their configured entity type (normalized)
-    return this.entityType?.toLowerCase() || 'unknown';
+    return this.entityType?.toLowerCase() || "unknown";
   }
 
   /**
@@ -251,7 +278,7 @@ export class SingleEntityDTO extends EntityDTOInterface {
     if (!config) {
       throw new Error(`No config available for ${this.entityType}`);
     }
-    
+
     if (isUpdate) {
       if (!config.updateFn) {
         throw new Error(`Update function not available for ${this.entityType}`);
@@ -281,9 +308,9 @@ export class SingleEntityDTO extends EntityDTOInterface {
    */
   createNewEntity(entityType) {
     // For single entity DTOs, entityType parameter is ignored
-    return { 
+    return {
       __isNew: true,
-      __entityType: this.entityType
+      __entityType: this.entityType,
     };
   }
 
@@ -294,12 +321,12 @@ export class SingleEntityDTO extends EntityDTOInterface {
     if (this.adapter?.enhanceEntity) {
       return this.adapter.enhanceEntity(rawEntity, this.entityType);
     }
-    
+
     // Fallback enhancement
     return {
       ...rawEntity,
       entityType: this.entityType,
-      renderId: `${this.entityType}-${rawEntity.id || rawEntity.uid || 'new'}`
+      renderId: `${this.entityType}-${rawEntity.id || rawEntity.uid || "new"}`,
     };
   }
 
@@ -309,39 +336,40 @@ export class SingleEntityDTO extends EntityDTOInterface {
     if (!result || !handleEntitySelect) {
       return;
     }
-    
+
     // Extract the actual entity data from API response
     const actualEntity = result.data || result;
-    
+
     // DTO responsibility: enhance the entity with proper normalization
     const entityToEnhance = {
       ...actualEntity,
-      entityType: entityType || this.entityType
+      entityType: entityType || this.entityType,
     };
-    
+
     const enhancedEntity = this.enhanceEntity(entityToEnhance);
-    
+
     if (enhancedEntity) {
       // DTO interface responsibility: select the enhanced entity
       handleEntitySelect(enhancedEntity);
-      
+
       // DTO interface responsibility: handle UI interactions like scrolling
       if (isCreate) {
         setTimeout(() => {
           const entityId = enhancedEntity.id || enhancedEntity.uid;
           const renderId = enhancedEntity.renderId;
-          
-          const entityElement = document.querySelector(`[data-entity-id="${renderId}"]`) ||
-                               document.querySelector(`[data-entity-id="${entityId}"]`) ||
-                               document.querySelector(`[data-entity-uid="${entityId}"]`);
-          
+
+          const entityElement =
+            document.querySelector(`[data-entity-id="${renderId}"]`) ||
+            document.querySelector(`[data-entity-id="${entityId}"]`) ||
+            document.querySelector(`[data-entity-uid="${entityId}"]`);
+
           if (entityElement) {
-            entityElement.scrollIntoView({ 
-              behavior: 'smooth', 
-              block: 'center' 
+            entityElement.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
             });
           }
-          
+
           // Delegate domain-specific business logic to adapter AFTER UI operations complete
           if (this.adapter.onSaveComplete) {
             this.adapter.onSaveComplete(result, isCreate, handleEntitySelect, entityType || this.entityType);

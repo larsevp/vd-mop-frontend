@@ -1,6 +1,6 @@
 import React from 'react';
 import { EntityDetailPane } from '../../shared';
-import { krav as kravConfig } from '@/modelConfigs/models/krav.js';
+import { krav as kravConfig } from '@/modelConfigs/models/krav';
 
 /**
  * KravDetailRenderer - Domain-specific detail renderer

@@ -16,28 +16,18 @@ const newProsjektKravWorkspaceConfig = {
     layout: "split",
     groupBy: "emne",
     layoutConfig: {
-      listWidth: "35%",
       enableKeyboardNav: true,
     },
-    features: {
-      grouping: true,
-      hierarchy: true,
-      inlineEdit: true,
-      search: true,
-      filters: true,
-      bulkActions: false,
-    },
+
     ui: {
       showHierarchy: true,
-      showMerknader: true,
+      showMerknader: false,
       showStatus: false,
-      showVurdering: true,
-      showPrioritet: true,
-      showObligatorisk: false,
+      showVurdering: false,
+      showPrioritet: false,
+      showObligatorisk: true,
       showRelations: true,
     },
-    cardFields: ["kravUID", "tittel", "beskrivelse", "obligatorisk"],
-    relationships: ["files", "prosjektTiltak", "lover", "kravpakker"],
   },
 
   // Hidden fields in different contexts

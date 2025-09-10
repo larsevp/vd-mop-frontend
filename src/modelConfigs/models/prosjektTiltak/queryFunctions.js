@@ -34,7 +34,7 @@ const createProjectAwareQueryFn = (baseFn) => {
   };
 };
 
-export const prosjektTiltak = {
+export const queryFunctions = {
   queryKey: ["prosjektTiltak"], // Keep simple array for admin compatibility
 
   // Base API functions for admin pages (no project context)

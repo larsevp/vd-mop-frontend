@@ -43,6 +43,11 @@ export class TiltakAdapter {
           label: "Emne",
           placeholder: "Alle emner",
         },
+        obligatorisk: {
+          enabled: true,
+          label: "Obligatorisk",
+          placeholder: "Alle",
+        },
       },
       sortFields: [
         { key: "updatedAt", label: "Sist endret" },

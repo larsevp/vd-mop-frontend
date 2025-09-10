@@ -1,6 +1,6 @@
 import React from "react";
 import { EntityWorkspaceNew } from "@/components/EntityWorkspace";
-import { krav as kravConfig } from "@/modelConfigs/models/krav.js";
+import { krav as kravConfig } from "@/modelConfigs/models/krav";
 import { createSingleEntityDTO } from "@/components/EntityWorkspace/interface/data";
 import { createKravAdapter } from "./adapter";
 import { renderEntityCard, renderGroupHeader, renderSearchBar, renderDetailPane, getAvailableViewOptions } from "./renderer";
@@ -52,7 +52,7 @@ const KravWorkspace = () => {
         />
       )}
       viewOptions={viewOptions}
-      debug={true}
+      debug={false}
     />
   );
 };

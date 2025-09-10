@@ -2,6 +2,7 @@ import React from "react";
 import { EmneGroupHeader } from "../../shared";
 import { KravTiltakSearchBar } from "../../shared";
 import ProsjektKravCard from "./components/ProsjektKravCard.jsx";
+import { prosjektKrav as prosjektKravConfig } from "@/modelConfigs/models/prosjektKrav";
 
 /**
  * ProsjektKravRenderer - Render functions for ProsjektKrav entities
@@ -108,32 +109,51 @@ export const renderSearchBar = (props) => {
 /**
  * Get available view options for ProsjektKrav
  * This defines what toggles appear in the "Visning" dropdown
+ * Only includes options that are enabled in modelConfig ui section
  *
  * @returns {Object} Available view options with labels
  */
 export const getAvailableViewOptions = () => {
-  return {
+  const uiConfig = prosjektKravConfig?.workspace?.ui || {};
+  console.log("ProsjektKrav uiConfig:", uiConfig); // Debug log
+
+  const allOptions = {
     showHierarchy: "Hierarki og relasjoner",
+    showMerknader: "Merknader",
     showVurdering: "Vurdering",
     showStatus: "Status",
     showPrioritet: "Prioritet",
     showObligatorisk: "Obligatorisk/Valgfri",
     showRelations: "Tilknyttede relasjoner",
   };
+
+  // Only return options that are not explicitly disabled in modelConfig
+  const availableOptions = {};
+  Object.keys(allOptions).forEach((key) => {
+    if (uiConfig[key] !== false) {
+      availableOptions[key] = allOptions[key];
+    }
+  });
+
+  console.log("ProsjektKrav availableOptions:", availableOptions); // Debug log
+  return availableOptions;
 };
 
 /**
  * Get default view options for ProsjektKrav
+ * Reads from modelConfig ui section
  *
  * @returns {Object} Default view options state
  */
 export const getDefaultViewOptions = () => {
-  return {
-    showHierarchy: true,
-    showVurdering: true,
-    showStatus: false,
-    showPrioritet: true,
-    showObligatorisk: true,
-    showRelations: true,
-  };
+  return (
+    prosjektKravConfig?.workspace?.ui || {
+      showHierarchy: true,
+      showVurdering: true,
+      showStatus: false,
+      showPrioritet: true,
+      showObligatorisk: true,
+      showRelations: true,
+    }
+  );
 };

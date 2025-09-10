@@ -6,26 +6,18 @@ const workspaceConfigData = {
     layout: "split",
     groupBy: "emne",
     layoutConfig: {
-      listWidth: "40%",
       enableKeyboardNav: true,
     },
-    features: {
-      grouping: true,
-      search: true,
-      filters: true,
-      hierarchy: true,
-    },
+
     ui: {
       showHierarchy: true,
-      showMerknader: false,
-      showStatus: false,
-      showVurdering: false,
-      showPrioritet: false,
-      showObligatorisk: true,
+      showMerknader: true,
+      showStatus: true,
+      showVurdering: true,
+      showPrioritet: true,
+      showObligatorisk: false,
       showRelations: true,
     },
-    cardFields: ["tiltakUID", "tittel", "beskrivelse", "obligatorisk"],
-    relationships: ["files", "prosjektKrav"],
   },
 
   workspaceHiddenIndex: [

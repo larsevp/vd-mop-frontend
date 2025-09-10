@@ -7,20 +7,27 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+// Default view options for combined KravTiltak view
+const getDefaultViewOptions = () => ({
+  groupByEmne: true,
+  showEntityType: true,
+  showHierarchy: true,
+  showMerknad: true,
+  showStatus: true,
+  showVurdering: true,
+  showPrioritet: true,
+  showObligatorisk: true,
+  showRelations: true,
+  compactMode: false,
+  sortBy: 'updatedAt',
+  sortOrder: 'desc'
+});
+
 export const useKravTiltakCombinedViewStore = create(
   persist(
     (set, get) => ({
       // View options state
-      viewOptions: {
-        groupByEmne: true,
-        showEntityType: true,
-        showHierarchy: true,
-        showStatus: true,
-        showVurdering: true,
-        compactMode: false,
-        sortBy: 'updatedAt',
-        sortOrder: 'desc'
-      },
+      viewOptions: getDefaultViewOptions(),
 
       // Update view options
       setViewOptions: (newOptions) => {
@@ -35,16 +42,7 @@ export const useKravTiltakCombinedViewStore = create(
       // Reset to defaults
       resetViewOptions: () => {
         set({
-          viewOptions: {
-            groupByEmne: true,
-            showEntityType: true,
-            showHierarchy: true,
-            showStatus: true,
-            showVurdering: true,
-            compactMode: false,
-            sortBy: 'updatedAt',
-            sortOrder: 'desc'
-          }
+          viewOptions: getDefaultViewOptions()
         });
       },
 

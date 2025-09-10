@@ -1,6 +1,6 @@
 /**
  * Entity Type Badge Utilities
- * 
+ *
  * Provides consistent styling and configuration for entity type badges
  * across Krav/Tiltak and ProsjektKrav/ProsjektTiltak entities
  */
@@ -10,25 +10,25 @@
  */
 export const ENTITY_TYPE_CONFIGS = {
   krav: {
-    badgeColor: 'bg-green-100 text-green-700',
-    label: 'krav',
-    shortLabel: 'KRAV'
+    badgeColor: "bg-green-100 text-green-700",
+    label: "krav",
+    shortLabel: "Krav",
   },
   tiltak: {
-    badgeColor: 'bg-blue-100 text-blue-700',
-    label: 'tiltak',
-    shortLabel: 'TILTAK'
+    badgeColor: "bg-blue-100 text-blue-700",
+    label: "tiltak",
+    shortLabel: "Tiltak",
   },
   prosjektkrav: {
-    badgeColor: 'bg-green-100 text-green-700',
-    label: 'p-krav',
-    shortLabel: 'P-KRAV'
+    badgeColor: "bg-green-100 text-green-700",
+    label: "p-krav",
+    shortLabel: "Krav",
   },
   prosjekttiltak: {
-    badgeColor: 'bg-blue-100 text-blue-700',
-    label: 'p-tiltak',
-    shortLabel: 'P-TILTAK'
-  }
+    badgeColor: "bg-blue-100 text-blue-700",
+    label: "p-tiltak",
+    shortLabel: "Tiltak",
+  },
 };
 
 /**
@@ -37,11 +37,13 @@ export const ENTITY_TYPE_CONFIGS = {
  * @returns {Object} Configuration object with badgeColor, label, shortLabel
  */
 export const getEntityTypeConfig = (entityType) => {
-  return ENTITY_TYPE_CONFIGS[entityType?.toLowerCase()] || {
-    badgeColor: 'bg-gray-100 text-gray-700',
-    label: entityType || 'unknown',
-    shortLabel: entityType?.toUpperCase() || 'UNKNOWN'
-  };
+  return (
+    ENTITY_TYPE_CONFIGS[entityType?.toLowerCase()] || {
+      badgeColor: "bg-gray-100 text-gray-700",
+      label: entityType || "unknown",
+      shortLabel: entityType || "UNKNOWN",
+    }
+  );
 };
 
 /**
@@ -72,32 +74,32 @@ export const getEntityTypeLabel = (entityType, short = false) => {
  */
 export const generateTypeCountBadges = (typeCounts) => {
   if (!typeCounts) return [];
-  
+
   const badges = [];
-  
+
   // Check for krav/prosjektkrav
   const kravCount = typeCounts.krav || typeCounts.prosjektkrav || 0;
-  const kravType = typeCounts.krav ? 'krav' : 'prosjektkrav';
-  
+  const kravType = typeCounts.krav ? "krav" : "prosjektkrav";
+
   if (kravCount > 0) {
     badges.push({
       count: kravCount,
       label: getEntityTypeLabel(kravType),
-      classes: getEntityTypeBadgeClasses(kravType)
+      classes: getEntityTypeBadgeClasses(kravType),
     });
   }
-  
+
   // Check for tiltak/prosjekttiltak
   const tiltakCount = typeCounts.tiltak || typeCounts.prosjekttiltak || 0;
-  const tiltakType = typeCounts.tiltak ? 'tiltak' : 'prosjekttiltak';
-  
+  const tiltakType = typeCounts.tiltak ? "tiltak" : "prosjekttiltak";
+
   if (tiltakCount > 0) {
     badges.push({
       count: tiltakCount,
       label: getEntityTypeLabel(tiltakType),
-      classes: getEntityTypeBadgeClasses(tiltakType)
+      classes: getEntityTypeBadgeClasses(tiltakType),
     });
   }
-  
+
   return badges;
 };

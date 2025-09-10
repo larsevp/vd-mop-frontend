@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import { Edit, X, Save, RotateCcw, Trash2 } from "lucide-react";
 import { useQueryClient } from '@tanstack/react-query';
 import { ValidationErrorSummary, FieldRenderer, FieldSection } from "./components";
+import { getEntityTypeConfig } from "../../utils/entityTypeBadges";
 import {
   getVisibleFields,
   getFieldsBySection,
@@ -234,6 +235,10 @@ const EntityDetailPane = ({
     : (entity.tittel || entity.navn || `${entityType} ${entity.id}`);
   const entityUID = isNewEntity ? null : (entity.kravUID || entity.tiltakUID || entity.uid);
   const emneTitle = isNewEntity ? null : (entity.emne?.navn || entity.emneTittel);
+  
+  // Get entity type for badge (from entity or fallback to entityType prop)
+  const currentEntityType = entity?.entityType || entity?.__entityType || entityType;
+  const entityConfig = getEntityTypeConfig(currentEntityType);
 
   return (
     <div className="flex flex-col min-h-full bg-white">
@@ -242,8 +247,13 @@ const EntityDetailPane = ({
         <div className="flex items-center justify-between gap-4">
           <div className="flex-1 min-w-0 flex items-center gap-3">
             {entityUID && (
-              <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-800 flex-shrink-0">
+              <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium flex-shrink-0 ${entityConfig.badgeColor}`}>
                 {entityUID}
+              </span>
+            )}
+            {!isNewEntity && (
+              <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium flex-shrink-0 ${entityConfig.badgeColor}`}>
+                {entityConfig.shortLabel}
               </span>
             )}
             {emneTitle && (

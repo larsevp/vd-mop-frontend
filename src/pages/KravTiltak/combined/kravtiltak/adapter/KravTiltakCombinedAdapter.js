@@ -10,8 +10,8 @@
 import { getPaginatedCombinedEntities, getCombinedEntitiesGroupedByEmne } from "@/api/endpoints";
 import { createKravAdapter } from "../../../krav/adapter";
 import { createTiltakAdapter } from "../../../tiltak/adapter";
-import { krav as kravConfig } from "@/modelConfigs/models/krav.js";
-import { tiltak as tiltakConfig } from "@/modelConfigs/models/tiltak.js";
+import { krav as kravConfig } from "@/modelConfigs/models/krav";
+import { tiltak as tiltakConfig } from "@/modelConfigs/models/tiltak";
 
 export class KravTiltakCombinedAdapter {
   constructor(options = {}) {

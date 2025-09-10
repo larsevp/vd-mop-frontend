@@ -11,8 +11,8 @@
 import { getPaginatedCombinedProsjektEntities, getCombinedProsjektEntitiesGroupedByEmne } from "@/api/endpoints";
 import { createProsjektKravAdapter } from "../../../prosjektkrav/adapter";
 import { createProsjektTiltakAdapter } from "../../../prosjekttiltak/adapter";
-import { prosjektKrav as prosjektKravConfig } from "@/modelConfigs/models/prosjektKrav.js";
-import { prosjektTiltak as prosjektTiltakConfig } from "@/modelConfigs/models/prosjektTiltak.js";
+import { prosjektKrav as prosjektKravConfig } from "@/modelConfigs/models/prosjektKrav";
+import { prosjektTiltak as prosjektTiltakConfig } from "@/modelConfigs/models/prosjektTiltak";
 
 export class ProsjektKravTiltakCombinedAdapter {
   constructor(options = {}) {
@@ -67,6 +67,7 @@ export class ProsjektKravTiltakCombinedAdapter {
         vurdering: { enabled: true, label: "Vurdering", placeholder: "Alle vurderinger" },
         prioritet: { enabled: true, label: "Prioritet", placeholder: "Alle prioriteter" },
         emne: { enabled: true, label: "Emne", placeholder: "Alle emner" },
+        obligatorisk: { enabled: true, label: "Obligatorisk", placeholder: "Alle" },
       },
 
       sortFields: [

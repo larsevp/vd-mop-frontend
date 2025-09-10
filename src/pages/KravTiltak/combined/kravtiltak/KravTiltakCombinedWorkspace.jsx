@@ -2,19 +2,9 @@ import React from "react";
 import { EntityWorkspaceNew } from "@/components/EntityWorkspace";
 import { createCombinedEntityDTO } from "@/components/EntityWorkspace/interface/data";
 import { createKravTiltakCombinedAdapter } from "./adapter";
-import { createCombinedRenderer } from "../shared/CombinedRenderer";
+import { renderEntityCard, renderGroupHeader, renderSearchBar, renderDetailPane, getAvailableViewOptions } from "./renderer";
 import { useKravTiltakCombinedViewStore } from "./store";
 import { RowListHeading } from "../../shared";
-
-// Import individual components and renderers
-import { renderEntityCard as kravRenderEntityCard } from "../../krav/renderer/KravRenderer";
-import { renderEntityCard as tiltakRenderEntityCard } from "../../tiltak/renderer/TiltakRenderer";
-import { renderDetailPane as KravDetailRenderer } from "../../krav/renderer/KravDetailRenderer";
-import { renderDetailPane as TiltakDetailRenderer } from "../../tiltak/renderer/TiltakDetailRenderer";
-import { createKravAdapter } from "../../krav/adapter";
-import { createTiltakAdapter } from "../../tiltak/adapter";
-import { krav as kravConfig } from "@/modelConfigs/models/krav.js";
-import { tiltak as tiltakConfig } from "@/modelConfigs/models/tiltak.js";
 
 /**
  * KravTiltakCombinedWorkspace - Combined workspace for Krav and Tiltak entities
@@ -45,62 +35,24 @@ const KravTiltakCombinedWorkspace = () => {
   // Get view options state
   const { viewOptions, setViewOptions } = useKravTiltakCombinedViewStore();
 
-  // Create combined renderer with proper configuration
-  const renderer = createCombinedRenderer({
-    entityTypes: {
-      primary: "krav",
-      secondary: "tiltak"
-    },
-    components: {
-      primaryCard: kravRenderEntityCard,
-      secondaryCard: tiltakRenderEntityCard
-    },
-    renderers: {
-      primaryDetailRenderer: KravDetailRenderer,
-      secondaryDetailRenderer: TiltakDetailRenderer
-    },
-    adapters: {
-      primaryAdapter: createKravAdapter(kravConfig),
-      secondaryAdapter: createTiltakAdapter(tiltakConfig)
-    },
-    labels: {
-      primaryCreate: "Opprett Krav",
-      secondaryCreate: "Opprett Tiltak",
-      primaryCount: "krav",
-      secondaryCount: "tiltak",
-      workspaceType: "krav-tiltak-combined"
-    },
-    viewOptions: {
-      showHierarchy: "Vis hierarki",
-      showMerknad: "Vis merknader",
-      showStatus: "Vis status",
-      showVurdering: "Vis vurdering",
-      showPrioritet: "Vis prioritet",
-      showObligatorisk: "Vis obligatorisk",
-      showRelations: "Vis relasjoner",
-      showEntityType: "Vis enhetstype"
-    }
-  });
-
   return (
     <EntityWorkspaceNew
       key={`${dto.entityType || "krav-tiltak-combined-workspace"}`}
       dto={dto}
-      renderEntityCard={renderer.renderEntityCard}
-      renderGroupHeader={renderer.renderGroupHeader}
-      renderDetailPane={renderer.renderDetailPane}
-      renderActionButtons={renderer.renderActionButtons}
-      renderSearchBar={renderer.renderSearchBar}
+      renderEntityCard={(entity, props) => renderEntityCard(entity, props, dto)}
+      renderGroupHeader={renderGroupHeader}
+      renderDetailPane={renderDetailPane}
+      renderSearchBar={renderSearchBar}
       renderListHeading={(props) => (
         <RowListHeading
           {...props}
           viewOptions={viewOptions}
           onViewOptionsChange={setViewOptions}
-          availableViewOptions={renderer.getAvailableViewOptions()}
+          availableViewOptions={getAvailableViewOptions()}
         />
       )}
       viewOptions={viewOptions}
-      debug={true}
+      debug={false}
     />
   );
 };

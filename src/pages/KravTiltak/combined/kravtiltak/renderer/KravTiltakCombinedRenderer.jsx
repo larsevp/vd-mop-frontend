@@ -4,13 +4,13 @@ import { renderDetailPane as kravRenderDetailPane } from "../../../krav/renderer
 import { renderDetailPane as tiltakRenderDetailPane } from "../../../tiltak/renderer/TiltakDetailRenderer.jsx";
 import { createKravAdapter } from "../../../krav/adapter";
 import { createTiltakAdapter } from "../../../tiltak/adapter";
-import { krav as kravConfig } from "@/modelConfigs/models/krav.js";
-import { tiltak as tiltakConfig } from "@/modelConfigs/models/tiltak.js";
+import { krav as kravConfig } from "@/modelConfigs/models/krav";
+import { tiltak as tiltakConfig } from "@/modelConfigs/models/tiltak";
 import { createCombinedRenderer } from "../../shared/CombinedRenderer.jsx";
 
 /**
  * KravTiltakCombined-specific renderer functions
- * 
+ *
  * Uses the shared CombinedRenderer factory to create domain-specific renderers
  * for combined Krav/Tiltak entities while maintaining consistency with the EntityWorkspace pattern.
  */
@@ -19,26 +19,26 @@ import { createCombinedRenderer } from "../../shared/CombinedRenderer.jsx";
 const config = {
   entityTypes: {
     primary: "krav",
-    secondary: "tiltak"
+    secondary: "tiltak",
   },
-  components: {
-    primaryCard: kravRenderEntityCard,
-    secondaryCard: tiltakRenderEntityCard
+  cardRenderers: {
+    primaryCardRenderer: kravRenderEntityCard,
+    secondaryCardRenderer: tiltakRenderEntityCard,
   },
   renderers: {
     primaryDetailRenderer: kravRenderDetailPane,
-    secondaryDetailRenderer: tiltakRenderDetailPane
+    secondaryDetailRenderer: tiltakRenderDetailPane,
   },
   adapters: {
     primaryAdapter: createKravAdapter(kravConfig),
-    secondaryAdapter: createTiltakAdapter(tiltakConfig)
+    secondaryAdapter: createTiltakAdapter(tiltakConfig),
   },
   labels: {
     primaryCreate: "Opprett Krav",
     secondaryCreate: "Opprett Tiltak",
     primaryCount: "krav",
     secondaryCount: "tiltak",
-    workspaceType: "combined"
+    workspaceType: "combined",
   },
   viewOptions: {
     showHierarchy: "Vis hierarki",
@@ -49,7 +49,7 @@ const config = {
     showObligatorisk: "Vis obligatorisk",
     showRelations: "Vis relasjoner",
     showEntityType: "Vis enhetstype",
-  }
+  },
 };
 
 // Create and export all renderer functions using the shared factory

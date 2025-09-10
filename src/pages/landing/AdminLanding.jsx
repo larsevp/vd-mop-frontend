@@ -176,7 +176,7 @@ export default function AdminLanding() {
             {adminCards.map((card) => {
               const IconComponent = card.icon;
               return (
-                <Link key={card.config.title} to={card.link} className="group block transform transition-all duration-200 hover:scale-105">
+                <Link key={card.link} to={card.link} className="group block transform transition-all duration-200 hover:scale-105">
                   <div className="card-base card-hover rounded-xl p-6 h-full transition-all duration-200 group-hover:shadow-xl">
                     <div className={`inline-flex p-3 rounded-xl bg-gradient-to-r ${card.color} text-white mb-4 shadow-md`}>
                       <IconComponent size={24} />

@@ -1,6 +1,6 @@
 import React from "react";
 import { EntityWorkspaceNew } from "@/components/EntityWorkspace";
-import { prosjektKrav as prosjektKravConfig } from "@/modelConfigs/models/prosjektKrav.js";
+import { prosjektKrav as prosjektKravConfig } from "@/modelConfigs/models/prosjektKrav";
 import { createSingleEntityDTO } from "@/components/EntityWorkspace/interface/data";
 import { createProsjektKravAdapter } from "./adapter";
 import { renderEntityCard, renderGroupHeader, renderSearchBar, renderDetailPane, getAvailableViewOptions } from "./renderer";

@@ -4,13 +4,13 @@ import { renderDetailPane as prosjektKravRenderDetailPane } from "../../../prosj
 import { renderDetailPane as prosjektTiltakRenderDetailPane } from "../../../prosjekttiltak/renderer/ProsjektTiltakDetailRenderer.jsx";
 import { createProsjektKravAdapter } from "../../../prosjektkrav/adapter";
 import { createProsjektTiltakAdapter } from "../../../prosjekttiltak/adapter";
-import { prosjektKrav as prosjektKravConfig } from "@/modelConfigs/models/prosjektKrav.js";
-import { prosjektTiltak as prosjektTiltakConfig } from "@/modelConfigs/models/prosjektTiltak.js";
+import { prosjektKrav as prosjektKravConfig } from "@/modelConfigs/models/prosjektKrav";
+import { prosjektTiltak as prosjektTiltakConfig } from "@/modelConfigs/models/prosjektTiltak";
 import { createCombinedRenderer } from "../../shared/CombinedRenderer.jsx";
 
 /**
  * ProsjektKravTiltakCombined-specific renderer functions
- * 
+ *
  * Uses the shared CombinedRenderer factory to create domain-specific renderers
  * for combined ProsjektKrav/ProsjektTiltak entities while maintaining consistency with the EntityWorkspace pattern.
  */
@@ -19,26 +19,26 @@ import { createCombinedRenderer } from "../../shared/CombinedRenderer.jsx";
 const config = {
   entityTypes: {
     primary: "prosjektKrav",
-    secondary: "prosjektTiltak"
+    secondary: "prosjektTiltak",
   },
-  components: {
-    primaryCard: prosjektKravRenderEntityCard,
-    secondaryCard: prosjektTiltakRenderEntityCard
+  cardRenderers: {
+    primaryCardRenderer: prosjektKravRenderEntityCard,
+    secondaryCardRenderer: prosjektTiltakRenderEntityCard,
   },
   renderers: {
     primaryDetailRenderer: prosjektKravRenderDetailPane,
-    secondaryDetailRenderer: prosjektTiltakRenderDetailPane
+    secondaryDetailRenderer: prosjektTiltakRenderDetailPane,
   },
   adapters: {
     primaryAdapter: createProsjektKravAdapter(prosjektKravConfig),
-    secondaryAdapter: createProsjektTiltakAdapter(prosjektTiltakConfig)
+    secondaryAdapter: createProsjektTiltakAdapter(prosjektTiltakConfig),
   },
   labels: {
-    primaryCreate: "Opprett ProsjektKrav",
-    secondaryCreate: "Opprett ProsjektTiltak",
+    primaryCreate: "Nytt krav",
+    secondaryCreate: "Nytt tiltak",
     primaryCount: "prosjektkrav",
     secondaryCount: "prosjekttiltak",
-    workspaceType: "combined-project"
+    workspaceType: "combined-project",
   },
   viewOptions: {
     showHierarchy: "Hierarki og relasjoner",
@@ -48,7 +48,7 @@ const config = {
     showObligatorisk: "Obligatorisk/Valgfri",
     showRelations: "Tilknyttede relasjoner",
     showEntityType: "Vis enhetstype",
-  }
+  },
 };
 
 // Create and export all renderer functions using the shared factory

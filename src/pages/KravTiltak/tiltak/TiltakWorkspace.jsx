@@ -1,6 +1,6 @@
 import React from "react";
 import { EntityWorkspaceNew } from "@/components/EntityWorkspace";
-import { tiltak as tiltakConfig } from "@/modelConfigs/models/tiltak.js";
+import { tiltak as tiltakConfig } from "@/modelConfigs/models/tiltak";
 import { createSingleEntityDTO } from "@/components/EntityWorkspace/interface/data";
 import { createTiltakAdapter } from "./adapter";
 import { renderEntityCard, renderGroupHeader, renderSearchBar, renderDetailPane, getAvailableViewOptions } from "./renderer";

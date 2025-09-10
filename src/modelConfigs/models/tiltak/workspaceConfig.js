@@ -13,24 +13,18 @@ const newTiltakWorkspaceConfig = {
     layout: "split",
     groupBy: "emne",
     layoutConfig: {
-      listWidth: "40%",
       enableKeyboardNav: true,
     },
-    features: {
-      grouping: true,
-      search: true,
-      filters: true,
-    },
+
     ui: {
-      showHierarchy: false,
+      showHierarchy: true,
       showMerknader: false,
       showStatus: false,
       showVurdering: false,
       showPrioritet: false,
-      showObligatorisk: true,
+      showObligatorisk: false,
       showRelations: true,
     },
-    cardFields: ["tiltakUID", "tittel", "beskrivelse", "obligatorisk"],
   },
 
   // Hidden fields in different contexts

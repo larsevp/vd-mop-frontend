@@ -1,7 +1,7 @@
 export const metadata = {
-  modelPrintName: "prosjektKrav",
-  title: "Prosjekt Krav",
-  titlePlural: "Prosjekt Krav", // Norwegian: same form for plural
+  modelPrintName: "prosjektTiltak",
+  title: "Prosjekt Tiltak",
+  titlePlural: "Prosjekt Tiltak", // Norwegian: same form for plural
   desc: "beskrivelse ...",
-  newButtonLabelText: "Nytt prosjekt krav",
+  newButtonLabelText: "Nytt prosjekttiltak",
 };

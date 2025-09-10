@@ -13,8 +13,8 @@ import { renderDetailPane as ProsjektKravDetailRenderer } from "../../prosjektkr
 import { renderDetailPane as ProsjektTiltakDetailRenderer } from "../../prosjekttiltak/renderer/ProsjektTiltakDetailRenderer";
 import { createProsjektKravAdapter } from "../../prosjektkrav/adapter";
 import { createProsjektTiltakAdapter } from "../../prosjekttiltak/adapter";
-import { prosjektKrav as prosjektKravConfig } from "@/modelConfigs/models/prosjektKrav.js";
-import { prosjektTiltak as prosjektTiltakConfig } from "@/modelConfigs/models/prosjektTiltak.js";
+import { prosjektKrav as prosjektKravConfig } from "@/modelConfigs/models/prosjektKrav";
+import { prosjektTiltak as prosjektTiltakConfig } from "@/modelConfigs/models/prosjektTiltak";
 
 /**
  * ProsjektKravTiltakCombinedWorkspace - Combined workspace for ProsjektKrav and ProsjektTiltak entities
@@ -65,8 +65,8 @@ const ProsjektKravTiltakCombinedWorkspace = () => {
       secondaryAdapter: createProsjektTiltakAdapter(prosjektTiltakConfig),
     },
     labels: {
-      primaryCreate: "Opprett Prosjektkrav",
-      secondaryCreate: "Opprett Prosjekttiltak",
+      primaryCreate: "Nytt krav",
+      secondaryCreate: "Nytt tiltak",
       primaryCount: "prosjektkrav",
       secondaryCount: "prosjekttiltak",
       workspaceType: "prosjektkrav-tiltak-combined",
@@ -101,7 +101,7 @@ const ProsjektKravTiltakCombinedWorkspace = () => {
         />
       )}
       viewOptions={viewOptions}
-      debug={true}
+      debug={false}
     />
   );
 };
