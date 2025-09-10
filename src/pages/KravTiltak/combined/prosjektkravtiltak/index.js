@@ -1,2 +1,2 @@
-export { default as ProsjektKravTiltakCombinedWorkspace } from './ProsjektKravTiltakCombinedWorkspace.jsx';
-export { default } from './ProsjektKravTiltakCombinedWorkspace.jsx';
+export { default as ProsjektKravTiltakCombinedWorkspace } from './ProsjektKravTiltakFlowWorkspace.jsx';
+export { default } from './ProsjektKravTiltakFlowWorkspace.jsx';
