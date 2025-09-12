@@ -37,86 +37,98 @@ export const useEmneInheritance = (entityType = 'tiltak', entityId = null) => {
   // Track current entity ID to prevent state leakage between entities
   const [currentEntityId, setCurrentEntityId] = React.useState(null);
   
+  // Stable reference to clear function to prevent infinite loops
+  const stableClear = React.useCallback(() => {
+    clearAllInheritance();
+  }, []); // Empty deps - this function is always the same
+
   // Clear inheritance state when switching between different entities
   React.useEffect(() => {
     // Only clear if we're switching to a different entity (not just re-mounting same entity)
     if (entityId && entityId !== currentEntityId) {
-      // Don't clear if inheritance is actively being used (parent/related entity connections)
-      // Only clear residual state from previous entities
-      if (!hasParentConnection && !hasRelatedEntityConnection && inheritedEmne) {
-        console.log('🧹 Clearing residual inheritance state from previous entity');
-        clearAllInheritance();
+      // Always clear inheritance state when switching to create new entity
+      if (entityId === 'create-new' || entityId.toString().includes('create')) {
+        stableClear();
       }
+      // DISABLED: Don't clear if inheritance is actively being used (parent/related entity connections)
+      // This was causing infinite loops when parent/krav with no emne was selected
+      // else if (!hasParentConnection && !hasRelatedEntityConnection && inheritedEmne) {
+      //   console.log('🔧 Clearing residual inheritance');
+      //   stableClear();
+      // }
       setCurrentEntityId(entityId);
     }
-  }, [entityId, currentEntityId, hasParentConnection, hasRelatedEntityConnection, inheritedEmne, clearAllInheritance]);
+  }, [entityId, currentEntityId, hasParentConnection, hasRelatedEntityConnection, inheritedEmne, stableClear]);
 
   // Handle parent inheritance (generic - works for tiltak, krav, prosjektTiltak parents)
   const inheritFromParent = useCallback((parentData, parentEntityType = entityType) => {
-    
-    if (parentData?.emneId) {
+    if (parentData) {
+      // Always set parent inheritance when parent exists (regardless of whether parent has emne)
       setParentInheritance(parentData, parentEntityType);
       
-      // Show notification
-      Swal.fire({
-        icon: "info",
-        title: "Emne arves automatisk",
-        text: "Emne arves fra overordnet element",
-        timer: 3000,
-        showConfirmButton: false,
-        toast: true,
-        position: "top-end",
-        showClass: { popup: "", backdrop: "", icon: "" },
-        hideClass: { popup: "", backdrop: "", icon: "" },
-        width: '350px',
-        padding: '0.75rem',
-        customClass: {
-          popup: 'swal2-toast-small',
-          title: 'swal2-toast-title-small',
-          htmlContainer: 'swal2-toast-text-small'
-        }
-      });
+      // Show notification only if parent actually has an emne to inherit
+      if (parentData?.emneId) {
+        Swal.fire({
+          icon: "info",
+          title: "Emne arves automatisk",
+          text: "Emne arves fra overordnet element",
+          timer: 3000,
+          showConfirmButton: false,
+          toast: true,
+          position: "top-end",
+          showClass: { popup: "", backdrop: "", icon: "" },
+          hideClass: { popup: "", backdrop: "", icon: "" },
+          width: '350px',
+          padding: '0.75rem',
+          customClass: {
+            popup: 'swal2-toast-small',
+            title: 'swal2-toast-title-small',
+            htmlContainer: 'swal2-toast-text-small'
+          }
+        });
+      }
     } else {
-      // Clear parent connection if no emneId
+      // Clear parent connection if no parent
       clearParentConnection();
     }
   }, [setParentInheritance, clearParentConnection, entityType]);
 
   // Handle related entity inheritance (krav, prosjektKrav, etc.)
   const inheritFromRelatedEntity = useCallback((entityData, relatedType = 'krav') => {
-    
-    if (entityData?.emneId) {
+    if (entityData) {
+      // Always set related entity inheritance when entity exists (regardless of whether entity has emne)
       setRelatedEntityInheritance(entityData, relatedType);
       
-      // Show notification
-      const entityLabel = relatedType === 'prosjektKrav' ? 'prosjektkrav' : relatedType;
-      Swal.fire({
-        icon: "info",
-        title: "Emne arves automatisk", 
-        text: `Emne arves fra tilknyttet ${entityLabel}`,
-        timer: 3000,
-        showConfirmButton: false,
-        toast: true,
-        position: "top-end",
-        showClass: { popup: "", backdrop: "", icon: "" },
-        hideClass: { popup: "", backdrop: "", icon: "" },
-        width: '350px',
-        padding: '0.75rem',
-        customClass: {
-          popup: 'swal2-toast-small',
-          title: 'swal2-toast-title-small',
-          htmlContainer: 'swal2-toast-text-small'
-        }
-      });
+      // Show notification only if entity actually has an emne to inherit
+      if (entityData?.emneId) {
+        const entityLabel = relatedType === 'prosjektKrav' ? 'prosjektkrav' : relatedType;
+        Swal.fire({
+          icon: "info",
+          title: "Emne arves automatisk", 
+          text: `Emne arves fra tilknyttet ${entityLabel}`,
+          timer: 3000,
+          showConfirmButton: false,
+          toast: true,
+          position: "top-end",
+          showClass: { popup: "", backdrop: "", icon: "" },
+          hideClass: { popup: "", backdrop: "", icon: "" },
+          width: '350px',
+          padding: '0.75rem',
+          customClass: {
+            popup: 'swal2-toast-small',
+            title: 'swal2-toast-title-small',
+            htmlContainer: 'swal2-toast-text-small'
+          }
+        });
+      }
     } else {
-      // Clear related entity connection if no emneId
+      // Clear related entity connection if no entity
       clearRelatedEntityConnection();
     }
   }, [setRelatedEntityInheritance, clearRelatedEntityConnection, entityType]);
 
   // Handle parent selection (generic for any parent type)
   const handleParentSelection = useCallback((parentId, parentData, parentEntityType = entityType) => {
-    
     if (parentId && parentData) {
       inheritFromParent(parentData, parentEntityType);
     } else {
@@ -153,7 +165,7 @@ export const useEmneInheritance = (entityType = 'tiltak', entityId = null) => {
       case 'relatedEntity':
         return hasParentConnection; // Krav disabled when parent selected
       case 'emne':
-        return !!inheritedEmne; // Emne disabled when inherited from parent OR krav
+        return hasParentConnection || hasRelatedEntityConnection; // Emne disabled when parent OR krav connection exists
       default:
         return false;
     }

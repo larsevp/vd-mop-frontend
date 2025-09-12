@@ -58,7 +58,7 @@ export const entityRelationshipSelects = {
           // Initialize store when data loads and there's an existing parentId value
           if (field.name === "parentId" && value && !hasParentConnection && kravData.length > 0) {
             const existingKrav = kravData.find(k => k.id === value);
-            if (existingKrav?.emneId) {
+            if (existingKrav) { // Always call if parent exists (regardless of emne)
               handleParentSelection(value, existingKrav, 'prosjektKrav');
             }
           }
@@ -66,9 +66,9 @@ export const entityRelationshipSelects = {
         onKravSelected={(selectedKrav) => {
           // Handle inheritance logic via the store when krav is selected
           if (field.name === "parentId") {
-            if (selectedKrav?.emneId) {
+            if (selectedKrav) { // Always call if parent exists (regardless of emne)
               handleParentSelection(selectedKrav.id, selectedKrav, 'prosjektKrav');
-            } else if (selectedKrav === null) {
+            } else {
               handleParentSelection(null, null);
             }
           }
@@ -104,7 +104,7 @@ export const entityRelationshipSelects = {
           // Initialize store when data loads and there's an existing parentId value
           if (field.name === "parentId" && value && !hasParentConnection && tiltakData.length > 0) {
             const existingTiltak = tiltakData.find(t => t.id === value);
-            if (existingTiltak?.emneId) {
+            if (existingTiltak) { // Always call if parent exists (regardless of emne)
               handleParentSelection(value, existingTiltak, 'tiltak');
             }
           }
@@ -112,10 +112,10 @@ export const entityRelationshipSelects = {
         onTiltakSelected={(selectedTiltak) => {
           // Handle inheritance logic via the store when tiltak is selected
           if (field.name === "parentId") {
-            if (selectedTiltak?.emneId) {
+            if (selectedTiltak) { // Always call if parent exists (regardless of emne)
               // Use the store to handle inheritance and mutual exclusivity
               handleParentSelection(selectedTiltak.id, selectedTiltak, 'tiltak');
-            } else if (selectedTiltak === null) {
+            } else {
               // Clear parent connection when selection is cleared
               handleParentSelection(null, null);
             }
@@ -152,7 +152,7 @@ export const entityRelationshipSelects = {
           // Initialize store when data loads and there's an existing parentId value
           if (field.name === "parentId" && value && !hasParentConnection && tiltakData.length > 0) {
             const existingTiltak = tiltakData.find(t => t.id === value);
-            if (existingTiltak?.emneId) {
+            if (existingTiltak) { // Always call if parent exists (regardless of emne)
               handleParentSelection(value, existingTiltak, 'prosjektTiltak');
             }
           }
@@ -160,9 +160,9 @@ export const entityRelationshipSelects = {
         onTiltakSelected={(selectedTiltak) => {
           // Handle inheritance logic via the store when tiltak is selected
           if (field.name === "parentId") {
-            if (selectedTiltak?.emneId) {
+            if (selectedTiltak) { // Always call if parent exists (regardless of emne)
               handleParentSelection(selectedTiltak.id, selectedTiltak, 'prosjektTiltak');
-            } else if (selectedTiltak === null) {
+            } else {
               handleParentSelection(null, null);
             }
           }

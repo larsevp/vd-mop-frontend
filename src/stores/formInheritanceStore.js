@@ -34,17 +34,17 @@ export const useFormInheritanceStore = create((set, get) => ({
     const state = get();
     
     set({
-      // Inheritance
+      // Inheritance - inherit the exact emne value (including null/blank)
       inheritedEmne: parentData?.emneId || null,
-      source: parentData?.emneId ? 'parent' : null,
-      sourceType: parentData?.emneId ? parentType : null,
+      source: parentData ? 'parent' : null, // Connection exists if parentData exists
+      sourceType: parentData ? parentType : null,
       parentData,
       parentType: parentData ? parentType : null,
       
       // Mutual exclusivity - clear related entity when parent is set
       relatedEntityData: null,
       relatedEntityType: null,
-      hasParentConnection: !!parentData?.emneId,
+      hasParentConnection: !!parentData, // Connection exists if parentData exists (regardless of emneId)
       hasRelatedEntityConnection: false
     });
   },
@@ -53,17 +53,17 @@ export const useFormInheritanceStore = create((set, get) => ({
     const state = get();
     
     set({
-      // Inheritance  
+      // Inheritance - inherit the exact emne value (including null/blank)
       inheritedEmne: entityData?.emneId || null,
-      source: entityData?.emneId ? entityType : null,
-      sourceType: entityData?.emneId ? (state.sourceType || 'tiltak') : null, // Keep context
+      source: entityData ? entityType : null, // Connection exists if entityData exists
+      sourceType: entityData ? (state.sourceType || 'tiltak') : null, // Keep context
       relatedEntityData: entityData,
       relatedEntityType: entityData ? entityType : null,
       
       // Mutual exclusivity - clear parent when related entity is set
       parentData: null,
       parentType: null,
-      hasRelatedEntityConnection: !!entityData?.emneId,
+      hasRelatedEntityConnection: !!entityData, // Connection exists if entityData exists (regardless of emneId)
       hasParentConnection: false
     });
   },

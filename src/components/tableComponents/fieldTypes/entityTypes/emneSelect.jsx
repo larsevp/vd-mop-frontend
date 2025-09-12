@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { EmneSelect } from "../../../ui/form/EmneSelect";
 import { useEmneInheritance } from "../../../../hooks/useEmneInheritance";
 
@@ -28,15 +28,35 @@ export const emneSelectType = {
       inheritedEmne, 
       hasInheritance, 
       isFieldDisabled, 
-      getDisabledPlaceholder 
+      getDisabledPlaceholder,
+      hasParentConnection,
+      hasRelatedEntityConnection
     } = useEmneInheritance(entityType, entityId);
 
-    // Apply inheritance when store updates
+    // Track which entities we've already cleared to avoid repeated clearing
+    const clearedEntitiesRef = useRef(new Set());
+
+    // Apply inheritance when store updates (including blank/null values from connections)
     useEffect(() => {
-      if (inheritedEmne && value !== inheritedEmne) {
+      // If there's a parent or krav connection, always sync the emne value (even if null/blank)
+      if ((hasParentConnection || hasRelatedEntityConnection) && value !== inheritedEmne) {
         onChange({ target: { name: field.name, value: inheritedEmne } });
       }
-    }, [inheritedEmne, value, onChange, field.name]);
+      // Legacy: also sync if there's an actual inherited emne value
+      else if (inheritedEmne && value !== inheritedEmne) {
+        onChange({ target: { name: field.name, value: inheritedEmne } });
+      }
+    }, [inheritedEmne, value, onChange, field.name, hasParentConnection, hasRelatedEntityConnection]);
+
+    // Clear field value when switching to new entity (only once per entity)
+    useEffect(() => {
+      const isNewEntity = entityId === 'create-new' || entityId?.toString().includes('create');
+      
+      if (isNewEntity && !inheritedEmne && !hasParentConnection && !hasRelatedEntityConnection && value && !clearedEntitiesRef.current.has(entityId)) {
+        onChange({ target: { name: field.name, value: null } });
+        clearedEntitiesRef.current.add(entityId);
+      }
+    }, [entityId, inheritedEmne, value, onChange, field.name, hasParentConnection, hasRelatedEntityConnection]);
 
     // Use inherited value if available, otherwise use form value
     const effectiveValue = inheritedEmne || value;
