@@ -1,0 +1,1154 @@
+{
+    "items": [
+        {
+            "emne": {
+                "id": 1,
+                "tittel": "Støy",
+                "icon": "Volume2",
+                "color": "#ef4444",
+                "sortIt": 1
+            },
+            "entities": [
+                {
+                    "beskrivelseSnippet": "Dette er et testkrav med riktig TipTap JSON format",
+                    "informasjonSnippet": "Dette er en meget lang tekst, Dette er en meget lang tekst,Dette er en meget lang tekstDette er en meget lang tekstDette er en meget lang tekstDette er en meget lang tekstDette er en meget lang tekstDette er en meget lang tekstDette er en m…",
+                    "id": 1,
+                    "kravUID": "PK1",
+                    "tittel": "TestKrav",
+                    "beskrivelse": {
+                        "type": "doc",
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "text": "Dette er et testkrav med riktig TipTap JSON format",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "informasjon": {
+                        "type": "doc",
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "text": "Dette er en meget lang tekst, Dette er en meget lang tekst,Dette er en meget lang tekstDette er en meget lang tekstDette er en meget lang tekstDette er en meget lang tekstDette er en meget lang tekstDette er en meget lang tekstDette er en meget lang tekst Og mitt eget søkeord: Eplekake",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "beskrivelsePlain": "Dette er et testkrav med riktig TipTap JSON format",
+                    "informasjonPlain": "Dette er en meget lang tekst, Dette er en meget lang tekst,Dette er en meget lang tekstDette er en meget lang tekstDette er en meget lang tekstDette er en meget lang tekstDette er en meget lang tekstDette er en meget lang tekstDette er en meget lang tekst Og mitt eget søkeord: Eplekake",
+                    "kravreferansetypeId": 1,
+                    "kravreferanse": "Forurensingsforskriften kap2",
+                    "obligatorisk": false,
+                    "prioritet": 15,
+                    "givenOrder": 1,
+                    "parentId": null,
+                    "versjon": "V 1.0.0",
+                    "kravStatus": "baseline",
+                    "merknader": "Testmerknad for kravet",
+                    "vurderingId": 1,
+                    "statusId": 1,
+                    "emneId": 1,
+                    "enhetId": 1,
+                    "createdBy": 1,
+                    "updatedBy": 1,
+                    "projectId": 1,
+                    "generalKravId": null,
+                    "createdAt": "2025-09-10T19:32:29.005Z",
+                    "updatedAt": "2025-09-10T19:32:29.011Z",
+                    "enhet": {
+                        "id": 1,
+                        "navn": "Veidekke"
+                    },
+                    "emne": {
+                        "id": 1,
+                        "tittel": "Støy",
+                        "icon": "Volume2",
+                        "color": "#ef4444",
+                        "sortIt": 1
+                    },
+                    "status": {
+                        "id": 1,
+                        "navn": "Ferdig",
+                        "sortIt": 1,
+                        "icon": "CheckCircle",
+                        "color": "#22c55e"
+                    },
+                    "vurdering": {
+                        "id": 1,
+                        "navn": "Bra",
+                        "sortIt": 1,
+                        "icon": "Star",
+                        "color": "#22c55e"
+                    },
+                    "kravreferanseType": {
+                        "id": 1,
+                        "tittel": "Kontraktskrav"
+                    },
+                    "parent": null,
+                    "children": [
+                        {
+                            "id": 2,
+                            "kravUID": "PK2",
+                            "tittel": "TestKrav_2",
+                            "beskrivelseSnippet": "",
+                            "parentId": 1
+                        }
+                    ],
+                    "creator": {
+                        "id": 1,
+                        "navn": "Admin"
+                    },
+                    "updater": {
+                        "id": 1,
+                        "navn": "Admin"
+                    },
+                    "files": [],
+                    "generalKrav": null,
+                    "prosjektTiltak": [
+                        {
+                            "id": 5,
+                            "tiltakUID": "PT5",
+                            "tittel": "Masse tiltak på to krav",
+                            "KravTiltakJunction": {
+                                "id": 6,
+                                "kravId": 1,
+                                "kravType": "ProsjektKrav",
+                                "tiltakId": 5,
+                                "tiltakType": "ProsjektTiltak",
+                                "createdAt": "2025-09-10T19:36:08.172Z",
+                                "updatedAt": "2025-09-10T19:36:08.172Z"
+                            }
+                        }
+                    ],
+                    "lover": [],
+                    "kravpakker": [],
+                    "entityType": "prosjektkrav"
+                },
+                {
+                    "beskrivelseSnippet": "Masse tiltak",
+                    "implementasjonSnippet": "",
+                    "tilbakemeldingSnippet": "",
+                    "id": 5,
+                    "tiltakUID": "PT5",
+                    "tittel": "Masse tiltak på to krav",
+                    "beskrivelse": "<p class=\"mb-3 text-foreground\">Masse tiltak</p>",
+                    "implementasjon": null,
+                    "tilbakemelding": null,
+                    "beskrivelsePlain": "Masse tiltak",
+                    "implementasjonPlain": null,
+                    "tilbakemeldingPlain": null,
+                    "merknad": null,
+                    "prioritet": null,
+                    "givenOrder": null,
+                    "vurderingId": null,
+                    "statusId": null,
+                    "parentId": null,
+                    "obligatorisk": false,
+                    "emneId": 1,
+                    "enhetId": 2,
+                    "createdBy": 2,
+                    "updatedBy": 2,
+                    "projectId": 1,
+                    "generalTiltakId": null,
+                    "createdAt": "2025-09-10T19:36:08.148Z",
+                    "updatedAt": "2025-09-10T19:36:08.159Z",
+                    "enhet": {
+                        "id": 2,
+                        "navn": "Infrastruktur"
+                    },
+                    "emne": {
+                        "id": 1,
+                        "tittel": "Støy",
+                        "icon": "Volume2",
+                        "color": "#ef4444",
+                        "sortIt": 1
+                    },
+                    "status": null,
+                    "vurdering": null,
+                    "parent": null,
+                    "children": [],
+                    "creator": {
+                        "id": 2,
+                        "navn": "Testbruker ikke restricted"
+                    },
+                    "updater": {
+                        "id": 2,
+                        "navn": "Testbruker ikke restricted"
+                    },
+                    "files": [],
+                    "generalTiltak": null,
+                    "prosjektKrav": [
+                        {
+                            "beskrivelseSnippet": "",
+                            "id": 2,
+                            "kravUID": "PK2",
+                            "tittel": "TestKrav_2",
+                            "emneId": 1
+                        },
+                        {
+                            "beskrivelseSnippet": "",
+                            "id": 1,
+                            "kravUID": "PK1",
+                            "tittel": "TestKrav",
+                            "emneId": 1
+                        }
+                    ],
+                    "entityType": "prosjekttiltak",
+                    "_displayedUnderKrav": true,
+                    "_relatedToKrav": 1,
+                    "_parentKrav": {
+                        "id": 1,
+                        "kravUID": "PK1",
+                        "tittel": "TestKrav"
+                    }
+                },
+                {
+                    "beskrivelseSnippet": "Dette er et underkrav med TipTap JSON format",
+                    "informasjonSnippet": "Informasjon om underkravet",
+                    "id": 2,
+                    "kravUID": "PK2",
+                    "tittel": "TestKrav_2",
+                    "beskrivelse": {
+                        "type": "doc",
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "text": "Dette er et underkrav med TipTap JSON format",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "informasjon": {
+                        "type": "doc",
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "text": "Informasjon om underkravet",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "beskrivelsePlain": "Dette er et underkrav med TipTap JSON format",
+                    "informasjonPlain": "Informasjon om underkravet",
+                    "kravreferansetypeId": 1,
+                    "kravreferanse": "Forurensingsforskriften kap2",
+                    "obligatorisk": false,
+                    "prioritet": 15,
+                    "givenOrder": 1,
+                    "parentId": 1,
+                    "versjon": "V 1.0.0",
+                    "kravStatus": "baseline",
+                    "merknader": "Testmerknad for kravet",
+                    "vurderingId": 1,
+                    "statusId": 1,
+                    "emneId": 1,
+                    "enhetId": 1,
+                    "createdBy": 1,
+                    "updatedBy": 1,
+                    "projectId": 1,
+                    "generalKravId": null,
+                    "createdAt": "2025-09-10T19:32:29.016Z",
+                    "updatedAt": "2025-09-10T19:32:29.021Z",
+                    "enhet": {
+                        "id": 1,
+                        "navn": "Veidekke"
+                    },
+                    "emne": {
+                        "id": 1,
+                        "tittel": "Støy",
+                        "icon": "Volume2",
+                        "color": "#ef4444",
+                        "sortIt": 1
+                    },
+                    "status": {
+                        "id": 1,
+                        "navn": "Ferdig",
+                        "sortIt": 1,
+                        "icon": "CheckCircle",
+                        "color": "#22c55e"
+                    },
+                    "vurdering": {
+                        "id": 1,
+                        "navn": "Bra",
+                        "sortIt": 1,
+                        "icon": "Star",
+                        "color": "#22c55e"
+                    },
+                    "kravreferanseType": {
+                        "id": 1,
+                        "tittel": "Kontraktskrav"
+                    },
+                    "parent": {
+                        "id": 1,
+                        "kravUID": "PK1",
+                        "tittel": "TestKrav",
+                        "beskrivelseSnippet": "",
+                        "emneId": 1
+                    },
+                    "children": [],
+                    "creator": {
+                        "id": 1,
+                        "navn": "Admin"
+                    },
+                    "updater": {
+                        "id": 1,
+                        "navn": "Admin"
+                    },
+                    "files": [],
+                    "generalKrav": null,
+                    "prosjektTiltak": [
+                        {
+                            "id": 5,
+                            "tiltakUID": "PT5",
+                            "tittel": "Masse tiltak på to krav",
+                            "KravTiltakJunction": {
+                                "id": 5,
+                                "kravId": 2,
+                                "kravType": "ProsjektKrav",
+                                "tiltakId": 5,
+                                "tiltakType": "ProsjektTiltak",
+                                "createdAt": "2025-09-10T19:36:08.164Z",
+                                "updatedAt": "2025-09-10T19:36:08.164Z"
+                            }
+                        }
+                    ],
+                    "lover": [],
+                    "kravpakker": [],
+                    "entityType": "prosjektkrav",
+                    "_parentKrav": {
+                        "id": 1,
+                        "kravUID": "PK1",
+                        "tittel": "TestKrav",
+                        "beskrivelseSnippet": "",
+                        "emneId": 1
+                    }
+                },
+                {
+                    "beskrivelseSnippet": "Masse tiltak",
+                    "implementasjonSnippet": "",
+                    "tilbakemeldingSnippet": "",
+                    "id": 5,
+                    "tiltakUID": "PT5",
+                    "tittel": "Masse tiltak på to krav",
+                    "beskrivelse": "<p class=\"mb-3 text-foreground\">Masse tiltak</p>",
+                    "implementasjon": null,
+                    "tilbakemelding": null,
+                    "beskrivelsePlain": "Masse tiltak",
+                    "implementasjonPlain": null,
+                    "tilbakemeldingPlain": null,
+                    "merknad": null,
+                    "prioritet": null,
+                    "givenOrder": null,
+                    "vurderingId": null,
+                    "statusId": null,
+                    "parentId": null,
+                    "obligatorisk": false,
+                    "emneId": 1,
+                    "enhetId": 2,
+                    "createdBy": 2,
+                    "updatedBy": 2,
+                    "projectId": 1,
+                    "generalTiltakId": null,
+                    "createdAt": "2025-09-10T19:36:08.148Z",
+                    "updatedAt": "2025-09-10T19:36:08.159Z",
+                    "enhet": {
+                        "id": 2,
+                        "navn": "Infrastruktur"
+                    },
+                    "emne": {
+                        "id": 1,
+                        "tittel": "Støy",
+                        "icon": "Volume2",
+                        "color": "#ef4444",
+                        "sortIt": 1
+                    },
+                    "status": null,
+                    "vurdering": null,
+                    "parent": null,
+                    "children": [],
+                    "creator": {
+                        "id": 2,
+                        "navn": "Testbruker ikke restricted"
+                    },
+                    "updater": {
+                        "id": 2,
+                        "navn": "Testbruker ikke restricted"
+                    },
+                    "files": [],
+                    "generalTiltak": null,
+                    "prosjektKrav": [
+                        {
+                            "beskrivelseSnippet": "",
+                            "id": 2,
+                            "kravUID": "PK2",
+                            "tittel": "TestKrav_2",
+                            "emneId": 1
+                        },
+                        {
+                            "beskrivelseSnippet": "",
+                            "id": 1,
+                            "kravUID": "PK1",
+                            "tittel": "TestKrav",
+                            "emneId": 1
+                        }
+                    ],
+                    "entityType": "prosjekttiltak",
+                    "_displayedUnderKrav": true,
+                    "_relatedToKrav": 2,
+                    "_parentKrav": {
+                        "id": 2,
+                        "kravUID": "PK2",
+                        "tittel": "TestKrav_2"
+                    }
+                },
+                {
+                    "beskrivelseSnippet": "jeez",
+                    "informasjonSnippet": "",
+                    "id": 5,
+                    "kravUID": "PK5",
+                    "tittel": "KRAV ",
+                    "beskrivelse": "<p class=\"mb-3 text-foreground\">jeez</p>",
+                    "informasjon": null,
+                    "beskrivelsePlain": "jeez",
+                    "informasjonPlain": null,
+                    "kravreferansetypeId": null,
+                    "kravreferanse": null,
+                    "obligatorisk": false,
+                    "prioritet": null,
+                    "givenOrder": null,
+                    "parentId": null,
+                    "versjon": null,
+                    "kravStatus": null,
+                    "merknader": null,
+                    "vurderingId": null,
+                    "statusId": null,
+                    "emneId": 1,
+                    "enhetId": 2,
+                    "createdBy": 2,
+                    "updatedBy": 2,
+                    "projectId": 1,
+                    "generalKravId": null,
+                    "createdAt": "2025-09-10T22:18:56.090Z",
+                    "updatedAt": "2025-09-10T22:18:56.111Z",
+                    "enhet": {
+                        "id": 2,
+                        "navn": "Infrastruktur"
+                    },
+                    "emne": {
+                        "id": 1,
+                        "tittel": "Støy",
+                        "icon": "Volume2",
+                        "color": "#ef4444",
+                        "sortIt": 1
+                    },
+                    "status": null,
+                    "vurdering": null,
+                    "kravreferanseType": null,
+                    "parent": null,
+                    "children": [],
+                    "creator": {
+                        "id": 2,
+                        "navn": "Testbruker ikke restricted"
+                    },
+                    "updater": {
+                        "id": 2,
+                        "navn": "Testbruker ikke restricted"
+                    },
+                    "files": [],
+                    "generalKrav": null,
+                    "prosjektTiltak": [],
+                    "lover": [],
+                    "kravpakker": [],
+                    "entityType": "prosjektkrav"
+                },
+                {
+                    "beskrivelseSnippet": "Enda et til",
+                    "informasjonSnippet": "",
+                    "id": 6,
+                    "kravUID": "PK6",
+                    "tittel": "Mere krav",
+                    "beskrivelse": "<p class=\"mb-3 text-foreground\">Enda et til </p>",
+                    "informasjon": null,
+                    "beskrivelsePlain": "Enda et til",
+                    "informasjonPlain": null,
+                    "kravreferansetypeId": null,
+                    "kravreferanse": null,
+                    "obligatorisk": false,
+                    "prioritet": null,
+                    "givenOrder": null,
+                    "parentId": null,
+                    "versjon": null,
+                    "kravStatus": null,
+                    "merknader": null,
+                    "vurderingId": null,
+                    "statusId": null,
+                    "emneId": 1,
+                    "enhetId": 2,
+                    "createdBy": 2,
+                    "updatedBy": 2,
+                    "projectId": 1,
+                    "generalKravId": null,
+                    "createdAt": "2025-09-10T22:20:02.940Z",
+                    "updatedAt": "2025-09-10T22:20:02.949Z",
+                    "enhet": {
+                        "id": 2,
+                        "navn": "Infrastruktur"
+                    },
+                    "emne": {
+                        "id": 1,
+                        "tittel": "Støy",
+                        "icon": "Volume2",
+                        "color": "#ef4444",
+                        "sortIt": 1
+                    },
+                    "status": null,
+                    "vurdering": null,
+                    "kravreferanseType": null,
+                    "parent": null,
+                    "children": [],
+                    "creator": {
+                        "id": 2,
+                        "navn": "Testbruker ikke restricted"
+                    },
+                    "updater": {
+                        "id": 2,
+                        "navn": "Testbruker ikke restricted"
+                    },
+                    "files": [],
+                    "generalKrav": null,
+                    "prosjektTiltak": [],
+                    "lover": [],
+                    "kravpakker": [],
+                    "entityType": "prosjektkrav"
+                },
+                {
+                    "beskrivelseSnippet": "Prosjekttiltak grønnsak forhold i dette prosjektet.",
+                    "implementasjonSnippet": "TProsjekttiltakt med tilpassede materialer.",
+                    "tilbakemeldingSnippet": "Tilbakemelding fra lokale myndigheter er positiv for dette prosjektet. Naboer ønsker høyere skjermer på enkelte strekninger spesifikt for dette området.",
+                    "id": 1,
+                    "tiltakUID": "PT1",
+                    "tittel": "Implementering av støyskjerming - Prosjekt spesifikk",
+                    "beskrivelse": {
+                        "type": "doc",
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "text": "Prosjekttiltak grønnsak forhold i dette prosjektet.",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "implementasjon": {
+                        "type": "doc",
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "text": "TProsjekttiltakt med tilpassede materialer.",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "tilbakemelding": {
+                        "type": "doc",
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "text": "Tilbakemelding fra lokale myndigheter er positiv for dette prosjektet. Naboer ønsker høyere skjermer på enkelte strekninger spesifikt for dette området.",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "beskrivelsePlain": "Prosjekttiltak grønnsak forhold i dette prosjektet.",
+                    "implementasjonPlain": "TProsjekttiltakt med tilpassede materialer.",
+                    "tilbakemeldingPlain": "Tilbakemelding fra lokale myndigheter er positiv for dette prosjektet. Naboer ønsker høyere skjermer på enkelte strekninger spesifikt for dette området.",
+                    "merknad": "Viktig å koordinere med kommunens reguleringsplan for dette prosjektet",
+                    "prioritet": 10,
+                    "givenOrder": 1,
+                    "vurderingId": 1,
+                    "statusId": 1,
+                    "parentId": null,
+                    "obligatorisk": true,
+                    "emneId": 1,
+                    "enhetId": 1,
+                    "createdBy": 1,
+                    "updatedBy": 1,
+                    "projectId": 1,
+                    "generalTiltakId": 1,
+                    "createdAt": "2025-09-10T19:32:29.027Z",
+                    "updatedAt": "2025-09-10T19:32:29.033Z",
+                    "enhet": {
+                        "id": 1,
+                        "navn": "Veidekke"
+                    },
+                    "emne": {
+                        "id": 1,
+                        "tittel": "Støy",
+                        "icon": "Volume2",
+                        "color": "#ef4444",
+                        "sortIt": 1
+                    },
+                    "status": {
+                        "id": 1,
+                        "navn": "Ferdig",
+                        "sortIt": 1,
+                        "icon": "CheckCircle",
+                        "color": "#22c55e"
+                    },
+                    "vurdering": {
+                        "id": 1,
+                        "navn": "Bra",
+                        "sortIt": 1,
+                        "icon": "Star",
+                        "color": "#22c55e"
+                    },
+                    "parent": null,
+                    "children": [],
+                    "creator": {
+                        "id": 1,
+                        "navn": "Admin"
+                    },
+                    "updater": {
+                        "id": 1,
+                        "navn": "Admin"
+                    },
+                    "files": [],
+                    "generalTiltak": {
+                        "id": 1,
+                        "tiltakUID": "GT1",
+                        "tittel": "Implementering av støyskjerming"
+                    },
+                    "prosjektKrav": [],
+                    "entityType": "prosjekttiltak",
+                    "_displayedUnderKrav": false,
+                    "_orphaned": true
+                },
+                {
+                    "beskrivelseSnippet": "Enda mere tiltak",
+                    "implementasjonSnippet": "",
+                    "tilbakemeldingSnippet": "",
+                    "id": 6,
+                    "tiltakUID": "PT6",
+                    "tittel": "ET TILTAK ",
+                    "beskrivelse": "<p class=\"mb-3 text-foreground\">Enda mere tiltak</p>",
+                    "implementasjon": null,
+                    "tilbakemelding": null,
+                    "beskrivelsePlain": "Enda mere tiltak",
+                    "implementasjonPlain": null,
+                    "tilbakemeldingPlain": null,
+                    "merknad": null,
+                    "prioritet": null,
+                    "givenOrder": null,
+                    "vurderingId": null,
+                    "statusId": null,
+                    "parentId": null,
+                    "obligatorisk": false,
+                    "emneId": 1,
+                    "enhetId": 2,
+                    "createdBy": 2,
+                    "updatedBy": 2,
+                    "projectId": 1,
+                    "generalTiltakId": null,
+                    "createdAt": "2025-09-10T22:20:15.396Z",
+                    "updatedAt": "2025-09-10T22:20:15.414Z",
+                    "enhet": {
+                        "id": 2,
+                        "navn": "Infrastruktur"
+                    },
+                    "emne": {
+                        "id": 1,
+                        "tittel": "Støy",
+                        "icon": "Volume2",
+                        "color": "#ef4444",
+                        "sortIt": 1
+                    },
+                    "status": null,
+                    "vurdering": null,
+                    "parent": null,
+                    "children": [],
+                    "creator": {
+                        "id": 2,
+                        "navn": "Testbruker ikke restricted"
+                    },
+                    "updater": {
+                        "id": 2,
+                        "navn": "Testbruker ikke restricted"
+                    },
+                    "files": [],
+                    "generalTiltak": null,
+                    "prosjektKrav": [],
+                    "entityType": "prosjekttiltak",
+                    "_displayedUnderKrav": false,
+                    "_orphaned": true
+                }
+            ],
+            "_emneKey": "emne-1",
+            "_entityCount": 8
+        },
+        {
+            "emne": {
+                "id": 2,
+                "tittel": "Støv",
+                "icon": "Wind",
+                "color": "#f59e0b",
+                "sortIt": 2
+            },
+            "entities": [
+                {
+                    "beskrivelseSnippet": "Prosjekttiltak et dette prosjektets miljø.",
+                    "implementasjonSnippet": "Revegetering utføres umiddelbart etter at anleggsarbeid er ferdigstilt i hvert delområde av prosjektet. Brukes lokale plantearter spesifikt tilpasset dette prosjektets klimaforhold.",
+                    "tilbakemeldingSnippet": "",
+                    "id": 2,
+                    "tiltakUID": "PT2",
+                    "tittel": "Revegetering av anleggsområder - Prosjekt tilpasset",
+                    "beskrivelse": {
+                        "type": "doc",
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "text": "Prosjekttiltak et dette prosjektets miljø.",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "implementasjon": {
+                        "type": "doc",
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "text": "Revegetering utføres umiddelbart etter at anleggsarbeid er ferdigstilt i hvert delområde av prosjektet. Brukes lokale plantearter spesifikt tilpasset dette prosjektets klimaforhold.",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "tilbakemelding": null,
+                    "beskrivelsePlain": "Prosjekttiltak et dette prosjektets miljø.",
+                    "implementasjonPlain": "Revegetering utføres umiddelbart etter at anleggsarbeid er ferdigstilt i hvert delområde av prosjektet. Brukes lokale plantearter spesifikt tilpasset dette prosjektets klimaforhold.",
+                    "tilbakemeldingPlain": null,
+                    "merknad": "Koordinere med landskapsarkitekt og lokale miljøorganisasjoner for dette prosjektet",
+                    "prioritet": 15,
+                    "givenOrder": 2,
+                    "vurderingId": 2,
+                    "statusId": 2,
+                    "parentId": null,
+                    "obligatorisk": false,
+                    "emneId": 2,
+                    "enhetId": 1,
+                    "createdBy": 1,
+                    "updatedBy": 1,
+                    "projectId": 1,
+                    "generalTiltakId": 2,
+                    "createdAt": "2025-09-10T19:32:29.039Z",
+                    "updatedAt": "2025-09-10T19:32:29.043Z",
+                    "enhet": {
+                        "id": 1,
+                        "navn": "Veidekke"
+                    },
+                    "emne": {
+                        "id": 2,
+                        "tittel": "Støv",
+                        "icon": "Wind",
+                        "color": "#f59e0b",
+                        "sortIt": 2
+                    },
+                    "status": {
+                        "id": 2,
+                        "navn": "Under arbeid",
+                        "sortIt": 2,
+                        "icon": "Play",
+                        "color": "#f59e0b"
+                    },
+                    "vurdering": {
+                        "id": 2,
+                        "navn": "Trenger mer arbeid",
+                        "sortIt": 2,
+                        "icon": "AlertTriangle",
+                        "color": "#f59e0b"
+                    },
+                    "parent": null,
+                    "children": [
+                        {
+                            "id": 3,
+                            "tiltakUID": "PT3",
+                            "tittel": "Spesiell revegetering ved bekker - Prosjekt spesifikk",
+                            "beskrivelseSnippet": "",
+                            "parentId": 2
+                        }
+                    ],
+                    "creator": {
+                        "id": 1,
+                        "navn": "Admin"
+                    },
+                    "updater": {
+                        "id": 1,
+                        "navn": "Admin"
+                    },
+                    "files": [],
+                    "generalTiltak": {
+                        "id": 2,
+                        "tiltakUID": "GT2",
+                        "tittel": "Revegetering av anleggsområder"
+                    },
+                    "prosjektKrav": [],
+                    "entityType": "prosjekttiltak",
+                    "_displayedUnderKrav": false,
+                    "_orphaned": true
+                },
+                {
+                    "beskrivelseSnippet": "Prosjekttiltak te prosjektets geografi.",
+                    "implementasjonSnippet": "Planting av pil, bjørk og andre vannkjære arter spesifikt valgt for dette prosjektet. Etablering av filterstriper.",
+                    "tilbakemeldingSnippet": "",
+                    "id": 3,
+                    "tiltakUID": "PT3",
+                    "tittel": "Spesiell revegetering ved bekker - Prosjekt spesifikk",
+                    "beskrivelse": {
+                        "type": "doc",
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "text": "Prosjekttiltak te prosjektets geografi.",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "implementasjon": {
+                        "type": "doc",
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "text": "Planting av pil, bjørk og andre vannkjære arter spesifikt valgt for dette prosjektet. Etablering av filterstriper.",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "tilbakemelding": null,
+                    "beskrivelsePlain": "Prosjekttiltak te prosjektets geografi.",
+                    "implementasjonPlain": "Planting av pil, bjørk og andre vannkjære arter spesifikt valgt for dette prosjektet. Etablering av filterstriper.",
+                    "tilbakemeldingPlain": null,
+                    "merknad": "Følge retningslinjer fra miljømyndighetene for dette spesifikke prosjektet",
+                    "prioritet": 12,
+                    "givenOrder": 3,
+                    "vurderingId": 1,
+                    "statusId": 1,
+                    "parentId": 2,
+                    "obligatorisk": true,
+                    "emneId": 2,
+                    "enhetId": 1,
+                    "createdBy": 1,
+                    "updatedBy": 1,
+                    "projectId": 1,
+                    "generalTiltakId": null,
+                    "createdAt": "2025-09-10T19:32:29.049Z",
+                    "updatedAt": "2025-09-10T19:32:29.053Z",
+                    "enhet": {
+                        "id": 1,
+                        "navn": "Veidekke"
+                    },
+                    "emne": {
+                        "id": 2,
+                        "tittel": "Støv",
+                        "icon": "Wind",
+                        "color": "#f59e0b",
+                        "sortIt": 2
+                    },
+                    "status": {
+                        "id": 1,
+                        "navn": "Ferdig",
+                        "sortIt": 1,
+                        "icon": "CheckCircle",
+                        "color": "#22c55e"
+                    },
+                    "vurdering": {
+                        "id": 1,
+                        "navn": "Bra",
+                        "sortIt": 1,
+                        "icon": "Star",
+                        "color": "#22c55e"
+                    },
+                    "parent": {
+                        "id": 2,
+                        "tiltakUID": "PT2",
+                        "tittel": "Revegetering av anleggsområder - Prosjekt tilpasset",
+                        "beskrivelseSnippet": "",
+                        "emneId": 2
+                    },
+                    "children": [],
+                    "creator": {
+                        "id": 1,
+                        "navn": "Admin"
+                    },
+                    "updater": {
+                        "id": 1,
+                        "navn": "Admin"
+                    },
+                    "files": [],
+                    "generalTiltak": null,
+                    "prosjektKrav": [],
+                    "entityType": "prosjekttiltak",
+                    "_displayedUnderKrav": false,
+                    "_orphaned": true
+                }
+            ],
+            "_emneKey": "emne-2",
+            "_entityCount": 2
+        },
+        {
+            "emne": {
+                "id": 4,
+                "tittel": "Vibrasjoner1",
+                "icon": "Zap",
+                "color": "#06b6d4",
+                "sortIt": 4
+            },
+            "entities": [
+                {
+                    "beskrivelseSnippet": "Dette er et krav",
+                    "informasjonSnippet": "",
+                    "id": 3,
+                    "kravUID": "PK3",
+                    "tittel": "Dette er et krav",
+                    "beskrivelse": "<p class=\"mb-3 text-foreground\">Dette er et krav</p>",
+                    "informasjon": null,
+                    "beskrivelsePlain": "Dette er et krav",
+                    "informasjonPlain": null,
+                    "kravreferansetypeId": null,
+                    "kravreferanse": null,
+                    "obligatorisk": false,
+                    "prioritet": null,
+                    "givenOrder": null,
+                    "parentId": null,
+                    "versjon": null,
+                    "kravStatus": null,
+                    "merknader": null,
+                    "vurderingId": null,
+                    "statusId": null,
+                    "emneId": 4,
+                    "enhetId": 2,
+                    "createdBy": 2,
+                    "updatedBy": 2,
+                    "projectId": 1,
+                    "generalKravId": null,
+                    "createdAt": "2025-09-10T19:35:34.255Z",
+                    "updatedAt": "2025-09-10T19:35:34.277Z",
+                    "enhet": {
+                        "id": 2,
+                        "navn": "Infrastruktur"
+                    },
+                    "emne": {
+                        "id": 4,
+                        "tittel": "Vibrasjoner1",
+                        "icon": "Zap",
+                        "color": "#06b6d4",
+                        "sortIt": 4
+                    },
+                    "status": null,
+                    "vurdering": null,
+                    "kravreferanseType": null,
+                    "parent": null,
+                    "children": [],
+                    "creator": {
+                        "id": 2,
+                        "navn": "Testbruker ikke restricted"
+                    },
+                    "updater": {
+                        "id": 2,
+                        "navn": "Testbruker ikke restricted"
+                    },
+                    "files": [],
+                    "generalKrav": null,
+                    "prosjektTiltak": [],
+                    "lover": [],
+                    "kravpakker": [],
+                    "entityType": "prosjektkrav"
+                }
+            ],
+            "_emneKey": "emne-4",
+            "_entityCount": 1
+        },
+        {
+            "emne": {
+                "id": 7,
+                "tittel": "Vibrasjoner4",
+                "icon": "TrendingUp",
+                "color": "#3b82f6",
+                "sortIt": 7
+            },
+            "entities": [
+                {
+                    "beskrivelseSnippet": "Jaja",
+                    "informasjonSnippet": "",
+                    "id": 4,
+                    "kravUID": "PK4",
+                    "tittel": "Nytt krav igjen ",
+                    "beskrivelse": "<p class=\"mb-3 text-foreground\">Jaja</p>",
+                    "informasjon": null,
+                    "beskrivelsePlain": "Jaja",
+                    "informasjonPlain": null,
+                    "kravreferansetypeId": null,
+                    "kravreferanse": null,
+                    "obligatorisk": false,
+                    "prioritet": null,
+                    "givenOrder": null,
+                    "parentId": null,
+                    "versjon": null,
+                    "kravStatus": null,
+                    "merknader": null,
+                    "vurderingId": null,
+                    "statusId": null,
+                    "emneId": 7,
+                    "enhetId": 2,
+                    "createdBy": 2,
+                    "updatedBy": 2,
+                    "projectId": 1,
+                    "generalKravId": null,
+                    "createdAt": "2025-09-10T19:35:44.154Z",
+                    "updatedAt": "2025-09-10T19:35:44.166Z",
+                    "enhet": {
+                        "id": 2,
+                        "navn": "Infrastruktur"
+                    },
+                    "emne": {
+                        "id": 7,
+                        "tittel": "Vibrasjoner4",
+                        "icon": "TrendingUp",
+                        "color": "#3b82f6",
+                        "sortIt": 7
+                    },
+                    "status": null,
+                    "vurdering": null,
+                    "kravreferanseType": null,
+                    "parent": null,
+                    "children": [],
+                    "creator": {
+                        "id": 2,
+                        "navn": "Testbruker ikke restricted"
+                    },
+                    "updater": {
+                        "id": 2,
+                        "navn": "Testbruker ikke restricted"
+                    },
+                    "files": [],
+                    "generalKrav": null,
+                    "prosjektTiltak": [],
+                    "lover": [],
+                    "kravpakker": [],
+                    "entityType": "prosjektkrav"
+                }
+            ],
+            "_emneKey": "emne-7",
+            "_entityCount": 1
+        },
+        {
+            "emne": {
+                "id": null,
+                "tittel": "Ingen emne",
+                "icon": null,
+                "color": null
+            },
+            "entities": [
+                {
+                    "beskrivelseSnippet": "Ingen emne",
+                    "implementasjonSnippet": "",
+                    "tilbakemeldingSnippet": "",
+                    "id": 7,
+                    "tiltakUID": "PT7",
+                    "tittel": "utem emne",
+                    "beskrivelse": "<p class=\"mb-3 text-foreground\">Ingen emne</p>",
+                    "implementasjon": null,
+                    "tilbakemelding": null,
+                    "beskrivelsePlain": "Ingen emne",
+                    "implementasjonPlain": null,
+                    "tilbakemeldingPlain": null,
+                    "merknad": null,
+                    "prioritet": null,
+                    "givenOrder": null,
+                    "vurderingId": null,
+                    "statusId": null,
+                    "parentId": null,
+                    "obligatorisk": false,
+                    "emneId": null,
+                    "enhetId": 2,
+                    "createdBy": 2,
+                    "updatedBy": 2,
+                    "projectId": 1,
+                    "generalTiltakId": null,
+                    "createdAt": "2025-09-10T22:20:23.670Z",
+                    "updatedAt": "2025-09-10T22:20:23.683Z",
+                    "enhet": {
+                        "id": 2,
+                        "navn": "Infrastruktur"
+                    },
+                    "emne": null,
+                    "status": null,
+                    "vurdering": null,
+                    "parent": null,
+                    "children": [],
+                    "creator": {
+                        "id": 2,
+                        "navn": "Testbruker ikke restricted"
+                    },
+                    "updater": {
+                        "id": 2,
+                        "navn": "Testbruker ikke restricted"
+                    },
+                    "files": [],
+                    "generalTiltak": null,
+                    "prosjektKrav": [],
+                    "entityType": "prosjekttiltak",
+                    "_displayedUnderKrav": false,
+                    "_orphaned": true
+                }
+            ],
+            "_emneKey": "ingen-emne",
+            "_entityCount": 1
+        }
+    ],
+    "totalCount": 13,
+    "page": 1,
+    "pageSize": 100,
+    "totalPages": 1
+}

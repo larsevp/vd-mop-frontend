@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { EntityWorkspace } from "@/components/EntityWorkspace";
 import { createCombinedEntityDTO } from "@/components/EntityWorkspace/interface/data";
@@ -6,6 +6,8 @@ import { createProsjektKravTiltakCombinedAdapter } from "./adapter";
 import { createCombinedRenderer } from "../shared/CombinedRenderer";
 import { useProsjektKravTiltakCombinedViewStore } from "./store";
 import { RowListHeading } from "../../shared";
+import FlowWorkspace from "../../flow/FlowWorkspace";
+import { createProsjektKravTiltakFlowAdapter } from "../../flow/ProsjektKravTiltakFlowAdapter";
 
 // Import individual renderers
 import { renderEntityCard as ProsjektKravCardRenderer } from "../../prosjektkrav/renderer/ProsjektKravRenderer";
@@ -16,54 +18,48 @@ import { createProsjektKravAdapter } from "../../prosjektkrav/adapter";
 import { createProsjektTiltakAdapter } from "../../prosjekttiltak/adapter";
 import { prosjektKrav as prosjektKravConfig } from "@/modelConfigs/models/prosjektKrav";
 import { prosjektTiltak as prosjektTiltakConfig } from "@/modelConfigs/models/prosjektTiltak";
+import { useEntityData } from "@/components/EntityWorkspace/interface/hooks/useEntityData";
+import { useWorkspaceUI } from "@/components/EntityWorkspace/interface/hooks/useWorkspaceUI";
 
 /**
- * ProsjektKravTiltakCombinedWorkspace - Combined workspace for ProsjektKrav and ProsjektTiltak entities
- *
- * This workspace handles project-specific requirements (ProsjektKrav) and measures (ProsjektTiltak) which are:
- * - Project-specific entities tied to a particular project context
- * - Derived from general Krav/Tiltak templates but customized for project needs
- * - Combined in a unified view showing relationships between project requirements and measures
- * - Support rich text content, file attachments, hierarchical structure, and project-specific data
- *
- * Features automatically provided by EntityWorkspace:
- * - Project-scoped combined data fetching and filtering
- * - Search, filtering, sorting across both entity types within project context
- * - Entity type filtering (ProsjektKrav vs ProsjektTiltak)
- * - Grouping by emne (if configured)
- * - CRUD operations for both entity types
- * - Responsive UI layout
- * - Loading and error states
- * - File attachments and rich text editing
- * - Project context awareness
+ * ProsjektKravTiltakFlowWorkspace - Extended workspace with React Flow visualization
+ * 
+ * Reuses shared components:
+ * - RowListHeading for search, filters, and view toggles (extended with Flow option)
+ * - CombinedRenderer for card/detail rendering
+ * - Same adapters and DTOs as regular combined workspace
+ * 
+ * Features:
+ * - All existing EntityWorkspace functionality (Cards, Split views)
+ * - NEW: Flow visualization showing Emne → ProsjektKrav → ProsjektTiltak relationships
+ * - View mode toggle: Cards | Split | Flow
  */
-const ProsjektKravTiltakCombinedWorkspace = () => {
+const ProsjektKravTiltakFlowWorkspace = () => {
   const navigate = useNavigate();
   
-  // Create combined adapter for project entities
-  const adapter = createProsjektKravTiltakCombinedAdapter({ debug: true });
+  // Flow view mode state - default to 'flow' since this is the Flow workspace
+  const [flowViewMode, setFlowViewMode] = useState('flow');
 
-  // Create combined DTO
+  // Create combined adapter and DTO
+  const adapter = createProsjektKravTiltakCombinedAdapter({ debug: true });
   const dto = createCombinedEntityDTO(adapter, { debug: true });
 
-  // Get view options state
+  // Get view options state (reuse existing store)
   const { viewOptions, setViewOptions } = useProsjektKravTiltakCombinedViewStore();
 
-  // Handle Flow toggle - navigate to Flow workspace
+  // Handle flow view toggle - navigate back to regular workspace
   const handleFlowToggle = () => {
+    // Navigate back to regular combined workspace
     const currentPath = window.location.pathname;
-    if (currentPath.includes('/prosjekt-krav-tiltak-combined')) {
-      const flowPath = currentPath.replace('/prosjekt-krav-tiltak-combined', '/prosjekt-krav-tiltak-flow');
-      navigate(flowPath);
+    if (currentPath.includes('/prosjekt-krav-tiltak-flow')) {
+      const regularPath = currentPath.replace('/prosjekt-krav-tiltak-flow', '/prosjekt-krav-tiltak-combined');
+      navigate(regularPath);
     }
   };
 
-  // Create combined renderer with proper configuration
+  // Create renderer for EntityWorkspace views
   const renderer = createCombinedRenderer({
-    entityTypes: {
-      primary: "prosjektKrav",
-      secondary: "prosjektTiltak",
-    },
+    entityTypes: { primary: "prosjektkrav", secondary: "prosjekttiltak" },
     cardRenderers: {
       primaryCardRenderer: ProsjektKravCardRenderer,
       secondaryCardRenderer: ProsjektTiltakCardRenderer,
@@ -95,7 +91,33 @@ const ProsjektKravTiltakCombinedWorkspace = () => {
     },
   });
 
-  return (
+  // Enhanced RowListHeading that includes Flow toggle
+  const EnhancedRowListHeading = (props) => (
+    <RowListHeading
+      {...props}
+      viewOptions={viewOptions}
+      onViewOptionsChange={setViewOptions}
+      availableViewOptions={renderer.getAvailableViewOptions()}
+      // Pass flow state and handler
+      flowViewMode={flowViewMode}
+      onFlowToggle={handleFlowToggle}
+    />
+  );
+
+  // Create flow adapter for flow visualization
+  const flowAdapter = createProsjektKravTiltakFlowAdapter({ debug: true });
+
+  return flowViewMode === 'flow' ? (
+    /* Flow View - React Flow visualization */
+    <FlowWorkspace
+      flowAdapter={flowAdapter}
+      viewOptions={viewOptions}
+      className="w-full h-full"
+      renderSearchBar={renderer.renderSearchBar}
+      onFlowToggle={handleFlowToggle}
+    />
+  ) : (
+    /* Standard EntityWorkspace for Cards/Split views with enhanced heading */
     <EntityWorkspace
       key={`${dto.entityType || "prosjekt-krav-tiltak-combined-workspace"}`}
       dto={dto}
@@ -104,21 +126,11 @@ const ProsjektKravTiltakCombinedWorkspace = () => {
       renderDetailPane={renderer.renderDetailPane}
       renderSearchBar={renderer.renderSearchBar}
       renderActionButtons={renderer.renderActionButtons}
-      renderListHeading={(props) => (
-        <RowListHeading
-          {...props}
-          viewOptions={viewOptions}
-          onViewOptionsChange={setViewOptions}
-          availableViewOptions={renderer.getAvailableViewOptions()}
-        />
-      )}
+      renderListHeading={EnhancedRowListHeading}
       viewOptions={viewOptions}
       debug={false}
-      // Pass Flow toggle to EntityWorkspace header
-      flowViewMode={null} // Not in flow mode
-      onFlowToggle={handleFlowToggle}
     />
   );
 };
 
-export default ProsjektKravTiltakCombinedWorkspace;
+export default ProsjektKravTiltakFlowWorkspace;

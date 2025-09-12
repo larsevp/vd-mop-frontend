@@ -81,8 +81,8 @@ export class ProsjektKravTiltakCombinedAdapter {
       ],
 
       defaults: {
-        sortBy: "updatedAt",
-        sortOrder: "desc",
+        sortBy: "id",
+        sortOrder: "asc",
         filterBy: "all",
         entityType: "all",
       },
@@ -125,11 +125,11 @@ export class ProsjektKravTiltakCombinedAdapter {
   detectEntityType(rawEntity) {
     // Check for explicit entity type markers (used for new entities)
     if (rawEntity?.__entityType) {
-      return rawEntity.__entityType;
+      return rawEntity.__entityType.toLowerCase();
     }
 
     if (rawEntity?.entityType) {
-      return rawEntity.entityType;
+      return rawEntity.entityType.toLowerCase();
     }
 
     // Check for meaningful values (not empty strings)

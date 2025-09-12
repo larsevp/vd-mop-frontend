@@ -24,8 +24,8 @@ export const createEntityStore = (debug = false) => {
         searchQuery: '',
         filters: {
           filterBy: 'all',
-          sortBy: 'updatedAt',
-          sortOrder: 'desc',
+          sortBy: 'id',
+          sortOrder: 'asc',
           additionalFilters: {}
         },
         
@@ -276,8 +276,8 @@ export const createEntityStore = (debug = false) => {
             searchQuery: '',
             filters: {
               filterBy: 'all',
-              sortBy: 'updatedAt',
-              sortOrder: 'desc',
+              sortBy: 'id',
+              sortOrder: 'asc',
               additionalFilters: {}
             },
             pagination: {

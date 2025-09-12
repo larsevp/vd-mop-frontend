@@ -80,8 +80,8 @@ export class KravTiltakCombinedAdapter {
       ],
 
       defaults: {
-        sortBy: "updatedAt",
-        sortOrder: "desc",
+        sortBy: "id",
+        sortOrder: "asc",
         filterBy: "all",
         entityType: "all",
       },

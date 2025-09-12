@@ -19,8 +19,8 @@ const getDefaultViewOptions = () => ({
   showObligatorisk: true,
   showRelations: true,
   compactMode: false,
-  sortBy: 'updatedAt',
-  sortOrder: 'desc'
+  sortBy: 'id',
+  sortOrder: 'asc'
 });
 
 export const useKravTiltakCombinedViewStore = create(

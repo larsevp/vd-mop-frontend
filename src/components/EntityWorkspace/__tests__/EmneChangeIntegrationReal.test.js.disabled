@@ -106,8 +106,8 @@ skipIfNotIntegrationMode('Emne Change Integration Tests - REAL API', () => {
           page: 1,
           pageSize: 50,
           searchQuery: '',
-          sortBy: 'updatedAt',
-          sortOrder: 'desc',
+          sortBy: 'id',
+          sortOrder: 'asc',
           groupByEmne: true
         }),
         { wrapper }
@@ -269,8 +269,8 @@ skipIfNotIntegrationMode('Emne Change Integration Tests - REAL API', () => {
           page: 1,
           pageSize: 50,
           searchQuery: '',
-          sortBy: 'updatedAt',
-          sortOrder: 'desc',
+          sortBy: 'id',
+          sortOrder: 'asc',
           groupByEmne: true
         }),
         { wrapper }

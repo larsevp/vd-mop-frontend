@@ -99,8 +99,8 @@ describe('EntityWorkspaceCore', () => {
     pageSize: 50,
     searchQuery: '',
     searchInput: '',
-    sortBy: 'updatedAt',
-    sortOrder: 'desc',
+    sortBy: 'id',
+    sortOrder: 'asc',
     filterBy: 'all',
     additionalFilters: {},
     groupByEmne: true,
@@ -341,8 +341,8 @@ describe('EntityWorkspaceCore', () => {
         page: 1,
         pageSize: 50,
         searchQuery: '',
-        sortBy: 'updatedAt',
-        sortOrder: 'desc',
+        sortBy: 'id',
+        sortOrder: 'asc',
         groupByEmne: true
       });
 
@@ -350,8 +350,8 @@ describe('EntityWorkspaceCore', () => {
         entityType: 'krav',
         initialConfig: expect.objectContaining({
           groupByEmne: true,
-          sortBy: 'updatedAt',
-          sortOrder: 'desc'
+          sortBy: 'id',
+          sortOrder: 'asc'
         })
       });
 

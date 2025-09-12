@@ -25,8 +25,8 @@ export const useWorkspaceUIStore = create(
       activeSearchQuery: '', // What actually gets sent to API
       filters: {
         filterBy: 'all',
-        sortBy: 'updatedAt', 
-        sortOrder: 'desc',
+        sortBy: 'id', 
+        sortOrder: 'asc',
         additionalFilters: {}
       },
       
@@ -36,7 +36,7 @@ export const useWorkspaceUIStore = create(
       viewMode: (() => {
         // Initialize viewMode from localStorage, default to 'split'
         const saved = localStorage.getItem('entityWorkspace-viewMode');
-        return saved && ['split', 'cards', 'list'].includes(saved) ? saved : 'split';
+        return saved && ['split', 'cards', 'list', 'flow'].includes(saved) ? saved : 'split';
       })(),
       
       // ============ EXPANSION STATE ============
@@ -105,8 +105,8 @@ export const useWorkspaceUIStore = create(
           activeSearchQuery: '',
           filters: {
             filterBy: 'all',
-            sortBy: 'updatedAt',
-            sortOrder: 'desc', 
+            sortBy: 'id',
+            sortOrder: 'asc', 
             additionalFilters: {}
           }
         });
@@ -182,8 +182,8 @@ export const useWorkspaceUIStore = create(
           searchQuery: '',
           filters: {
             filterBy: 'all',
-            sortBy: 'updatedAt',
-            sortOrder: 'desc',
+            sortBy: 'id',
+            sortOrder: 'asc',
             additionalFilters: {}
           },
           showFilters: false,

@@ -90,8 +90,8 @@ export class KravTiltakAdapter {
       
       // Default values
       defaults: {
-        sortBy: 'updatedAt',
-        sortOrder: 'desc',
+        sortBy: 'id',
+        sortOrder: 'asc',
         filterBy: 'all'
       }
     };
