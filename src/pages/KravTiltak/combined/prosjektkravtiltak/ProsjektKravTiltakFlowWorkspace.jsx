@@ -6,8 +6,7 @@ import { createProsjektKravTiltakCombinedAdapter } from "./adapter";
 import { createCombinedRenderer } from "../shared/CombinedRenderer";
 import { useProsjektKravTiltakCombinedViewStore } from "./store";
 import { RowListHeading } from "../../shared";
-import FlowWorkspace from "../../flow/FlowWorkspace";
-import { createProsjektKravTiltakFlowAdapter } from "../../flow/ProsjektKravTiltakFlowAdapter";
+import FlowWorkspace from "../../flow/workspace/FlowWorkspace";
 
 // Import individual renderers
 import { renderEntityCard as ProsjektKravCardRenderer } from "../../prosjektkrav/renderer/ProsjektKravRenderer";
@@ -104,13 +103,9 @@ const ProsjektKravTiltakFlowWorkspace = () => {
     />
   );
 
-  // Create flow adapter for flow visualization
-  const flowAdapter = createProsjektKravTiltakFlowAdapter({ debug: true });
-
   return flowViewMode === 'flow' ? (
     /* Flow View - React Flow visualization */
     <FlowWorkspace
-      flowAdapter={flowAdapter}
       viewOptions={viewOptions}
       className="w-full h-full"
       renderSearchBar={renderer.renderSearchBar}

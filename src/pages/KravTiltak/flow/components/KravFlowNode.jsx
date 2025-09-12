@@ -1,69 +1,38 @@
 import React from 'react';
 import { Handle, Position } from 'reactflow';
-import { EntityCard } from '../shared/components/EntityCard';
-import { prosjektTiltak as prosjektTiltakConfig } from '@/modelConfigs/models/prosjektTiltak';
+import { EntityCard } from '../../shared/components/EntityCard';
+import { prosjektKrav as prosjektKravConfig } from '@/modelConfigs/models/prosjektKrav';
 
 /**
- * TiltakFlowNode - React Flow node for Tiltak entities
+ * KravFlowNode - React Flow node for Krav entities
  * Reuses existing EntityCard component for consistent styling and functionality
  */
-const TiltakFlowNode = ({ data, selected }) => {
+const KravFlowNode = ({ data, selected }) => {
   const { entity, dto, onEntitySelect, onFieldSave, viewOptions, usedHandles } = data;
 
   return (
     <>
-      {/* Input handle (left side) - receives connections from ProsjektKrav */}
+      {/* Input handle (left side) */}
       <Handle
         type="target"
         position={Position.Left}
-        style={{ background: '#6b7280' }}
+        style={{ background: '#3b82f6' }}
       />
 
-      {/* Output handles (right side) - connects to child ProsjektTiltak */}
-      {usedHandles?.source?.includes('right-top') && (
-        <Handle
-          id="right-top"
-          type="source"
-          position={Position.Right}
-          style={{ 
-            background: '#6b7280', 
-            top: '30%',
-            transform: 'translateY(-50%)'
-          }}
-        />
-      )}
-      {usedHandles?.source?.includes('right-middle') && (
-        <Handle
-          id="right-middle"
-          type="source"
-          position={Position.Right}
-          style={{ 
-            background: '#6b7280',
-            top: '50%',
-            transform: 'translateY(-50%)'
-          }}
-        />
-      )}
-      {usedHandles?.source?.includes('right-bottom') && (
-        <Handle
-          id="right-bottom"
-          type="source"
-          position={Position.Right}
-          style={{ 
-            background: '#6b7280',
-            top: '70%',
-            transform: 'translateY(-50%)'
-          }}
-        />
-      )}
+      {/* Output handle (right side) */}
+      <Handle
+        type="source"
+        position={Position.Right}
+        style={{ background: '#6b7280' }}
+      />
 
       {/* Flow node wrapper */}
       <div className="bg-white border-2 border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow w-80 max-w-80">
         {/* Header indicator with UID */}
-        <div className="bg-green-50 px-3 py-1 rounded-t-lg border-b border-green-100 flex justify-between items-center">
-          <span className="text-xs font-medium text-green-700">TILTAK</span>
+        <div className="bg-blue-50 px-3 py-1 rounded-t-lg border-b border-blue-100 flex justify-between items-center">
+          <span className="text-xs font-medium text-blue-700">KRAV</span>
           {dto && entity && (
-            <span className="text-xs font-mono text-green-600">
+            <span className="text-xs font-mono text-blue-600">
               {dto.extractUID(entity)}
             </span>
           )}
@@ -103,4 +72,4 @@ const TiltakFlowNode = ({ data, selected }) => {
   );
 };
 
-export default TiltakFlowNode;
+export default KravFlowNode;

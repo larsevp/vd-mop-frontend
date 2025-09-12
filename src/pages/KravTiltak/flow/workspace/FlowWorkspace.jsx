@@ -12,10 +12,10 @@ import { Network } from 'lucide-react';
 import { Button } from '@/components/ui/primitives/button';
 
 // Import flow components and utilities
-import EmneFlowNode from './EmneFlowNode';
-import KravFlowNode from './KravFlowNode';
-import TiltakFlowNode from './TiltakFlowNode';
-import { transformToFlowData, getDefaultFlowSettings } from './flowDataTransformer';
+import EmneFlowNode from '../components/EmneFlowNode';
+import KravFlowNode from '../components/KravFlowNode';
+import TiltakFlowNode from '../components/TiltakFlowNode';
+import { transformToFlowData, getDefaultFlowSettings } from '../adapter/flowDataTransformer';
 
 // Import data hook and UI state
 import { useEntityData } from '@/components/EntityWorkspace/interface/hooks/useEntityData';
@@ -23,14 +23,14 @@ import { useWorkspaceUI } from '@/components/EntityWorkspace/interface/hooks/use
 
 // Import Combined DTO and renderer - following established pattern
 import { createCombinedEntityDTO } from '@/components/EntityWorkspace/interface/data';
-import { createProsjektKravTiltakCombinedAdapter } from '../combined/prosjektkravtiltak/adapter';
-import { createCombinedRenderer } from '../combined/shared/CombinedRenderer';
-import { renderEntityCard as ProsjektKravCardRenderer } from '../prosjektkrav/renderer/ProsjektKravRenderer';
-import { renderEntityCard as ProsjektTiltakCardRenderer } from '../prosjekttiltak/renderer/ProsjektTiltakRenderer';
-import { renderDetailPane as ProsjektKravDetailRenderer } from '../prosjektkrav/renderer/ProsjektKravDetailRenderer';
-import { renderDetailPane as ProsjektTiltakDetailRenderer } from '../prosjekttiltak/renderer/ProsjektTiltakDetailRenderer';
-import { createProsjektKravAdapter } from '../prosjektkrav/adapter';
-import { createProsjektTiltakAdapter } from '../prosjekttiltak/adapter';
+import { createProsjektKravTiltakCombinedAdapter } from '../../combined/prosjektkravtiltak/adapter';
+import { createCombinedRenderer } from '../../combined/shared/CombinedRenderer';
+import { renderEntityCard as ProsjektKravCardRenderer } from '../../prosjektkrav/renderer/ProsjektKravRenderer';
+import { renderEntityCard as ProsjektTiltakCardRenderer } from '../../prosjekttiltak/renderer/ProsjektTiltakRenderer';
+import { renderDetailPane as ProsjektKravDetailRenderer } from '../../prosjektkrav/renderer/ProsjektKravDetailRenderer';
+import { renderDetailPane as ProsjektTiltakDetailRenderer } from '../../prosjekttiltak/renderer/ProsjektTiltakDetailRenderer';
+import { createProsjektKravAdapter } from '../../prosjektkrav/adapter';
+import { createProsjektTiltakAdapter } from '../../prosjekttiltak/adapter';
 import { prosjektKrav as prosjektKravConfig } from '@/modelConfigs/models/prosjektKrav';
 import { prosjektTiltak as prosjektTiltakConfig } from '@/modelConfigs/models/prosjektTiltak';
 
@@ -85,26 +85,11 @@ const FlowWorkspace = ({
   }, [singleEntityDTO]);
   
   // Fetch data using DTO - following established pattern
-  const { data: flowData, isLoading, error, refetch } = useEntityData(dto, {
+  const { data: flowData, isLoading, error } = useEntityData(dto, {
     searchQuery: ui.activeSearchQuery,
     filters: ui.filters,
     pagination: { page: 1, pageSize: 100 } // Larger page size for flow view
   });
-
-  // Force refetch when component mounts or viewOptions change to ensure fresh data
-  React.useEffect(() => {
-    refetch();
-  }, [refetch, viewOptions]); // Refetch when view options change
-
-  // Refetch data when window regains focus (user switches back to flow)
-  React.useEffect(() => {
-    const handleFocus = () => {
-      refetch();
-    };
-    
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [refetch]);
 
 
   // Use custom node types if provided, otherwise use defaults
@@ -418,10 +403,8 @@ const FlowWorkspace = ({
           onNodeDoubleClick={onNodeDoubleClick}
           nodeTypes={effectiveNodeTypes}
           fitView={true}
-          fitViewOptions={{ padding: 0.3, minZoom: 0.05, maxZoom: 4 }}
+          fitViewOptions={{ padding: 0.3 }}
           defaultViewport={{ x: 0, y: 0, zoom: 0.5 }}
-          minZoom={0.05}
-          maxZoom={4}
           nodesDraggable={true}
           nodesConnectable={false}
           elementsSelectable={true}

@@ -46,12 +46,22 @@ const originalConsole = {
 const getAPI = async () => {
   if (!API) {
     try {
-      // Dynamic import to get the API client
+      // Use the main API client with proper authentication
       const apiModule = await import('/src/api/index.js');
       API = apiModule.API;
     } catch (error) {
       originalConsole.error('Failed to import API client:', error);
-      return null;
+      // Fallback to simple axios if main API fails
+      try {
+        const axios = (await import('axios')).default;
+        API = axios.create({
+          baseURL: 'http://localhost:3001/api',
+          timeout: 5000
+        });
+      } catch (fallbackError) {
+        originalConsole.error('Failed to create fallback API client:', fallbackError);
+        return null;
+      }
     }
   }
   return API;
@@ -130,7 +140,7 @@ const BACKEND_DEBUG_MARKERS = ['LOGBACKEND'];
 const CONSOLE_DEBUG_MARKERS = ['🔍', '🐛', '📊', '⚠️', '❌', 'DEBUG', 'FlowDataTransformer:', 'FlowAdapter:', 'FlowWorkspace:'];
 
 const shouldSendToBackend = (message) => {
-  return BACKEND_DEBUG_MARKERS.some(marker => message.startsWith(marker));
+  return BACKEND_DEBUG_MARKERS.some(marker => message.includes(marker));
 };
 
 const shouldShowInConsole = (message) => {

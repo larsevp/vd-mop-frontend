@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import FlowWorkspace from '../flow/FlowWorkspace';
+import FlowWorkspace from '../flow/workspace/FlowWorkspace';
 import { createSingleEntityDTO } from '@/components/EntityWorkspace/interface/data';
 import { createProsjektTiltakAdapter } from './adapter';
 import { renderSearchBar, renderDetailPane } from './renderer';
@@ -100,7 +100,8 @@ const ProsjektTiltakFlowWorkspace = ({ onFlowToggle: providedOnFlowToggle }) => 
   return (
     <FlowWorkspace
       key={`prosjekttiltak-flow-${currentProject?.id || "no-project"}`}
-      flowAdapter={flowAdapter}
+      singleEntityDTO={dto}
+      transformData={transformSingleEntityToFlowFormat}
       renderSearchBar={renderSearchBar}
       onFlowToggle={handleFlowToggle}
       className="prosjekttiltak-flow-workspace"
@@ -109,9 +110,6 @@ const ProsjektTiltakFlowWorkspace = ({ onFlowToggle: providedOnFlowToggle }) => 
         showRelations: true,
         entityScope: 'prosjekttiltak' // Flow will only show tiltak entities
       }}
-      // Pass the DTO and transformation function to FlowWorkspace
-      singleEntityDTO={dto}
-      transformData={transformSingleEntityToFlowFormat}
       singleEntityDetailRenderer={renderDetailPane}
     />
   );

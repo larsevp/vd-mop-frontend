@@ -1,5 +1,6 @@
 import React from "react";
 import { ComboBox, ComboBoxOption } from "./ComboBox";
+import { IconWithText } from "@/components/ui/DynamicIcon";
 
 interface PrioritetSelectProps {
   name?: string;
@@ -14,11 +15,11 @@ interface PrioritetSelectProps {
   emptyLabel?: string;
 }
 
-// Priority mapping: label -> number
+// Priority mapping: label -> number with icons
 export const PRIORITY_OPTIONS = [
-  { value: 15, label: "Lav" },
-  { value: 25, label: "Middels" }, // Default value from schema
-  { value: 35, label: "Høy" },
+  { value: 15, label: "Lav", icon: "ChevronDown", color: "#10b981" },
+  { value: 25, label: "Middels", icon: "Minus", color: "#f59e0b" }, // Default value from schema
+  { value: 35, label: "Høy", icon: "ChevronUp", color: "#ef4444" },
 ];
 
 // Helper function to get label from value
@@ -75,6 +76,8 @@ export function PrioritetSelect({
     return PRIORITY_OPTIONS.map((option) => ({
       id: option.value.toString(),
       label: option.label,
+      icon: option.icon,
+      color: option.color,
     }));
   }, []);
 
@@ -93,6 +96,14 @@ export function PrioritetSelect({
       options={options}
       isLoading={false}
       error={null}
+      renderOption={(option, isSelected, isActive) => (
+        <IconWithText 
+          iconName={option.icon} 
+          text={option.label} 
+          iconSize={16} 
+          iconColor={option.color} 
+        />
+      )}
     />
   );
 }

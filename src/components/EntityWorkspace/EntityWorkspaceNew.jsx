@@ -448,7 +448,28 @@ const EntityWorkspaceNew = ({
         <div className="bg-white border-b border-neutral-200 px-6 py-4">
           <div className="flex items-center justify-between gap-6">
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="text-neutral-600 hover:text-neutral-900">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => {
+                  // Navigate to appropriate landing page based on current path
+                  const currentPath = window.location.pathname;
+                  if (currentPath.includes('/prosjekt/')) {
+                    // Extract project ID from path and go to project landing
+                    const projectMatch = currentPath.match(/\/prosjekt\/(\d+)/);
+                    if (projectMatch) {
+                      const projectId = projectMatch[1];
+                      navigate(`/prosjekt/${projectId}`);
+                    } else {
+                      navigate('/prosjekt');
+                    }
+                  } else {
+                    // Fallback for general krav/tiltak pages
+                    navigate('/krav-tiltak');
+                  }
+                }}
+                className="text-neutral-600 hover:text-neutral-900"
+              >
                 <ArrowLeft className="w-4 h-4 mr-1" />
                 Tilbake
               </Button>
