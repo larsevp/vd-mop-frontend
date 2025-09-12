@@ -1,5 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
+import { useNavigationHistoryStore } from "@/stores/navigationHistoryStore";
 
 /**
  * Smart back navigation hook that checks browser history first,
@@ -34,6 +35,26 @@ export const useSmartBack = () => {
     }
 
     // Smart navigation fallbacks based on context
+
+    // 1) Prefer the earliest hit in recorded history between admin landing and prosjekt landing
+    const stack = useNavigationHistoryStore.getState().getStack();
+    if (stack && stack.length > 1) {
+      // look back for candidates in order
+      const isAdminLanding = (p) => p.startsWith("/admin-landing") || p === "/admin";
+      const isProsjektLanding = (p) => p.startsWith("/prosjekter") || p.startsWith("/prosjekt/");
+      // Find the closest prior occurrence (first hit backward) of either
+      for (let i = stack.length - 2; i >= 0; i--) {
+        const p = stack[i];
+        if (isAdminLanding(p)) {
+          navigate(p);
+          return;
+        }
+        if (isProsjektLanding(p)) {
+          navigate(p);
+          return;
+        }
+      }
+    }
 
     // Admin user routes - go to admin landing (for user management)
     if (currentPath.includes("/admin/")) {

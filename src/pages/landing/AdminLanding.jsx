@@ -1,4 +1,5 @@
 import React from "react";
+import useNavigationHistory from "@/hooks/useNavigationHistory";
 import { Link } from "react-router-dom";
 import {
   Users,
@@ -19,6 +20,7 @@ import { useUserStore } from "@/stores/userStore";
 import { getModelConfig } from "@/modelConfigs";
 
 export default function AdminLanding() {
+  useNavigationHistory();
   const { user } = useUserStore();
   const isAdmin = user?.rolle === "ADMIN";
 

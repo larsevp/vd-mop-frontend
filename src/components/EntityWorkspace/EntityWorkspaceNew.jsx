@@ -28,6 +28,7 @@ import { useWorkspaceUI } from "./interface/hooks/useWorkspaceUI";
 
 // DTO Interface validation
 import { validateEntityDTO } from "./interface/data/EntityDTOInterface";
+import useNavigationHistory from "@/hooks/useNavigationHistory";
 
 /**
  * Minimal EntityWorkspace component (~40 lines)
@@ -49,7 +50,7 @@ const EntityWorkspaceNew = ({
 }) => {
   const navigate = useNavigate();
   const cardsContainerRef = useRef(null);
-
+  useNavigationHistory();
 
   // Validate DTO implements required interface
   useEffect(() => {
@@ -80,7 +81,6 @@ const EntityWorkspaceNew = ({
     filters: ui.filters,
     enabled: !!dto,
   });
-
 
   const entities = result?.items || [];
   const entityType = dto?.entityType || dto?.getPrimaryEntityType?.() || "entities";
@@ -181,28 +181,31 @@ const EntityWorkspaceNew = ({
 
   // Event handlers
   const handleEntitySelect = useCallback(
-    (entity, action = 'select') => {
-      if (action === 'delete') {
+    (entity, action = "select") => {
+      if (action === "delete") {
         // Handle delete action - call delete directly to avoid dependency issues
-        dto.delete(entity).then(() => {
-          refetch(); // Refresh the list after successful delete
-          // Clear selection if we deleted the selected entity
-          if (ui.selectedEntity?.id === entity.id) {
-            ui.setSelectedEntity(null);
-          }
-        }).catch(error => {
-          console.error("Delete failed:", error);
-          // You might want to show a toast notification here
-        });
+        dto
+          .delete(entity)
+          .then(() => {
+            refetch(); // Refresh the list after successful delete
+            // Clear selection if we deleted the selected entity
+            if (ui.selectedEntity?.id === entity.id) {
+              ui.setSelectedEntity(null);
+            }
+          })
+          .catch((error) => {
+            console.error("Delete failed:", error);
+            // You might want to show a toast notification here
+          });
         return;
       }
-      
-      if (action === 'edit') {
+
+      if (action === "edit") {
         // Handle edit action - select entity and switch to split view
         const enhancedEntity = entity ? dto.enhanceEntity(entity) : null;
         ui.setSelectedEntity(enhancedEntity);
         ui.setViewMode("split");
-        
+
         // Update URL with selected entity ID
         if (entity && entity.id) {
           const currentPath = window.location.pathname;
@@ -211,13 +214,13 @@ const EntityWorkspaceNew = ({
         }
         return;
       }
-      
-      if (action === 'editCard') {
+
+      if (action === "editCard") {
         // Handle editCard action - select entity and enable inline card editing
         const enhancedEntity = entity ? dto.enhanceEntity(entity) : null;
         ui.setSelectedEntity(enhancedEntity);
         // Stay in current view mode but enable card editing
-        
+
         // Update URL with selected entity ID
         if (entity && entity.id) {
           const currentPath = window.location.pathname;
@@ -226,7 +229,7 @@ const EntityWorkspaceNew = ({
         }
         return;
       }
-      
+
       // Default 'select' action - just select without changing view
       const enhancedEntity = entity ? dto.enhanceEntity(entity) : null;
       ui.setSelectedEntity(enhancedEntity);
@@ -359,7 +362,7 @@ const EntityWorkspaceNew = ({
         // Check if we're in edit card mode before letting DTO override selection
         const urlParams = new URLSearchParams(window.location.search);
         const isInEditCardMode = urlParams.get("editCard") === "true";
-        
+
         if (isInEditCardMode) {
           // If we're in edit card mode, preserve it after save by not letting DTO change selection
           // Just refresh the selected entity without changing URL
@@ -448,24 +451,24 @@ const EntityWorkspaceNew = ({
         <div className="bg-white border-b border-neutral-200 px-6 py-4">
           <div className="flex items-center justify-between gap-6">
             <div className="flex items-center gap-4">
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   // Navigate to appropriate landing page based on current path
                   const currentPath = window.location.pathname;
-                  if (currentPath.includes('/prosjekt/')) {
+                  if (currentPath.includes("/prosjekt/")) {
                     // Extract project ID from path and go to project landing
                     const projectMatch = currentPath.match(/\/prosjekt\/(\d+)/);
                     if (projectMatch) {
                       const projectId = projectMatch[1];
                       navigate(`/prosjekt/${projectId}`);
                     } else {
-                      navigate('/prosjekt');
+                      navigate("/prosjekt");
                     }
                   } else {
                     // Fallback for general krav/tiltak pages
-                    navigate('/krav-tiltak');
+                    navigate("/krav-tiltak");
                   }
                 }}
                 className="text-neutral-600 hover:text-neutral-900"
