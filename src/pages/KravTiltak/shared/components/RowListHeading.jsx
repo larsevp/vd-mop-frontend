@@ -52,6 +52,7 @@ const RowListHeading = ({
           >
             {allGroupsExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
           </Button>
+
           
           {children}
         </div>

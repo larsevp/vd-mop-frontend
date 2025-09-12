@@ -25,8 +25,8 @@ export const useWorkspaceUIStore = create(
       activeSearchQuery: '', // What actually gets sent to API
       filters: {
         filterBy: 'all',
-        sortBy: 'updatedAt', 
-        sortOrder: 'desc',
+        sortBy: 'id', 
+        sortOrder: 'asc',
         additionalFilters: {}
       },
       
@@ -105,8 +105,8 @@ export const useWorkspaceUIStore = create(
           activeSearchQuery: '',
           filters: {
             filterBy: 'all',
-            sortBy: 'updatedAt',
-            sortOrder: 'desc', 
+            sortBy: 'id',
+            sortOrder: 'asc', 
             additionalFilters: {}
           }
         });
@@ -182,8 +182,8 @@ export const useWorkspaceUIStore = create(
           searchQuery: '',
           filters: {
             filterBy: 'all',
-            sortBy: 'updatedAt',
-            sortOrder: 'desc',
+            sortBy: 'id',
+            sortOrder: 'asc',
             additionalFilters: {}
           },
           showFilters: false,

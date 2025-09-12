@@ -21,8 +21,8 @@ export const useProsjektKravTiltakCombinedViewStore = create(
         showObligatorisk: true,
         showProjectRelations: true,
         compactMode: false,
-        sortBy: 'updatedAt',
-        sortOrder: 'desc'
+        sortBy: 'id',
+        sortOrder: 'asc'
       },
 
       // Update view options
@@ -48,8 +48,8 @@ export const useProsjektKravTiltakCombinedViewStore = create(
             showObligatorisk: true,
             showProjectRelations: true,
             compactMode: false,
-            sortBy: 'updatedAt',
-            sortOrder: 'desc'
+            sortBy: 'id',
+            sortOrder: 'asc'
           }
         });
       },

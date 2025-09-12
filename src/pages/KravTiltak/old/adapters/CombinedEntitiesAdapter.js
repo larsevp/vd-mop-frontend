@@ -77,8 +77,8 @@ export class CombinedEntitiesAdapter extends EntityWorkspaceAdapter {
       ],
 
       defaults: {
-        sortBy: 'updatedAt',
-        sortOrder: 'desc',
+        sortBy: 'id',
+        sortOrder: 'asc',
         filterBy: 'all',
         entityType: 'all'
       }

@@ -15,7 +15,7 @@
 import React, { useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/primitives/button";
-import { Plus, ArrowLeft, LayoutGrid, Columns } from "lucide-react";
+import { Plus, ArrowLeft, LayoutGrid, Columns, Network } from "lucide-react";
 
 // Existing components (reuse these)
 import EntitySplitView from "./interface/components/EntitySplitView";
@@ -43,9 +43,13 @@ const EntityWorkspaceNew = ({
   renderActionButtons, // NEW: Allow domains to provide custom action buttons
   viewOptions = {},
   debug = false,
+  // Optional Flow view support
+  flowViewMode = null,
+  onFlowToggle = null,
 }) => {
   const navigate = useNavigate();
   const cardsContainerRef = useRef(null);
+
 
   // Validate DTO implements required interface
   useEffect(() => {
@@ -471,6 +475,18 @@ const EntityWorkspaceNew = ({
                 >
                   <LayoutGrid className="w-4 h-4" />
                 </Button>
+                {/* Flow View Toggle - Optional */}
+                {onFlowToggle && (
+                  <Button
+                    variant={flowViewMode === "flow" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={onFlowToggle}
+                    className="h-8 w-8 p-0"
+                    title={flowViewMode === "flow" ? "Exit Flow View" : "Flow View"}
+                  >
+                    <Network className="w-4 h-4" />
+                  </Button>
+                )}
               </div>
             </div>
 

@@ -7,21 +7,25 @@ import ReactFlow, {
   useEdgesState
 } from 'reactflow';
 import 'reactflow/dist/style.css';
+import { Network } from 'lucide-react';
+import { Button } from '@/components/ui/primitives/button';
 
 // Import flow components and utilities
 import EmneFlowNode from './EmneFlowNode';
-import ProsjektKravFlowNode from './ProsjektKravFlowNode';
-import ProsjektTiltakFlowNode from './ProsjektTiltakFlowNode';
+import KravFlowNode from './KravFlowNode';
+import TiltakFlowNode from './TiltakFlowNode';
 import { transformToFlowData, getDefaultFlowSettings } from './flowDataTransformer';
 
-// Import data hook
+// Import data hook and UI state
 import { useEntityData } from '@/components/EntityWorkspace/interface/hooks/useEntityData';
+import { useWorkspaceUI } from '@/components/EntityWorkspace/interface/hooks/useWorkspaceUI';
+// Using renderSearchBar prop like other workspaces
 
 // Define node types outside component to prevent recreation
 const nodeTypes = {
   emne: EmneFlowNode,
-  prosjektKrav: ProsjektKravFlowNode,
-  prosjektTiltak: ProsjektTiltakFlowNode,
+  prosjektKrav: KravFlowNode,
+  prosjektTiltak: TiltakFlowNode,
 };
 
 /**
@@ -36,34 +40,37 @@ const nodeTypes = {
  */
 const ProjectFlowView = ({
   dto,
-  ui,
-  onEntitySelect,
-  onFieldSave,
-  selectedEntity,
   viewOptions = {},
+  renderListHeading,
+  renderSearchBar,
+  onFlowToggle, // Add flow toggle handler
   className = ''
 }) => {
   // Note: nodeTypes defined outside component to prevent recreation
 
-  // Fetch data using the same pattern as EntityWorkspace
+  // UI state management (same as EntityWorkspace)
+  const ui = useWorkspaceUI();
+  
+  // Fetch data using the same pattern as EntityWorkspace  
   const { data: result, isLoading, error } = useEntityData(dto, {
     searchQuery: ui.activeSearchQuery,
     filters: ui.filters,
     pagination: { page: 1, pageSize: 100 } // Larger page size for flow view
   });
 
+  // Entity type for search placeholder
+  const entityType = dto?.entityType || dto?.getPrimaryEntityType?.() || "entities";
+
+  // Handle search like EntityWorkspace does
+  const handleSearch = useCallback(() => {
+    ui.executeSearch(); // Update activeSearchQuery from searchInput
+    // TanStack Query will automatically refetch when activeSearchQuery changes
+  }, [ui.executeSearch]);
+
   // Transform data to flow format
   const { nodes: initialNodes, edges: initialEdges } = useMemo(() => {
-    console.log('Flow: Transforming data:', result);
-    const flowData = transformToFlowData(result, {
-      onEntitySelect,
-      onFieldSave
-    }, viewOptions);
-    console.log('Flow: Generated nodes:', flowData.nodes.length, 'edges:', flowData.edges.length);
-    console.log('Flow: Node data:', flowData.nodes);
-    console.log('Flow: Edge data:', flowData.edges);
-    return flowData;
-  }, [result, onEntitySelect, onFieldSave, viewOptions]);
+    return transformToFlowData(result, { dto }, viewOptions);
+  }, [result, viewOptions, dto]);
 
   // React Flow state
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -75,47 +82,18 @@ const ProjectFlowView = ({
     setEdges(initialEdges);
   }, [initialNodes, initialEdges, setNodes, setEdges]);
 
-  // Debug logging
-  console.log('ProjectFlowView: result:', result);
-  console.log('ProjectFlowView: isLoading:', isLoading);
-  console.log('ProjectFlowView: error:', error);
-  console.log('ProjectFlowView: initialNodes:', initialNodes);
-  console.log('ProjectFlowView: initialEdges:', initialEdges);
-  console.log('ProjectFlowView: current nodes state:', nodes);
-  console.log('ProjectFlowView: current edges state:', edges);
-
   // Handle node clicks
   const onNodeClick = useCallback((event, node) => {
     // Only handle clicks on entity nodes (not emne nodes)
     if (node.type === 'prosjektKrav' || node.type === 'prosjekttiltak') {
       const entity = node.data?.entity;
-      if (entity && onEntitySelect) {
-        onEntitySelect(entity, 'select');
+      if (entity) {
+        // Could add selection logic here later
       }
     }
-  }, [onEntitySelect]);
+  }, []);
 
-  // Update nodes when selectedEntity changes
-  React.useEffect(() => {
-    if (selectedEntity?.id) {
-      setNodes(currentNodes => 
-        currentNodes.map(node => {
-          const isSelected = node.data?.entity?.id === selectedEntity.id;
-          return {
-            ...node,
-            selected: isSelected,
-            style: {
-              ...node.style,
-              ...(isSelected && {
-                boxShadow: '0 0 0 2px #3b82f6',
-                transform: 'scale(1.02)'
-              })
-            }
-          };
-        })
-      );
-    }
-  }, [selectedEntity, setNodes]);
+  // Note: Node selection could be added here later if needed
 
   // Flow settings
   const flowSettings = getDefaultFlowSettings();
@@ -145,14 +123,66 @@ const ProjectFlowView = ({
   }
 
   return (
-    <div 
-      className={`bg-gray-50`} 
-      style={{ 
-        width: '100%',
-        height: 'calc(100vh - 140px)', // Account for header space
-        minHeight: '600px'
-      }}
-    >
+    <div style={{ width: '100%', height: '100vh' }} className="flex flex-col bg-gray-50">
+      {/* Flow header with inline search */}
+      <div className="flex-shrink-0 border-b border-gray-200 bg-white p-3">
+        <div className="flex items-center justify-between gap-4">
+          <div className="text-sm font-medium text-gray-900">
+            Flow Visualization
+          </div>
+          
+          {/* Search bar using renderSearchBar prop - same configuration as EntityWorkspace */}
+          <div className="flex-1 max-w-lg">
+            {renderSearchBar({
+              searchInput: ui.searchInput,
+              onSearchInputChange: ui.setSearchInput,
+              onSearch: handleSearch,
+              onClearSearch: () => {
+                ui.setSearchInput("");
+                ui.setActiveSearchQuery("");
+                ui.resetFilters();
+              },
+              isLoading: isLoading,
+              placeholder: `Søk i ${entityType}...`,
+              mode: "advanced", // Use advanced mode like EntityWorkspace
+              filterBy: ui.filters.filterBy,
+              sortBy: ui.filters.sortBy,
+              sortOrder: ui.filters.sortOrder,
+              onFilterChange: (filterBy) => ui.setFilters({ filterBy }),
+              onSortChange: (sortBy) => ui.setFilters({ sortBy }),
+              onSortOrderChange: (sortOrder) => ui.setFilters({ sortOrder }),
+              entityType: entityType,
+              additionalFilters: ui.filters.additionalFilters,
+              onAdditionalFiltersChange: (additionalFilters) => ui.setFilters({ additionalFilters }),
+              filterConfig: dto?.getFilterConfig?.(),
+              availableFilters: result?.availableFilters || {},
+              viewOptions: viewOptions,
+              customFilterFields: []
+            })}
+          </div>
+          
+          {/* Back to regular view button */}
+          {onFlowToggle && (
+            <Button
+              variant="ghost"
+              onClick={onFlowToggle}
+              className="h-8 w-8 p-0"
+              title="Back to regular view"
+            >
+              <Network className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
+      </div>
+      
+      {/* Flow container with absolute dimensions */}
+      <div 
+        style={{ 
+          width: '100%',
+          height: '800px',
+          position: 'relative'
+        }}
+      >
       <ReactFlow
         key={`flow-${nodes.length}-${edges.length}`}
         nodes={nodes}
@@ -243,6 +273,7 @@ const ProjectFlowView = ({
           </div>
         )}
       </ReactFlow>
+      </div>
     </div>
   );
 };

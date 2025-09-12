@@ -99,8 +99,8 @@ describe('Emne Change Integration Tests', () => {
           page: 1,
           pageSize: 50,
           searchQuery: '',
-          sortBy: 'updatedAt',
-          sortOrder: 'desc',
+          sortBy: 'id',
+          sortOrder: 'asc',
           groupByEmne: true
         }),
         { wrapper }
@@ -196,8 +196,8 @@ describe('Emne Change Integration Tests', () => {
           page: 1,
           pageSize: 50,
           searchQuery: '',
-          sortBy: 'updatedAt',
-          sortOrder: 'desc',
+          sortBy: 'id',
+          sortOrder: 'asc',
           groupByEmne: true
         }),
         { wrapper }
@@ -293,8 +293,8 @@ describe('Emne Change Integration Tests', () => {
           page: 1,
           pageSize: 50,
           searchQuery: '',
-          sortBy: 'updatedAt',
-          sortOrder: 'desc',
+          sortBy: 'id',
+          sortOrder: 'asc',
           groupByEmne: true
         }),
         { wrapper }
@@ -345,8 +345,8 @@ describe('Emne Change Integration Tests', () => {
           page: 1,
           pageSize: 50,
           searchQuery: '',
-          sortBy: 'updatedAt',
-          sortOrder: 'desc',
+          sortBy: 'id',
+          sortOrder: 'asc',
           groupByEmne: true
         }),
         { wrapper }

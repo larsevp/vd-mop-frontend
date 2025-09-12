@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { EntityWorkspace } from "@/components/EntityWorkspace";
 import { createCombinedEntityDTO } from "@/components/EntityWorkspace/interface/data";
 import { createProsjektKravTiltakCombinedAdapter } from "./adapter";
@@ -37,6 +38,8 @@ import { prosjektTiltak as prosjektTiltakConfig } from "@/modelConfigs/models/pr
  * - Project context awareness
  */
 const ProsjektKravTiltakCombinedWorkspace = () => {
+  const navigate = useNavigate();
+  
   // Create combined adapter for project entities
   const adapter = createProsjektKravTiltakCombinedAdapter({ debug: true });
 
@@ -45,6 +48,15 @@ const ProsjektKravTiltakCombinedWorkspace = () => {
 
   // Get view options state
   const { viewOptions, setViewOptions } = useProsjektKravTiltakCombinedViewStore();
+
+  // Handle Flow toggle - navigate to Flow workspace
+  const handleFlowToggle = () => {
+    const currentPath = window.location.pathname;
+    if (currentPath.includes('/prosjekt-krav-tiltak-combined')) {
+      const flowPath = currentPath.replace('/prosjekt-krav-tiltak-combined', '/prosjekt-krav-tiltak-flow');
+      navigate(flowPath);
+    }
+  };
 
   // Create combined renderer with proper configuration
   const renderer = createCombinedRenderer({
@@ -102,6 +114,9 @@ const ProsjektKravTiltakCombinedWorkspace = () => {
       )}
       viewOptions={viewOptions}
       debug={false}
+      // Pass Flow toggle to EntityWorkspace header
+      flowViewMode={null} // Not in flow mode
+      onFlowToggle={handleFlowToggle}
     />
   );
 };

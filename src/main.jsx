@@ -1,6 +1,9 @@
 // Suppress Lucide errors first, before any other imports
 import "./utils/suppressLucideErrors";
 
+// Debug console capture for flow debugging
+import "../debug-console.js";
+
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";

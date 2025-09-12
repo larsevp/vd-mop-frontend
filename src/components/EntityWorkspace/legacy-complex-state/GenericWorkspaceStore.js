@@ -53,8 +53,8 @@ export const createGenericWorkspaceStore = (entityType, config = {}) => {
           searchQuery: '',
           filters: {
             filterBy: 'all',
-            sortBy: 'updatedAt',
-            sortOrder: 'desc',
+            sortBy: 'id',
+            sortOrder: 'asc',
             additionalFilters: {}
           },
           
@@ -275,8 +275,8 @@ export const createGenericWorkspaceStore = (entityType, config = {}) => {
               searchQuery: '',
               filters: {
                 filterBy: 'all',
-                sortBy: 'updatedAt',
-                sortOrder: 'desc',
+                sortBy: 'id',
+                sortOrder: 'asc',
                 additionalFilters: {}
               },
               pagination: {

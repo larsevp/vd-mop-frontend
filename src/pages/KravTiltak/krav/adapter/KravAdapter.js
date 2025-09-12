@@ -60,8 +60,8 @@ export class KravAdapter {
         { key: "emne", label: "Emne" },
       ],
       defaults: {
-        sortBy: "updatedAt",
-        sortOrder: "desc",
+        sortBy: "id",
+        sortOrder: "asc",
         filterBy: "all",
       },
     };
