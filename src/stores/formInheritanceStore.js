@@ -128,7 +128,7 @@ export const useFormInheritanceStore = create((set, get) => ({
     const currentContext = `${entityType}-${entityId}`;
     const stateContext = `${state.sourceType}-${state.lastEntityId}`;
     
-    // Only reset if we're switching to a completely different entity
+    // Only reset if we're switching to a completely different entity (not create-new, handled separately)
     if (entityId && currentContext !== stateContext && entityId !== "create-new") {
       
       set({

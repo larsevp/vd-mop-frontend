@@ -34,6 +34,18 @@ export const useEmneInheritance = (entityType = 'tiltak') => {
     initializeForEntityType(entityType);
   }, [entityType, initializeForEntityType]);
 
+  // Clear inheritance state when we detect we're in create mode
+  React.useEffect(() => {
+    // Check if we're in create mode by looking at URL or other indicators
+    const isCreateMode = window.location.pathname.includes('/create') || 
+                        window.location.pathname.includes('create-new') ||
+                        window.location.hash.includes('create-new');
+    
+    if (isCreateMode && inheritedEmne) {
+      clearAllInheritance();
+    }
+  }, [inheritedEmne, clearAllInheritance]);
+
   // Handle parent inheritance (generic - works for tiltak, krav, prosjektTiltak parents)
   const inheritFromParent = useCallback((parentData, parentEntityType = entityType) => {
     
