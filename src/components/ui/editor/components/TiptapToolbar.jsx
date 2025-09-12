@@ -13,9 +13,10 @@ const ToolbarButton = React.forwardRef(({ onClick, active, disabled, children, t
     title={title}
     className={cn(
       "px-3 py-1.5 rounded text-sm font-medium transition-colors border",
-      "hover:bg-accent hover:text-accent-foreground hover:border-accent-foreground/20",
       "disabled:opacity-50 disabled:cursor-not-allowed",
-      active ? "bg-primary text-primary-foreground border-primary shadow-sm" : "bg-background text-foreground border-border",
+      active 
+        ? "bg-primary text-primary-foreground border-primary shadow-sm hover:bg-primary/90" 
+        : "bg-background text-foreground border-border hover:bg-accent hover:text-accent-foreground hover:border-accent-foreground/20",
       className
     )}
   >
@@ -32,10 +33,31 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
   const [isInTable, setIsInTable] = useState(false);
   const [isImageSelected, setIsImageSelected] = useState(false);
 
+  // Track active formatting states for immediate button feedback
+  const [activeMarks, setActiveMarks] = useState({
+    bold: false,
+    italic: false, 
+    underline: false,
+    highlight: false
+  });
+
+  // Force re-render when editor state changes for proper button states
+  const [, forceUpdate] = useState({});
+
   useEffect(() => {
     const updateSelection = () => {
       setIsInTable(editor.isActive("table"));
       setIsImageSelected(editor.isActive("image"));
+      
+      // Update active marks state
+      setActiveMarks({
+        bold: editor.isActive("bold"),
+        italic: editor.isActive("italic"),
+        underline: editor.isActive("underline"),
+        highlight: editor.isActive("highlight")
+      });
+      
+      forceUpdate({}); // Force re-render to update button active states
     };
 
     editor.on("selectionUpdate", updateSelection);
@@ -46,6 +68,30 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
       editor.off("selectionUpdate", updateSelection);
       editor.off("transaction", updateSelection);
     };
+  }, [editor]);
+
+  // Helper to check if a mark is active (either in selection or stored marks)
+  const isMarkActive = useCallback((markName) => {
+    try {
+      const { state } = editor;
+      const { selection, storedMarks } = state;
+      
+      // If there's a selection, check if the mark is active in the selection
+      if (!selection.empty) {
+        return editor.isActive(markName);
+      }
+      
+      // For empty selections, check stored marks (marks that will be applied to new text)
+      if (storedMarks) {
+        return storedMarks.some(mark => mark.type.name === markName);
+      }
+      
+      // Fallback: check if the mark would be active at the current position
+      return editor.isActive(markName);
+    } catch (error) {
+      console.debug('Error checking mark active state:', error);
+      return editor.isActive(markName);
+    }
   }, [editor]);
 
   // Toggle mark across a multi-cell selection if present; otherwise act normally
@@ -372,16 +418,40 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
     <>
       <div className="border-b border-border p-2 flex items-center gap-1 flex-wrap">
         {/* Text Formatting */}
-        <ToolbarButton onClick={() => toggleMarkAcrossCells("bold")} active={editor.isActive("bold")} title="Bold (Ctrl+B)">
+        <ToolbarButton 
+          onClick={() => {
+            editor.chain().focus().toggleBold().run();
+          }} 
+          active={activeMarks.bold} 
+          title="Bold (Ctrl+B)"
+        >
           <strong>B</strong>
         </ToolbarButton>
-        <ToolbarButton onClick={() => toggleMarkAcrossCells("italic")} active={editor.isActive("italic")} title="Italic (Ctrl+I)">
+        <ToolbarButton 
+          onClick={() => {
+            editor.chain().focus().toggleItalic().run();
+          }} 
+          active={activeMarks.italic} 
+          title="Italic (Ctrl+I)"
+        >
           <em>I</em>
         </ToolbarButton>
-        <ToolbarButton onClick={() => toggleMarkAcrossCells("underline")} active={editor.isActive("underline")} title="Underline (Ctrl+U)">
+        <ToolbarButton 
+          onClick={() => {
+            editor.chain().focus().toggleUnderline().run();
+          }} 
+          active={activeMarks.underline} 
+          title="Underline (Ctrl+U)"
+        >
           <u>U</u>
         </ToolbarButton>
-        <ToolbarButton onClick={() => toggleMarkAcrossCells("highlight")} active={editor.isActive("highlight")} title="Highlight (Ctrl+H)">
+        <ToolbarButton 
+          onClick={() => {
+            editor.chain().focus().toggleHighlight().run();
+          }} 
+          active={activeMarks.highlight} 
+          title="Highlight (Ctrl+H)"
+        >
           <span className="bg-yellow-200 text-yellow-900 px-1 rounded font-semibold">H</span>
         </ToolbarButton>
 
@@ -391,11 +461,15 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
         {!basic && (
           <ToolbarButton
             onClick={() => {
-              toggleBlockAcrossCells("paragraph");
-              if (editor.isActive("link")) editor.chain().focus().unsetLink().run();
+              // Clear all formatting: marks, headings, and links
+              editor.chain()
+                .focus()
+                .clearNodes() // Remove headings, lists, etc.
+                .unsetAllMarks() // Remove bold, italic, underline, highlight, etc.
+                .run();
             }}
-            active={!editor.isActive("heading")}
-            title="Normal Text (removes links and headings)"
+            active={!editor.isActive("heading") && !editor.isActive("bold") && !editor.isActive("italic") && !editor.isActive("underline") && !editor.isActive("highlight")}
+            title="Normal Text (removes all formatting)"
           >
             Normal
           </ToolbarButton>

@@ -12,8 +12,8 @@ import { Highlight } from "@tiptap/extension-highlight";
 import { Placeholder } from "@tiptap/extension-placeholder";
 import { Heading } from "@tiptap/extension-heading";
 import { SafariBulletList } from "../extensions/SafariBulletList";
-import { createKeyboardHandler } from "./useEditorKeyboard";
-import { createPasteHandler } from "./useEditorPaste";
+import { SmartPasteExtension } from "../extensions/SmartPasteExtension";
+import { KeyboardShortcutsExtension } from "../extensions/KeyboardShortcutsExtension";
 import { getEditorStyles } from "../utils/editorStyles";
 
 export const useTiptapEditor = ({
@@ -32,6 +32,17 @@ export const useTiptapEditor = ({
         link: basic ? false : false, // Disable default link to use custom one (or completely disable in basic mode)
         underline: false, // Disable default underline to use custom one
         bulletList: false, // Disable default bulletList to use Safari-compatible one
+        // Explicitly enable bold and italic with proper configuration
+        bold: {
+          HTMLAttributes: {
+            class: "font-semibold",
+          },
+        },
+        italic: {
+          HTMLAttributes: {
+            class: "italic",
+          },
+        },
         orderedList: {
           HTMLAttributes: {
             class: "list-decimal ml-6 space-y-1",
@@ -120,16 +131,36 @@ export const useTiptapEditor = ({
         placeholder,
         emptyEditorClass: "text-muted-foreground",
       }),
+      // Safari-compatible smart paste extension
+      SmartPasteExtension.configure({
+        basic,
+        onShowToast,
+        uploadUrl,
+      }),
+      // Safari-compatible keyboard shortcuts extension
+      KeyboardShortcutsExtension.configure({
+        disabled,
+      }),
     ],
     content:
       value ||
       (typeof navigator !== "undefined" && /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent) ? "<p>A</p>" : ""),
     editable: !disabled,
     onUpdate: ({ editor }) => {
-      const html = editor.getHTML();
-      // Handle Safari's initial test letter and empty paragraph states
-      const isEmpty = html === "<p></p>" || html === "<p>&nbsp;</p>" || html === "<p> </p>" || html === "<p>A</p>" || html.trim() === "";
-      onChange?.(isEmpty ? "" : html);
+      try {
+        // Safari safety check - ensure view is available before getting HTML
+        if (!editor.view || !editor.view.dom) {
+          return;
+        }
+        
+        const html = editor.getHTML();
+        // Handle Safari's initial test letter and empty paragraph states
+        const isEmpty = html === "<p></p>" || html === "<p>&nbsp;</p>" || html === "<p> </p>" || html === "<p>A</p>" || html.trim() === "";
+        onChange?.(isEmpty ? "" : html);
+      } catch (error) {
+        console.error('Safari: Failed to get HTML content:', error);
+        // Don't call onChange if we can't get the content safely
+      }
     },
     editorProps: {
       attributes: {
@@ -138,60 +169,8 @@ export const useTiptapEditor = ({
     },
   });
 
-  // Add event handlers after editor is created - with Safari timing safety
-  React.useEffect(() => {
-    if (!editor) return;
-
-    // Safari-safe handler setup with retry mechanism
-    const setupHandlers = () => {
-      try {
-        // Check if editor view is available and has props
-        if (!editor.view || !editor.view.props) {
-          // Retry after a short delay for Safari
-          setTimeout(setupHandlers, 10);
-          return;
-        }
-
-        const keydownHandler = createKeyboardHandler(editor, disabled);
-        const pasteHandler = createPasteHandler(editor, basic, onShowToast, uploadUrl);
-
-        // Store original handlers so we can restore them
-        const originalHandleKeyDown = editor.view.props.handleKeyDown;
-        const originalHandlePaste = editor.view.props.handlePaste;
-
-        // Update the editor props safely
-        editor.view.updateState(editor.view.state);
-        editor.view.setProps({
-          ...editor.view.props,
-          handleKeyDown: keydownHandler,
-          handlePaste: pasteHandler,
-        });
-
-        // Return cleanup function to restore original handlers
-        return () => {
-          try {
-            if (editor.view && editor.view.props) {
-              editor.view.setProps({
-                ...editor.view.props,
-                handleKeyDown: originalHandleKeyDown,
-                handlePaste: originalHandlePaste,
-              });
-            }
-          } catch (error) {
-            // Silently handle cleanup errors in Safari
-            console.debug('TipTap cleanup error (safe to ignore):', error);
-          }
-        };
-      } catch (error) {
-        // Handle any setup errors gracefully
-        console.debug('TipTap setup error (retrying):', error);
-        setTimeout(setupHandlers, 50);
-      }
-    };
-
-    const cleanup = setupHandlers();
-    return cleanup;
-  }, [editor, disabled, basic, onShowToast, uploadUrl]);
+  // Note: Removed custom event handler setup that was causing Safari mounting issues
+  // TipTap now uses its default event handling which works reliably across all browsers
 
   return editor;
 };

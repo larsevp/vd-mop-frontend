@@ -51,24 +51,40 @@ export const TiptapDisplay = ({
     return content;
   }, [content]);
 
-  // Use the same editor hook but make it non-editable without graying out
+  // Use the same editor hook but make it non-editable from start
   const editor = useTiptapEditor({
     value: cleanContent,
     onChange: () => {}, // No-op since it's read-only
     placeholder: "",
-    disabled: false, // Don't gray it out
+    disabled: true, // Make it disabled from the start to avoid Safari timing issues
     basic,
     onShowToast: () => {}, // No-op
     uploadUrl: null,
   });
 
-  // Make editor non-editable after creation and override styles
+  // Only override styles after creation - no more setEditable calls
   React.useEffect(() => {
     if (editor) {
-      editor.setEditable(false);
-      // Override the editor styles to remove padding
-      if (editor.view && editor.view.dom) {
-        editor.view.dom.className = getDisplayEditorStyles();
+      // Safari-safe styling only
+      const applyStyles = () => {
+        try {
+          if (editor.view && editor.view.dom && typeof editor.view.dom.className !== 'undefined') {
+            editor.view.dom.className = getDisplayEditorStyles();
+          }
+        } catch (error) {
+          // Silently fail - styles are not critical
+        }
+      };
+      
+      // For Safari, defer styling to next tick
+      const isSafari = typeof navigator !== "undefined" && 
+                       /Safari/.test(navigator.userAgent) && 
+                       !/Chrome/.test(navigator.userAgent);
+      
+      if (isSafari) {
+        setTimeout(applyStyles, 0);
+      } else {
+        applyStyles();
       }
     }
   }, [editor]);

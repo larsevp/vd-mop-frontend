@@ -196,13 +196,14 @@ const groupIntoParagraphs = (lines, targetLength, tolerance) => {
  * @returns {boolean} True if text appears to be PDF-like and should be cleaned
  */
 const shouldCleanText = (text) => {
-  if (!text || text.length < 50) return false; // Too short to meaningfully analyze
+  if (!text || text.length < 50) return false;
 
   const lines = text
     .split("\n")
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
-  if (lines.length < 3) return false; // Need multiple lines to have artificial breaks
+  
+  if (lines.length < 3) return false;
 
   // Check for indicators this is structured content that shouldn't be cleaned
   const hasTabsInMultipleLines = lines.filter((line) => line.includes("\t")).length > 1;
@@ -229,11 +230,14 @@ const shouldCleanText = (text) => {
 /**
  * Main function to clean PDF-extracted text
  * @param {string} text - Raw text from PDF paste
+ * @param {boolean} force - Force cleaning even if shouldCleanText returns false
  * @returns {string} Cleaned text with proper paragraph structure
  */
-export const cleanPDFText = (text) => {
+export const cleanPDFText = (text, force = false) => {
   // First check if this text should be cleaned at all
-  if (!shouldCleanText(text)) {
+  const shouldClean = force || shouldCleanText(text);
+  
+  if (!shouldClean) {
     return text;
   }
 
