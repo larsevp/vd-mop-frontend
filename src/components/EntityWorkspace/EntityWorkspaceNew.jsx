@@ -421,7 +421,7 @@ const EntityWorkspaceNew = ({
   if (error) {
     return (
       <div className="bg-neutral-50 min-h-screen">
-        <div className="max-w-[1600px] mx-auto p-8">
+        <div className="max-w-none w-full p-8">
           <div className="bg-red-50 border border-red-200 rounded-lg p-6">
             <h3 className="text-red-800 font-medium mb-2">Feil ved lasting av {entityType}</h3>
             <p className="text-red-700 mb-4">{error.message}</p>
@@ -443,7 +443,7 @@ const EntityWorkspaceNew = ({
   // Main render - reuse existing EntitySplitView structure
   return (
     <div className="bg-neutral-50 min-h-screen">
-      <div className="max-w-[1600px] mx-auto" style={{ maxWidth: "1600px" }}>
+      <div className="max-w-none w-full" style={{ maxWidth: "none" }}>
         {/* Header with search */}
         <div className="bg-white border-b border-neutral-200 px-6 py-4">
           <div className="flex items-center justify-between gap-6">

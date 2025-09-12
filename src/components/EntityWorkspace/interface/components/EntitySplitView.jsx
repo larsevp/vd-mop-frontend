@@ -82,9 +82,9 @@ const EntitySplitView = ({
     const containerRect = container.getBoundingClientRect();
     const newWidth = e.clientX - containerRect.left;
     
-    // Constrain width to reasonable bounds
-    const minWidth = 250;
-    const maxWidth = Math.min(600, containerRect.width * 0.6);
+    // Almost no limits - let user drag as far as they want
+    const minWidth = 150; // Very small minimum
+    const maxWidth = containerRect.width - 100; // Leave just 100px for right pane minimum
     const constrainedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
     
     setPanelWidth(`${constrainedWidth}px`);
@@ -122,7 +122,7 @@ const EntitySplitView = ({
         }`}
         style={{ 
           width: isCollapsed ? '0px' : panelWidth,
-          minWidth: isCollapsed ? '0px' : '250px'
+          minWidth: isCollapsed ? '0px' : '150px' // Match the new lower drag constraint minimum
         }}
       >
         {!isCollapsed && (
@@ -136,12 +136,12 @@ const EntitySplitView = ({
         )}
       </div>
 
-      {/* Resizer Handle */}
+      {/* Resizer Handle - Wider for better UX */}
       <div 
-        className={`relative bg-gray-100 hover:bg-gray-200 cursor-col-resize transition-colors duration-150 ${
+        className={`relative bg-gray-100 hover:bg-blue-100 cursor-col-resize transition-colors duration-150 ${
           isDragging ? 'bg-blue-200' : ''
         }`}
-        style={{ width: '6px' }}
+        style={{ width: '12px' }} // Doubled from 6px to 12px for better drag area
         onMouseDown={handleMouseDown}
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
@@ -179,7 +179,7 @@ const EntitySplitView = ({
       </div>
 
       {/* Right Panel - Detail View */}
-      <div className="flex-1 bg-white">
+      <div className="flex-1 bg-white min-w-0">
         <FlexScrollableContainer 
           className="h-full" 
           dependencies={[selectedEntity]}
