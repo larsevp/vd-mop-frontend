@@ -138,35 +138,59 @@ export const useTiptapEditor = ({
     },
   });
 
-  // Add event handlers after editor is created
+  // Add event handlers after editor is created - with Safari timing safety
   React.useEffect(() => {
-    if (editor && editor.view) {
-      const keydownHandler = createKeyboardHandler(editor, disabled);
-      const pasteHandler = createPasteHandler(editor, basic, onShowToast, uploadUrl);
+    if (!editor) return;
 
-      // Store original handlers so we can restore them
-      const originalHandleKeyDown = editor.view.props.handleKeyDown;
-      const originalHandlePaste = editor.view.props.handlePaste;
-
-      // Update the editor props
-      editor.view.updateState(editor.view.state);
-      editor.view.setProps({
-        ...editor.view.props,
-        handleKeyDown: keydownHandler,
-        handlePaste: pasteHandler,
-      });
-
-      // Cleanup function to restore original handlers
-      return () => {
-        if (editor.view) {
-          editor.view.setProps({
-            ...editor.view.props,
-            handleKeyDown: originalHandleKeyDown,
-            handlePaste: originalHandlePaste,
-          });
+    // Safari-safe handler setup with retry mechanism
+    const setupHandlers = () => {
+      try {
+        // Check if editor view is available and has props
+        if (!editor.view || !editor.view.props) {
+          // Retry after a short delay for Safari
+          setTimeout(setupHandlers, 10);
+          return;
         }
-      };
-    }
+
+        const keydownHandler = createKeyboardHandler(editor, disabled);
+        const pasteHandler = createPasteHandler(editor, basic, onShowToast, uploadUrl);
+
+        // Store original handlers so we can restore them
+        const originalHandleKeyDown = editor.view.props.handleKeyDown;
+        const originalHandlePaste = editor.view.props.handlePaste;
+
+        // Update the editor props safely
+        editor.view.updateState(editor.view.state);
+        editor.view.setProps({
+          ...editor.view.props,
+          handleKeyDown: keydownHandler,
+          handlePaste: pasteHandler,
+        });
+
+        // Return cleanup function to restore original handlers
+        return () => {
+          try {
+            if (editor.view && editor.view.props) {
+              editor.view.setProps({
+                ...editor.view.props,
+                handleKeyDown: originalHandleKeyDown,
+                handlePaste: originalHandlePaste,
+              });
+            }
+          } catch (error) {
+            // Silently handle cleanup errors in Safari
+            console.debug('TipTap cleanup error (safe to ignore):', error);
+          }
+        };
+      } catch (error) {
+        // Handle any setup errors gracefully
+        console.debug('TipTap setup error (retrying):', error);
+        setTimeout(setupHandlers, 50);
+      }
+    };
+
+    const cleanup = setupHandlers();
+    return cleanup;
   }, [editor, disabled, basic, onShowToast, uploadUrl]);
 
   return editor;

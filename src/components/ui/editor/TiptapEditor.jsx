@@ -151,8 +151,13 @@ export const TiptapEditor = ({
         </div>
       )}
       <div className="min-h-[120px] max-h-[600px] overflow-y-auto">
-        <EditorContent editor={editor} />
-        {editor && editor.isActive("table") && <TableInlineControls editor={editor} />}
+        {/* Safari-safe editor content rendering */}
+        {editor && editor.view ? (
+          <EditorContent editor={editor} />
+        ) : (
+          <div className="p-4 text-muted-foreground">Loading editor...</div>
+        )}
+        {editor && editor.view && editor.isActive("table") && <TableInlineControls editor={editor} />}
       </div>
       {editor && editor.isActive("table") && (
         <div className="px-3 py-1.5 bg-muted/30 border-t border-border text-xs text-muted-foreground">
