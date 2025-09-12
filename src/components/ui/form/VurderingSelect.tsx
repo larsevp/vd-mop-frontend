@@ -39,7 +39,6 @@ export function VurderingSelect(props: VurderingSelectProps) {
       queryKey={["vurderinger"]}
       queryFn={getVurderinger}
       displayField="navn"
-      sortField="navn"
     />
   );
 }
@@ -52,7 +51,6 @@ export function VurderingCheckboxGroup({ label = "Vurdering", layout = "vertical
       queryKey={["vurderinger"]}
       queryFn={getVurderinger}
       displayField="navn"
-      sortField="navn"
       layout={layout}
     />
   );
