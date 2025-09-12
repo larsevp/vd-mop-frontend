@@ -8,6 +8,7 @@ import { buildGlobalRelationships } from "./relationshipBuilder.js";
 import { preCalculateAllConnections } from "./connectionCalculator.js";
 import { calculateLayout } from "./layoutEngine.js";
 import { createNodes, createEdges } from "./nodeEdgeBuilder.js";
+import { buildFlowLayoutConfig } from "./flowLayoutConfig.js";
 
 // Re-export all functions
 export {
@@ -23,7 +24,7 @@ export {
 /**
  * Main flow data transformer - clean architecture
  */
-export function transformFlowData(flowData, nodeDataOptions = {}, viewOptions = {}) {
+export function transformFlowData(flowData, nodeDataOptions = {}, viewOptions = {}, layoutOverrides = {}) {
   console.log("[LOGBACKEND] FLOW TRANSFORMER LOADED - NEW MODULAR VERSION v1.0");
 
   const nodes = [];
@@ -45,12 +46,21 @@ export function transformFlowData(flowData, nodeDataOptions = {}, viewOptions = 
     return { nodes, edges };
   }
 
-  // Configuration
+  // Build merged layout configuration (defaults + overrides)
+  const merged = buildFlowLayoutConfig(layoutOverrides);
+  const L = merged.LAYOUT;
   const config = {
-    MIN_EMNE_SPACING: 80, // Proper spacing between different emne groups
+    // Raw spacing semantics used by downstream code
     BASE_NODE_HEIGHT: 120,
     MERKNAD_HEIGHT: 45,
-    ENTITY_SPACING: 140, // Node height + margin (120 + 20)
+    ENTITY_SPACING: L.vertical_distance_within_emne,
+    MIN_EMNE_SPACING: L.vertical_distance_between_emne,
+    verticalWithinEmne: L.vertical_distance_within_emne,
+    verticalBetweenEmne: L.vertical_distance_between_emne,
+    horizontalBetweenColumns: L.horizontal_distance_between_columns,
+    minClusterHeight: L.min_cluster_height,
+    enableClusterSpread: L.enable_cluster_spread,
+    enableMultiParentAdjust: L.enable_multi_parent_adjust,
   };
 
   // STEP 1: Global data collection (once)
@@ -66,7 +76,7 @@ export function transformFlowData(flowData, nodeDataOptions = {}, viewOptions = 
   const globalPositions = calculateLayout(allKravEntities, allTiltakEntities, globalRelationships, globalConnections, config, viewOptions);
 
   // STEP 5: Create React Flow nodes and edges with proper handles
-  const finalNodes = createNodes(globalPositions, globalRelationships, config, nodeDataOptions);
+  const finalNodes = createNodes(globalPositions, globalRelationships, config, nodeDataOptions, allKravEntities, allTiltakEntities);
   const finalEdges = createEdges(globalRelationships, globalPositions, allKravEntities, allTiltakEntities);
 
   return {
