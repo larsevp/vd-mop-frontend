@@ -124,13 +124,15 @@ const EntityListPane = ({
   };
 
   const collapseAll = () => {
-    const allGroupKeys = groupedItems.map((group, groupIndex) => `${entityType}-group-${group.group?.emne?.id || "no-emne"}-${groupIndex}`);
-    //console.log('collapseAll called, groupKeys:', allGroupKeys);
+    const allGroupKeys = groupedItems.map((group, groupIndex) => {
+      // Use same key generation logic as in the rendering
+      const itemIds = (group.items || []).map(item => item.id || item.renderId).join('-');
+      return `${entityType}-group-${group.group?.emne?.id || "no-emne"}-${groupIndex}-${itemIds.substring(0, 20)}`;
+    });
     setCollapsedGroups(new Set(allGroupKeys));
   };
 
   const expandAll = () => {
-    //console.log('expandAll called');
     setCollapsedGroups(new Set());
   };
 
@@ -138,7 +140,9 @@ const EntityListPane = ({
     hasGroupedData &&
     groupedItems.length > 0 &&
     groupedItems.every((group, groupIndex) => {
-      const groupKey = `${entityType}-group-${group.group?.emne?.id || "no-emne"}-${groupIndex}`;
+      // Use same key generation logic as in collapseAll and rendering
+      const itemIds = (group.items || []).map(item => item.id || item.renderId).join('-');
+      const groupKey = `${entityType}-group-${group.group?.emne?.id || "no-emne"}-${groupIndex}-${itemIds.substring(0, 20)}`;
       return collapsedGroups.has(groupKey);
     });
 
@@ -153,13 +157,19 @@ const EntityListPane = ({
   return (
     <div className="h-full flex flex-col bg-white">
       {/* Header - Domain-controlled via EntityListHeading */}
-      {EntityListHeading &&
-        EntityListHeading({
+      {EntityListHeading && (() => {
+        const headingProps = {
           itemCount: allItems.length,
-          hasGroups: hasGroupedData && groupedItems.length > 1,
+          hasGroups: hasGroupedData && groupedItems.length > 0,
           allGroupsExpanded: !allGroupsCollapsed,
           onToggleAllGroups: allGroupsCollapsed ? expandAll : collapseAll,
-        })}
+        };
+        //console.log('EntityListPane: Passing props to EntityListHeading:', headingProps);
+        //console.log('EntityListPane: hasGroupedData =', hasGroupedData);
+        //console.log('EntityListPane: groupedItems.length =', groupedItems.length);
+        //console.log('EntityListPane: allGroupsCollapsed =', allGroupsCollapsed);
+        return EntityListHeading(headingProps);
+      })()}
 
       {/* Entity List */}
       <FlexScrollableContainer className="flex-1" dependencies={[allItems.length, collapsedGroups]} fadeColor="from-white">

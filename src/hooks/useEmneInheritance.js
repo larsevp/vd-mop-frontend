@@ -7,7 +7,7 @@ import { useFormInheritanceStore } from '../stores/formInheritanceStore';
  * Generic hook that works with multiple entity types (tiltak, krav, prosjektTiltak)
  * Provides clean API for components to handle form inheritance logic
  */
-export const useEmneInheritance = (entityType = 'tiltak') => {
+export const useEmneInheritance = (entityType = 'tiltak', entityId = null) => {
   const {
     inheritedEmne,
     source,
@@ -34,17 +34,22 @@ export const useEmneInheritance = (entityType = 'tiltak') => {
     initializeForEntityType(entityType);
   }, [entityType, initializeForEntityType]);
 
-  // Clear inheritance state when we detect we're in create mode
+  // Track current entity ID to prevent state leakage between entities
+  const [currentEntityId, setCurrentEntityId] = React.useState(null);
+  
+  // Clear inheritance state when switching between different entities
   React.useEffect(() => {
-    // Check if we're in create mode by looking at URL or other indicators
-    const isCreateMode = window.location.pathname.includes('/create') || 
-                        window.location.pathname.includes('create-new') ||
-                        window.location.hash.includes('create-new');
-    
-    if (isCreateMode && inheritedEmne) {
-      clearAllInheritance();
+    // Only clear if we're switching to a different entity (not just re-mounting same entity)
+    if (entityId && entityId !== currentEntityId) {
+      // Don't clear if inheritance is actively being used (parent/related entity connections)
+      // Only clear residual state from previous entities
+      if (!hasParentConnection && !hasRelatedEntityConnection && inheritedEmne) {
+        console.log('🧹 Clearing residual inheritance state from previous entity');
+        clearAllInheritance();
+      }
+      setCurrentEntityId(entityId);
     }
-  }, [inheritedEmne, clearAllInheritance]);
+  }, [entityId, currentEntityId, hasParentConnection, hasRelatedEntityConnection, inheritedEmne, clearAllInheritance]);
 
   // Handle parent inheritance (generic - works for tiltak, krav, prosjektTiltak parents)
   const inheritFromParent = useCallback((parentData, parentEntityType = entityType) => {

@@ -97,7 +97,12 @@ export const createCombinedRenderer = (config) => {
    * Render list heading for combined entities
    */
   const renderListHeading = (props) => {
-    return <RowListHeading {...props} entityType={`${primaryType}-${secondaryType}-combined`} />;
+    return (
+      <RowListHeading 
+        {...props} 
+        entityType={`${primaryType}-${secondaryType}-combined`}
+      />
+    );
   };
 
   /**

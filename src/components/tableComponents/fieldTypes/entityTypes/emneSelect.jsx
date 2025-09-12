@@ -21,12 +21,15 @@ export const emneSelectType = {
     
     const entityType = getEntityTypeFromModel(modelName);
     
+    // Get entity ID from formData, row, or data for proper inheritance tracking
+    const entityId = formData?.id || row?.id || data?.id || 'create-new';
+    
     const { 
       inheritedEmne, 
       hasInheritance, 
       isFieldDisabled, 
       getDisabledPlaceholder 
-    } = useEmneInheritance(entityType);
+    } = useEmneInheritance(entityType, entityId);
 
     // Apply inheritance when store updates
     useEffect(() => {

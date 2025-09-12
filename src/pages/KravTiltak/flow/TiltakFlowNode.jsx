@@ -80,6 +80,16 @@ const TiltakFlowNode = ({ data, selected }) => {
               {entity?.tittel || entity?.navn || entity?.name || 'Uten tittel'}
             </h4>
             
+            {/* Merknad if present */}
+            {(entity?.merknad || entity?.merknader) && (
+              <div className="text-sm text-amber-700 bg-amber-50 rounded px-2 py-1 mb-2">
+                <span className="text-xs font-medium text-amber-800">Merknad:</span>
+                <div className="mt-0.5 text-xs line-clamp-2">
+                  {entity?.merknad || entity?.merknader}
+                </div>
+              </div>
+            )}
+            
             {/* Description snippet */}
             {entity?.beskrivelseSnippet && (
               <p className="text-xs text-gray-600 line-clamp-2">

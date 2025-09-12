@@ -38,20 +38,22 @@ const RowListHeading = ({
             {itemCount} {itemCount === 1 ? 'element' : 'elementer'}
           </div>
           
-          {/* Expand/Collapse All Groups Button - Always visible */}
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onToggleAllGroups();
-            }}
-            className="flex items-center p-1 h-6 w-6"
-            title={allGroupsExpanded ? "Skjul alle grupper" : "Vis alle grupper"}
-          >
-            {allGroupsExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-          </Button>
+          {/* Expand/Collapse All Groups Button - Only show when hasGroups */}
+          {hasGroups && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onToggleAllGroups();
+              }}
+              className="flex items-center p-1 h-6 w-6"
+              title={allGroupsExpanded ? "Skjul alle grupper" : "Vis alle grupper"}
+            >
+              {allGroupsExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+            </Button>
+          )}
 
           
           {children}

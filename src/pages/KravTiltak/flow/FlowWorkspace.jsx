@@ -85,11 +85,26 @@ const FlowWorkspace = ({
   }, [singleEntityDTO]);
   
   // Fetch data using DTO - following established pattern
-  const { data: flowData, isLoading, error } = useEntityData(dto, {
+  const { data: flowData, isLoading, error, refetch } = useEntityData(dto, {
     searchQuery: ui.activeSearchQuery,
     filters: ui.filters,
     pagination: { page: 1, pageSize: 100 } // Larger page size for flow view
   });
+
+  // Force refetch when component mounts or viewOptions change to ensure fresh data
+  React.useEffect(() => {
+    refetch();
+  }, [refetch, viewOptions]); // Refetch when view options change
+
+  // Refetch data when window regains focus (user switches back to flow)
+  React.useEffect(() => {
+    const handleFocus = () => {
+      refetch();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [refetch]);
 
 
   // Use custom node types if provided, otherwise use defaults
