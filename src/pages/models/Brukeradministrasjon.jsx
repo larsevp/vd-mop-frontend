@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { RowList, AdminPage } from "@/components/tableComponents";
 import { getModelConfig } from "@/modelConfigs";
 import { user } from "@/modelConfigs/models/user";
-import { useSmartBack } from "@/hooks/useSmartBack";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 
 export default function Brukeradministrasjon() {
   const navigate = useNavigate();
-  const { goBack } = useSmartBack();
+  const { goBack } = useBackNavigation();
   const config = user; //getModelConfig("users");
 
   function handleEdit(user) {
@@ -33,7 +33,6 @@ export default function Brukeradministrasjon() {
       newButtonLabel={config.newButtonLabelText}
       onNew={handleNew}
       onBack={handleBack}
-      showBackButton={true}
       backButtonLabel="Tilbake"
       showNewButton={false} // Kan settes til false for å skjule knappen
     >

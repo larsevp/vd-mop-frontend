@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { EntityWorkspace } from "@/components/EntityWorkspace";
 import { prosjektTiltak as prosjektTiltakConfig } from "@/modelConfigs/models/prosjektTiltak";
 import { createSingleEntityDTO } from "@/components/EntityWorkspace/interface/data";
@@ -32,6 +32,7 @@ import { ArrowLeft, Building } from "lucide-react";
  */
 const ProsjektTiltakWorkspace = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentProject } = useProjectStore();
 
   // Show message if no project is selected
@@ -71,15 +72,15 @@ const ProsjektTiltakWorkspace = () => {
   // Get view options state
   const { viewOptions, setViewOptions } = useProsjektTiltakViewStore();
 
-  // Handle Flow toggle - navigate to Flow workspace
+  // Handle Flow toggle - navigate to Flow workspace while preserving state
   const handleFlowToggle = () => {
     const currentPath = window.location.pathname;
     if (currentPath.includes('/prosjekt-tiltak-workspace')) {
       const flowPath = currentPath.replace('/prosjekt-tiltak-workspace', '/prosjekt-tiltak-flow');
-      navigate(flowPath);
+      navigate(flowPath, { state: location.state });
     } else if (currentPath.includes('/prosjekt-tiltak')) {
       const flowPath = currentPath.replace('/prosjekt-tiltak', '/prosjekt-tiltak-flow');
-      navigate(flowPath);
+      navigate(flowPath, { state: location.state });
     }
   };
 

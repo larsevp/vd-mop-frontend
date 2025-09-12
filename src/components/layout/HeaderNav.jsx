@@ -4,12 +4,12 @@ import { Link, useLocation } from "react-router-dom";
 import { useMsal } from "@azure/msal-react";
 import { useUserStore } from "@/stores/userStore";
 import { UserProjectMenu } from "./UserProjectMenu";
-import { useSmartBack } from "@/hooks/useSmartBack";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 
-export default function HeaderNav({ showBackButton = false }) {
+export default function HeaderNav() {
   const user = useUserStore((state) => state.user);
   const location = useLocation();
-  const { goBack } = useSmartBack();
+  const { goBack, shouldShowBackButton } = useBackNavigation();
   const { accounts } = useMsal();
   const [tenantError] = React.useState(false);
   const isAdmin = user?.rolle === "ADMIN";
@@ -37,11 +37,11 @@ export default function HeaderNav({ showBackButton = false }) {
       <div className="max-w-screen-xl mx-auto">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-2">
-            {showBackButton ? (
+            {shouldShowBackButton() && (
               <button onClick={goBack} className="p-1 rounded-full hover:bg-background-muted text-text-muted" aria-label="Gå tilbake">
                 <ArrowLeft size={18} />
               </button>
-            ) : null}
+            )}
             <Link to="/" className="flex items-center gap-2">
               <Home size={20} className="text-primary-500" />
               <span className="font-semibold text-lg text-text-primary">MOP</span>

@@ -35,6 +35,8 @@ export const emneSelectType = {
 
     // Track which entities we've already cleared to avoid repeated clearing
     const clearedEntitiesRef = useRef(new Set());
+    // Track user interaction to prevent clearing after manual selections
+    const userInteractionRef = useRef(false);
 
     // Apply inheritance when store updates (including blank/null values from connections)
     useEffect(() => {
@@ -48,26 +50,37 @@ export const emneSelectType = {
       }
     }, [inheritedEmne, value, onChange, field.name, hasParentConnection, hasRelatedEntityConnection]);
 
-    // Clear field value when switching to new entity (only once per entity)
+    // Clear field value when switching to new entity (only once per entity, and only if no user interaction)
     useEffect(() => {
       const isNewEntity = entityId === 'create-new' || entityId?.toString().includes('create');
       
-      if (isNewEntity && !inheritedEmne && !hasParentConnection && !hasRelatedEntityConnection && value && !clearedEntitiesRef.current.has(entityId)) {
+      if (isNewEntity && !inheritedEmne && !hasParentConnection && !hasRelatedEntityConnection && value && !clearedEntitiesRef.current.has(entityId) && !userInteractionRef.current) {
         onChange({ target: { name: field.name, value: null } });
         clearedEntitiesRef.current.add(entityId);
       }
     }, [entityId, inheritedEmne, value, onChange, field.name, hasParentConnection, hasRelatedEntityConnection]);
+
+    // Reset interaction flag when switching entities
+    useEffect(() => {
+      userInteractionRef.current = false;
+    }, [entityId]);
 
     // Use inherited value if available, otherwise use form value
     const effectiveValue = inheritedEmne || value;
     const disabled = isFieldDisabled('emne');
     const placeholder = getDisabledPlaceholder('emne') || field.placeholder;
 
+    // Wrap onChange to mark user interaction
+    const handleChange = (event) => {
+      userInteractionRef.current = true;
+      onChange(event);
+    };
+
     return (
       <EmneSelect
         name={field.name}
         value={effectiveValue}
-        onChange={disabled ? () => {} : onChange}
+        onChange={disabled ? () => {} : handleChange}
         label={field.label}
         required={disabled ? false : field.required}
         placeholder={placeholder}

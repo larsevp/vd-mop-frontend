@@ -26,7 +26,6 @@ export default function StatusPage({
   showLoginButton = true,
   showLogoutButton = false,
   showRefreshButton = false,
-  showBackButton = false,
 }) {
   console.log("StatusPage: Rendering with props:", {
     type,
@@ -36,7 +35,6 @@ export default function StatusPage({
     showLoginButton,
     showLogoutButton,
     showRefreshButton,
-    showBackButton,
   });
 
   // Use safer hooks that don't depend on MSAL state

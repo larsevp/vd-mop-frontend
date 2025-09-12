@@ -2,11 +2,11 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { RowList, AdminPage } from "@/components/tableComponents";
 import { getModelConfig } from "../../modelConfigs";
-import { useSmartBack } from "@/hooks/useSmartBack";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 
 export default function Prosjektadministrasjon() {
   const navigate = useNavigate();
-  const { goBack } = useSmartBack();
+  const { goBack } = useBackNavigation();
   const config = getModelConfig("prosjekter");
 
   function handleEdit(row) {
@@ -32,7 +32,6 @@ export default function Prosjektadministrasjon() {
       newButtonLabel={config.newButtonLabelText}
       onNew={handleNew}
       onBack={handleBack}
-      showBackButton={true}
       backButtonLabel="Tilbake"
     >
       <RowList

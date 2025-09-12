@@ -14,6 +14,8 @@
 
 import React, { useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { Button } from "@/components/ui/primitives/button";
 import { Plus, ArrowLeft, LayoutGrid, Columns, Network } from "lucide-react";
 
@@ -28,7 +30,6 @@ import { useWorkspaceUI } from "./interface/hooks/useWorkspaceUI";
 
 // DTO Interface validation
 import { validateEntityDTO } from "./interface/data/EntityDTOInterface";
-import useNavigationHistory from "@/hooks/useNavigationHistory";
 
 /**
  * Minimal EntityWorkspace component (~40 lines)
@@ -49,8 +50,9 @@ const EntityWorkspaceNew = ({
   onFlowToggle = null,
 }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { goBack } = useBackNavigation();
   const cardsContainerRef = useRef(null);
-  useNavigationHistory();
 
   // Validate DTO implements required interface
   useEffect(() => {
@@ -357,6 +359,33 @@ const EntityWorkspaceNew = ({
         // Refresh the list after successful save
         await refetch();
 
+        // Invalidate related query caches to ensure dropdowns are updated
+        // This is crucial for parent/child relationships to work immediately
+        if (entityType === 'prosjekttiltak' || entityType === 'tiltak') {
+          // Invalidate prosjektTiltak queries so parent dropdowns refresh
+          queryClient.invalidateQueries({
+            queryKey: ["prosjektTiltak", "simple"]
+          });
+        }
+        if (entityType === 'prosjektkrav' || entityType === 'krav') {
+          // Invalidate prosjektKrav queries so parent dropdowns refresh
+          queryClient.invalidateQueries({
+            queryKey: ["prosjektKrav", "simple"]
+          });
+        }
+        if (entityType === 'tiltak') {
+          // Also invalidate general tiltak queries
+          queryClient.invalidateQueries({
+            queryKey: ["tiltak", "simple"]
+          });
+        }
+        if (entityType === 'krav') {
+          // Also invalidate general krav queries
+          queryClient.invalidateQueries({
+            queryKey: ["krav", "simple"]
+          });
+        }
+
         // Let DTO handle post-save logic (selection, scrolling, etc.)
         // Pass the entity type context for proper dependency injection (DTO normalized)
         // Check if we're in edit card mode before letting DTO override selection
@@ -429,7 +458,7 @@ const EntityWorkspaceNew = ({
             <h3 className="text-red-800 font-medium mb-2">Feil ved lasting av {entityType}</h3>
             <p className="text-red-700 mb-4">{error.message}</p>
             <div className="flex gap-3">
-              <Button onClick={() => navigate(-1)} variant="outline">
+              <Button onClick={goBack} variant="outline">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Tilbake
               </Button>
@@ -454,23 +483,7 @@ const EntityWorkspaceNew = ({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => {
-                  // Navigate to appropriate landing page based on current path
-                  const currentPath = window.location.pathname;
-                  if (currentPath.includes("/prosjekt/")) {
-                    // Extract project ID from path and go to project landing
-                    const projectMatch = currentPath.match(/\/prosjekt\/(\d+)/);
-                    if (projectMatch) {
-                      const projectId = projectMatch[1];
-                      navigate(`/prosjekt/${projectId}`);
-                    } else {
-                      navigate("/prosjekt");
-                    }
-                  } else {
-                    // Fallback for general krav/tiltak pages
-                    navigate("/krav-tiltak");
-                  }
-                }}
+                onClick={goBack}
                 className="text-neutral-600 hover:text-neutral-900"
               >
                 <ArrowLeft className="w-4 h-4 mr-1" />

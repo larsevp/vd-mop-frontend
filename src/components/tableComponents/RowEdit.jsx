@@ -3,12 +3,12 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import RowForm from "./RowForm";
 import { useQuery } from "@tanstack/react-query";
 import { getModelConfig } from "../../modelConfigs";
-import { useSmartBack } from "@/hooks/useSmartBack";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 
 export default function RowEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { goBack } = useSmartBack();
+  const { goBack } = useBackNavigation();
   const location = useLocation();
   const modelType = location.state?.modelType;
   const config = getModelConfig(modelType);

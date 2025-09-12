@@ -28,7 +28,6 @@ export default function ProsjektTiltak() {
       newButtonLabel={config.newButtonLabelText}
       onNew={handleNew}
       onBack={handleBack}
-      showBackButton={true}
       backButtonLabel="Tilbake"
     >
       <RowList fields={config.fields} queryKey={config.queryKey} onEdit={handleEdit} queryFn={config.queryFn} deleteFn={config.deleteFn} />

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { EntityWorkspace } from "@/components/EntityWorkspace";
 import { createCombinedEntityDTO } from "@/components/EntityWorkspace/interface/data";
 import { createProsjektKravTiltakCombinedAdapter } from "./adapter";
@@ -35,6 +35,7 @@ import { useWorkspaceUI } from "@/components/EntityWorkspace/interface/hooks/use
  */
 const ProsjektKravTiltakFlowWorkspace = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   
   // Flow view mode state - default to 'flow' since this is the Flow workspace
   const [flowViewMode, setFlowViewMode] = useState('flow');
@@ -46,13 +47,14 @@ const ProsjektKravTiltakFlowWorkspace = () => {
   // Get view options state (reuse existing store)
   const { viewOptions, setViewOptions } = useProsjektKravTiltakCombinedViewStore();
 
-  // Handle flow view toggle - navigate back to regular workspace
+  // Handle flow view toggle - navigate back to regular workspace while preserving state
   const handleFlowToggle = () => {
     // Navigate back to regular combined workspace
     const currentPath = window.location.pathname;
     if (currentPath.includes('/prosjekt-krav-tiltak-flow')) {
       const regularPath = currentPath.replace('/prosjekt-krav-tiltak-flow', '/prosjekt-krav-tiltak-combined');
-      navigate(regularPath);
+      // Preserve the location state (including returnTo)
+      navigate(regularPath, { state: location.state });
     }
   };
 

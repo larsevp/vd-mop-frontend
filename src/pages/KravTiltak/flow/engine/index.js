@@ -25,8 +25,6 @@ export {
  * Main flow data transformer - clean architecture
  */
 export function transformFlowData(flowData, nodeDataOptions = {}, viewOptions = {}, layoutOverrides = {}) {
-  console.log("[LOGBACKEND] FLOW TRANSFORMER LOADED - NEW MODULAR VERSION v1.0");
-
   const nodes = [];
   const edges = [];
 

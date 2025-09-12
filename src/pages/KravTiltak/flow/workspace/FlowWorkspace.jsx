@@ -216,17 +216,26 @@ const FlowWorkspace = ({
 
   const handleEntitySave = useCallback(async (saveData, isUpdate) => {
     try {
-      // Use CombinedEntityDTO's save method following established pattern
-      // This delegates to individual prosjektkrav/prosjekttiltak adapters
+      // Use DTO's save method (works for both CombinedEntityDTO and SingleEntityDTO)
       await dto.save(saveData, isUpdate);
       
-      // Invalidate relevant queries to trigger flow data refresh
-      await queryClient.invalidateQueries({
-        queryKey: ["entities", dto?.entityType || dto?.getPrimaryEntityType?.() || "unknown"],
-        exact: false // Invalidate all matching queries regardless of other parameters
-      });
+      // Get entity type for cache invalidation
+      const entityType = dto?.entityType || dto?.getPrimaryEntityType?.() || "unknown";
       
-      console.log('Entity saved successfully and cache invalidated');
+      // Invalidate multiple query key patterns to ensure comprehensive cache refresh
+      const queryPatterns = [
+        ["entities", entityType],
+        ["entities", entityType.toLowerCase()],
+        ["entities"]
+      ];
+      
+      for (const pattern of queryPatterns) {
+        await queryClient.invalidateQueries({
+          queryKey: pattern,
+          exact: false // Invalidate all matching queries regardless of other parameters
+        });
+      }
+      
       handleDetailPaneClose();
     } catch (error) {
       console.error('Save failed:', error);
@@ -236,17 +245,26 @@ const FlowWorkspace = ({
 
   const handleEntityDelete = useCallback(async (entity) => {
     try {
-      // Use CombinedEntityDTO's delete method following established pattern
-      // This delegates to individual prosjektkrav/prosjekttiltak adapters
+      // Use DTO's delete method (works for both CombinedEntityDTO and SingleEntityDTO)
       await dto.delete(entity);
       
-      // Invalidate relevant queries to trigger flow data refresh
-      await queryClient.invalidateQueries({
-        queryKey: ["entities", dto?.entityType || dto?.getPrimaryEntityType?.() || "unknown"],
-        exact: false // Invalidate all matching queries regardless of other parameters
-      });
+      // Get entity type for cache invalidation
+      const entityType = dto?.entityType || dto?.getPrimaryEntityType?.() || "unknown";
       
-      console.log('Entity deleted successfully and cache invalidated');
+      // Invalidate multiple query key patterns to ensure comprehensive cache refresh
+      const queryPatterns = [
+        ["entities", entityType],
+        ["entities", entityType.toLowerCase()],
+        ["entities"]
+      ];
+      
+      for (const pattern of queryPatterns) {
+        await queryClient.invalidateQueries({
+          queryKey: pattern,
+          exact: false // Invalidate all matching queries regardless of other parameters
+        });
+      }
+      
       handleDetailPaneClose();
     } catch (error) {
       console.error('Delete failed:', error);
@@ -405,6 +423,8 @@ const FlowWorkspace = ({
           fitView={true}
           fitViewOptions={{ padding: 0.3 }}
           defaultViewport={{ x: 0, y: 0, zoom: 0.5 }}
+          minZoom={0.1}
+          maxZoom={2}
           nodesDraggable={true}
           nodesConnectable={false}
           elementsSelectable={true}

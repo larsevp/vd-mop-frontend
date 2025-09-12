@@ -105,7 +105,6 @@ export function createNodes(
     nodes.push(baseNode);
   });
 
-  console.log(`[LOGBACKEND] Created ${nodes.length} React Flow nodes (conditional handles)`);
   return nodes;
 }
 
@@ -190,6 +189,5 @@ export function createEdges(globalRelationships, positions, allKravEntities, all
     }
   });
 
-  console.log(`[LOGBACKEND] Created ${edges.length} React Flow edges (including emne connections)`);
   return edges;
 }

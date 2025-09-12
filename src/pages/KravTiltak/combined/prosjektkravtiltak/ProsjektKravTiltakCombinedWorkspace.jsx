@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { EntityWorkspace } from "@/components/EntityWorkspace";
 import { createCombinedEntityDTO } from "@/components/EntityWorkspace/interface/data";
 import { createProsjektKravTiltakCombinedAdapter } from "./adapter";
@@ -39,6 +39,7 @@ import { prosjektTiltak as prosjektTiltakConfig } from "@/modelConfigs/models/pr
  */
 const ProsjektKravTiltakCombinedWorkspace = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   
   // Create combined adapter for project entities
   const adapter = createProsjektKravTiltakCombinedAdapter({ debug: true });
@@ -49,12 +50,13 @@ const ProsjektKravTiltakCombinedWorkspace = () => {
   // Get view options state
   const { viewOptions, setViewOptions } = useProsjektKravTiltakCombinedViewStore();
 
-  // Handle Flow toggle - navigate to Flow workspace
+  // Handle Flow toggle - navigate to Flow workspace while preserving state
   const handleFlowToggle = () => {
     const currentPath = window.location.pathname;
     if (currentPath.includes('/prosjekt-krav-tiltak-combined')) {
       const flowPath = currentPath.replace('/prosjekt-krav-tiltak-combined', '/prosjekt-krav-tiltak-flow');
-      navigate(flowPath);
+      // Preserve the location state (including returnTo)
+      navigate(flowPath, { state: location.state });
     }
   };
 

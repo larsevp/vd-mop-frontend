@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import { ArrowRight, FolderOpen, Plus, Book, Users, CheckSquare, Briefcase, Download, ArrowLeft, Calendar, Building2, FileText, X } from "lucide-react";
 import { getProsjekter, getProsjektById } from "@/api/endpoints";
 import { useQuery } from "@tanstack/react-query";
@@ -12,6 +12,7 @@ export default function ProjectLanding() {
   const { user } = useUserStore();
   const { setCurrentProject, currentProject } = useProjectStore();
   const navigate = useNavigate();
+  const location = useLocation();
   const { prosjektId } = useParams();
   const isAdmin = user?.rolle === "ADMIN";
   const [showFullDescription, setShowFullDescription] = useState(false);
@@ -266,7 +267,12 @@ export default function ProjectLanding() {
 
                 if (isAvailable) {
                   return (
-                    <Link key={card.title} to={card.link} className="group block transform transition-all duration-200 hover:scale-105">
+                    <Link 
+                      key={card.title} 
+                      to={card.link} 
+                      state={{ returnTo: location.pathname }}
+                      className="group block transform transition-all duration-200 hover:scale-105"
+                    >
                       <div className="card-base card-hover rounded-xl p-6 h-full transition-all duration-200 group-hover:shadow-xl">
                         <div className={`inline-flex p-3 rounded-xl bg-gradient-to-r ${card.color} text-white mb-4 shadow-md`}>
                           <IconComponent size={24} />

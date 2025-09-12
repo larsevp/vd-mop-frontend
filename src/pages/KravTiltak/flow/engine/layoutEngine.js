@@ -9,27 +9,27 @@ import dagre from "dagre";
  * Keep the important features but simplify the approach
  */
 export function calculateLayout(allKravEntities, allTiltakEntities, globalRelationships, globalConnections, config, viewOptions = {}) {
-  console.log("[LOGBACKEND] DAGRE: Starting balanced layout calculation");
-
   const g = new dagre.graphlib.Graph({ compound: true });
 
   // Keep compound graph configuration - it works for spacing
   g.setGraph({
     rankdir: "LR",
-    nodesep: Math.max(20, (config.verticalWithinEmne || 140) * 0.25), // local vertical separation heuristic
+    nodesep: Math.max(15, (config.verticalWithinEmne || 100) * 0.2), // Vertical separation within emne from config
     ranksep: config.horizontalBetweenColumns || 120, // horizontal separation (LR mode)
     edgesep: 10,
     marginx: 20,
-    marginy: 120,
+    marginy: 100, // Standard margins
   });
 
   g.setDefaultEdgeLabel(() => ({}));
 
-  // First, collect all unique emne from entities
+  // First, collect all unique emne from entities in order of appearance
   const emneSet = new Map();
+  const emneOrder = []; // Track the order emne first appear
   [...allKravEntities, ...allTiltakEntities].forEach((entity) => {
-    if (entity._sourceEmne) {
+    if (entity._sourceEmne && !emneSet.has(entity._sourceEmne.id)) {
       emneSet.set(entity._sourceEmne.id, entity._sourceEmne);
+      emneOrder.push(entity._sourceEmne.id);
     }
   });
 
@@ -56,19 +56,8 @@ export function calculateLayout(allKravEntities, allTiltakEntities, globalRelati
   [...allKravEntities, ...allTiltakEntities].forEach((entity) => {
     const nodeKey = entity.entityType?.toLowerCase().includes("krav") ? `krav-${entity.id}` : `tiltak-${entity.id}`;
 
-    // Calculate height: base 100px + 20% for merknad + 20% for description
-    let estimatedHeight = 100; // Base: 100px
-
-    // Add 20% if merknad is visible and present
-    const hasMerknad = entity.merknad || entity.merknader;
-    if (hasMerknad && viewOptions.showMerknad !== false) {
-      estimatedHeight += Math.round(estimatedHeight * 0.2); // +20%
-    }
-
-    // Add 20% if description snippet is present
-    if (entity.beskrivelseSnippet) {
-      estimatedHeight += Math.round(estimatedHeight * 0.2); // +20%
-    }
+    // Calculate height using the helper function for consistency
+    const estimatedHeight = calculateEntityHeight(entity, viewOptions);
 
     g.setNode(nodeKey, {
       width: 320,
@@ -124,7 +113,7 @@ export function calculateLayout(allKravEntities, allTiltakEntities, globalRelati
   });
 
   // Let Dagre do the layout
-  console.log(`[LOGBACKEND] DAGRE: Graph has ${g.nodes().length} nodes and ${g.edges().length} edges`);
+
   dagre.layout(g);
 
   // Extract Dagre positions
@@ -144,24 +133,18 @@ export function calculateLayout(allKravEntities, allTiltakEntities, globalRelati
   // Optional deterministic cluster spreading (post-processing) for vertical clarity with many emne
   if (config.enableClusterSpread !== false) {
     spreadEmneClusters(dagrePositions, {
-      gap: config.verticalBetweenEmne || config.MIN_EMNE_SPACING || 240,
-      minHeight: config.minClusterHeight || 220,
+      gap: config.verticalBetweenEmne || config.MIN_EMNE_SPACING || 120, // More compact gap between emne groups
+      minHeight: config.minClusterHeight || 240, // Increased minimum height
+      emneOrder: emneOrder, // Pass the original order
     });
   }
 
   if (config.enableMultiParentAdjust) {
     try {
       applyMultiParentPositioning(dagrePositions, globalRelationships);
-    } catch (e) {
-      console.warn("[LOGBACKEND] Multi-parent adjustment failed:", e);
-    }
+    } catch (e) {}
   }
 
-  console.log(
-    `[LOGBACKEND] DAGRE: Layout complete - positioned ${dagrePositions.size} elements (cluster spread: ${
-      config.enableClusterSpread !== false
-    })`
-  );
   return dagrePositions;
 }
 
@@ -218,12 +201,15 @@ function applyEmneGrouping(dagrePositions, config) {
           ...position, // Keep Dagre X position
           y: entityY, // Organized Y position
         });
-        entityY += 140; // Proper spacing for 120px nodes
+        // Use dynamic spacing based on actual card height + buffer
+        const cardHeight = position.height || 120;
+        entityY += cardHeight + 40; // Card height + 40px buffer between cards
       });
 
-    // Move to next emne group
-    const groupHeight = Math.max(200, group.entities.length * 140 + 80);
-    currentY += groupHeight + config.MIN_EMNE_SPACING;
+    // Move to next emne group - calculate actual height based on positioned entities
+    const actualGroupHeight = entityY - currentY; // Total height used by this group
+    const groupHeight = Math.max(200, actualGroupHeight);
+    currentY += groupHeight + (config.MIN_EMNE_SPACING || 240);
   });
 
   return positions;
@@ -275,9 +261,26 @@ function applyMultiParentPositioning(positions, globalRelationships) {
       const avgY = yPositions.reduce((sum, y) => sum + y, 0) / yPositions.length;
 
       positions.set(entityKey, { ...currentPos, y: avgY });
-      console.log(`[LOGBACKEND] Multi-parent positioning for ${entityKey}: y=${avgY} (${parentPositions.length} parents)`);
     }
   });
+}
+
+/**
+ * Calculate realistic height needed for an entity based on its content
+ */
+function calculateEntityHeight(entity, viewOptions = {}) {
+  let height = 120; // Base height
+  
+  const hasMerknad = entity.merknad || entity.merknader;
+  if (hasMerknad && viewOptions.showMerknad !== false) {
+    height += 50;
+  }
+  
+  if (entity.beskrivelseSnippet) {
+    height += 30;
+  }
+  
+  return height;
 }
 
 /**
@@ -285,16 +288,21 @@ function applyMultiParentPositioning(positions, globalRelationships) {
  * KISS post-processing: keep Dagre X & intra-cluster relative Y; shift clusters to inject fixed vertical gaps.
  * Works for any number of emne. O(N) over nodes.
  */
-function spreadEmneClusters(dagrePositions, { gap = 240, minHeight = 220 }) {
+function spreadEmneClusters(dagrePositions, { gap = 240, minHeight = 220, emneOrder = [] }) {
   // Group nodes by emneId (entity._sourceEmne.id or emne.id for header nodes)
   const groups = new Map();
   dagrePositions.forEach((pos, key) => {
+    // Skip cluster nodes - they are invisible layout helpers, not displayable content
+    if (key.startsWith('cluster-')) return;
+    
     const emneId = pos.entity?._sourceEmne?.id || pos.emne?.id;
-    if (!emneId) return; // Skip non-emne / ungrouped nodes
-    if (!groups.has(emneId)) {
-      groups.set(emneId, { nodes: [], minY: Infinity, maxY: -Infinity });
+    // Include nodes even if emneId is null/undefined - they belong to "Ingen emne" group
+    const groupKey = emneId || 'null';
+    
+    if (!groups.has(groupKey)) {
+      groups.set(groupKey, { nodes: [], minY: Infinity, maxY: -Infinity });
     }
-    const g = groups.get(emneId);
+    const g = groups.get(groupKey);
     g.nodes.push(key);
     const top = pos.y - pos.height / 2;
     const bottom = pos.y + pos.height / 2;
@@ -304,22 +312,132 @@ function spreadEmneClusters(dagrePositions, { gap = 240, minHeight = 220 }) {
 
   if (groups.size === 0) return; // Nothing to do
 
-  // Order clusters by their top (minY)
-  const ordered = [...groups.entries()].map(([emneId, data]) => ({ emneId, ...data })).sort((a, b) => a.minY - b.minY);
+  // Debug logs removed - spacing is now working correctly
+  
+  // Order clusters by original emne order (preserving data sequence), but ensure "Ingen emne" is always last
+  const ordered = [...groups.entries()]
+    .map(([emneId, data]) => ({ emneId, ...data }))
+    .sort((a, b) => {
+      // Get emne names for special handling - try multiple ways to find the name
+      let aName = '';
+      let bName = '';
+      
+      // Try to get emne from the emne node
+      const aEmneNode = dagrePositions.get(`emne-${a.emneId}`);
+      const bEmneNode = dagrePositions.get(`emne-${b.emneId}`);
+      
+      if (aEmneNode?.emne) {
+        aName = aEmneNode.emne.navn || aEmneNode.emne.name || '';
+      }
+      if (bEmneNode?.emne) {
+        bName = bEmneNode.emne.navn || bEmneNode.emne.name || '';
+      }
+      
+      // If still no name, try to get from entity nodes in the group
+      if (!aName) {
+        for (const nodeKey of a.nodes) {
+          const pos = dagrePositions.get(nodeKey);
+          if (pos?.entity?._sourceEmne) {
+            aName = pos.entity._sourceEmne.navn || pos.entity._sourceEmne.name || '';
+            break;
+          }
+        }
+      }
+      
+      if (!bName) {
+        for (const nodeKey of b.nodes) {
+          const pos = dagrePositions.get(nodeKey);
+          if (pos?.entity?._sourceEmne) {
+            bName = pos.entity._sourceEmne.navn || pos.entity._sourceEmne.name || '';
+            break;
+          }
+        }
+      }
+      
+      // Handle special case for "null" emneId groups
+      if (a.emneId === 'null' || a.emneId === null) aName = 'Ingen emne';
+      if (b.emneId === 'null' || b.emneId === null) bName = 'Ingen emne';
+      
+      
+      // Handle null/undefined emneId as "Ingen emne"
+      const aIsIngenEmne = (!a.emneId || a.emneId === 'null' || aName === 'Ingen emne');
+      const bIsIngenEmne = (!b.emneId || b.emneId === 'null' || bName === 'Ingen emne');
+      
+      // Always put "Ingen emne" last
+      if (aIsIngenEmne && !bIsIngenEmne) return 1;
+      if (bIsIngenEmne && !aIsIngenEmne) return -1;
+      if (aIsIngenEmne && bIsIngenEmne) return 0;
+      
+      // For other emne, use original order
+      const aIndex = emneOrder.indexOf(a.emneId);
+      const bIndex = emneOrder.indexOf(b.emneId);
+      
+      // If both are in emneOrder, sort by their order
+      if (aIndex !== -1 && bIndex !== -1) {
+        return aIndex - bIndex;
+      }
+      
+      // Fallback to minY sorting for any missing emne
+      return a.minY - b.minY;
+    });
 
-  let cursor = ordered.length ? ordered[0].minY : 0; // Start from first top for stable shift
-  ordered.forEach((group) => {
-    const rawHeight = group.maxY - group.minY;
-    const height = Math.max(rawHeight, minHeight);
-    // Ensure current group top aligns with cursor
-    const shift = cursor - group.minY;
-    if (Math.abs(shift) > 0.5) {
-      group.nodes.forEach((nodeKey) => {
-        const p = dagrePositions.get(nodeKey);
-        if (!p) return;
-        dagrePositions.set(nodeKey, { ...p, y: p.y + shift });
-      });
+  // Apply uniform spacing from the top
+  let currentY = 0;
+  
+  ordered.forEach((group, index) => {
+    // Calculate the shift needed to position this group at currentY
+    const originalMinY = group.minY;
+    const targetMinY = currentY;
+    const shift = targetMinY - originalMinY;
+    
+    // Apply the shift to all nodes in this group and recalculate actual bounds
+    let newMinY = Infinity;
+    let newMaxY = -Infinity;
+    
+    group.nodes.forEach((nodeKey) => {
+      const p = dagrePositions.get(nodeKey);
+      if (!p) return;
+      
+      // Shift the node
+      const newY = p.y + shift;
+      dagrePositions.set(nodeKey, { ...p, y: newY });
+      
+      // Calculate new bounds based on shifted positions - but exclude cluster nodes from bounds
+      if (!nodeKey.startsWith('cluster-')) {
+        const top = newY - p.height / 2;
+        const bottom = newY + p.height / 2;
+        newMinY = Math.min(newMinY, top);
+        newMaxY = Math.max(newMaxY, bottom);
+      }
+    });
+    
+    // Update group bounds with actual calculated values
+    group.minY = newMinY;
+    group.maxY = newMaxY;
+    
+    // Move currentY to start of next group
+    const actualGroupHeight = group.maxY - group.minY;
+    currentY = group.maxY + gap;
+    
+    // Debug logging for group heights - focus on "Ingen emne"
+    const enableDebugLogs = false; // Set to true to enable debug logging
+    if (enableDebugLogs) {
+      const emneName = group.emneId === 'null' || group.emneId === null ? 'Ingen emne' : `Emne ${group.emneId}`;
+      const visibleNodes = group.nodes.filter(key => !key.startsWith('cluster-'));
+      const clusterNodes = group.nodes.filter(key => key.startsWith('cluster-'));
+      
+      if (emneName === 'Ingen emne' || index < 3) { // Log Ingen emne always, and first few groups
+        console.log(`[LOGBACKEND] SPACING-DEBUG: ${emneName} - Height: ${actualGroupHeight.toFixed(1)}px`);
+        console.log(`[LOGBACKEND] SPACING-DEBUG: ${emneName} - Visible nodes: ${visibleNodes.length}, Cluster nodes: ${clusterNodes.length}`);
+        console.log(`[LOGBACKEND] SPACING-DEBUG: ${emneName} - Bounds: minY=${group.minY.toFixed(1)}, maxY=${group.maxY.toFixed(1)}`);
+        
+        if (emneName === 'Ingen emne') {
+          console.log(`[LOGBACKEND] SPACING-DEBUG: ${emneName} - All nodes:`, group.nodes);
+          console.log(`[LOGBACKEND] SPACING-DEBUG: ${emneName} - Visible nodes:`, visibleNodes);
+          console.log(`[LOGBACKEND] SPACING-DEBUG: ${emneName} - Cluster nodes:`, clusterNodes);
+        }
+      }
     }
-    cursor += height + gap;
+    
   });
 }

@@ -8,9 +8,6 @@ export default function AdminPage({
   newButtonLabel,
   onNew,
   showNewButton = true,
-  onBack,
-  showBackButton = false,
-  backButtonLabel,
   children,
 }) {
   return (
@@ -22,9 +19,6 @@ export default function AdminPage({
         newButtonLabel={newButtonLabel}
         showNewButton={showNewButton}
         showCopy={false}
-        onBack={onBack}
-        showBackButton={showBackButton}
-        backButtonLabel={backButtonLabel}
       />
       <section className="max-w-screen-xl mx-auto px-4 py-12 sm:px-6 md:px-8">
         <div className="w-full">

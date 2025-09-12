@@ -2,11 +2,11 @@ import React from "react";
 import { RowList, AdminPage } from "@/components/tableComponents/";
 import { getModelConfig } from "@/modelConfigs";
 import { useNavigate } from "react-router-dom";
-import { useSmartBack } from "@/hooks/useSmartBack";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 
 export default function ProsjektKrav() {
   const navigate = useNavigate();
-  const { goBack } = useSmartBack();
+  const { goBack } = useBackNavigation();
   const config = getModelConfig("prosjektKrav");
 
   function handleEdit(row) {
@@ -30,7 +30,6 @@ export default function ProsjektKrav() {
       newButtonLabel={config.newButtonLabelText}
       onNew={handleNew}
       onBack={handleBack}
-      showBackButton={true}
       backButtonLabel="Tilbake"
     >
       <RowList fields={config.fields} queryKey={config.queryKey} onEdit={handleEdit} queryFn={config.queryFn} deleteFn={config.deleteFn} />

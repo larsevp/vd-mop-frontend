@@ -1,5 +1,5 @@
 import React from "react";
-import { Plus, Copy, ArrowLeft } from "lucide-react";
+import { Plus, Copy } from "lucide-react";
 import { getThemeClasses } from "@/hooks/useTheme";
 
 function OldPageTitleSection({
@@ -11,9 +11,6 @@ function OldPageTitleSection({
   showNewButton = true,
   onCopy,
   showCopy = false,
-  onBack,
-  showBackButton = false,
-  backButtonLabel = "Tilbake",
   rightChildren,
   children,
 }) {
@@ -22,19 +19,6 @@ function OldPageTitleSection({
       <div className="max-w-screen-xl mx-auto px-4 py-10 sm:px-6 md:px-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div>
-            <div className="flex items-center gap-3 mb-2">
-              {showBackButton && (
-                <div>
-                  <button
-                    onClick={onBack}
-                    className="inline-flex items-center gap-2 text-text-muted hover:text-primary-600 transition-colors"
-                  >
-                    <ArrowLeft size={20} />
-                    <span className="font-medium">{backButtonLabel}</span>
-                  </button>
-                </div>
-              )}
-            </div>
             <h1 className="text-3xl font-bold mb-2 text-primary-700">{title}</h1>
             {subtitle && <p className="text-text-muted text-lg">{subtitle}</p>}
           </div>

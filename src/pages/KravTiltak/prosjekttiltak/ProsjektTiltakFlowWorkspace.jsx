@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import FlowWorkspace from '../flow/workspace/FlowWorkspace';
 import { createSingleEntityDTO } from '@/components/EntityWorkspace/interface/data';
 import { createProsjektTiltakAdapter } from './adapter';
@@ -24,6 +24,7 @@ import { ArrowLeft, Building } from 'lucide-react';
  */
 const ProsjektTiltakFlowWorkspace = ({ onFlowToggle: providedOnFlowToggle }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentProject } = useProjectStore();
 
   // Show message if no project is selected
@@ -85,15 +86,15 @@ const ProsjektTiltakFlowWorkspace = ({ onFlowToggle: providedOnFlowToggle }) => 
     // Transform SingleEntityDTO data to flow format in the component
   }), []);
 
-  // Handle flow toggle navigation back to regular workspace
+  // Handle flow toggle navigation back to regular workspace while preserving state
   const handleFlowToggle = providedOnFlowToggle || (() => {
     const currentPath = window.location.pathname;
     if (currentPath.includes('/prosjekt-tiltak-flow-workspace')) {
       const regularPath = currentPath.replace('/prosjekt-tiltak-flow-workspace', '/prosjekt-tiltak-workspace');
-      navigate(regularPath);
+      navigate(regularPath, { state: location.state });
     } else if (currentPath.includes('/prosjekt-tiltak-flow')) {
       const regularPath = currentPath.replace('/prosjekt-tiltak-flow', '/prosjekt-tiltak-workspace');
-      navigate(regularPath);
+      navigate(regularPath, { state: location.state });
     }
   });
 

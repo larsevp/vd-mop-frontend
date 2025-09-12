@@ -12,7 +12,7 @@ import KravFlowNode from "../components/KravFlowNode";
 import TiltakFlowNode from "../components/TiltakFlowNode";
 
 // Import modular transformer
-import { transformFlowData } from '../engine/index.js';
+import { transformFlowData } from "../engine/index.js";
 
 // Register node types
 export const nodeTypes = {
@@ -26,11 +26,9 @@ export const nodeTypes = {
  * Wrapper around the new transformFlowData function
  */
 export function transformToFlowData(flowAdapterData, options = {}, viewOptions = {}) {
-  console.log('[LOGBACKEND] transformToFlowData called with:', { flowAdapterData, options, viewOptions });
-  
   // Handle different data structures
   let emneGroups = null;
-  
+
   if (flowAdapterData?.emneGroups) {
     // FlowAdapter format: { emneGroups: [...] }
     emneGroups = flowAdapterData.emneGroups;
@@ -38,19 +36,16 @@ export function transformToFlowData(flowAdapterData, options = {}, viewOptions =
     // Direct emneGroups array
     emneGroups = flowAdapterData;
   } else {
-    console.log('[LOGBACKEND] No valid data structure found');
     return { nodes: [], edges: [] };
   }
-  
-  console.log('[LOGBACKEND] Using emneGroups:', emneGroups);
-  
+
   // Extract node data options from the legacy parameters
   const nodeDataOptions = {};
   if (options?.dto) nodeDataOptions.dto = options.dto;
   if (options?.onEntitySelect) nodeDataOptions.onEntitySelect = options.onEntitySelect;
   if (options?.onFieldSave) nodeDataOptions.onFieldSave = options.onFieldSave;
   if (viewOptions) nodeDataOptions.viewOptions = viewOptions;
-  
+
   return transformFlowData(emneGroups, nodeDataOptions);
 }
 
@@ -62,13 +57,13 @@ export function getDefaultFlowSettings() {
     defaultViewport: { x: 0, y: 0, zoom: 0.8 },
     minZoom: 0.1,
     maxZoom: 2,
-    attributionPosition: 'bottom-left',
+    attributionPosition: "bottom-left",
     snapToGrid: true,
     snapGrid: [10, 10],
     defaultEdgeOptions: {
-      type: 'default',
-      style: { strokeWidth: 2 }
-    }
+      type: "default",
+      style: { strokeWidth: 2 },
+    },
   };
 }
 
