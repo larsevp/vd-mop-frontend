@@ -6,6 +6,7 @@ import { createProsjektTiltakAdapter } from './adapter';
 import { renderSearchBar, renderDetailPane } from './renderer';
 import { prosjektTiltak as prosjektTiltakConfig } from '@/modelConfigs/models/prosjektTiltak';
 import { useProjectStore } from '@/stores/userStore';
+import { useProsjektTiltakViewStore } from './store';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Building } from 'lucide-react';
 
@@ -26,6 +27,9 @@ const ProsjektTiltakFlowWorkspace = ({ onFlowToggle: providedOnFlowToggle }) => 
   const navigate = useNavigate();
   const location = useLocation();
   const { currentProject } = useProjectStore();
+  
+  // Get the same viewOptions that split view uses
+  const { viewOptions } = useProsjektTiltakViewStore();
 
   // Show message if no project is selected
   if (!currentProject) {
@@ -106,11 +110,7 @@ const ProsjektTiltakFlowWorkspace = ({ onFlowToggle: providedOnFlowToggle }) => 
       renderSearchBar={renderSearchBar}
       onFlowToggle={handleFlowToggle}
       className="prosjekttiltak-flow-workspace"
-      viewOptions={{
-        showHierarchy: true,
-        showRelations: true,
-        entityScope: 'prosjekttiltak' // Flow will only show tiltak entities
-      }}
+      viewOptions={viewOptions} // Use the same viewOptions as split view
       singleEntityDetailRenderer={renderDetailPane}
     />
   );

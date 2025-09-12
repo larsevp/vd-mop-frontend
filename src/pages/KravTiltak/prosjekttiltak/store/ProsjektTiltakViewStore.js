@@ -22,7 +22,8 @@ export const useProsjektTiltakViewStore = create(
         showRelations: true,
       },
 
-      // Actions
+
+      // View options actions
       setViewOptions: (newOptions) => {
         set((state) => ({
           viewOptions: {
@@ -47,7 +48,6 @@ export const useProsjektTiltakViewStore = create(
         });
       },
 
-      // Utility actions
       toggleViewOption: (optionKey) => {
         set((state) => ({
           viewOptions: {
@@ -55,11 +55,12 @@ export const useProsjektTiltakViewStore = create(
             [optionKey]: !state.viewOptions[optionKey]
           }
         }));
-      }
+      },
+
     }),
     {
       name: 'prosjekttiltak-view-store',
-      version: 1,
+      version: 2, // Increment version due to schema change
     }
   )
 );

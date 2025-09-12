@@ -67,6 +67,7 @@ const FlowWorkspace = ({
 }) => {
   // UI state management
   const ui = useWorkspaceUI();
+  
   const queryClient = useQueryClient();
   
   // Modal state for EntityDetailPane
@@ -384,6 +385,8 @@ const FlowWorkspace = ({
                 additionalFilters: ui.filters.additionalFilters,
                 onAdditionalFiltersChange: (additionalFilters) => ui.setFilters({ additionalFilters }),
                 viewOptions: viewOptions,
+                filterConfig: dto?.getFilterConfig?.(), // Add missing filter config
+                availableFilters: flowData?.availableFilters || {}, // Add missing available filters
                 customFilterFields: []
               })}
             </div>

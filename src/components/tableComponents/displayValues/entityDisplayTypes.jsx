@@ -125,10 +125,33 @@ export const ENTITY_DISPLAY_TYPES = {
     }
   },
 
-  // Priority display (translates numbers to user-friendly labels)
+  // Priority display (translates numbers to user-friendly labels with consistent KravTiltak icons)
   prioritet: (row, field, context) => {
-    const displayValue = getPriorityLabel(row[field.name]);
-    return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
+    const prioritetValue = row[field.name];
+    if (!prioritetValue) {
+      const displayValue = getPriorityLabel(prioritetValue);
+      return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
+    }
+
+    // Use KravTiltak standard priority icons and colors
+    let icon, color, label;
+    if (prioritetValue >= 30) {
+      icon = "AlertTriangle";
+      color = "#dc2626";
+      label = "Høy";
+    } else if (prioritetValue >= 20) {
+      icon = "AlertCircle"; 
+      color = "#d97706";
+      label = "Middels";
+    } else {
+      icon = "Circle";
+      color = "#059669";
+      label = "Lav";
+    }
+
+    return context.format === "REACT" ? (
+      <IconWithText iconName={icon} text={label} iconColor={color} iconSize={14} />
+    ) : label;
   },
 
   // Kravreferansetype relationships (generic fallback)
