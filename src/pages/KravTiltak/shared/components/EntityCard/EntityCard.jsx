@@ -34,6 +34,7 @@ const EntityCard = ({
   onFieldSave,
   editingDisabled = false,
   editMode = false,
+  compactMode = false, // New prop for compact text sizing
   'data-entity-id': dataEntityId,
   ...restProps
 }) => {
@@ -106,6 +107,7 @@ const EntityCard = ({
   const title = getEntityTitle(entity, config);
   const uid = entity[config.uidField] || entity.uid;
   const isExpandedCards = viewOptions.viewMode === 'cards';
+  const shouldUseCompactMode = compactMode || !isExpandedCards; // Use compact mode for row list
   const shouldIndent = entity.parentId || entity._relatedToKrav;
 
   /**
@@ -335,18 +337,18 @@ const EntityCard = ({
             <div className="mb-2 flex items-center justify-between">
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 {/* Entity type indicator - bigger */}
-                <span className={`text-sm font-medium px-2.5 py-1 rounded ${config.badgeColor}`}>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded ${config.badgeColor}`}>
                   {config.badgeText}
                 </span>
                 
                 {/* UID - bigger */}
                 {uid && (
-                  <span className={`text-sm font-mono px-2 py-1 rounded font-medium ${config.badgeColor}`}>
+                  <span className={`text-xs font-mono px-1.5 py-0.5 rounded font-medium ${config.badgeColor}`}>
                     [{uid}]
                   </span>
                 )}
                 
-                <span className="font-medium text-gray-900 text-base">{title}</span>
+                <span className={`font-medium text-gray-900 ${shouldUseCompactMode ? 'text-sm' : 'text-base'}`}>{title}</span>
               </div>
               {/* Action buttons for cards mode - Only show when selected */}
               {isSelected && (
@@ -391,7 +393,7 @@ const EntityCard = ({
 
             {/* Line 3: Rich description - MAIN DIFFERENCE: Full rich text in cards */}
             {(entity.beskrivelse || entity.beskrivelseSnippet || entity.descriptionSnippet) && (
-              <div className="text-sm text-gray-600 mb-3 prose prose-sm max-w-none">
+              <div className={`${shouldUseCompactMode ? 'text-xs' : 'text-sm'} text-gray-600 mb-3 prose prose-sm max-w-none`}>
                 {getDescription()}
               </div>
             )}
@@ -399,8 +401,8 @@ const EntityCard = ({
             {/* Merknad */}
             {viewOptions.showMerknad && (
               editMode && onFieldSave && !editingDisabled && isExpandedCards ? (
-                <div className="text-sm bg-amber-50 rounded px-2 py-1 mb-3" onClick={(e) => e.stopPropagation()}>
-                  <span className="text-xs font-medium text-amber-800">Merknad:</span>
+                <div className={`${shouldUseCompactMode ? 'text-xs' : 'text-sm'} bg-amber-50 rounded px-2 py-1 mb-3`} onClick={(e) => e.stopPropagation()}>
+                  <span className={`${shouldUseCompactMode ? 'text-xs' : 'text-xs'} font-medium text-amber-800`}>Merknad:</span>
                   <div className="mt-1">
                     {(() => {
                       const fieldConfig = getFieldConfig(merknadFieldName);
@@ -447,8 +449,8 @@ const EntityCard = ({
               ) : (
                 // View mode: only show merknad if it has content
                 (formData[merknadFieldName] || merknadValue) && (
-                  <div className="text-sm text-amber-700 bg-amber-50 rounded px-2 py-1 mb-3">
-                    <span className="text-xs font-medium text-amber-800">Merknad:</span>
+                  <div className={`${shouldUseCompactMode ? 'text-xs' : 'text-sm'} text-amber-700 bg-amber-50 rounded px-2 py-1 mb-3`}>
+                    <span className={`${shouldUseCompactMode ? 'text-xs' : 'text-xs'} font-medium text-amber-800`}>Merknad:</span>
                     <div className="mt-1 whitespace-pre-wrap">
                       {formatCardText(formData[merknadFieldName] || merknadValue, isExpandedCards)}
                     </div>
@@ -616,24 +618,24 @@ const EntityCard = ({
           <div className="mb-1 flex items-center justify-between">
             <div className="flex items-center gap-2 min-w-0 flex-1">
               {/* Entity type indicator - bigger */}
-              <span className={`text-sm font-medium px-2.5 py-1 rounded ${config.badgeColor}`}>
+              <span className={`text-xs font-medium px-2 py-0.5 rounded ${config.badgeColor}`}>
                 {config.badgeText}
               </span>
               
               {/* UID - bigger */}
               {uid && (
-                <span className={`text-sm font-mono px-2 py-1 rounded font-medium ${config.badgeColor}`}>
+                <span className={`text-xs font-mono px-1.5 py-0.5 rounded font-medium ${config.badgeColor}`}>
                   [{uid}]
                 </span>
               )}
               
-              <span className="font-medium text-gray-900">{title}</span>
+              <span className={`font-medium text-gray-900 ${shouldUseCompactMode ? 'text-sm' : 'text-base'}`}>{title}</span>
             </div>
           </div>
 
           {/* Line 3: Description preview (full width, readable) */}
           {(entity.beskrivelseSnippet || entity.descriptionSnippet) && (
-            <div className="text-sm text-gray-600 mb-2">
+            <div className={`${shouldUseCompactMode ? 'text-xs' : 'text-sm'} text-gray-600 mb-2`}>
               {truncateText(getDescription())}
             </div>
           )}
@@ -641,8 +643,8 @@ const EntityCard = ({
           {/* Merknad if defined and enabled */}
           {viewOptions.showMerknad && (
             editMode && onFieldSave && !editingDisabled && isExpandedCards ? (
-              <div className="text-sm bg-amber-50 rounded px-2 py-1 mb-2" onClick={(e) => e.stopPropagation()}>
-                <span className="text-xs font-medium text-amber-800">Merknad:</span>
+              <div className={`${shouldUseCompactMode ? 'text-xs' : 'text-sm'} bg-amber-50 rounded px-2 py-1 mb-2`} onClick={(e) => e.stopPropagation()}>
+                <span className={`${shouldUseCompactMode ? 'text-xs' : 'text-xs'} font-medium text-amber-800`}>Merknad:</span>
                 <div className="mt-1">
                   {(() => {
                     const fieldConfig = getFieldConfig(merknadFieldName);
@@ -689,8 +691,8 @@ const EntityCard = ({
             ) : (
               // View mode: only show merknad if it has content
               (formData[merknadFieldName] || merknadValue) && (
-                <div className="text-sm text-amber-700 bg-amber-50 rounded px-2 py-1 mb-2">
-                  <span className="text-xs font-medium text-amber-800">Merknad:</span> {truncateText(formData[merknadFieldName] || merknadValue, 100)}
+                <div className={`${shouldUseCompactMode ? 'text-xs' : 'text-sm'} text-amber-700 bg-amber-50 rounded px-2 py-1 mb-2`}>
+                  <span className={`${shouldUseCompactMode ? 'text-xs' : 'text-xs'} font-medium text-amber-800`}>Merknad:</span> {truncateText(formData[merknadFieldName] || merknadValue, 100)}
                 </div>
               )
             )

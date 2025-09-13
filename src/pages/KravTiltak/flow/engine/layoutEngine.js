@@ -314,71 +314,85 @@ function spreadEmneClusters(dagrePositions, { gap = 240, minHeight = 220, emneOr
 
   // Debug logs removed - spacing is now working correctly
   
-  // Order clusters by original emne order (preserving data sequence), but ensure "Ingen emne" is always last
+  // Order clusters by emne sortIt field, then by id, but ensure "Ingen emne" is always last
   const ordered = [...groups.entries()]
     .map(([emneId, data]) => ({ emneId, ...data }))
     .sort((a, b) => {
-      // Get emne names for special handling - try multiple ways to find the name
-      let aName = '';
-      let bName = '';
+      // Get emne data for both groups
+      let aEmne = null;
+      let bEmne = null;
       
-      // Try to get emne from the emne node
+      // Try to get emne from the emne node first
       const aEmneNode = dagrePositions.get(`emne-${a.emneId}`);
       const bEmneNode = dagrePositions.get(`emne-${b.emneId}`);
       
       if (aEmneNode?.emne) {
-        aName = aEmneNode.emne.navn || aEmneNode.emne.name || '';
+        aEmne = aEmneNode.emne;
       }
       if (bEmneNode?.emne) {
-        bName = bEmneNode.emne.navn || bEmneNode.emne.name || '';
+        bEmne = bEmneNode.emne;
       }
       
-      // If still no name, try to get from entity nodes in the group
-      if (!aName) {
+      // If still no emne data, try to get from entity nodes in the group
+      if (!aEmne) {
         for (const nodeKey of a.nodes) {
           const pos = dagrePositions.get(nodeKey);
           if (pos?.entity?._sourceEmne) {
-            aName = pos.entity._sourceEmne.navn || pos.entity._sourceEmne.name || '';
+            aEmne = pos.entity._sourceEmne;
             break;
           }
         }
       }
       
-      if (!bName) {
+      if (!bEmne) {
         for (const nodeKey of b.nodes) {
           const pos = dagrePositions.get(nodeKey);
           if (pos?.entity?._sourceEmne) {
-            bName = pos.entity._sourceEmne.navn || pos.entity._sourceEmne.name || '';
+            bEmne = pos.entity._sourceEmne;
             break;
           }
         }
       }
       
-      // Handle special case for "null" emneId groups
-      if (a.emneId === 'null' || a.emneId === null) aName = 'Ingen emne';
-      if (b.emneId === 'null' || b.emneId === null) bName = 'Ingen emne';
-      
-      
-      // Handle null/undefined emneId as "Ingen emne"
-      const aIsIngenEmne = (!a.emneId || a.emneId === 'null' || aName === 'Ingen emne');
-      const bIsIngenEmne = (!b.emneId || b.emneId === 'null' || bName === 'Ingen emne');
+      // Handle null/undefined emneId as "Ingen emne" - always last
+      const aIsIngenEmne = (!a.emneId || a.emneId === 'null' || !aEmne);
+      const bIsIngenEmne = (!b.emneId || b.emneId === 'null' || !bEmne);
       
       // Always put "Ingen emne" last
       if (aIsIngenEmne && !bIsIngenEmne) return 1;
       if (bIsIngenEmne && !aIsIngenEmne) return -1;
       if (aIsIngenEmne && bIsIngenEmne) return 0;
       
-      // For other emne, use original order
+      // For emne with data, sort by sortIt field first, then by id
+      const aSortIt = aEmne?.sortIt;
+      const bSortIt = bEmne?.sortIt;
+      
+      // If both have sortIt, use that for ordering
+      if (aSortIt !== undefined && bSortIt !== undefined) {
+        return aSortIt - bSortIt;
+      }
+      
+      // If only one has sortIt, prioritize it
+      if (aSortIt !== undefined && bSortIt === undefined) return -1;
+      if (bSortIt !== undefined && aSortIt === undefined) return 1;
+      
+      // If neither has sortIt, fall back to emne id
+      const aId = aEmne?.id || a.emneId;
+      const bId = bEmne?.id || b.emneId;
+      
+      if (aId !== undefined && bId !== undefined) {
+        return aId - bId;
+      }
+      
+      // Final fallback to original emne order from entities
       const aIndex = emneOrder.indexOf(a.emneId);
       const bIndex = emneOrder.indexOf(b.emneId);
       
-      // If both are in emneOrder, sort by their order
       if (aIndex !== -1 && bIndex !== -1) {
         return aIndex - bIndex;
       }
       
-      // Fallback to minY sorting for any missing emne
-      return a.minY - b.minY;
+      return 0;
     });
 
   // Apply uniform spacing from the top
