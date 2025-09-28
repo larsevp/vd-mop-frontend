@@ -1,5 +1,6 @@
 import React from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserStore } from "@/stores/userStore";
 import { LoadingSpinner } from "@/components/ui";
 import StatusPage from "@/pages/auth/StatusPage";
 import AuthenticatedRoutes from "./AuthenticatedRoutes";
@@ -8,15 +9,15 @@ function AuthenticatedApp() {
   const { syncStatus, syncError } = useAuth();
 
   // DEBUG: Log current status
-  //console.log('AuthenticatedApp - syncStatus:', syncStatus, 'syncError:', syncError);
+  //console.log('AuthenticatedApp - syncStatus:', syncStatus);
 
-  // Show loading spinner during authentication sync
+  // Show loading spinner during MSAL authentication sync
   if (syncStatus === "syncing") {
     //console.log('Showing LoadingSpinner due to syncing status');
-    return <LoadingSpinner />;
+    return <LoadingSpinner text="Synkroniserer autentisering..." />;
   }
 
-  // Handle Safari-specific authentication issues more gracefully
+  // Handle MSAL authentication errors
   if (syncStatus === "error") {
     //console.log('Showing StatusPage due to error status:', syncError);
 
@@ -31,8 +32,7 @@ function AuthenticatedApp() {
     return <StatusPage type="sync-error" error={syncError} showRefreshButton={true} showLogoutButton={true} />;
   }
 
-  // Show main app if authentication succeeds (or even if there are errors - for debugging)
-  //  console.log('Showing protected routes due to success status');
+  // MSAL authentication successful - UserInitializer handles backend validation
   return <AuthenticatedRoutes />;
 }
 

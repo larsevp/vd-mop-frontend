@@ -27,16 +27,6 @@ export default function StatusPage({
   showLogoutButton = false,
   showRefreshButton = false,
 }) {
-  console.log("StatusPage: Rendering with props:", {
-    type,
-    error,
-    title,
-    description,
-    showLoginButton,
-    showLogoutButton,
-    showRefreshButton,
-  });
-
   // Use safer hooks that don't depend on MSAL state
   const isAuthenticated = useIsAuthenticated();
   const navigate = useNavigate();

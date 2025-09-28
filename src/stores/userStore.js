@@ -38,16 +38,31 @@ export const useUserStore = create(
           const response = await getCurrentUserInfo();
           const userInfo = response.data;
 
+          console.log('UserStore: API response:', response.data);
+
+          // Get fresh user state right before merge to avoid stale closure
+          const currentUser = get().user;
+          console.log('UserStore: Current user before merge:', currentUser);
+
           // Merge with existing user data or create new user object
+          const updatedUser = {
+            ...currentUser,
+            navn: userInfo.navn,
+            rolle: userInfo.rolle,
+            enhetId: userInfo.enhetId,
+          };
+
+          console.log('UserStore: Updated user after merge:', updatedUser);
+
           set({
-            user: {
-              ...user,
-              navn: userInfo.navn,
-              rolle: userInfo.rolle,
-              enhetId: userInfo.enhetId,
-            },
+            user: updatedUser,
             isLoadingUserInfo: false,
           });
+
+          // Verify the set worked
+          const verifyUser = get().user;
+          console.log('UserStore: User after set() call:', verifyUser);
+          console.log('UserStore: Set successful? Role exists?', !!verifyUser?.rolle);
         } catch (error) {
           set({
             userInfoError: error.message || "Failed to fetch user info",
@@ -58,20 +73,28 @@ export const useUserStore = create(
     }),
     {
       name: "user-storage", // unique name for localStorage key
+      version: 1, // Add version to handle state migrations
       // Only persist minimal user data, exclude sensitive information like tokens
-      partialize: (state) => ({
-        user: state.user
-          ? {
-              id: state.user.id,
-              rolle: state.user.rolle,
-              navn: state.user.navn,
-              name: state.user.name, // Legacy support for HeaderNav
-              enhetId: state.user.enhetId,
-              isManualLogin: state.user.isManualLogin,
-              // Explicitly exclude manualToken and other sensitive data
-            }
-          : null,
-      }),
+      partialize: (state) => {
+        const persistedData = {
+          user: state.user
+            ? {
+                id: state.user.id,
+                rolle: state.user.rolle,
+                navn: state.user.navn,
+                name: state.user.name, // Legacy support for HeaderNav
+                enhetId: state.user.enhetId,
+                isManualLogin: state.user.isManualLogin,
+                // Explicitly exclude manualToken and other sensitive data
+              }
+            : null,
+        };
+        console.log('UserStore: Persisting to localStorage:', persistedData);
+        return persistedData;
+      },
+      onRehydrateStorage: () => (state) => {
+        console.log('UserStore: Rehydrated from localStorage:', state);
+      },
     }
   )
 );
@@ -94,6 +117,7 @@ export const useProjectStore = create(
     }),
     {
       name: "project-storage",
+      version: 1, // Add version to handle state migrations
       // Only persist currentProject, not the full projects list
       partialize: (state) => ({
         currentProject: state.currentProject,

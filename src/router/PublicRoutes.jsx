@@ -11,6 +11,17 @@ export default function PublicRoutes() {
       <Route path="/login" element={<StatusPage type="login" showLoginButton={true} />} />
       <Route path="/auth-redirect" element={<AuthRedirectPage />} />
       <Route path="/manualLogin" element={<ManualLoginPage />} />
+      <Route
+        path="/access-denied"
+        element={
+          <StatusPage
+            type="access-denied"
+            title="Tilgang nektet"
+            description="Du har ikke tilgang til dette systemet. Kontakt systemadministrator hvis du mener du skal ha tilgang."
+            showLoginButton={true}
+          />
+        }
+      />
       {/* Redirect any other route to login */}
       <Route path="*" element={<StatusPage type="login" showLoginButton={true} />} />
     </Routes>

@@ -115,6 +115,7 @@ export const useRecentProjectsStore = create(
     }),
     {
       name: "recent-projects-storage",
+      version: 1, // Add version to handle state migrations
       // Only persist the actual projects data, not the cooldown cache
       partialize: (state) => ({
         recentProjects: state.recentProjects,

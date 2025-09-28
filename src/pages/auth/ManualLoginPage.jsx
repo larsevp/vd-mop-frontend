@@ -25,7 +25,7 @@ export default function ManualLoginPage() {
       // Handle both old (token) and new (accessToken/refreshToken) response formats
       const finalAccessToken = accessToken || token;
 
-      console.log("Manual login successful:", { user, hasAccessToken: !!finalAccessToken, hasRefreshToken: !!refreshToken });
+      //console.log("Manual login successful:", { user, hasAccessToken: !!finalAccessToken, hasRefreshToken: !!refreshToken });
 
       // Store tokens separately to avoid sensitive data detection
       localStorage.setItem("mt", finalAccessToken); // Access token
@@ -39,12 +39,12 @@ export default function ManualLoginPage() {
         isManualLogin: true,
       };
 
-      console.log("Setting user in store:", manualUser);
+      //console.log("Setting user in store:", manualUser);
       setUser(manualUser);
 
       // Navigate to home page after a short delay to ensure store update
       setTimeout(() => {
-        console.log("Navigating to home page");
+        //console.log("Navigating to home page");
         navigate("/", { replace: true });
       }, 100);
     } catch (error) {

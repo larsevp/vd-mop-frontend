@@ -21,10 +21,12 @@ export function useLogout() {
         return;
       }
 
-      // MSAL logout - use logoutRedirect for cleanup and redirect
+      // MSAL logout - clear local state without Microsoft redirect
       if (instance) {
         clearUser();
-        await instance.logoutRedirect({ postLogoutRedirectUri: window.location.origin + redirectTo });
+        // Clear MSAL cache silently without redirecting to Microsoft
+        await instance.clearCache();
+        window.location.href = redirectTo;
       } else {
         window.location.href = redirectTo;
       }

@@ -10,7 +10,8 @@ export const useUserStore = create(persist(
     clearUser: () => set({ userId: null, name: null }),
   }),
   {
-    name: 'user-storage',
+    name: 'user-storage-session',
+    version: 1, // Add version to handle state migrations
     getStorage: () => sessionStorage, // sessionStorage
   }
 ));

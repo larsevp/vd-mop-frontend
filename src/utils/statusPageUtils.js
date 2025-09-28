@@ -17,13 +17,21 @@ export const getStatusPageContent = ({ type, title, description, loginError, err
         iconType: 'AlertTriangle',
         iconBg: 'bg-red-100'
       };
-    
+
+    case 'access-denied':
+      return {
+        title: title || 'Tilgang nektet',
+        description: description || 'Du har ikke tilgang til dette systemet',
+        iconType: 'AlertTriangle',
+        iconBg: 'bg-red-100'
+      };
+
     case 'login':
     default:
       return {
         title: title || (hasError ? 'Innloggingsfeil' : 'Logg inn'),
-        description: description || (hasError 
-          ? 'Det oppstod et problem under innlogging' 
+        description: description || (hasError
+          ? 'Det oppstod et problem under innlogging'
           : 'Bruk din Microsoft-konto for å fortsette'
         ),
         iconType: hasError ? 'AlertCircle' : 'LogIn',

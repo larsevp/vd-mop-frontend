@@ -114,7 +114,8 @@ API.interceptors.response.use(
       const errorCode = errorData?.code;
       const shouldRedirectToLogin = errorData?.shouldRedirectToLogin;
 
-      console.warn(`[API] Authentication error: ${errorCode || "UNKNOWN"} - ${errorData?.error || error.message}`);
+      // Log error code only, don't expose detailed error messages that might contain sensitive info
+      console.warn(`[API] Authentication error: ${errorCode || "UNKNOWN"}`);
 
       // Check for simple "Authentication required" response (no error code)
       const isSimpleAuthRequired = errorData?.error === "Authentication required" && !errorCode;
@@ -144,10 +145,8 @@ API.interceptors.response.use(
             break;
         }
 
-        // For MSAL users with specific auth errors, clear session and redirect
+        // For MSAL users with specific auth errors, handle based on error type
         if (user && !user.isManualLogin) {
-          console.log("[API] Clearing MSAL session and redirecting to login");
-
           // Clear user store
           useUserStore.getState().clearUser();
 
@@ -156,15 +155,20 @@ API.interceptors.response.use(
           if (instance) {
             try {
               await instance.clearCache();
-              // Redirect to Microsoft login to refresh session
-              window.location.href = "/login";
-              return Promise.reject(error);
             } catch (msalError) {
               console.error("[API] Failed to clear MSAL cache:", msalError);
             }
           }
 
-          // Fallback redirect
+          // Handle AUTH_FAILED errors differently - show access denied page
+          if (errorCode === "AUTH_FAILED") {
+            console.log("[API] Access denied - redirecting to access denied page");
+            window.location.href = "/access-denied";
+            return Promise.reject(error);
+          }
+
+          // For other auth errors, redirect to login
+          console.log("[API] Clearing MSAL session and redirecting to login");
           window.location.href = "/login";
           return Promise.reject(error);
         }

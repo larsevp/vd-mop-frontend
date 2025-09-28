@@ -12,7 +12,7 @@ import { vurdering } from "./models/vurdering";
 import { kravpakker } from "./models/kravpakker";
 import { kravreferansetype } from "./models/kravreferansetype";
 import { tiltak } from "./models/tiltak";
-import { prosjektKrav } from "./models/prosjektKrav";
+import { prosjektKrav } from "./models/prosjektKrav/index.js";
 import { prosjektTiltak } from "./models/prosjektTiltak";
 // Object mapping for dynamic lookup
 export const modelConfigs = {
