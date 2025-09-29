@@ -351,8 +351,19 @@ export function ComboBox({
                 e.preventDefault();
                 e.stopPropagation();
 
-                // If dropdown is closed, try to select the first matching option
-                if (!open && filteredOptions.length > 0) {
+                if (open) {
+                  // Dropdown is open - handle selection like the global handler would
+                  const availableOptions: string[] = [];
+                  if (effectiveAllowEmpty) availableOptions.push("empty");
+                  availableOptions.push(...filteredOptions.map((option) => option.id));
+
+                  if (highlightedIndex >= 0 && highlightedIndex < availableOptions.length) {
+                    handleSelect(availableOptions[highlightedIndex]);
+                  } else if (filteredOptions.length === 1) {
+                    handleSelect(filteredOptions[0].id);
+                  }
+                } else if (filteredOptions.length > 0) {
+                  // Dropdown is closed - select first matching option
                   handleSelect(filteredOptions[0].id);
                 }
               }

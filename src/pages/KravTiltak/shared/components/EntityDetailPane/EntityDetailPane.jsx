@@ -227,6 +227,15 @@ const EntityDetailPane = ({
   // Keyboard shortcuts with stable listener
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // Check if the event is coming from a ComboBox - don't interfere
+      const isWithinComboBox = e.target.closest('[role="combobox"]') ||
+                               e.target.closest('[role="listbox"]') ||
+                               e.target.closest('[role="option"]');
+
+      if (isWithinComboBox) {
+        return; // Let ComboBox handle its own keyboard events
+      }
+
       if (e.key === 'e' && !isEditing && !e.ctrlKey && !e.metaKey && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'BUTTON') {
         e.preventDefault();
         setIsEditing(true);
