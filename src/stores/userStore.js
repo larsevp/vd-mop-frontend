@@ -38,11 +38,11 @@ export const useUserStore = create(
           const response = await getCurrentUserInfo();
           const userInfo = response.data;
 
-          console.log('UserStore: API response:', response.data);
+          console.log("UserStore: API response:", response.data);
 
           // Get fresh user state right before merge to avoid stale closure
           const currentUser = get().user;
-          console.log('UserStore: Current user before merge:', currentUser);
+          console.log("UserStore: Current user before merge:", currentUser);
 
           // Merge with existing user data or create new user object
           const updatedUser = {
@@ -52,7 +52,7 @@ export const useUserStore = create(
             enhetId: userInfo.enhetId,
           };
 
-          console.log('UserStore: Updated user after merge:', updatedUser);
+          console.log("UserStore: Updated user after merge:", updatedUser);
 
           set({
             user: updatedUser,
@@ -61,8 +61,8 @@ export const useUserStore = create(
 
           // Verify the set worked
           const verifyUser = get().user;
-          console.log('UserStore: User after set() call:', verifyUser);
-          console.log('UserStore: Set successful? Role exists?', !!verifyUser?.rolle);
+          console.log("UserStore: User after set() call:", verifyUser);
+          console.log("UserStore: Set successful? Role exists?", !!verifyUser?.rolle);
         } catch (error) {
           set({
             userInfoError: error.message || "Failed to fetch user info",
@@ -89,11 +89,11 @@ export const useUserStore = create(
               }
             : null,
         };
-        console.log('UserStore: Persisting to localStorage:', persistedData);
+        //console.log('UserStore: Persisting to localStorage:', persistedData);
         return persistedData;
       },
       onRehydrateStorage: () => (state) => {
-        console.log('UserStore: Rehydrated from localStorage:', state);
+        //console.log('UserStore: Rehydrated from localStorage:', state);
       },
     }
   )
@@ -105,11 +105,11 @@ export const useProjectStore = create(
     (set, get) => ({
       projects: [],
       currentProject: null,
-      
+
       setProjects: (projects) => set({ projects }),
       addProject: (project) => set((state) => ({ projects: [...state.projects, project] })),
       clearProjects: () => set({ projects: [] }),
-      
+
       // Current project management
       setCurrentProject: (project) => set({ currentProject: project }),
       clearCurrentProject: () => set({ currentProject: null }),

@@ -558,7 +558,7 @@ const EntityWorkspaceNew = ({
             </div>
 
             {renderActionButtons ? (
-              renderActionButtons({ handleCreateNew })
+              renderActionButtons({ handleCreateNew, currentFilters: ui.filters })
             ) : (
               <Button onClick={handleCreateNew} className="bg-blue-600 hover:bg-blue-700">
                 <Plus className="w-4 h-4 mr-2" />

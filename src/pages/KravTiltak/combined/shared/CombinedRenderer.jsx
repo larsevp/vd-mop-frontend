@@ -2,6 +2,7 @@ import React from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/primitives/button";
 import { EmneGroupHeader, RowListHeading, EntityDetailPane, KravTiltakSearchBar } from "../../shared";
+import { WordExporter } from "@/components/export/WordExporter";
 
 /**
  * Generic Combined Renderer Factory
@@ -122,7 +123,7 @@ export const createCombinedRenderer = (config) => {
    * Render action buttons for combined entities
    * Shows separate create buttons that delegate to individual model configs
    */
-  const renderActionButtons = ({ handleCreateNew }) => {
+  const renderActionButtons = ({ handleCreateNew, currentFilters }) => {
     const handlePrimaryCreate = () => {
       // EntityWorkspace's handleCreateNew expects just the entity type string
       // It will create the entity structure: { __isNew: true, __entityType: entityType }
@@ -137,20 +138,26 @@ export const createCombinedRenderer = (config) => {
 
     return (
       <div className="flex gap-2">
-        <Button 
-          onClick={handlePrimaryCreate} 
+        <Button
+          onClick={handlePrimaryCreate}
           className="bg-green-600 hover:bg-green-700"
         >
           <Plus className="w-4 h-4 mr-2" />
           {primaryCreate}
         </Button>
-        <Button 
-          onClick={handleSecondaryCreate} 
+        <Button
+          onClick={handleSecondaryCreate}
           className="bg-blue-600 hover:bg-blue-700"
         >
           <Plus className="w-4 h-4 mr-2" />
           {secondaryCreate}
         </Button>
+        <WordExporter
+          currentFilters={currentFilters}
+          variant="outline"
+          size="default"
+          className="ml-2"
+        />
       </div>
     );
   };
