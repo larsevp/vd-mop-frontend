@@ -20,7 +20,7 @@ export const fields = [
     name: "beskrivelse",
     label: "Beskrivelse",
     type: "basicrichtext",
-    required: true,
+    required: false,
     placeholder: "Beskriv prosjekttiltaket i detalj...",
     field_info: "Detaljert beskrivelse av prosjekttiltaket med grunnleggende formatering (fet, kursiv, understreking, overskrifter).",
     hiddenIndex: true,

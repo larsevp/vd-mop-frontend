@@ -24,6 +24,7 @@ interface EmneSelectProps {
   className?: string;
   allowEmpty?: boolean;
   emptyLabel?: string;
+  error?: string | null; // Validation error message
   // Dynamic filtering support
   availableIds?: number[]; // Optional: limit to only these IDs (for dynamic filtering)
 }
@@ -49,12 +50,13 @@ export function EmneSelect({
   allowEmpty = true,
   emptyLabel = "Ingen emne",
   className = "",
+  error: validationError,
   availableIds,
 }: EmneSelectProps) {
   const {
     data: emneList = [],
     isLoading,
-    error,
+    error: queryError,
   } = useQuery({
     queryKey: ["emner"],
     queryFn: getEmner,
@@ -132,7 +134,7 @@ export function EmneSelect({
       emptyLabel={emptyLabel}
       options={options}
       isLoading={isLoading}
-      error={error instanceof Error ? error.message : error ? String(error) : null}
+      error={validationError || (queryError instanceof Error ? queryError.message : queryError ? String(queryError) : null)}
       filterFn={(option, searchValue) => option.label.toLowerCase().includes(searchValue.toLowerCase())}
     />
   );

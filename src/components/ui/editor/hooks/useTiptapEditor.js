@@ -152,11 +152,20 @@ export const useTiptapEditor = ({
         if (!editor.view || !editor.view.dom) {
           return;
         }
-        
+
         const html = editor.getHTML();
         // Handle Safari's initial test letter and empty paragraph states
-        const isEmpty = html === "<p></p>" || html === "<p>&nbsp;</p>" || html === "<p> </p>" || html === "<p>A</p>" || html.trim() === "";
-        onChange?.(isEmpty ? "" : html);
+        // Also check for the garbage empty paragraph with classes
+        const isEmpty =
+          html === "<p></p>" ||
+          html === "<p>&nbsp;</p>" ||
+          html === "<p> </p>" ||
+          html === "<p>A</p>" ||
+          html === '<p class="mb-3 text-foreground"></p>' ||
+          html.trim() === "" ||
+          // Check if it's just an empty paragraph with any classes
+          /^<p[^>]*><\/p>$/.test(html.trim());
+        onChange?.(isEmpty ? null : html);
       } catch (error) {
         console.error('Safari: Failed to get HTML content:', error);
         // Don't call onChange if we can't get the content safely

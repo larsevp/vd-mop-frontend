@@ -2,11 +2,11 @@ import { FieldResolver } from "@/components/tableComponents/fieldTypes/fieldReso
 
 export const validateForm = (visibleFields, formData, modelName) => {
   const newErrors = {};
-  
+
   visibleFields.forEach((field) => {
     const value = formData[field.name];
     const error = FieldResolver.validateField(field, value, modelName);
-    
+
     if (error) {
       newErrors[field.name] = error;
     }

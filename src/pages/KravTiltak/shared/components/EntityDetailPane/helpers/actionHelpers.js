@@ -1,9 +1,11 @@
 import Swal from "sweetalert2";
 
-export const handleSaveAction = async (validateForm, formData, entity, onSave, setIsSubmitting, setIsEditing) => {
-  const validationErrors = validateForm();
-  if (Object.keys(validationErrors).length > 0) {
-    return { success: false, errors: validationErrors };
+export const handleSaveAction = async (validateFormData, formData, entity, onSave, setIsSubmitting, setIsEditing) => {
+  const isValid = validateFormData();
+  if (!isValid) {
+    // Don't set isSubmitting(true) if validation fails - this prevents UI state conflicts
+    // Don't return errors here - validateFormData() already set them via setErrors()
+    return { success: false, validationFailed: true };
   }
 
   setIsSubmitting(true);

@@ -57,9 +57,16 @@ const EntityDetailPane = ({
   // Validation function using helper
   const validateFormData = useCallback(() => {
     const newErrors = validateForm(visibleFields, formData, modelName);
+
+    // Manually validate tittel since it's excluded from visibleFields (handled in header)
+    const tittelField = allFields.find(f => f.name === 'tittel');
+    if (tittelField?.required && (!formData.tittel || formData.tittel.trim() === '')) {
+      newErrors.tittel = `${tittelField.label || 'Tittel'} er påkrevet`;
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [visibleFields, formData, modelName]);
+  }, [visibleFields, formData, modelName, allFields]);
 
   // Handle new entity creation
   useEffect(() => {
@@ -122,7 +129,7 @@ const EntityDetailPane = ({
     }
 
     setFormData(prev => ({ ...prev, [fieldName]: fieldValue }));
-    
+
     if (errors[fieldName]) {
       setErrors(prev => ({ ...prev, [fieldName]: "" }));
     }
@@ -159,7 +166,8 @@ const EntityDetailPane = ({
   // Save handler using helper
   const handleSave = useCallback(async () => {
     const result = await handleSaveAction(validateFormData, formData, entity, createSaveHandler, setIsSubmitting, setIsEditing);
-    if (!result.success && result.errors) {
+    // Only set backend validation errors (not empty objects from client validation failures)
+    if (!result.success && result.errors && Object.keys(result.errors).length > 0) {
       setErrors(result.errors);
     }
   }, [validateFormData, formData, entity, createSaveHandler]);
@@ -448,7 +456,7 @@ const EntityDetailPane = ({
 
       {/* Content */}
       <div ref={detailViewRef} className="flex-1 min-h-0 px-6 py-6">
-        <ValidationErrorSummary errors={errors} fields={visibleFields} />
+        <ValidationErrorSummary errors={errors} fields={allFields} />
 
         {/* Source Krav Context Box - only shown when created via "Lag tilknyttet tiltak" */}
         {entity?.__sourceKrav && (

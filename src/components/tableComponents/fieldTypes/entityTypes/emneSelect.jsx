@@ -51,10 +51,17 @@ export const emneSelectType = {
         return; // User has manually selected a value, don't override it
       }
 
-      // Add a delay to prevent race conditions with user interactions
+      // Add a delay to prevent race conditions with user interactions and validation
       const timeoutId = setTimeout(() => {
         // Double-check user interaction flag after delay
         if (sessionStorage.getItem(userInteractionKey) === 'true') {
+          return;
+        }
+
+        // Don't update formData during validation to prevent clearing validation errors
+        // Check if we're in a validation state by looking for validation errors in the DOM
+        const validationSummary = document.querySelector('[class*="ValidationErrorSummary"], [class*="bg-red-50"]');
+        if (validationSummary) {
           return;
         }
 

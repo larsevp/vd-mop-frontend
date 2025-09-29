@@ -88,6 +88,8 @@ export const getFieldRowsBySection = (sectionFields) => {
 
 export const initializeFormData = (allFields, entity, modelName) => {
   const initialForm = {};
+  const isNewEntity = entity?.__isNew;
+
   allFields.forEach((field) => {
     const isHidden = field.hiddenEdit || field.hiddenCreate;
     const isVirtual = field.name.includes("Snippet") || field.name.includes("Plain");
@@ -95,8 +97,16 @@ export const initializeFormData = (allFields, entity, modelName) => {
     const isSystemField = ["id", "createdAt", "updatedAt", "createdBy", "updatedBy"].includes(field.name);
 
     if (!isHidden && !isVirtual && !isRelationship && !isSystemField) {
-      const fieldValue = FieldResolver.initializeFieldValue(field, entity, true, modelName);
-      initialForm[field.name] = fieldValue !== undefined ? fieldValue : entity[field.name] || "";
+      if (isNewEntity) {
+        // For new entities, start with defaults/empty - don't inherit from entity object
+        // The entity object might have leftover values from context that shouldn't be inherited
+        const fieldValue = FieldResolver.initializeFieldValue(field, {}, true, modelName);
+        initialForm[field.name] = fieldValue !== undefined ? fieldValue : "";
+      } else {
+        // For existing entities, use actual values from the entity
+        const fieldValue = FieldResolver.initializeFieldValue(field, entity, true, modelName);
+        initialForm[field.name] = fieldValue !== undefined ? fieldValue : entity[field.name] || "";
+      }
     }
   });
   return initialForm;

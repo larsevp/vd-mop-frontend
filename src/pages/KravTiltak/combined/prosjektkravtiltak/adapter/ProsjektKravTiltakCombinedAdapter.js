@@ -338,6 +338,11 @@ export class ProsjektKravTiltakCombinedAdapter {
 
     if (entityType === "prosjektkrav" && this.prosjektKravAdapter?.config) {
       const config = this.prosjektKravAdapter.config;
+      // Use the modelConfig save handler which includes validation
+      if (config.save) {
+        return await config.save(cleanEntityData, isUpdate);
+      }
+      // Fallback to direct API calls only if no save handler exists
       if (isUpdate && config.updateFn) {
         return await config.updateFn(cleanEntityData.id, cleanEntityData);
       } else if (!isUpdate && config.createFn) {
@@ -348,6 +353,11 @@ export class ProsjektKravTiltakCombinedAdapter {
 
     if (entityType === "prosjekttiltak" && this.prosjektTiltakAdapter?.config) {
       const config = this.prosjektTiltakAdapter.config;
+      // Use the modelConfig save handler which includes validation
+      if (config.save) {
+        return await config.save(cleanEntityData, isUpdate);
+      }
+      // Fallback to direct API calls only if no save handler exists
       if (isUpdate && config.updateFn) {
         return await config.updateFn(cleanEntityData.id, cleanEntityData);
       } else if (!isUpdate && config.createFn) {

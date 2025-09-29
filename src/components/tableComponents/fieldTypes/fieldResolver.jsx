@@ -49,6 +49,7 @@ export class FieldResolver {
   static validateField(field, value, modelName) {
     const modelValidation = MODEL_VALIDATION_RULES[modelName];
 
+
     // Check for model-specific validation
     if (modelValidation?.[field.name]) {
       return modelValidation[field.name](value);
@@ -75,6 +76,12 @@ export class FieldResolver {
         // File upload fields are never required in the traditional sense
         // since files are stored separately and linked via scoped relationships
         return null;
+      } else if (field.type === "emneselect" || field.type === "statusselect" || field.type === "vurderingselect" || field.type === "enhetselect") {
+        // Entity select fields - check for valid ID value
+        if (value === null || value === undefined || value === "" || value === 0) {
+          const errorMessage = `${field.label} er påkrevet`;
+          return errorMessage;
+        }
       } else if (value === null || value === undefined || value === "") {
         return `${field.label} er påkrevet`;
       } else if (field.type === "select" && field.options) {

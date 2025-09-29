@@ -23,6 +23,7 @@ interface EntitySelectProps<T extends EntityWithIcon> {
   className?: string;
   allowEmpty?: boolean;
   emptyLabel?: string;
+  error?: string | null; // Validation error message
   // Entity-specific configuration
   queryKey: string[];
   queryFn: () => Promise<any>;

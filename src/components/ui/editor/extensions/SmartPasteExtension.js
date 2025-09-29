@@ -32,8 +32,8 @@ export const SmartPasteExtension = Extension.create({
         key: new PluginKey('smartPaste'),
         props: {
           handlePaste: (view, event) => {
-            const editor = view.state.tr.doc;
             const options = this.options;
+            const editor = this.editor; // Store editor reference correctly
             
             // In basic mode, only allow text cleaning (no images/tables)
             const isBasic = options.basic;
@@ -166,7 +166,6 @@ export const SmartPasteExtension = Extension.create({
             // STAGE 3: Handle text cleaning
             if (textData && textData.trim().length > 0) {
               // Check if we should preserve HTML formatting
-              const editor = this.editor;
               const preserveFormatting = editor.storage.smartPaste?.preserveFormatting || false;
 
               if (preserveFormatting) {
@@ -198,7 +197,6 @@ export const SmartPasteExtension = Extension.create({
                     const htmlContent = paragraphs.map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
 
                     // Use TipTap's insertContent command which handles HTML properly
-                    const editor = this.editor;
                     editor.chain().focus().insertContent(htmlContent).run();
                   } else {
                     // Single paragraph - use simple text insertion
