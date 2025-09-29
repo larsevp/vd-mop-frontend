@@ -43,11 +43,6 @@ const SearchBar = ({
   useEffect(() => {
     if (mode === "advanced") {
       const handleGlobalKeyDown = (e) => {
-        // Focus search with '/' key
-        if (e.key === "/" && e.target !== searchRef.current) {
-          e.preventDefault();
-          searchRef.current?.focus();
-        }
         // Close filters with Escape
         if (e.key === "Escape" && showFilters) {
           setShowFilters(false);
