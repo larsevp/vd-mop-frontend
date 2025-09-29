@@ -18,6 +18,8 @@ import { cleanPDFText } from '../utils/pdfTextCleaner';
 export const SmartPasteExtension = Extension.create({
   name: 'smartPaste',
 
+  priority: 1000, // High priority to run before default paste handlers
+
   addOptions() {
     return {
       basic: false,
@@ -34,7 +36,7 @@ export const SmartPasteExtension = Extension.create({
           handlePaste: (view, event) => {
             const options = this.options;
             const editor = this.editor; // Store editor reference correctly
-            
+
             // In basic mode, only allow text cleaning (no images/tables)
             const isBasic = options.basic;
 
@@ -49,26 +51,33 @@ export const SmartPasteExtension = Extension.create({
             // Helper functions
             const isTabularData = (text) => {
               if (!text) return false;
-              const lines = text.split('\n').filter(line => line.trim());
-              if (lines.length < 2) return false;
-              
-              const firstLineTabCount = (lines[0].match(/\t/g) || []).length;
-              const firstLineCommaCount = (lines[0].match(/,/g) || []).length;
-              
-              if (firstLineTabCount === 0 && firstLineCommaCount === 0) return false;
-              
-              const delimiter = firstLineTabCount > firstLineCommaCount ? '\t' : ',';
-              const expectedCount = delimiter === '\t' ? firstLineTabCount : firstLineCommaCount;
-              
-              let matchingLines = 0;
-              for (const line of lines) {
-                const delimiterCount = (line.match(new RegExp(delimiter === '\t' ? '\\t' : ',', 'g')) || []).length;
-                if (Math.abs(delimiterCount - expectedCount) <= 1) {
-                  matchingLines++;
-                }
+
+              // Excel/CSV detection: Look for tabs or commas in a CONSISTENT structured way
+              const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+              if (lines.length < 2) return false; // Need at least 2 lines for a table
+
+              // TAB-delimited detection: Check if tabs appear CONSISTENTLY across lines
+              const tabsPerLine = lines.map(line => (line.match(/\t/g) || []).length);
+              const hasConsistentTabs = tabsPerLine.every(count => count > 0) &&
+                                        Math.max(...tabsPerLine) - Math.min(...tabsPerLine) <= 1;
+
+              if (hasConsistentTabs && tabsPerLine[0] >= 1) {
+                return true;
               }
-              
-              return (matchingLines / lines.length) >= 0.8;
+
+              // CSV detection: Check if commas appear CONSISTENTLY across lines
+              // AND average line length is relatively short (< 100 chars suggests CSV, not prose)
+              const commasPerLine = lines.map(line => (line.match(/,/g) || []).length);
+              const avgLineLength = lines.reduce((sum, line) => sum + line.length, 0) / lines.length;
+              const hasConsistentCommas = commasPerLine.every(count => count > 0) &&
+                                          Math.max(...commasPerLine) - Math.min(...commasPerLine) <= 2;
+
+              if (hasConsistentCommas && commasPerLine[0] >= 1 && avgLineLength < 100) {
+                return true;
+              }
+
+              return false;
             };
 
             const containsHTMLTable = (html) => {
@@ -134,82 +143,113 @@ export const SmartPasteExtension = Extension.create({
 
             // STAGE 2: Check for Excel/CSV tabular data (not in basic mode)
             if (!isBasic && isTabularData(textData)) {
-              event.preventDefault();
-              
               try {
                 const tableHTML = buildHTMLTableFromTSV(textData);
+
                 if (tableHTML && view.state.schema.nodes.table) {
                   const parser = new DOMParser();
                   const doc = parser.parseFromString(tableHTML, 'text/html');
                   const tableElement = doc.querySelector('table');
-                  
+
                   if (tableElement) {
-                    // Simple table insertion
-                    const { state } = view;
-                    const tr = state.tr.insertText(textData); // Fallback to text for now
-                    view.dispatch(tr);
-                    
-                    if (options.onShowToast) {
-                      options.onShowToast('Table data pasted', 'success');
+                    event.preventDefault();
+
+                    // Use TipTap's editor.chain() API to insert the table HTML
+                    if (editor && editor.chain) {
+                      editor.chain().focus().insertContent(tableHTML).run();
+                    } else {
+                      const { state } = view;
+                      const tr = state.tr.insertText(textData);
+                      view.dispatch(tr);
                     }
+
+                    if (options.onShowToast) {
+                      options.onShowToast('Tabell limt inn', 'success');
+                    }
+                    return true;
                   }
                 }
+
+                // If we can't handle it as a table, fall through to Stage 3 for text cleaning
               } catch (error) {
-                console.error('Table creation failed:', error);
-                // Let TipTap handle as normal text
-                return false;
+                console.error('SmartPaste - Table creation error:', error);
+                // Fall through to Stage 3
               }
-              
-              return true;
             }
 
             // STAGE 3: Handle text cleaning
             if (textData && textData.trim().length > 0) {
-              // Check if we should preserve HTML formatting
+              // Check if we should preserve HTML formatting (Word button was clicked)
               const preserveFormatting = editor.storage.smartPaste?.preserveFormatting || false;
 
               if (preserveFormatting) {
                 // Reset the flag and let TipTap handle normally (preserves Word/HTML formatting)
+                // But we already handled images and tables in Stage 1 & 2, so this is just for text
                 editor.storage.smartPaste.preserveFormatting = false;
                 if (options.onShowToast) {
                   options.onShowToast('Formatering bevart fra Word/HTML', 'success');
                 }
-                return false; // Let TipTap handle with formatting
+                return false; // Let TipTap handle with formatting - NO PDF cleaning
               }
 
-              // For all other text, clean it (no detection needed - always clean)
+              // For normal paste (Ctrl+V), clean the text
               event.preventDefault();
 
               try {
                 const cleanedText = cleanPDFText(textData, true); // Always force cleaning
 
-                // In basic mode, use simple text insertion without HTML
+                // Insert at current selection with proper state handling
+                const { state } = view;
+                const { selection, schema } = state;
+
+                // Both basic and richtext: convert newlines to proper structure
+                // Basic mode uses simple paragraphs, richtext uses TipTap paragraph nodes
+                const paragraphs = cleanedText.split('\n\n').filter(p => p.trim());
+
+                if (paragraphs.length === 0) {
+                  // No content
+                  return true;
+                }
+
                 if (isBasic) {
-                  // Basic mode: simple text insertion only
-                  const tr = view.state.tr.insertText(cleanedText);
+                  // Basic mode: just insert the cleaned text as-is
+                  const tr = state.tr.insertText(cleanedText, selection.from, selection.to);
                   view.dispatch(tr);
                 } else {
-                  // Full mode: convert cleaned text with paragraph breaks to proper HTML
-                  const paragraphs = cleanedText.split('\n\n').filter(p => p.trim());
+                  // Richtext mode: create proper paragraph nodes for each paragraph
+                  const nodes = [];
 
-                  if (paragraphs.length > 1) {
-                    // Create proper HTML with paragraph tags
-                    const htmlContent = paragraphs.map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
+                  paragraphs.forEach(para => {
+                    // Each paragraph becomes one paragraph node
+                    // Single newlines within become hard breaks
+                    const lines = para.split('\n').filter(l => l.trim());
 
-                    // Use TipTap's insertContent command which handles HTML properly
-                    editor.chain().focus().insertContent(htmlContent).run();
-                  } else {
-                    // Single paragraph - use simple text insertion
-                    const tr = view.state.tr.insertText(cleanedText);
-                    view.dispatch(tr);
-                  }
+                    if (lines.length === 1) {
+                      // Single line paragraph
+                      const textNode = schema.text(lines[0]);
+                      nodes.push(schema.nodes.paragraph.create(null, textNode));
+                    } else {
+                      // Multiple lines: use hard breaks between them
+                      const content = [];
+                      lines.forEach((line, idx) => {
+                        content.push(schema.text(line));
+                        if (idx < lines.length - 1) {
+                          content.push(schema.nodes.hardBreak.create());
+                        }
+                      });
+                      nodes.push(schema.nodes.paragraph.create(null, content));
+                    }
+                  });
+
+                  const tr = state.tr.replaceWith(selection.from, selection.to, nodes);
+                  view.dispatch(tr);
                 }
 
                 if (options.onShowToast) {
                   options.onShowToast('Tekst renset og formatert', 'success');
                 }
               } catch (error) {
-                console.error('Text cleaning failed:', error);
+                console.error('SmartPaste - Text cleaning failed:', error);
                 return false;
               }
 

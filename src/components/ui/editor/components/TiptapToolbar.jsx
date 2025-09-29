@@ -583,15 +583,8 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
 
         <ToolbarSeparator />
 
-        {/* Paste buttons - available in both basic and full mode */}
-        <ToolbarButton onClick={pasteAndClean} title="Lime inn tekst (renses automatisk)">
-          <div className="flex items-center gap-1">
-            <ClipboardPaste size={16} />
-            Lim inn
-          </div>
-        </ToolbarButton>
-
-        <ToolbarButton onClick={pastePreserveFormatting} title="Lime inn og bevar formatering fra Word/HTML">
+        {/* Paste button - preserves Word formatting while handling images and tables */}
+        <ToolbarButton onClick={pastePreserveFormatting} title="Lime inn fra Word/HTML med formatering (håndterer bilder og tabeller)">
           <div className="flex items-center gap-1">
             <ClipboardPaste size={16} />
             Word

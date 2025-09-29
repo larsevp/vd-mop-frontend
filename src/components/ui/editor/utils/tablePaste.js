@@ -169,13 +169,22 @@ export const sanitizeHTMLTable = (html) => {
  * Build HTML table from TSV (Tab-separated values) data from Excel plain text
  */
 export const buildHTMLTableFromTSV = (text) => {
+  // Split by newlines but keep ALL lines (including blank ones from Excel)
   const lines = text.split(/\r?\n/);
+
+  // Only filter out the very last line if it's completely empty (trailing newline)
+  if (lines.length > 0 && lines[lines.length - 1].trim() === '') {
+    lines.pop();
+  }
+
   if (!lines.length) return null;
 
-  // Split to cells and normalize; drop rows that are entirely empty
+  // Split to cells and normalize
   const splitRows = lines.map((line) => (line.includes("\t") ? line.split("\t") : [line]));
   const normalized = splitRows.map((cells) => cells.map((c) => normalizeText(c)));
-  const rows = normalized.filter((cells) => cells.some((t) => t.length > 0));
+
+  // Keep ALL rows, even if cells are empty (preserves table structure from Excel)
+  const rows = normalized;
   if (!rows.length) return null;
 
   const maxCols = Math.max(...rows.map((r) => r.length));
@@ -187,7 +196,11 @@ export const buildHTMLTableFromTSV = (text) => {
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
-  const cellsToHtml = (r) => r.map((c) => `<td>${esc(c)}</td>`).join("");
+
+  // Pad rows to maxCols so all rows have same number of cells
+  const cellsToHtml = (r) =>
+    Array.from({ length: maxCols }, (_, i) => `<td>${esc(r[i] || "")}</td>`).join("");
+
   const rowsHtml = rows.map((r) => `<tr>${cellsToHtml(r)}</tr>`).join("");
   return `<table><tbody>${rowsHtml}</tbody></table>`;
 };

@@ -236,7 +236,7 @@ const shouldCleanText = (text) => {
 export const cleanPDFText = (text, force = false) => {
   // First check if this text should be cleaned at all
   const shouldClean = force || shouldCleanText(text);
-  
+
   if (!shouldClean) {
     return text;
   }
