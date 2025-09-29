@@ -41,6 +41,9 @@ const newProsjektKravWorkspaceConfig = {
     "beskrivelseSnippet",
     "informasjonSnippet",
     "projectId",
+    "enhetId",
+    "givenOrder",
+    "obligatorisk",
   ],
   workspaceHiddenEdit: [
     "kravUID",
@@ -52,6 +55,9 @@ const newProsjektKravWorkspaceConfig = {
     "beskrivelseSnippet",
     "informasjonSnippet",
     "projectId",
+    "enhetId",
+    "givenOrder",
+    "obligatorisk",
   ],
   workspaceHiddenCreate: [
     "kravUID",
@@ -63,6 +69,9 @@ const newProsjektKravWorkspaceConfig = {
     "beskrivelseSnippet",
     "informasjonSnippet",
     "projectId",
+    "enhetId",
+    "givenOrder",
+    "obligatorisk",
   ],
 
   // Sections with their field overrides and row definitions

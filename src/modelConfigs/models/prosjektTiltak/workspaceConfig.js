@@ -29,6 +29,8 @@ const workspaceConfigData = {
     "implementasjonSnippet",
     "tilbakemeldingSnippet",
     "generalTiltakId",
+    "enhetId",
+    "obligatorisk",
   ],
   workspaceHiddenEdit: [
     "tiltakUID",
@@ -39,6 +41,8 @@ const workspaceConfigData = {
     "implementasjonSnippet",
     "tilbakemeldingSnippet",
     "generalTiltakId",
+    "enhetId",
+    "obligatorisk",
   ],
   workspaceHiddenCreate: [
     "tiltakUID",
@@ -49,6 +53,8 @@ const workspaceConfigData = {
     "implementasjonSnippet",
     "tilbakemeldingSnippet",
     "generalTiltakId",
+    "enhetId",
+    "obligatorisk",
   ],
 
   sections: {
@@ -93,19 +99,6 @@ const workspaceConfigData = {
       defaultExpanded: false,
       fieldOverrides: {},
       rows: {},
-    },
-    admin: {
-      title: "Administrative detaljer",
-      defaultExpanded: false,
-      fieldOverrides: {
-        givenOrder: { order: 12 },
-      },
-      rows: {
-        "admin-row": {
-          obligatorisk: { order: 11 },
-          enhetId: { order: 11 },
-        },
-      },
     },
     metadata: {
       title: "Metadata",
