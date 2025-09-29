@@ -247,10 +247,20 @@ const EntityDetailPane = ({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isEditing]); // Only depend on isEditing state
 
+  // IMPORTANT: Early return AFTER all hooks to avoid hook consistency errors
   if (!entity) {
     return (
       <div className="flex items-center justify-center h-full text-gray-500">
         <p>Ingen element valgt</p>
+      </div>
+    );
+  }
+
+  // IMPORTANT: For consistent hook patterns, ensure modelConfig is always defined
+  if (!modelConfig) {
+    return (
+      <div className="flex items-center justify-center h-full text-gray-500">
+        <p>Laster...</p>
       </div>
     );
   }

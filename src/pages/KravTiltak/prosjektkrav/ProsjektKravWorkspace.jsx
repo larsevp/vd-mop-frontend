@@ -1,10 +1,11 @@
 import React from "react";
-import { EntityWorkspaceNew } from "@/components/EntityWorkspace";
+import { EntityWorkspace } from "@/components/EntityWorkspace";
 import { prosjektKrav as prosjektKravConfig } from "@/modelConfigs/models/prosjektKrav";
 import { createSingleEntityDTO } from "@/components/EntityWorkspace/interface/data";
 import { createProsjektKravAdapter } from "./adapter";
 import { renderEntityCard, renderGroupHeader, renderSearchBar, renderDetailPane, getAvailableViewOptions } from "./renderer";
-import { useProsjektKravViewStore } from "./store";
+import { createWorkspaceUIHook } from "@/components/EntityWorkspace/interface/hooks/createWorkspaceUIHook";
+import { useProsjektKravViewStore, useProsjektKravUIStore } from "./store";
 import { RowListHeading } from "../shared";
 import { useProjectStore } from "@/stores/userStore";
 import { Link } from "react-router-dom";
@@ -68,8 +69,11 @@ const ProsjektKravWorkspace = () => {
   // Get view options state
   const { viewOptions, setViewOptions } = useProsjektKravViewStore();
 
+  // Create workspace-specific UI hook
+  const { useWorkspaceUI } = createWorkspaceUIHook(useProsjektKravUIStore);
+
   return (
-    <EntityWorkspaceNew
+    <EntityWorkspace
       key={`${dto.entityType || "workspace"}-${currentProject?.id || "no-project"}`} // Force remount on project change
       dto={dto}
       renderEntityCard={(entity, props) => renderEntityCard(entity, props, dto)}
@@ -84,6 +88,7 @@ const ProsjektKravWorkspace = () => {
           availableViewOptions={getAvailableViewOptions()}
         />
       )}
+      useWorkspaceUIHook={useWorkspaceUI}
       viewOptions={viewOptions}
       debug={false}
     />

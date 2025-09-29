@@ -1,12 +1,12 @@
 /**
  * WorkspaceStore - Pure workspace state store
- * 
+ *
  * This store handles workspace switching, DTO registration,
  * and workspace state persistence. No business logic.
  */
 
-import { create } from 'zustand';
-import { devtools, subscribeWithSelector } from 'zustand/middleware';
+import { create } from "zustand";
+import { devtools, subscribeWithSelector } from "zustand/middleware";
 
 /**
  * Create workspace store - handles workspace state only
@@ -19,16 +19,16 @@ export const createWorkspaceStore = (debug = false) => {
         currentEntityType: null,
         currentDTO: null,
         currentWorkspace: null,
-        
+
         // ============ DTO REGISTRY ============
         dtos: new Map(),
-        
+
         // ============ SAVED STATES ============
         savedStates: new Map(),
-        
+
         // ============ WORKSPACE HISTORY ============
         workspaceHistory: [],
-        
+
         // ============ METADATA ============
         lastLoaded: new Map(),
         workspaceSwitchCount: 0,
@@ -36,59 +36,52 @@ export const createWorkspaceStore = (debug = false) => {
         // ============ WORKSPACE MANAGEMENT ============
 
         setCurrentWorkspace: (entityType, dto = null) => {
-          if (debug) console.log('[WorkspaceStore] Setting current workspace', { entityType, hasDTO: !!dto });
-          
           const state = get();
-          
+
           // Add to history if different from current
           if (state.currentEntityType !== entityType) {
-            const newHistory = [...state.workspaceHistory.slice(-9), {
-              entityType: state.currentEntityType,
-              timestamp: Date.now(),
-              switchCount: state.workspaceSwitchCount
-            }].filter(item => item.entityType); // Remove null entries
-            
+            const newHistory = [
+              ...state.workspaceHistory.slice(-9),
+              {
+                entityType: state.currentEntityType,
+                timestamp: Date.now(),
+                switchCount: state.workspaceSwitchCount,
+              },
+            ].filter((item) => item.entityType); // Remove null entries
+
             set({
               currentEntityType: entityType,
               currentDTO: dto,
               currentWorkspace: entityType,
               workspaceHistory: newHistory,
-              workspaceSwitchCount: state.workspaceSwitchCount + 1
+              workspaceSwitchCount: state.workspaceSwitchCount + 1,
             });
           } else {
             // Same workspace, just update DTO
             set({
-              currentDTO: dto
+              currentDTO: dto,
             });
           }
         },
 
         clearCurrentWorkspace: () => {
-          if (debug) console.log('[WorkspaceStore] Clearing current workspace');
           set({
             currentEntityType: null,
             currentDTO: null,
-            currentWorkspace: null
+            currentWorkspace: null,
           });
         },
 
         // ============ DTO MANAGEMENT ============
 
         registerDTO: (entityType, dto) => {
-          if (debug) console.log('[WorkspaceStore] Registering DTO', { 
-            entityType, 
-            dtoType: dto?.constructor?.name 
-          });
-          
-          set(state => ({
-            dtos: new Map(state.dtos).set(entityType, dto)
+          set((state) => ({
+            dtos: new Map(state.dtos).set(entityType, dto),
           }));
         },
 
         unregisterDTO: (entityType) => {
-          if (debug) console.log('[WorkspaceStore] Unregistering DTO', entityType);
-          
-          set(state => {
+          set((state) => {
             const newDtos = new Map(state.dtos);
             newDtos.delete(entityType);
             return { dtos: newDtos };
@@ -108,16 +101,11 @@ export const createWorkspaceStore = (debug = false) => {
         // ============ STATE PERSISTENCE ============
 
         setSavedState: (entityType, stateData) => {
-          if (debug) console.log('[WorkspaceStore] Saving workspace state', { 
-            entityType, 
-            entitiesCount: stateData.entities?.length || 0 
-          });
-          
-          set(state => ({
+          set((state) => ({
             savedStates: new Map(state.savedStates).set(entityType, {
               ...stateData,
-              savedAt: Date.now()
-            })
+              savedAt: Date.now(),
+            }),
           }));
         },
 
@@ -127,9 +115,7 @@ export const createWorkspaceStore = (debug = false) => {
         },
 
         clearSavedState: (entityType) => {
-          if (debug) console.log('[WorkspaceStore] Clearing saved state', entityType);
-          
-          set(state => {
+          set((state) => {
             const newSavedStates = new Map(state.savedStates);
             newSavedStates.delete(entityType);
             return { savedStates: newSavedStates };
@@ -137,7 +123,6 @@ export const createWorkspaceStore = (debug = false) => {
         },
 
         clearAllSavedStates: () => {
-          if (debug) console.log('[WorkspaceStore] Clearing all saved states');
           set({ savedStates: new Map() });
         },
 
@@ -149,10 +134,8 @@ export const createWorkspaceStore = (debug = false) => {
         // ============ METADATA TRACKING ============
 
         updateLastLoaded: (entityType, timestamp = Date.now()) => {
-          if (debug) console.log('[WorkspaceStore] Updating last loaded', { entityType, timestamp });
-          
-          set(state => ({
-            lastLoaded: new Map(state.lastLoaded).set(entityType, timestamp)
+          set((state) => ({
+            lastLoaded: new Map(state.lastLoaded).set(entityType, timestamp),
           }));
         },
 
@@ -161,11 +144,12 @@ export const createWorkspaceStore = (debug = false) => {
           return state.lastLoaded.get(entityType);
         },
 
-        isStale: (entityType, maxAgeMs = 5 * 60 * 1000) => { // 5 minutes default
+        isStale: (entityType, maxAgeMs = 5 * 60 * 1000) => {
+          // 5 minutes default
           const lastLoaded = get().getLastLoaded(entityType);
           if (!lastLoaded) return true;
-          
-          return (Date.now() - lastLoaded) > maxAgeMs;
+
+          return Date.now() - lastLoaded > maxAgeMs;
         },
 
         // ============ WORKSPACE VALIDATION ============
@@ -188,7 +172,7 @@ export const createWorkspaceStore = (debug = false) => {
             isActive: !!state.currentEntityType,
             hasDTO: !!state.currentDTO,
             lastLoaded: state.getLastLoaded(state.currentEntityType),
-            hasSavedState: state.hasSavedState(state.currentEntityType)
+            hasSavedState: state.hasSavedState(state.currentEntityType),
           };
         },
 
@@ -200,7 +184,6 @@ export const createWorkspaceStore = (debug = false) => {
         },
 
         clearWorkspaceHistory: () => {
-          if (debug) console.log('[WorkspaceStore] Clearing workspace history');
           set({ workspaceHistory: [] });
         },
 
@@ -213,9 +196,7 @@ export const createWorkspaceStore = (debug = false) => {
         // ============ BULK OPERATIONS ============
 
         bulkRegisterDTOs: (dtoMap) => {
-          if (debug) console.log('[WorkspaceStore] Bulk registering DTOs', Object.keys(dtoMap));
-          
-          set(state => {
+          set((state) => {
             const newDtos = new Map(state.dtos);
             Object.entries(dtoMap).forEach(([entityType, dto]) => {
               newDtos.set(entityType, dto);
@@ -225,11 +206,9 @@ export const createWorkspaceStore = (debug = false) => {
         },
 
         bulkClearSavedStates: (entityTypes) => {
-          if (debug) console.log('[WorkspaceStore] Bulk clearing saved states', entityTypes);
-          
-          set(state => {
+          set((state) => {
             const newSavedStates = new Map(state.savedStates);
-            entityTypes.forEach(entityType => {
+            entityTypes.forEach((entityType) => {
               newSavedStates.delete(entityType);
             });
             return { savedStates: newSavedStates };
@@ -239,8 +218,6 @@ export const createWorkspaceStore = (debug = false) => {
         // ============ UTILITIES ============
 
         reset: () => {
-          if (debug) console.log('[WorkspaceStore] Resetting store');
-          
           set({
             currentEntityType: null,
             currentDTO: null,
@@ -249,7 +226,7 @@ export const createWorkspaceStore = (debug = false) => {
             savedStates: new Map(),
             workspaceHistory: [],
             lastLoaded: new Map(),
-            workspaceSwitchCount: 0
+            workspaceSwitchCount: 0,
           });
         },
 
@@ -262,7 +239,7 @@ export const createWorkspaceStore = (debug = false) => {
             savedStatesKeys: Array.from(state.savedStates.keys()),
             workspaceHistoryCount: state.workspaceHistory.length,
             workspaceSwitchCount: state.workspaceSwitchCount,
-            lastLoadedCount: state.lastLoaded.size
+            lastLoadedCount: state.lastLoaded.size,
           };
         },
 
@@ -276,14 +253,16 @@ export const createWorkspaceStore = (debug = false) => {
             switchCount: state.workspaceSwitchCount,
             historyLength: state.workspaceHistory.length,
             currentWorkspace: state.currentEntityType,
-            oldestSavedState: Array.from(state.savedStates.values())
-              .reduce((oldest, current) => 
-                !oldest || current.savedAt < oldest.savedAt ? current : oldest, null
+            oldestSavedState:
+              Array.from(state.savedStates.values()).reduce(
+                (oldest, current) => (!oldest || current.savedAt < oldest.savedAt ? current : oldest),
+                null
               )?.savedAt || null,
-            newestSavedState: Array.from(state.savedStates.values())
-              .reduce((newest, current) => 
-                !newest || current.savedAt > newest.savedAt ? current : newest, null
-              )?.savedAt || null
+            newestSavedState:
+              Array.from(state.savedStates.values()).reduce(
+                (newest, current) => (!newest || current.savedAt > newest.savedAt ? current : newest),
+                null
+              )?.savedAt || null,
           };
         },
 
@@ -291,21 +270,21 @@ export const createWorkspaceStore = (debug = false) => {
           const state = get();
           const now = Date.now();
           const staleWorkspaces = [];
-          
+
           state.lastLoaded.forEach((timestamp, entityType) => {
-            if ((now - timestamp) > maxAgeMs) {
+            if (now - timestamp > maxAgeMs) {
               staleWorkspaces.push({
                 entityType,
                 lastLoaded: timestamp,
-                ageMs: now - timestamp
+                ageMs: now - timestamp,
               });
             }
           });
-          
+
           return staleWorkspaces;
-        }
+        },
       })),
-      { name: 'workspace-store' }
+      { name: "workspace-store" }
     )
   );
 };

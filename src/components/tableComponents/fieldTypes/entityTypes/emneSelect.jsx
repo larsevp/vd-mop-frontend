@@ -19,16 +19,17 @@ export const emneSelectType = {
       }
     };
     
-    const entityType = getEntityTypeFromModel(modelName);
-    
+    // IMPORTANT: Stabilize entityType to prevent hook consistency errors
+    const entityType = React.useMemo(() => getEntityTypeFromModel(modelName), [modelName]);
+
     // Get entity ID from formData, row, or data for proper inheritance tracking
     const isNewEntity = formData?.__isNew || row?.__isNew || data?.__isNew;
     const entityId = isNewEntity ? 'create-new' : (formData?.id || row?.id || data?.id);
-    
-    const { 
-      inheritedEmne, 
-      hasInheritance, 
-      isFieldDisabled, 
+
+    const {
+      inheritedEmne,
+      hasInheritance,
+      isFieldDisabled,
       getDisabledPlaceholder,
       hasParentConnection,
       hasRelatedEntityConnection

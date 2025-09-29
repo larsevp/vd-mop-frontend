@@ -372,10 +372,6 @@ const EntityDetailPane = ({ entity, modelConfig, entityType, config, onSave, onD
 
         // Handle emne propagation for krav/prosjektKrav updates in regular EntityWorkspace
         const camelCaseEntityType = entityType.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
-        console.log(
-          `🔍 EntityDetailPane: Checking emne propagation for entityType: ${entityType} (${camelCaseEntityType}), emneId changed:`,
-          (updatedData || { ...filteredData, id: entity.id }).emneId !== entity.emneId
-        );
 
         if (camelCaseEntityType === "krav" || camelCaseEntityType === "prosjektKrav") {
           try {

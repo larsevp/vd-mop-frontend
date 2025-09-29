@@ -1,9 +1,9 @@
 /**
  * CombinedEntityDTO - Coordinates multiple SingleEntityDTOs for combined views
- * 
+ *
  * This DTO takes SingleEntityDTO instances as input and orchestrates them
  * to provide a unified interface for combined entity workspaces like KravTiltak.
- * 
+ *
  * Architecture: CombinedEntityDTO -> SingleEntityDTOs -> Adapters
  */
 
@@ -11,30 +11,22 @@ export class CombinedEntityDTO {
   constructor(entityDTOs, options = {}) {
     // Allow empty array if we have a backend adapter (backend mixing mode)
     if (!Array.isArray(entityDTOs) || (entityDTOs.length === 0 && !options.backendAdapter)) {
-      throw new Error('CombinedEntityDTO requires either an array of SingleEntityDTOs or a backend adapter');
+      throw new Error("CombinedEntityDTO requires either an array of SingleEntityDTOs or a backend adapter");
     }
-    
+
     this.entityDTOs = entityDTOs;
     this.options = { debug: false, ...options };
-    
+
     // Extract primary types from DTOs or backend adapter
     if (this.options.backendAdapter) {
       // Backend mixing mode - get types from adapter config
       const displayConfig = this.options.backendAdapter.getDisplayConfig();
-      this.entityTypes = displayConfig.entityTypes || ['combined'];
+      this.entityTypes = displayConfig.entityTypes || ["combined"];
       this.primaryEntityType = displayConfig.primaryType || this.entityTypes[0];
-      
-      if (this.options.debug) {
-        console.log('CombinedEntityDTO: Initialized with backend adapter for types:', this.entityTypes);
-      }
     } else {
       // Frontend mixing mode - get types from DTOs
-      this.entityTypes = entityDTOs.map(dto => dto.entityType);
+      this.entityTypes = entityDTOs.map((dto) => dto.entityType);
       this.primaryEntityType = this.entityTypes[0];
-      
-      if (this.options.debug) {
-        console.log('CombinedEntityDTO: Initialized with DTOs for types:', this.entityTypes);
-      }
     }
   }
 
@@ -48,20 +40,23 @@ export class CombinedEntityDTO {
     if (this.options.backendAdapter) {
       return this.options.backendAdapter.getDisplayConfig();
     }
-    
+
     // Frontend mixing mode - combine DTO configs
-    const configs = this.entityDTOs.map(dto => dto.getDisplayConfig());
+    const configs = this.entityDTOs.map((dto) => dto.getDisplayConfig());
     const primaryConfig = configs[0];
-    
+
     return {
-      title: `${primaryConfig.title} og ${configs.slice(1).map(c => c.title).join(', ')}`,
+      title: `${primaryConfig.title} og ${configs
+        .slice(1)
+        .map((c) => c.title)
+        .join(", ")}`,
       entityTypes: this.entityTypes,
-      supportsGroupByEmne: configs.every(c => c.supportsGroupByEmne),
+      supportsGroupByEmne: configs.every((c) => c.supportsGroupByEmne),
       layout: primaryConfig.layout,
       newButtonLabel: primaryConfig.newButtonLabel,
       // Combined config
       isCombinedView: true,
-      combinedEntityTypes: this.entityTypes
+      combinedEntityTypes: this.entityTypes,
     };
   }
 
@@ -73,21 +68,21 @@ export class CombinedEntityDTO {
     if (this.options.backendAdapter) {
       return this.options.backendAdapter.getFilterConfig();
     }
-    
+
     // Frontend mixing mode - combine DTO configs
-    const configs = this.entityDTOs.map(dto => dto.getFilterConfig());
+    const configs = this.entityDTOs.map((dto) => dto.getFilterConfig());
     const primaryConfig = configs[0];
-    
+
     // Merge all available sort fields
     const allSortFields = configs.reduce((acc, config) => {
-      config.sortFields?.forEach(field => {
-        if (!acc.find(existing => existing.key === field.key)) {
+      config.sortFields?.forEach((field) => {
+        if (!acc.find((existing) => existing.key === field.key)) {
           acc.push(field);
         }
       });
       return acc;
     }, []);
-    
+
     return {
       ...primaryConfig,
       // Add entity type filter for combined views
@@ -95,11 +90,11 @@ export class CombinedEntityDTO {
         ...primaryConfig.fields,
         entityType: {
           enabled: true,
-          label: 'Type',
-          placeholder: 'Alle typer'
-        }
+          label: "Type",
+          placeholder: "Alle typer",
+        },
       },
-      sortFields: allSortFields
+      sortFields: allSortFields,
     };
   }
 
@@ -108,12 +103,12 @@ export class CombinedEntityDTO {
    */
   getQueryFunctions() {
     const functions = {};
-    
-    this.entityDTOs.forEach(dto => {
+
+    this.entityDTOs.forEach((dto) => {
       const entityQueries = dto.getQueryFunctions();
       functions[dto.entityType] = entityQueries;
     });
-    
+
     return functions;
   }
 
@@ -135,38 +130,28 @@ export class CombinedEntityDTO {
    * Load data from backend combined endpoint (preferred for complex hierarchy)
    */
   async loadDataFromBackend(queryParams = {}) {
-    if (this.options.debug) {
-      console.log('CombinedEntityDTO: Loading from backend adapter with params:', queryParams);
-    }
-    
     try {
       const backendAdapter = this.options.backendAdapter;
       const rawData = await backendAdapter.getQueryFunctions().combined.grouped(queryParams);
-      
+
       // Extract data from Axios response
       const data = rawData.data || rawData;
-      
+
       // Transform using the backend adapter
       const transformedResponse = backendAdapter.transformResponse(data);
-      
+
       if (this.options.debug) {
-        console.log('CombinedEntityDTO: Backend response transformed:', {
-          itemCount: transformedResponse.items?.length || 0,
-          total: transformedResponse.total
-        });
       }
-      
+
       return transformedResponse;
-      
     } catch (error) {
-      console.error('CombinedEntityDTO: Backend load error:', error);
-      
+      console.error("CombinedEntityDTO: Backend load error:", error);
+
       // Fallback to frontend mixing if backend fails
       if (this.entityDTOs?.length > 0) {
-        console.log('CombinedEntityDTO: Falling back to frontend mixing due to backend error');
         return this.loadCombinedData(queryParams);
       }
-      
+
       throw error;
     }
   }
@@ -175,10 +160,6 @@ export class CombinedEntityDTO {
    * Load and combine data from all entity DTOs (frontend mixing fallback)
    */
   async loadCombinedData(queryParams = {}) {
-    if (this.options.debug) {
-      console.log('CombinedEntityDTO: Loading combined data with params:', queryParams);
-    }
-    
     try {
       // Load data from all DTOs in parallel
       const dataPromises = this.entityDTOs.map(async (dto) => {
@@ -188,7 +169,7 @@ export class CombinedEntityDTO {
             entityType: dto.entityType,
             success: true,
             data: data,
-            error: null
+            error: null,
           };
         } catch (error) {
           console.error(`CombinedEntityDTO: Failed to load ${dto.entityType}:`, error);
@@ -196,26 +177,26 @@ export class CombinedEntityDTO {
             entityType: dto.entityType,
             success: false,
             data: { items: [], total: 0 },
-            error: error.message || 'Failed to load data'
+            error: error.message || "Failed to load data",
           };
         }
       });
-      
+
       const results = await Promise.all(dataPromises);
-      
+
       // Combine successful results
       const allItems = [];
       let totalCount = 0;
       let hasErrors = false;
       const errors = [];
-      
-      results.forEach(result => {
+
+      results.forEach((result) => {
         if (result.success) {
           // Tag each entity with its type for filtering
-          const taggedItems = result.data.items.map(item => ({
+          const taggedItems = result.data.items.map((item) => ({
             ...item,
             entityType: result.entityType,
-            _combinedViewSource: result.entityType
+            _combinedViewSource: result.entityType,
           }));
           allItems.push(...taggedItems);
           totalCount += result.data.total || 0;
@@ -224,10 +205,10 @@ export class CombinedEntityDTO {
           errors.push(`${result.entityType}: ${result.error}`);
         }
       });
-      
+
       // Apply combined filtering and sorting
       const processed = this.processCombinedData(allItems, queryParams);
-      
+
       return {
         items: processed.items,
         total: totalCount,
@@ -242,13 +223,12 @@ export class CombinedEntityDTO {
         errors: hasErrors ? errors : null,
         metadata: {
           timestamp: new Date().toISOString(),
-          source: 'CombinedEntityDTO',
-          entityTypes: this.entityTypes
-        }
+          source: "CombinedEntityDTO",
+          entityTypes: this.entityTypes,
+        },
       };
-      
     } catch (error) {
-      console.error('CombinedEntityDTO: Critical error loading combined data:', error);
+      console.error("CombinedEntityDTO: Critical error loading combined data:", error);
       throw error;
     }
   }
@@ -258,48 +238,44 @@ export class CombinedEntityDTO {
    */
   processCombinedData(items, queryParams = {}) {
     let processed = [...items];
-    
+
     // Apply search filter
     if (queryParams.search) {
       const searchTerm = queryParams.search.toLowerCase();
-      processed = processed.filter(item => {
-        const searchable = [
-          item.title,
-          item.descriptionCard,
-          item.uid,
-          item.emne?.navn || item.emne?.name,
-          item.entityType
-        ].join(' ').toLowerCase();
-        
+      processed = processed.filter((item) => {
+        const searchable = [item.title, item.descriptionCard, item.uid, item.emne?.navn || item.emne?.name, item.entityType]
+          .join(" ")
+          .toLowerCase();
+
         return searchable.includes(searchTerm);
       });
     }
-    
+
     // Apply entity type filter
-    if (queryParams.entityType && queryParams.entityType !== 'all') {
-      processed = processed.filter(item => item.entityType === queryParams.entityType);
+    if (queryParams.entityType && queryParams.entityType !== "all") {
+      processed = processed.filter((item) => item.entityType === queryParams.entityType);
     }
-    
+
     // Apply other filters (delegate to individual DTOs if needed)
     // TODO: Implement more sophisticated filtering
-    
+
     // Apply sorting
-    const sortBy = queryParams.sortBy || 'updatedAt';
-    const sortOrder = queryParams.sortOrder || 'desc';
-    
+    const sortBy = queryParams.sortBy || "updatedAt";
+    const sortOrder = queryParams.sortOrder || "desc";
+
     processed.sort((a, b) => {
       let aValue = this.getSortValue(a, sortBy);
       let bValue = this.getSortValue(b, sortBy);
-      
-      if (typeof aValue === 'string') {
+
+      if (typeof aValue === "string") {
         aValue = aValue.toLowerCase();
         bValue = bValue.toLowerCase();
       }
-      
+
       const comparison = aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-      return sortOrder === 'desc' ? -comparison : comparison;
+      return sortOrder === "desc" ? -comparison : comparison;
     });
-    
+
     return { items: processed };
   }
 
@@ -308,16 +284,16 @@ export class CombinedEntityDTO {
    */
   getSortValue(entity, field) {
     switch (field) {
-      case 'title':
-        return entity.title || '';
-      case 'status':
-        return entity.status?.name || entity.status?.navn || '';
-      case 'emne':
-        return entity.emne?.navn || entity.emne?.name || '';
-      case 'entityType':
-        return entity.entityType || '';
+      case "title":
+        return entity.title || "";
+      case "status":
+        return entity.status?.name || entity.status?.navn || "";
+      case "emne":
+        return entity.emne?.navn || entity.emne?.name || "";
+      case "entityType":
+        return entity.entityType || "";
       default:
-        return entity[field] || '';
+        return entity[field] || "";
     }
   }
 
@@ -329,22 +305,22 @@ export class CombinedEntityDTO {
       statuses: new Set(),
       vurderinger: new Set(),
       emner: new Set(),
-      entityTypes: new Set()
+      entityTypes: new Set(),
     };
 
-    entities.forEach(entity => {
+    entities.forEach((entity) => {
       // Status values
       const status = entity.status?.name || entity.status?.navn;
       if (status) filters.statuses.add(status);
-      
+
       // Vurdering values
       const vurdering = entity.vurdering?.name || entity.vurdering?.navn;
       if (vurdering) filters.vurderinger.add(vurdering);
-      
+
       // Emne values
       const emne = entity.emne?.navn || entity.emne?.name;
       if (emne) filters.emner.add(emne);
-      
+
       // Entity types (this is the key addition for combined views)
       if (entity.entityType) filters.entityTypes.add(entity.entityType);
     });
@@ -353,7 +329,7 @@ export class CombinedEntityDTO {
       statuses: Array.from(filters.statuses).sort(),
       vurderinger: Array.from(filters.vurderinger).sort(),
       emner: Array.from(filters.emner).sort(),
-      entityTypes: Array.from(filters.entityTypes).sort()
+      entityTypes: Array.from(filters.entityTypes).sort(),
     };
   }
 
@@ -367,7 +343,7 @@ export class CombinedEntityDTO {
     if (!dto) {
       throw new Error(`No DTO found for entity type: ${entityType}`);
     }
-    
+
     return await dto.createEntity(entityData, options);
   }
 
@@ -379,7 +355,7 @@ export class CombinedEntityDTO {
     if (!dto) {
       throw new Error(`No DTO found for entity type: ${entityType}`);
     }
-    
+
     return await dto.updateEntity(entityId, updates, options);
   }
 
@@ -391,7 +367,7 @@ export class CombinedEntityDTO {
     if (!dto) {
       throw new Error(`No DTO found for entity type: ${entityType}`);
     }
-    
+
     return await dto.deleteEntity(entityId, options);
   }
 
@@ -401,7 +377,7 @@ export class CombinedEntityDTO {
    * Get DTO for specific entity type
    */
   getEntityDTO(entityType) {
-    return this.entityDTOs.find(dto => dto.entityType === entityType);
+    return this.entityDTOs.find((dto) => dto.entityType === entityType);
   }
 
   /**
@@ -423,19 +399,19 @@ export class CombinedEntityDTO {
    */
   getDebugInfo() {
     return {
-      type: 'CombinedEntityDTO',
+      type: "CombinedEntityDTO",
       entityTypes: this.entityTypes,
       primaryEntityType: this.primaryEntityType,
       dtoCount: this.entityDTOs.length,
       options: this.options,
-      dtosDebugInfo: this.entityDTOs.map(dto => dto.getDebugInfo?.() || { entityType: dto.entityType })
+      dtosDebugInfo: this.entityDTOs.map((dto) => dto.getDebugInfo?.() || { entityType: dto.entityType }),
     };
   }
 }
 
 /**
  * Factory function for creating combined DTOs with optional backend adapter
- * 
+ *
  * @param {Array|Object} entityDTOsOrBackendAdapter - Either array of SingleEntityDTOs for frontend mixing,
  *                                                    or a backend adapter for server-side mixing
  * @param {Object} options - Configuration options
@@ -448,16 +424,16 @@ export const createCombinedEntityDTO = (entityDTOsOrBackendAdapter, options = {}
   if (Array.isArray(entityDTOsOrBackendAdapter)) {
     return new CombinedEntityDTO(entityDTOsOrBackendAdapter, options);
   }
-  
+
   // If first argument is an adapter object, use backend mixing
-  if (entityDTOsOrBackendAdapter && typeof entityDTOsOrBackendAdapter === 'object' && entityDTOsOrBackendAdapter.getQueryFunctions) {
+  if (entityDTOsOrBackendAdapter && typeof entityDTOsOrBackendAdapter === "object" && entityDTOsOrBackendAdapter.getQueryFunctions) {
     return new CombinedEntityDTO([], {
       ...options,
-      backendAdapter: entityDTOsOrBackendAdapter
+      backendAdapter: entityDTOsOrBackendAdapter,
     });
   }
-  
-  throw new Error('createCombinedEntityDTO requires either an array of DTOs or a backend adapter');
+
+  throw new Error("createCombinedEntityDTO requires either an array of DTOs or a backend adapter");
 };
 
 export default CombinedEntityDTO;

@@ -1,13 +1,22 @@
 import React, { useCallback } from 'react';
 import Swal from 'sweetalert2';
-import { useFormInheritanceStore } from '../stores/formInheritanceStore';
+import { useKravTiltakInheritanceStore, useProsjektKravTiltakInheritanceStore } from '../stores/formInheritanceStore';
 
 /**
  * Custom hook for managing emne inheritance and mutual exclusivity
- * Generic hook that works with multiple entity types (tiltak, krav, prosjektTiltak)
+ * Automatically selects the correct store based on entity type to prevent workspace conflicts
+ * Generic hook that works with multiple entity types (tiltak, krav, prosjektTiltak, prosjektKrav)
  * Provides clean API for components to handle form inheritance logic
  */
 export const useEmneInheritance = (entityType = 'tiltak', entityId = null) => {
+  // ALWAYS call both hooks unconditionally (React hooks rule)
+  const kravTiltakStore = useKravTiltakInheritanceStore();
+  const prosjektKravTiltakStore = useProsjektKravTiltakInheritanceStore();
+
+  // Select which store to use based on entity type
+  const isProsjektWorkspace = entityType === 'prosjektTiltak' || entityType === 'prosjektKrav';
+  const activeStore = isProsjektWorkspace ? prosjektKravTiltakStore : kravTiltakStore;
+
   const {
     inheritedEmne,
     source,
@@ -27,7 +36,7 @@ export const useEmneInheritance = (entityType = 'tiltak', entityId = null) => {
     initializeForEntity,
     resetForWorkspace,
     logState
-  } = useFormInheritanceStore();
+  } = activeStore;
 
   // Initialize store for this entity type on first use
   React.useEffect(() => {

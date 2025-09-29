@@ -62,11 +62,7 @@ API.interceptors.request.use(async (config) => {
 
           config.headers = config.headers || {};
           config.headers["Authorization"] = `Bearer ${result.accessToken}`;
-          /*
-          console.log('[API] Token acquired successfully, expires:', new Date(result.expiresOn));
-          console.log('[API] Token preview:', result.accessToken.substring(0, 50) + '...');
-          console.log('[API] Token parts count:', result.accessToken.split('.').length);
-          */
+
           // Debug: decode token to see what we're sending
           try {
             const tokenParts = result.accessToken.split(".");
@@ -162,13 +158,12 @@ API.interceptors.response.use(
 
           // Handle AUTH_FAILED errors differently - show access denied page
           if (errorCode === "AUTH_FAILED") {
-            console.log("[API] Access denied - redirecting to access denied page");
             window.location.href = "/access-denied";
             return Promise.reject(error);
           }
 
           // For other auth errors, redirect to login
-          console.log("[API] Clearing MSAL session and redirecting to login");
+
           window.location.href = "/login";
           return Promise.reject(error);
         }

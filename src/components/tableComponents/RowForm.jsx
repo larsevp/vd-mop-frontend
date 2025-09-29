@@ -114,22 +114,20 @@ export default function RowForm({
       // Standard TanStack Query cache update
       queryClient.setQueryData(queryKey, (oldData) => {
         if (!oldData) return oldData;
-        
+
         // Update the specific item in cache
         if (Array.isArray(oldData)) {
-          return oldData.map(item => 
-            item.id === updatedData.id ? { ...item, ...updatedData } : item
-          );
+          return oldData.map((item) => (item.id === updatedData.id ? { ...item, ...updatedData } : item));
         }
-        
+
         // Single item update
         if (oldData.id === updatedData.id) {
           return { ...oldData, ...updatedData };
         }
-        
+
         return oldData;
       });
-      
+
       // Invalidate related queries
       queryClient.invalidateQueries({ queryKey });
 
@@ -256,8 +254,6 @@ export default function RowForm({
 
       // Only process file uploads for entities that support rich text fields
       if (supportsFileUploads(modelName)) {
-        console.log("🔄 Frontend: Checking for localStorage images to upload...");
-
         // Show initial upload status
         setToast({
           show: true,
@@ -274,8 +270,6 @@ export default function RowForm({
         updatedForm = await prepareTempImagesForUpload(form, uploadImage, (message, type) => {
           setToast({ show: true, message, type, persistent: true });
         });
-
-        console.log("✅ Frontend: All localStorage images uploaded successfully");
 
         // Update the form state with the new URLs so user sees uploaded images
         setForm(updatedForm);

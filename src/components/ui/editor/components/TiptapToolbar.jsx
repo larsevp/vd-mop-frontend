@@ -14,8 +14,8 @@ const ToolbarButton = React.forwardRef(({ onClick, active, disabled, children, t
     className={cn(
       "px-3 py-1.5 rounded text-sm font-medium transition-colors border",
       "disabled:opacity-50 disabled:cursor-not-allowed",
-      active 
-        ? "bg-primary text-primary-foreground border-primary shadow-sm hover:bg-primary/90" 
+      active
+        ? "bg-primary text-primary-foreground border-primary shadow-sm hover:bg-primary/90"
         : "bg-background text-foreground border-border hover:bg-accent hover:text-accent-foreground hover:border-accent-foreground/20",
       className
     )}
@@ -36,9 +36,9 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
   // Track active formatting states for immediate button feedback
   const [activeMarks, setActiveMarks] = useState({
     bold: false,
-    italic: false, 
+    italic: false,
     underline: false,
-    highlight: false
+    highlight: false,
   });
 
   // Force re-render when editor state changes for proper button states
@@ -48,15 +48,15 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
     const updateSelection = () => {
       setIsInTable(editor.isActive("table"));
       setIsImageSelected(editor.isActive("image"));
-      
+
       // Update active marks state
       setActiveMarks({
         bold: editor.isActive("bold"),
         italic: editor.isActive("italic"),
         underline: editor.isActive("underline"),
-        highlight: editor.isActive("highlight")
+        highlight: editor.isActive("highlight"),
       });
-      
+
       forceUpdate({}); // Force re-render to update button active states
     };
 
@@ -71,28 +71,31 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
   }, [editor]);
 
   // Helper to check if a mark is active (either in selection or stored marks)
-  const isMarkActive = useCallback((markName) => {
-    try {
-      const { state } = editor;
-      const { selection, storedMarks } = state;
-      
-      // If there's a selection, check if the mark is active in the selection
-      if (!selection.empty) {
+  const isMarkActive = useCallback(
+    (markName) => {
+      try {
+        const { state } = editor;
+        const { selection, storedMarks } = state;
+
+        // If there's a selection, check if the mark is active in the selection
+        if (!selection.empty) {
+          return editor.isActive(markName);
+        }
+
+        // For empty selections, check stored marks (marks that will be applied to new text)
+        if (storedMarks) {
+          return storedMarks.some((mark) => mark.type.name === markName);
+        }
+
+        // Fallback: check if the mark would be active at the current position
+        return editor.isActive(markName);
+      } catch (error) {
+        console.debug("Error checking mark active state:", error);
         return editor.isActive(markName);
       }
-      
-      // For empty selections, check stored marks (marks that will be applied to new text)
-      if (storedMarks) {
-        return storedMarks.some(mark => mark.type.name === markName);
-      }
-      
-      // Fallback: check if the mark would be active at the current position
-      return editor.isActive(markName);
-    } catch (error) {
-      console.debug('Error checking mark active state:', error);
-      return editor.isActive(markName);
-    }
-  }, [editor]);
+    },
+    [editor]
+  );
 
   // Toggle mark across a multi-cell selection if present; otherwise act normally
   const toggleMarkAcrossCells = useCallback(
@@ -347,14 +350,7 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
     input.onchange = async (e) => {
       const file = e.target.files?.[0];
       if (file) {
-        console.log("🖼️ Frontend: Image selected:", {
-          name: file.name,
-          size: file.size,
-          type: file.type,
-        });
-
         try {
-          console.log("📦 Frontend: Storing selected image in localStorage...");
           onShowToast("Lagrer bilde lokalt...", "info");
 
           // Import the storage function dynamically
@@ -362,8 +358,6 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
 
           // Store the image in localStorage
           const tempImageData = await storeTempImage(file);
-
-          console.log("✅ Frontend: Image stored in localStorage:", tempImageData.id);
 
           // Check if we can insert the image before trying
           if (!editor.can().setImage({ src: tempImageData.url })) {
@@ -374,7 +368,6 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
 
           // Insert the image using the base64 data URL
           try {
-            console.log("� Frontend: Inserting image from localStorage...");
             editor
               .chain()
               .focus()
@@ -385,7 +378,6 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
               })
               .run();
 
-            console.log("✅ Frontend: Image inserted from localStorage");
             onShowToast("Bilde valgt og lagret! Vil bli lastet opp ved lagring.", "success");
           } catch (insertError) {
             console.error("❌ Frontend: Failed to insert image from localStorage:", insertError);
@@ -419,12 +411,12 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
         if (text && text.trim()) {
           // Create a synthetic paste event with the clipboard text
           const clipboardData = new DataTransfer();
-          clipboardData.setData('text/plain', text);
+          clipboardData.setData("text/plain", text);
 
-          const pasteEvent = new ClipboardEvent('paste', {
+          const pasteEvent = new ClipboardEvent("paste", {
             clipboardData: clipboardData,
             bubbles: true,
-            cancelable: true
+            cancelable: true,
           });
 
           // Dispatch to the editor DOM element
@@ -435,14 +427,14 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
       } else {
         // Fallback: try execCommand
         editor.view.dom.focus();
-        if (document.execCommand && document.execCommand('paste')) {
+        if (document.execCommand && document.execCommand("paste")) {
           // execCommand worked
         } else {
           onShowToast("Utklippstavle ikke tilgjengelig - bruk Ctrl+V", "error");
         }
       }
     } catch (error) {
-      console.error('Paste failed:', error);
+      console.error("Paste failed:", error);
       onShowToast("Kunne ikke lime inn - bruk Ctrl+V", "error");
     }
   }, [editor, onShowToast]);
@@ -462,12 +454,12 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
         if (text && text.trim()) {
           // Create a synthetic paste event with the clipboard text
           const clipboardData = new DataTransfer();
-          clipboardData.setData('text/plain', text);
+          clipboardData.setData("text/plain", text);
 
-          const pasteEvent = new ClipboardEvent('paste', {
+          const pasteEvent = new ClipboardEvent("paste", {
             clipboardData: clipboardData,
             bubbles: true,
-            cancelable: true
+            cancelable: true,
           });
 
           // Dispatch to the editor DOM element
@@ -478,14 +470,14 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
       } else {
         // Fallback: try execCommand
         editor.view.dom.focus();
-        if (document.execCommand && document.execCommand('paste')) {
+        if (document.execCommand && document.execCommand("paste")) {
           // execCommand worked
         } else {
           onShowToast("Utklippstavle ikke tilgjengelig - bruk Ctrl+V", "error");
         }
       }
     } catch (error) {
-      console.error('Paste with formatting failed:', error);
+      console.error("Paste with formatting failed:", error);
       // Reset the flag if paste failed
       if (editor.storage.smartPaste) {
         editor.storage.smartPaste.preserveFormatting = false;
@@ -504,38 +496,38 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
     <>
       <div className="border-b border-border p-2 flex items-center gap-1 flex-wrap">
         {/* Text Formatting */}
-        <ToolbarButton 
+        <ToolbarButton
           onClick={() => {
             editor.chain().focus().toggleBold().run();
-          }} 
-          active={activeMarks.bold} 
+          }}
+          active={activeMarks.bold}
           title="Bold (Ctrl+B)"
         >
           <strong>B</strong>
         </ToolbarButton>
-        <ToolbarButton 
+        <ToolbarButton
           onClick={() => {
             editor.chain().focus().toggleItalic().run();
-          }} 
-          active={activeMarks.italic} 
+          }}
+          active={activeMarks.italic}
           title="Italic (Ctrl+I)"
         >
           <em>I</em>
         </ToolbarButton>
-        <ToolbarButton 
+        <ToolbarButton
           onClick={() => {
             editor.chain().focus().toggleUnderline().run();
-          }} 
-          active={activeMarks.underline} 
+          }}
+          active={activeMarks.underline}
           title="Underline (Ctrl+U)"
         >
           <u>U</u>
         </ToolbarButton>
-        <ToolbarButton 
+        <ToolbarButton
           onClick={() => {
             editor.chain().focus().toggleHighlight().run();
-          }} 
-          active={activeMarks.highlight} 
+          }}
+          active={activeMarks.highlight}
           title="Highlight (Ctrl+H)"
         >
           <span className="bg-yellow-200 text-yellow-900 px-1 rounded font-semibold">H</span>
@@ -548,13 +540,20 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
           <ToolbarButton
             onClick={() => {
               // Clear all formatting: marks, headings, and links
-              editor.chain()
+              editor
+                .chain()
                 .focus()
                 .clearNodes() // Remove headings, lists, etc.
                 .unsetAllMarks() // Remove bold, italic, underline, highlight, etc.
                 .run();
             }}
-            active={!editor.isActive("heading") && !editor.isActive("bold") && !editor.isActive("italic") && !editor.isActive("underline") && !editor.isActive("highlight")}
+            active={
+              !editor.isActive("heading") &&
+              !editor.isActive("bold") &&
+              !editor.isActive("italic") &&
+              !editor.isActive("underline") &&
+              !editor.isActive("highlight")
+            }
             title="Normal Text (removes all formatting)"
           >
             Normal

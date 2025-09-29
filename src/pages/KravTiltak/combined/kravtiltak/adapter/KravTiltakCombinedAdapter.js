@@ -22,13 +22,6 @@ export class KravTiltakCombinedAdapter {
     this.kravAdapter = createKravAdapter(kravConfig);
     this.tiltakAdapter = createTiltakAdapter(tiltakConfig);
     this.entityType = "combined-krav-tiltak";
-
-    if (this.options.debug) {
-      console.log("KravTiltakCombinedAdapter: Initialized", {
-        entityType: this.entityType,
-        options: this.options,
-      });
-    }
   }
 
   // === DISPLAY CONFIGURATION ===
@@ -289,12 +282,6 @@ export class KravTiltakCombinedAdapter {
     const { entityType: _, ...cleanEntityData } = entityData;
 
     // Debug: Check what we're sending to individual adapter
-    console.log("KravTiltakCombinedAdapter.save debug:", {
-      originalEntityData: entityData,
-      detectedEntityType: entityType,
-      cleanEntityData: cleanEntityData,
-      hasEntityTypeInClean: "entityType" in cleanEntityData,
-    });
 
     if (entityType === "krav" && this.kravAdapter?.config) {
       const config = this.kravAdapter.config;
@@ -348,14 +335,6 @@ export class KravTiltakCombinedAdapter {
    * @param {string} entityType - The entity type context from EntityWorkspace (proper DI)
    */
   onSaveComplete(result, isCreate, handleEntitySelect, entityType = null) {
-    if (this.options.debug) {
-      console.log("KravTiltakCombinedAdapter onSaveComplete - domain business logic:", {
-        result,
-        entityType,
-        isCreate,
-      });
-    }
-
     // Adapter responsibility: Domain-specific business logic only
     // Examples: cache invalidation, notifications, analytics, business rules
 

@@ -1,13 +1,13 @@
 /**
  * Generic Workspace Store - Restored with DTO Integration
- * 
+ *
  * Unified state management for entity workspaces using Zustand.
  * Routes all entity operations through DTO contracts while maintaining
  * generic infrastructure concerns (caching, state, optimistic updates).
  */
 
-import { create } from 'zustand';
-import { devtools, subscribeWithSelector } from 'zustand/middleware';
+import { create } from "zustand";
+import { devtools, subscribeWithSelector } from "zustand/middleware";
 
 /**
  * Create a generic workspace store that works with DTOs
@@ -16,12 +16,8 @@ export const createGenericWorkspaceStore = (entityType, config = {}) => {
   const storeConfig = {
     debug: false,
     persist: false,
-    ...config
+    ...config,
   };
-
-  if (storeConfig.debug) {
-    console.log(`GenericWorkspaceStore[${entityType}]: Creating store with DTO:`, !!config.dto);
-  }
 
   return create(
     devtools(
@@ -30,14 +26,14 @@ export const createGenericWorkspaceStore = (entityType, config = {}) => {
           // ============ CORE STATE ============
           entityType,
           dto: config.dto || null,
-          
+
           // ============ DATA STATE ============
           // Entity collection
           entities: [],
           rawData: null,
           loading: false,
           error: null,
-          
+
           // Pagination
           pagination: {
             page: 1,
@@ -45,80 +41,72 @@ export const createGenericWorkspaceStore = (entityType, config = {}) => {
             totalCount: 0,
             totalPages: 1,
             hasNextPage: false,
-            hasPreviousPage: false
+            hasPreviousPage: false,
           },
-          
+
           // ============ UI STATE ============
           // Search and filters
-          searchQuery: '',
+          searchQuery: "",
           filters: {
-            filterBy: 'all',
-            sortBy: 'id',
-            sortOrder: 'asc',
-            additionalFilters: {}
+            filterBy: "all",
+            sortBy: "id",
+            sortOrder: "asc",
+            additionalFilters: {},
           },
-          
+
           // Selection and focus
           selectedEntities: new Set(),
           selectedEntity: null,
           focusedEntity: null,
           expandedEntities: new Set(),
-          
+
           // View state
-          viewMode: 'list', // 'list', 'cards', 'unified'
+          viewMode: "list", // 'list', 'cards', 'unified'
           showFilters: false,
           showBulkActions: false,
-          
+
           // Available filter options (populated from data)
           availableFilters: {
             statuses: [],
             vurderinger: [],
             emner: [],
-            priorities: []
+            priorities: [],
           },
-          
+
           // Statistics
           stats: {
             total: 0,
             obligatoriske: 0,
             valgfrie: 0,
             completed: 0,
-            pending: 0
+            pending: 0,
           },
-          
+
           // Cache and services
           cacheManager: null,
           queryClient: null,
-          
+
           // ============ INITIALIZATION ============
           initialize: (queryClient, userContext) => {
-            if (storeConfig.debug) {
-              console.log(`GenericWorkspaceStore[${entityType}]: Initializing with queryClient`);
-            }
-            
-            set(state => ({
+            set((state) => ({
               ...state,
               queryClient,
               cacheManager: queryClient, // Simple cache reference
-              initialized: true
+              initialized: true,
             }));
           },
-          
+
           // ============ DATA LOADING ACTIONS ============
           loadEntities: async (options = {}) => {
             const state = get();
-            
-            if (storeConfig.debug) {
-              console.log(`GenericWorkspaceStore[${entityType}]: loadEntities called`, options);
-            }
-            
+
             // Set loading state
-            set(prevState => ({
+            set((prevState) => ({
               ...prevState,
               loading: true,
-              error: null
+              error: null,
             }));
-            
+
             try {
               // Route through DTO if available
               if (state.dto && state.dto.loadData) {
@@ -127,15 +115,11 @@ export const createGenericWorkspaceStore = (entityType, config = {}) => {
                   pageSize: state.pagination.pageSize,
                   searchQuery: state.searchQuery,
                   ...state.filters,
-                  ...options
+                  ...options,
                 });
-                
-                if (storeConfig.debug) {
-                  console.log(`GenericWorkspaceStore[${entityType}]: DTO loadData result:`, result);
-                }
-                
+
                 // Update store with results
-                set(prevState => ({
+                set((prevState) => ({
                   ...prevState,
                   entities: result.items || [],
                   rawData: result,
@@ -145,77 +129,75 @@ export const createGenericWorkspaceStore = (entityType, config = {}) => {
                     totalCount: result.total || 0,
                     totalPages: result.totalPages || 1,
                     hasNextPage: result.hasNextPage || false,
-                    hasPreviousPage: result.hasPreviousPage || false
+                    hasPreviousPage: result.hasPreviousPage || false,
                   },
                   loading: false,
-                  error: null
+                  error: null,
                 }));
-                
+
                 // Extract available filters if DTO provides extraction method
                 if (state.dto.extractAvailableFilters && result.items?.length > 0) {
                   const availableFilters = state.dto.extractAvailableFilters(result.items);
-                  set(prevState => ({
+                  set((prevState) => ({
                     ...prevState,
-                    availableFilters
+                    availableFilters,
                   }));
                 }
-                
               } else {
                 console.warn(`GenericWorkspaceStore[${entityType}]: No DTO or loadData method available`);
-                set(prevState => ({
+                set((prevState) => ({
                   ...prevState,
                   loading: false,
-                  error: 'No data loading method available'
+                  error: "No data loading method available",
                 }));
               }
-              
             } catch (error) {
               console.error(`GenericWorkspaceStore[${entityType}]: Load error:`, error);
-              set(prevState => ({
+              set((prevState) => ({
                 ...prevState,
                 loading: false,
-                error: error.message || 'Failed to load entities'
+                error: error.message || "Failed to load entities",
               }));
             }
           },
-          
+
           // ============ SEARCH AND FILTER ACTIONS ============
           setSearchQuery: (query) => {
-            set(state => ({
+            set((state) => ({
               ...state,
               searchQuery: query,
-              pagination: { ...state.pagination, page: 1 }
+              pagination: { ...state.pagination, page: 1 },
             }));
           },
-          
+
           setFilters: (newFilters) => {
-            set(state => ({
+            set((state) => ({
               ...state,
               filters: { ...state.filters, ...newFilters },
-              pagination: { ...state.pagination, page: 1 }
+              pagination: { ...state.pagination, page: 1 },
             }));
           },
-          
+
           setPage: (page) => {
-            set(state => ({
+            set((state) => ({
               ...state,
-              pagination: { ...state.pagination, page }
+              pagination: { ...state.pagination, page },
             }));
           },
-          
+
           // ============ SELECTION ACTIONS ============
           setSelectedEntity: (entity) => {
-            set(state => ({ ...state, selectedEntity: entity }));
+            set((state) => ({ ...state, selectedEntity: entity }));
           },
-          
+
           clearSelection: () => {
-            set(state => ({
+            set((state) => ({
               ...state,
               selectedEntities: new Set(),
-              selectedEntity: null
+              selectedEntity: null,
             }));
           },
-          
+
           // ============ OPTIMISTIC UPDATES ============
           optimisticCreate: (entityData) => {
             const tempId = `temp-${Date.now()}`;
@@ -223,48 +205,44 @@ export const createGenericWorkspaceStore = (entityType, config = {}) => {
               ...entityData,
               id: tempId,
               _isOptimistic: true,
-              _tempId: tempId
+              _tempId: tempId,
             };
-            
-            set(state => ({
+
+            set((state) => ({
               ...state,
-              entities: [tempEntity, ...state.entities]
+              entities: [tempEntity, ...state.entities],
             }));
-            
+
             return tempId;
           },
-          
+
           optimisticUpdate: (entityId, updates) => {
-            set(state => ({
+            set((state) => ({
               ...state,
-              entities: state.entities.map(entity =>
-                entity.id === entityId
-                  ? { ...entity, ...updates, _isOptimistic: true }
-                  : entity
-              )
+              entities: state.entities.map((entity) => (entity.id === entityId ? { ...entity, ...updates, _isOptimistic: true } : entity)),
             }));
           },
-          
+
           optimisticDelete: (entityId) => {
-            set(state => ({
+            set((state) => ({
               ...state,
-              entities: state.entities.filter(entity => entity.id !== entityId)
+              entities: state.entities.filter((entity) => entity.id !== entityId),
             }));
           },
-          
+
           rollbackOptimistic: () => {
             // This would need backup state for proper rollback
-            console.log(`GenericWorkspaceStore[${entityType}]: Rollback optimistic changes`);
+
             // For now, just trigger a reload
             const state = get();
             if (state.loadEntities) {
               state.loadEntities({ force: true });
             }
           },
-          
+
           // ============ UTILITY METHODS ============
           reset: () => {
-            set(state => ({
+            set((state) => ({
               ...state,
               entities: [],
               rawData: null,
@@ -272,12 +250,12 @@ export const createGenericWorkspaceStore = (entityType, config = {}) => {
               error: null,
               selectedEntity: null,
               selectedEntities: new Set(),
-              searchQuery: '',
+              searchQuery: "",
               filters: {
-                filterBy: 'all',
-                sortBy: 'id',
-                sortOrder: 'asc',
-                additionalFilters: {}
+                filterBy: "all",
+                sortBy: "id",
+                sortOrder: "asc",
+                additionalFilters: {},
               },
               pagination: {
                 page: 1,
@@ -285,11 +263,11 @@ export const createGenericWorkspaceStore = (entityType, config = {}) => {
                 totalCount: 0,
                 totalPages: 1,
                 hasNextPage: false,
-                hasPreviousPage: false
-              }
+                hasPreviousPage: false,
+              },
             }));
           },
-          
+
           getDebugInfo: () => {
             const state = get();
             return {
@@ -301,9 +279,9 @@ export const createGenericWorkspaceStore = (entityType, config = {}) => {
               hasQueryClient: !!state.queryClient,
               searchQuery: state.searchQuery,
               filters: state.filters,
-              pagination: state.pagination
+              pagination: state.pagination,
             };
-          }
+          },
         };
       }),
       { name: `workspace-store-${entityType}` }

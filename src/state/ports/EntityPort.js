@@ -1,6 +1,6 @@
 /**
  * EntityPort - Single entry point for all entity operations
- * 
+ *
  * This port centralizes all entity-related state operations, providing
  * a clean interface between the UI components and the underlying state management.
  * All entity operations (CRUD, search, filtering) go through this port.
@@ -22,11 +22,7 @@ export class EntityPort {
     this.debug = enabled;
   }
 
-  log(message, data) {
-    if (this.debug) {
-      console.log(`[EntityPort] ${message}`, data);
-    }
-  }
+  log(message, data) {}
 
   // ============ CORE ENTITY OPERATIONS ============
 
@@ -34,14 +30,9 @@ export class EntityPort {
    * Load entities for a specific type
    */
   async loadEntities(entityType, options = {}) {
-    this.log('Loading entities', { entityType, options });
-    
-    const { 
-      filters = {}, 
-      pagination = {}, 
-      searchQuery = '',
-      force = false 
-    } = options;
+    this.log("Loading entities", { entityType, options });
+
+    const { filters = {}, pagination = {}, searchQuery = "", force = false } = options;
 
     // Set loading state
     this.entityStore.getState().setLoading(true);
@@ -62,7 +53,7 @@ export class EntityPort {
         ...filters,
         page: pagination.page || 1,
         pageSize: pagination.pageSize || 50,
-        force
+        force,
       });
 
       // Update store with results
@@ -74,7 +65,7 @@ export class EntityPort {
         totalCount: result.total || 0,
         totalPages: result.totalPages || 1,
         hasNextPage: result.hasNextPage || false,
-        hasPreviousPage: result.hasPreviousPage || false
+        hasPreviousPage: result.hasPreviousPage || false,
       });
 
       // Extract available filters if supported
@@ -86,16 +77,15 @@ export class EntityPort {
       // Update workspace state
       workspaceState.updateLastLoaded(entityType, Date.now());
 
-      this.log('Entities loaded successfully', { 
-        entityType, 
-        count: result.items?.length || 0 
+      this.log("Entities loaded successfully", {
+        entityType,
+        count: result.items?.length || 0,
       });
 
       return result;
-
     } catch (error) {
-      this.log('Error loading entities', { entityType, error });
-      this.entityStore.getState().setError(error.message || 'Failed to load entities');
+      this.log("Error loading entities", { entityType, error });
+      this.entityStore.getState().setError(error.message || "Failed to load entities");
       throw error;
     } finally {
       this.entityStore.getState().setLoading(false);
@@ -106,7 +96,7 @@ export class EntityPort {
    * Create a new entity
    */
   async createEntity(entityType, entityData) {
-    this.log('Creating entity', { entityType, entityData });
+    this.log("Creating entity", { entityType, entityData });
 
     try {
       // Validate data
@@ -126,21 +116,19 @@ export class EntityPort {
       try {
         // Create through DTO
         const result = await dto.createEntity(entityData);
-        
+
         // Replace temp entity with real entity
         this.entityStore.getState().replaceTempEntity(tempId, result);
-        
-        this.log('Entity created successfully', { entityType, result });
-        return result;
 
+        this.log("Entity created successfully", { entityType, result });
+        return result;
       } catch (error) {
         // Rollback optimistic update
         this.entityStore.getState().rollbackOptimistic(tempId);
         throw error;
       }
-
     } catch (error) {
-      this.log('Error creating entity', { entityType, error });
+      this.log("Error creating entity", { entityType, error });
       throw error;
     }
   }
@@ -149,7 +137,7 @@ export class EntityPort {
    * Update an existing entity
    */
   async updateEntity(entityType, entityId, updates) {
-    this.log('Updating entity', { entityType, entityId, updates });
+    this.log("Updating entity", { entityType, entityId, updates });
 
     try {
       // Validate updates
@@ -169,21 +157,19 @@ export class EntityPort {
       try {
         // Update through DTO
         const result = await dto.updateEntity(entityId, updates);
-        
+
         // Update with real result
         this.entityStore.getState().updateEntity(entityId, result);
-        
-        this.log('Entity updated successfully', { entityType, entityId });
-        return result;
 
+        this.log("Entity updated successfully", { entityType, entityId });
+        return result;
       } catch (error) {
         // Rollback optimistic update
         this.entityStore.getState().rollbackOptimistic();
         throw error;
       }
-
     } catch (error) {
-      this.log('Error updating entity', { entityType, entityId, error });
+      this.log("Error updating entity", { entityType, entityId, error });
       throw error;
     }
   }
@@ -192,7 +178,7 @@ export class EntityPort {
    * Delete an entity
    */
   async deleteEntity(entityType, entityId) {
-    this.log('Deleting entity', { entityType, entityId });
+    this.log("Deleting entity", { entityType, entityId });
 
     try {
       // Get DTO
@@ -203,16 +189,15 @@ export class EntityPort {
 
       // Store entity for potential rollback
       const entity = this.entityStore.getState().getEntity(entityId);
-      
+
       // Optimistic delete
       this.entityStore.getState().optimisticDelete(entityId);
 
       try {
         // Delete through DTO
         await dto.deleteEntity(entityId);
-        
-        this.log('Entity deleted successfully', { entityType, entityId });
 
+        this.log("Entity deleted successfully", { entityType, entityId });
       } catch (error) {
         // Rollback - restore entity
         if (entity) {
@@ -220,9 +205,8 @@ export class EntityPort {
         }
         throw error;
       }
-
     } catch (error) {
-      this.log('Error deleting entity', { entityType, entityId, error });
+      this.log("Error deleting entity", { entityType, entityId, error });
       throw error;
     }
   }
@@ -233,15 +217,15 @@ export class EntityPort {
    * Update search query and reload data
    */
   async updateSearchQuery(entityType, query) {
-    this.log('Updating search query', { entityType, query });
-    
+    this.log("Updating search query", { entityType, query });
+
     // Update store state
     this.entityStore.getState().setSearchQuery(query);
-    
+
     // Reload data with new search
-    return this.loadEntities(entityType, { 
+    return this.loadEntities(entityType, {
       searchQuery: query,
-      pagination: { page: 1 } // Reset to first page
+      pagination: { page: 1 }, // Reset to first page
     });
   }
 
@@ -249,15 +233,15 @@ export class EntityPort {
    * Update filters and reload data
    */
   async updateFilters(entityType, filters) {
-    this.log('Updating filters', { entityType, filters });
-    
+    this.log("Updating filters", { entityType, filters });
+
     // Update store state
     this.entityStore.getState().setFilters(filters);
-    
+
     // Reload data with new filters
-    return this.loadEntities(entityType, { 
+    return this.loadEntities(entityType, {
       filters,
-      pagination: { page: 1 } // Reset to first page
+      pagination: { page: 1 }, // Reset to first page
     });
   }
 
@@ -265,11 +249,11 @@ export class EntityPort {
    * Update pagination and reload data
    */
   async updatePagination(entityType, pagination) {
-    this.log('Updating pagination', { entityType, pagination });
-    
+    this.log("Updating pagination", { entityType, pagination });
+
     // Update store state
     this.entityStore.getState().setPagination(pagination);
-    
+
     // Reload data with new pagination
     return this.loadEntities(entityType, { pagination });
   }
@@ -280,7 +264,7 @@ export class EntityPort {
    * Set selected entity
    */
   setSelectedEntity(entity) {
-    this.log('Setting selected entity', { entity });
+    this.log("Setting selected entity", { entity });
     this.entityStore.getState().setSelectedEntity(entity);
   }
 
@@ -288,7 +272,7 @@ export class EntityPort {
    * Clear all selections
    */
   clearSelection() {
-    this.log('Clearing selection');
+    this.log("Clearing selection");
     this.entityStore.getState().clearSelection();
   }
 
@@ -307,7 +291,7 @@ export class EntityPort {
   getState(entityType) {
     const entityState = this.entityStore.getState();
     const workspaceState = this.workspaceStore.getState();
-    
+
     return {
       entities: entityState.entities,
       loading: entityState.loading,
@@ -318,7 +302,7 @@ export class EntityPort {
       selectedEntity: entityState.selectedEntity,
       availableFilters: entityState.availableFilters,
       currentWorkspace: workspaceState.currentWorkspace,
-      dto: workspaceState.getDTO(entityType)
+      dto: workspaceState.getDTO(entityType),
     };
   }
 
@@ -326,7 +310,7 @@ export class EntityPort {
    * Reset all entity state
    */
   reset() {
-    this.log('Resetting entity state');
+    this.log("Resetting entity state");
     this.entityStore.getState().reset();
   }
 }
@@ -342,7 +326,7 @@ export const useEntityPort = (entityStore, workspaceStore, services = {}) => {
   if (!entityPortInstance) {
     entityPortInstance = new EntityPort(entityStore, workspaceStore, services);
   }
-  
+
   return entityPortInstance;
 };
 

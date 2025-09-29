@@ -19,15 +19,12 @@ export default function AuthRedirectPage() {
   useEffect(() => {
     const handleRedirectResponse = async () => {
       try {
-        console.log("[AuthRedirect] Processing authentication redirect...");
-
         // Handle the redirect response from Azure AD
         const response = await instance.handleRedirectPromise();
 
         if (response) {
           // Successful authentication
           const username = response.account?.username || response.account?.name || "unknown";
-          console.log("[AuthRedirect] Authentication successful for:", username);
 
           // Extract return URL from the state parameter
           let returnUrl = "/"; // Default to home page
@@ -36,17 +33,15 @@ export default function AuthRedirectPage() {
             try {
               const state = JSON.parse(response.state);
               returnUrl = state.returnUrl || "/";
-              console.log("[AuthRedirect] Extracted return URL:", returnUrl);
             } catch (error) {
               console.warn("[AuthRedirect] Could not parse state parameter:", error);
             }
           }
 
-          console.log("[AuthRedirect] Navigating to:", returnUrl);
           navigate(returnUrl, { replace: true });
         } else {
           // No response means no authentication occurred
-          console.log("[AuthRedirect] No authentication response, redirecting to login");
+
           navigate("/login", { replace: true });
         }
       } catch (error) {
@@ -54,13 +49,10 @@ export default function AuthRedirectPage() {
 
         // Handle specific MSAL errors
         if (error.errorCode === "user_cancelled") {
-          console.log("[AuthRedirect] User cancelled authentication");
           navigate("/login?error=cancelled", { replace: true });
         } else if (error.errorCode === "access_denied") {
-          console.log("[AuthRedirect] Access denied by user or policy");
           navigate("/login?error=access_denied", { replace: true });
         } else {
-          console.log("[AuthRedirect] General authentication error");
           navigate("/login?error=auth_failed", { replace: true });
         }
       }

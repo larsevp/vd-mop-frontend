@@ -1,6 +1,6 @@
 /**
  * Entity State Management Contract
- * 
+ *
  * This defines the contract for entity state management that all
  * domain-specific implementations must follow.
  */
@@ -11,37 +11,37 @@
  */
 export class EntityStateContract {
   constructor(dto, options = {}) {
-    if (!dto) throw new Error('EntityStateContract requires a DTO');
-    
+    if (!dto) throw new Error("EntityStateContract requires a DTO");
+
     this.dto = dto;
     this.options = { debug: false, ...options };
-    this.entityType = dto.getPrimaryEntityType ? dto.getPrimaryEntityType() : 'unknown';
-    
+    this.entityType = dto.getPrimaryEntityType ? dto.getPrimaryEntityType() : "unknown";
+
     // Core state
     this.entities = [];
     this.loading = false;
     this.error = null;
     this.selectedEntity = null;
-    this.searchQuery = '';
+    this.searchQuery = "";
     this.filters = {};
     this.pagination = { page: 1, pageSize: 50, total: 0 };
-    
+
     // Cache state
     this.lastLoaded = null;
     this.cacheKey = null;
     this.isStale = false;
-    
+
     // Subscribers for reactive updates
     this.subscribers = new Set();
   }
 
   // ============ CORE STATE METHODS (must implement) ============
-  
+
   /**
    * Load entities - main data loading method
    */
   async loadEntities(params = {}) {
-    throw new Error('loadEntities must be implemented by concrete state manager');
+    throw new Error("loadEntities must be implemented by concrete state manager");
   }
 
   /**
@@ -74,21 +74,17 @@ export class EntityStateContract {
    * Generate cache key for current state
    */
   generateCacheKey(params = {}) {
-    const keyParts = [
-      this.entityType,
-      this.searchQuery || '',
-      JSON.stringify(this.filters),
-      JSON.stringify(params),
-    ];
-    return keyParts.join(':');
+    const keyParts = [this.entityType, this.searchQuery || "", JSON.stringify(this.filters), JSON.stringify(params)];
+    return keyParts.join(":");
   }
 
   /**
    * Check if data is stale
    */
-  isDataStale(maxAgeMs = 5 * 60 * 1000) { // 5 minutes default
+  isDataStale(maxAgeMs = 5 * 60 * 1000) {
+    // 5 minutes default
     if (!this.lastLoaded) return true;
-    return (Date.now() - this.lastLoaded) > maxAgeMs;
+    return Date.now() - this.lastLoaded > maxAgeMs;
   }
 
   /**
@@ -99,7 +95,6 @@ export class EntityStateContract {
     this.lastLoaded = null;
     this.cacheKey = null;
     if (this.options.debug) {
-      console.log(`[${this.entityType}] Cache invalidated`);
     }
   }
 
@@ -125,11 +120,11 @@ export class EntityStateContract {
    * Notify all subscribers of state changes
    */
   notifySubscribers() {
-    this.subscribers.forEach(callback => {
+    this.subscribers.forEach((callback) => {
       try {
         callback(this.getState());
       } catch (error) {
-        console.error('Subscriber error:', error);
+        console.error("Subscriber error:", error);
       }
     });
   }
@@ -162,7 +157,7 @@ export class EntityStateContract {
     this.loading = false;
     this.error = null;
     this.selectedEntity = null;
-    this.searchQuery = '';
+    this.searchQuery = "";
     this.filters = {};
     this.pagination = { page: 1, pageSize: 50, total: 0 };
     this.invalidateCache();
@@ -194,7 +189,7 @@ export class EntityStateContract {
 export class CombinedEntityStateContract extends EntityStateContract {
   constructor(dto, options = {}) {
     super(dto, options);
-    
+
     // Combined-specific state
     this.entityTypeFilter = [];
     this.parentChildRelations = new Map();
@@ -207,7 +202,7 @@ export class CombinedEntityStateContract extends EntityStateContract {
    * Load combined entities with cross-entity coordination
    */
   async loadCombinedEntities(params = {}) {
-    throw new Error('loadCombinedEntities must be implemented by combined state manager');
+    throw new Error("loadCombinedEntities must be implemented by combined state manager");
   }
 
   /**
@@ -224,7 +219,6 @@ export class CombinedEntityStateContract extends EntityStateContract {
   async syncRelatedEntities(primaryEntity) {
     // Override in concrete implementation
     if (this.options.debug) {
-      console.log(`[${this.entityType}] Syncing related entities for:`, primaryEntity.id);
     }
   }
 
@@ -234,7 +228,6 @@ export class CombinedEntityStateContract extends EntityStateContract {
   async handleCascadingUpdates(entityType, entityId, updates) {
     // Override in concrete implementation
     if (this.options.debug) {
-      console.log(`[${this.entityType}] Handling cascading updates:`, { entityType, entityId });
     }
   }
 
@@ -244,7 +237,7 @@ export class CombinedEntityStateContract extends EntityStateContract {
    * Invalidate cache for specific entity types
    */
   invalidateCacheForTypes(entityTypes) {
-    entityTypes.forEach(type => {
+    entityTypes.forEach((type) => {
       this.crossEntityCache.delete(type);
     });
     this.invalidateCache();
@@ -255,7 +248,7 @@ export class CombinedEntityStateContract extends EntityStateContract {
    */
   generateCacheKey(params = {}) {
     const baseKey = super.generateCacheKey(params);
-    const typeFilter = this.entityTypeFilter.join(',');
+    const typeFilter = this.entityTypeFilter.join(",");
     return `${baseKey}:types:${typeFilter}`;
   }
 

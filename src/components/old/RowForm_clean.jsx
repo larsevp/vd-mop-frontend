@@ -128,7 +128,7 @@ export default function RowForm({
     const validationResult = validateForm();
     if (!validationResult) {
       alert("Form validation failed. Check for errors.");
-      console.log("Validation errors:", errors);
+
       return;
     }
 

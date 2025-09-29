@@ -325,10 +325,16 @@ export class CombinedEntityDTO extends EntityDTOInterface {
       throw new Error("Combined DTO requires entityType parameter for createNewEntity");
     }
 
+    // Include workspace cleanup callback from options if available
+    const finalInitialData = {
+      ...initialData,
+      ...(this.options.onCreateNew && { __onCreateNew: this.options.onCreateNew })
+    };
+
     return {
       __isNew: true,
       __entityType: entityType,
-      ...initialData, // Merge any initial data provided
+      ...finalInitialData, // Merge any initial data provided
     };
   }
 

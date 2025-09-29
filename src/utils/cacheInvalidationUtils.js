@@ -81,10 +81,6 @@ export const invalidateTableComponentCaches = (queryClient, entityName, options 
       exact: false,
     });
   });
-
-  if (options.verbose) {
-    console.log(`🔄 Table Component: Invalidated caches for entity type: ${entityName}`, cacheKeys);
-  }
 };
 
 /**

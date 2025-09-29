@@ -1,10 +1,11 @@
 import React from "react";
-import { EntityWorkspaceNew } from "@/components/EntityWorkspace";
+import { EntityWorkspace } from "@/components/EntityWorkspace";
 import { tiltak as tiltakConfig } from "@/modelConfigs/models/tiltak";
 import { createSingleEntityDTO } from "@/components/EntityWorkspace/interface/data";
 import { createTiltakAdapter } from "./adapter";
 import { renderEntityCard, renderGroupHeader, renderSearchBar, renderDetailPane, getAvailableViewOptions } from "./renderer";
-import { useTiltakViewStore } from "./store";
+import { createWorkspaceUIHook } from "@/components/EntityWorkspace/interface/hooks/createWorkspaceUIHook";
+import { useTiltakViewStore, useTiltakUIStore } from "./store";
 import { RowListHeading } from "../shared";
 
 /**
@@ -37,8 +38,11 @@ const TiltakWorkspace = () => {
   // Get view options state
   const { viewOptions, setViewOptions } = useTiltakViewStore();
 
+  // Create workspace-specific UI hook
+  const { useWorkspaceUI } = createWorkspaceUIHook(useTiltakUIStore);
+
   return (
-    <EntityWorkspaceNew
+    <EntityWorkspace
       key={`${dto.entityType || "tiltak-workspace"}`}
       dto={dto}
       renderEntityCard={renderEntityCard}
@@ -53,6 +57,7 @@ const TiltakWorkspace = () => {
           availableViewOptions={getAvailableViewOptions()}
         />
       )}
+      useWorkspaceUIHook={useWorkspaceUI}
       viewOptions={viewOptions}
       debug={true}
     />

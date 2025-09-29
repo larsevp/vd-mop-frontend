@@ -200,8 +200,9 @@ export const createCombinedRenderer = (config) => {
       return secondaryDetailRenderer(selectedEntity, rendererProps);
     }
 
-    // If we reach here, it means the adapter didn't properly enhance the entity
-    console.warn('CombinedRenderer: Entity type not properly set by adapter. This should be handled in the adapter\'s enhanceEntity() method.', {
+    // If we reach here, entity type doesn't match this workspace's expected types
+    // This can happen during workspace transitions when selecting entities from different workspaces
+    console.info('CombinedRenderer: Entity type mismatch - falling back to generic renderer. This is normal during workspace transitions.', {
       entity: selectedEntity,
       entityType,
       expectedTypes: [primaryType, secondaryType]

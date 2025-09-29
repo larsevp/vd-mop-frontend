@@ -1,81 +1,63 @@
 import { create } from 'zustand';
 
 /**
- * Generic Zustand store for managing form field inheritance and mutual exclusivity
- * 
- * Supports multiple entity types with the same pattern:
- * - tiltak: parentId (tiltak) ↔ krav (multiselect) → emneId inheritance
- * - krav: parentId (krav) ↔ ??? → emneId inheritance  
- * - prosjektTiltak: parentId (prosjektTiltak) ↔ krav (multiselect) → emneId inheritance
- * 
- * The store is entity-agnostic and handles the mutual exclusivity pattern
+ * Clean, simple inheritance stores for workspace isolation
+ * Two separate stores for complete isolation between workspaces
  */
-export const useFormInheritanceStore = create((set, get) => ({
-  // State
+
+// Shared initial state structure
+const createInitialState = () => ({
   inheritedEmne: null,
   source: null, // 'parent' | 'krav' | 'prosjektKrav' | null
-  sourceType: null, // 'tiltak' | 'krav' | 'prosjektTiltak' | null (for context)
-  lastEntityId: null, // Track which entity this state belongs to
-  
-  // Parent connection (can be tiltak, krav, prosjektTiltak, etc.)
+  sourceType: null, // 'tiltak' | 'krav' | 'prosjektTiltak' | null
+  lastEntityId: null,
   parentData: null,
-  parentType: null, // 'tiltak' | 'krav' | 'prosjektTiltak'
-  
-  // Related entity connection (krav, prosjektKrav, etc.)
+  parentType: null,
   relatedEntityData: null,
-  relatedEntityType: null, // 'krav' | 'prosjektKrav' | other
-  
-  // Mutual exclusivity state
+  relatedEntityType: null,
   hasParentConnection: false,
   hasRelatedEntityConnection: false,
-  
-  // Actions - Generic inheritance setters
+});
+
+// KravTiltak workspace store
+export const useKravTiltakInheritanceStore = create((set, get) => ({
+  ...createInitialState(),
+
   setParentInheritance: (parentData, parentType = 'tiltak') => {
-    const state = get();
-    
     set({
-      // Inheritance - inherit the exact emne value (including null/blank)
       inheritedEmne: parentData?.emneId || null,
-      source: parentData ? 'parent' : null, // Connection exists if parentData exists
+      source: parentData ? 'parent' : null,
       sourceType: parentData ? parentType : null,
       parentData,
       parentType: parentData ? parentType : null,
-      
-      // Mutual exclusivity - clear related entity when parent is set
       relatedEntityData: null,
       relatedEntityType: null,
-      hasParentConnection: !!parentData, // Connection exists if parentData exists (regardless of emneId)
+      hasParentConnection: !!parentData,
       hasRelatedEntityConnection: false
     });
   },
-  
+
   setRelatedEntityInheritance: (entityData, entityType = 'krav') => {
     const state = get();
-    
     set({
-      // Inheritance - inherit the exact emne value (including null/blank)
       inheritedEmne: entityData?.emneId || null,
-      source: entityData ? entityType : null, // Connection exists if entityData exists
-      sourceType: entityData ? (state.sourceType || 'tiltak') : null, // Keep context
+      source: entityData ? entityType : null,
+      sourceType: entityData ? (state.sourceType || 'tiltak') : null,
       relatedEntityData: entityData,
       relatedEntityType: entityData ? entityType : null,
-      
-      // Mutual exclusivity - clear parent when related entity is set
       parentData: null,
       parentType: null,
-      hasRelatedEntityConnection: !!entityData, // Connection exists if entityData exists (regardless of emneId)
+      hasRelatedEntityConnection: !!entityData,
       hasParentConnection: false
     });
   },
-  
+
   clearParentConnection: () => {
     const state = get();
-    
     set({
       parentData: null,
       parentType: null,
       hasParentConnection: false,
-      // Only clear inheritance if it was from parent
       ...(state.source === 'parent' && {
         inheritedEmne: null,
         source: null,
@@ -83,15 +65,13 @@ export const useFormInheritanceStore = create((set, get) => ({
       })
     });
   },
-  
+
   clearRelatedEntityConnection: () => {
     const state = get();
-    
     set({
       relatedEntityData: null,
       relatedEntityType: null,
       hasRelatedEntityConnection: false,
-      // Only clear inheritance if it was from related entity
       ...((state.source === 'krav' || state.source === 'prosjektKrav') && {
         inheritedEmne: null,
         source: null,
@@ -99,93 +79,146 @@ export const useFormInheritanceStore = create((set, get) => ({
       })
     });
   },
-  
+
   clearAllInheritance: () => {
-    
-    set({
-      inheritedEmne: null,
-      source: null,
-      sourceType: null,
-      parentData: null,
-      parentType: null,
-      relatedEntityData: null,
-      relatedEntityType: null,
-      hasParentConnection: false,
-      hasRelatedEntityConnection: false
-    });
-  },
-  
-  // Context-aware actions for specific entity types
-  initializeForEntityType: (entityType) => {
-    set({
-      sourceType: entityType
-    });
+    set(createInitialState());
   },
 
-  // Context-aware initialization - only reset when switching between different entities
+  initializeForEntityType: (entityType) => {
+    set({ sourceType: entityType });
+  },
+
   initializeForEntity: (entityId, entityType) => {
     const state = get();
     const currentContext = `${entityType}-${entityId}`;
     const stateContext = `${state.sourceType}-${state.lastEntityId}`;
-    
-    // Only reset if we're switching to a completely different entity (not create-new, handled separately)
+
     if (entityId && currentContext !== stateContext && entityId !== "create-new") {
-      
       set({
-        inheritedEmne: null,
-        source: null,
+        ...createInitialState(),
         sourceType: entityType,
-        parentData: null,
-        parentType: null,
-        relatedEntityData: null,
-        relatedEntityType: null,
-        hasParentConnection: false,
-        hasRelatedEntityConnection: false,
         lastEntityId: entityId
       });
     }
-    
+
     if (entityId === "create-new") {
-      // Always reset for new entity creation
       set({
-        inheritedEmne: null,
-        source: null,
+        ...createInitialState(),
         sourceType: entityType,
-        parentData: null,
-        parentType: null,
-        relatedEntityData: null,
-        relatedEntityType: null,
-        hasParentConnection: false,
-        hasRelatedEntityConnection: false,
         lastEntityId: entityId
       });
     }
   },
-  
-  // Legacy reset - kept for backward compatibility but made more conservative  
+
   resetForWorkspace: (entityType) => {
     const state = get();
-    // Only reset if sourceType is fundamentally different or if no context exists
     if (!state.sourceType || (state.sourceType !== entityType && !state.lastEntityId)) {
       set({
+        ...createInitialState(),
+        sourceType: entityType
+      });
+    }
+  }
+}));
+
+// ProsjektKravTiltak workspace store
+export const useProsjektKravTiltakInheritanceStore = create((set, get) => ({
+  ...createInitialState(),
+
+  setParentInheritance: (parentData, parentType = 'prosjektTiltak') => {
+    set({
+      inheritedEmne: parentData?.emneId || null,
+      source: parentData ? 'parent' : null,
+      sourceType: parentData ? parentType : null,
+      parentData,
+      parentType: parentData ? parentType : null,
+      relatedEntityData: null,
+      relatedEntityType: null,
+      hasParentConnection: !!parentData,
+      hasRelatedEntityConnection: false
+    });
+  },
+
+  setRelatedEntityInheritance: (entityData, entityType = 'prosjektKrav') => {
+    const state = get();
+    set({
+      inheritedEmne: entityData?.emneId || null,
+      source: entityData ? entityType : null,
+      sourceType: entityData ? (state.sourceType || 'prosjektTiltak') : null,
+      relatedEntityData: entityData,
+      relatedEntityType: entityData ? entityType : null,
+      parentData: null,
+      parentType: null,
+      hasRelatedEntityConnection: !!entityData,
+      hasParentConnection: false
+    });
+  },
+
+  clearParentConnection: () => {
+    const state = get();
+    set({
+      parentData: null,
+      parentType: null,
+      hasParentConnection: false,
+      ...(state.source === 'parent' && {
         inheritedEmne: null,
         source: null,
+        sourceType: null
+      })
+    });
+  },
+
+  clearRelatedEntityConnection: () => {
+    const state = get();
+    set({
+      relatedEntityData: null,
+      relatedEntityType: null,
+      hasRelatedEntityConnection: false,
+      ...((state.source === 'krav' || state.source === 'prosjektKrav') && {
+        inheritedEmne: null,
+        source: null,
+        sourceType: null
+      })
+    });
+  },
+
+  clearAllInheritance: () => {
+    set(createInitialState());
+  },
+
+  initializeForEntityType: (entityType) => {
+    set({ sourceType: entityType });
+  },
+
+  initializeForEntity: (entityId, entityType) => {
+    const state = get();
+    const currentContext = `${entityType}-${entityId}`;
+    const stateContext = `${state.sourceType}-${state.lastEntityId}`;
+
+    if (entityId && currentContext !== stateContext && entityId !== "create-new") {
+      set({
+        ...createInitialState(),
         sourceType: entityType,
-        parentData: null,
-        parentType: null,
-        relatedEntityData: null,
-        relatedEntityType: null,
-        hasParentConnection: false,
-        hasRelatedEntityConnection: false
+        lastEntityId: entityId
+      });
+    }
+
+    if (entityId === "create-new") {
+      set({
+        ...createInitialState(),
+        sourceType: entityType,
+        lastEntityId: entityId
       });
     }
   },
-  
-  // Getters for convenience
-  getState: () => get(),
-  
-  // Debug helpers (removed console.log for production)
-  logState: () => {
-    // Debug logging removed for production
+
+  resetForWorkspace: (entityType) => {
+    const state = get();
+    if (!state.sourceType || (state.sourceType !== entityType && !state.lastEntityId)) {
+      set({
+        ...createInitialState(),
+        sourceType: entityType
+      });
+    }
   }
 }));

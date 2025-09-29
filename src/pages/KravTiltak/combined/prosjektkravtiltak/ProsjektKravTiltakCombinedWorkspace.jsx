@@ -4,8 +4,10 @@ import { EntityWorkspace } from "@/components/EntityWorkspace";
 import { createCombinedEntityDTO } from "@/components/EntityWorkspace/interface/data";
 import { createProsjektKravTiltakCombinedAdapter } from "./adapter";
 import { createCombinedRenderer } from "../shared/CombinedRenderer";
-import { useProsjektKravTiltakCombinedViewStore } from "./store";
+import { createWorkspaceUIHook } from "@/components/EntityWorkspace/interface/hooks/createWorkspaceUIHook";
+import { useProsjektKravTiltakCombinedViewStore, useProsjektKravTiltakCombinedUIStore } from "./store";
 import { RowListHeading } from "../../shared";
+import { useKravTiltakInheritanceStore, useProsjektKravTiltakInheritanceStore } from "@/stores/formInheritanceStore";
 
 // Import individual renderers
 import { renderEntityCard as ProsjektKravCardRenderer } from "../../prosjektkrav/renderer/ProsjektKravRenderer";
@@ -40,15 +42,30 @@ import { prosjektTiltak as prosjektTiltakConfig } from "@/modelConfigs/models/pr
 const ProsjektKravTiltakCombinedWorkspace = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  
+
+  // Clear both inheritance stores when this workspace mounts (only once)
+  React.useEffect(() => {
+    useKravTiltakInheritanceStore.getState().clearAllInheritance();
+    useProsjektKravTiltakInheritanceStore.getState().clearAllInheritance();
+  }, []); // Empty dependency array - only run once on mount
+
   // Create combined adapter for project entities
   const adapter = createProsjektKravTiltakCombinedAdapter({ debug: true });
 
-  // Create combined DTO
-  const dto = createCombinedEntityDTO(adapter, { debug: true });
+  // Create combined DTO with workspace-specific cleanup
+  const dto = createCombinedEntityDTO(adapter, {
+    debug: true,
+    onCreateNew: () => {
+      // Clear ProsjektKravTiltak inheritance store when creating new entities
+      useProsjektKravTiltakInheritanceStore.getState().clearAllInheritance();
+    }
+  });
 
   // Get view options state
   const { viewOptions, setViewOptions } = useProsjektKravTiltakCombinedViewStore();
+
+  // Create workspace-specific UI hook
+  const { useWorkspaceUI } = createWorkspaceUIHook(useProsjektKravTiltakCombinedUIStore);
 
   // Handle Flow toggle - navigate to Flow workspace while preserving state
   const handleFlowToggle = () => {
@@ -99,7 +116,7 @@ const ProsjektKravTiltakCombinedWorkspace = () => {
 
   return (
     <EntityWorkspace
-      key={`${dto.entityType || "prosjekt-krav-tiltak-combined-workspace"}`}
+      key="prosjekt-krav-tiltak-combined-workspace-fixed"
       dto={dto}
       renderEntityCard={renderer.renderEntityCard}
       renderGroupHeader={renderer.renderGroupHeader}
@@ -114,6 +131,7 @@ const ProsjektKravTiltakCombinedWorkspace = () => {
           availableViewOptions={renderer.getAvailableViewOptions()}
         />
       )}
+      useWorkspaceUIHook={useWorkspaceUI}
       viewOptions={viewOptions}
       debug={false}
       // Pass Flow toggle to EntityWorkspace header

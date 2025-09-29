@@ -3,4 +3,5 @@
  */
 
 export { useProsjektKravViewStore } from './ProsjektKravViewStore.js';
+export { useProsjektKravUIStore } from './ProsjektKravUIStore.js';
 export { default } from './ProsjektKravViewStore.js';

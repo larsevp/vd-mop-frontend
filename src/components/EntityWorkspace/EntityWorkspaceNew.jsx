@@ -26,7 +26,7 @@ import SearchBarPlaceholder from "./interface/components/SearchBarPlaceholder";
 
 // New hooks (TanStack Query + simple state)
 import { useEntityData } from "./interface/hooks/useEntityData";
-import { useWorkspaceUI } from "./interface/hooks/useWorkspaceUI";
+import { useWorkspaceUI as useDefaultWorkspaceUI } from "./interface/hooks/useWorkspaceUI";
 
 // DTO Interface validation
 import { validateEntityDTO } from "./interface/data/EntityDTOInterface";
@@ -43,6 +43,7 @@ const EntityWorkspaceNew = ({
   renderDetailPane,
   renderSearchBar, // NEW: Allow domains to provide their own search implementation
   renderActionButtons, // NEW: Allow domains to provide custom action buttons
+  useWorkspaceUIHook, // NEW: Allow domains to provide their workspace-specific UI hook
   viewOptions = {},
   debug = false,
   // Optional Flow view support
@@ -69,8 +70,8 @@ const EntityWorkspaceNew = ({
     }
   }, [dto, debug]);
 
-  // Get UI state (search, filters, selection)
-  const ui = useWorkspaceUI();
+  // Get UI state (search, filters, selection) - use provided hook or default
+  const ui = useWorkspaceUIHook ? useWorkspaceUIHook() : useDefaultWorkspaceUI();
 
   // Get server data via TanStack Query + DTO
   const {
@@ -260,10 +261,10 @@ const EntityWorkspaceNew = ({
 
   const handleCreateNew = useCallback(
     (entityType = null, initialData = {}) => {
-      // Import and clear inheritance store before creating new entity
-      import('@/stores/formInheritanceStore.js').then(({ useFormInheritanceStore }) => {
-        useFormInheritanceStore.getState().clearAllInheritance();
-      });
+      // Allow workspace to handle domain-specific cleanup
+      if (typeof initialData?.__onCreateNew === 'function') {
+        initialData.__onCreateNew();
+      }
 
       // Use DTO to create properly structured new entity
       const newEntity = dto.createNewEntity(entityType, initialData);

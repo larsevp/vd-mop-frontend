@@ -11,8 +11,6 @@ export default function ParentSelectField({ field, value, onChange, currentLevel
     queryKey: ["potential-parents", currentLevel],
     queryFn: () => getPotentialParents(currentLevel),
     select: (res) => {
-      console.log("Full response:", res);
-
       // If backend returns array directly (Option 1)
       const actualData = res.data || [];
 
@@ -25,8 +23,6 @@ export default function ParentSelectField({ field, value, onChange, currentLevel
     staleTime: Infinity, // Never automatically refetch - only when form is submitted or cancelled
     cacheTime: Infinity, // Keep in cache indefinitely
   });
-
-  console.log("ParentSelectField - parents:", parents, "currentLevel:", currentLevel); // Debug log
 
   if (isLoading) return <div>Loading parents...</div>;
 
