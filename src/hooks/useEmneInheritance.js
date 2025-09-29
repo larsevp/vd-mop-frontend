@@ -34,32 +34,6 @@ export const useEmneInheritance = (entityType = 'tiltak', entityId = null) => {
     initializeForEntityType(entityType);
   }, [entityType, initializeForEntityType]);
 
-  // Track current entity ID to prevent state leakage between entities
-  const [currentEntityId, setCurrentEntityId] = React.useState(null);
-  
-  // Stable reference to clear function to prevent infinite loops
-  const stableClear = React.useCallback(() => {
-    clearAllInheritance();
-  }, []); // Empty deps - this function is always the same
-
-  // Clear inheritance state when switching between different entities
-  React.useEffect(() => {
-    // Only clear if we're switching to a different entity (not just re-mounting same entity)
-    if (entityId && entityId !== currentEntityId) {
-      // Always clear inheritance state when switching to create new entity
-      if (entityId === 'create-new' || entityId.toString().includes('create')) {
-        stableClear();
-      }
-      // DISABLED: Don't clear if inheritance is actively being used (parent/related entity connections)
-      // This was causing infinite loops when parent/krav with no emne was selected
-      // else if (!hasParentConnection && !hasRelatedEntityConnection && inheritedEmne) {
-      //   console.log('🔧 Clearing residual inheritance');
-      //   stableClear();
-      // }
-      setCurrentEntityId(entityId);
-    }
-  }, [entityId, currentEntityId, hasParentConnection, hasRelatedEntityConnection, inheritedEmne, stableClear]);
-
   // Handle parent inheritance (generic - works for tiltak, krav, prosjektTiltak parents)
   const inheritFromParent = useCallback((parentData, parentEntityType = entityType) => {
     if (parentData) {

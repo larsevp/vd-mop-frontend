@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { Edit, X, Save, RotateCcw, Trash2 } from "lucide-react";
+import { Edit, X, Save, RotateCcw, Trash2, Plus } from "lucide-react";
 import { useQueryClient } from '@tanstack/react-query';
 import { ValidationErrorSummary, FieldRenderer, FieldSection } from "./components";
 import { getEntityTypeConfig } from "../../utils/entityTypeBadges";
+import { TiptapDisplay } from "@/components/ui/editor/TiptapDisplay";
 import {
   getVisibleFields,
   getFieldsBySection,
@@ -23,6 +24,7 @@ const EntityDetailPane = ({
   onSave,
   onDelete,
   onClose,
+  onCreateNew,
   entityType = "entity"
 }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -72,6 +74,17 @@ const EntityDetailPane = ({
   useEffect(() => {
     if (entity) {
       const initialForm = initializeFormData(allFields, entity, modelName);
+
+      // For new entities, ensure relationship fields from initial data are included
+      if (entity.__isNew) {
+        // Include relationship fields that were passed in initial data
+        ['krav', 'prosjektKrav'].forEach(relationField => {
+          if (entity[relationField] !== undefined) {
+            initialForm[relationField] = entity[relationField];
+          }
+        });
+      }
+
       setFormData(initialForm);
     }
   }, [entity, modelName, allFields]);
@@ -254,6 +267,46 @@ const EntityDetailPane = ({
   const currentEntityType = entity?.entityType || entity?.__entityType || entityType;
   const entityConfig = getEntityTypeConfig(currentEntityType);
 
+  // Handle creating connected tiltak from krav
+  const handleCreateConnectedTiltak = useCallback(() => {
+    if (!onCreateNew || !entity) {
+      return;
+    }
+
+    // Support both krav -> tiltak and prosjektkrav -> prosjekttiltak
+    let targetEntityType, relationshipField, relationshipValue;
+
+    const entityTypeLower = currentEntityType.toLowerCase();
+
+    if (entityTypeLower === 'krav') {
+      targetEntityType = 'tiltak';
+      relationshipField = 'krav';
+      relationshipValue = { krav: [entity.id] };
+    } else if (entityTypeLower === 'prosjektkrav') {
+      targetEntityType = 'prosjekttiltak';
+      relationshipField = 'prosjektKrav';
+      relationshipValue = { prosjektKrav: [entity.id] };
+    } else {
+      return; // Not a supported entity type
+    }
+
+    const initialData = {
+      tittel: `Tiltak ${entity.tittel}`, // Add "Tiltak " prefix to the copied krav title
+      ...relationshipValue, // Set the connected relationship
+      // Add source krav context for UI display
+      __sourceKrav: {
+        id: entity.id,
+        tittel: entity.tittel,
+        beskrivelse: entity.beskrivelse,
+        beskrivelseSnippet: entity.beskrivelseSnippet,
+        entityType: currentEntityType
+      }
+    };
+
+    onCreateNew(targetEntityType, initialData);
+  }, [onCreateNew, entity, currentEntityType]);
+
+
   return (
     <div className="flex flex-col min-h-full bg-white">
       {/* Header */}
@@ -324,6 +377,16 @@ const EntityDetailPane = ({
               </>
             ) : (
               <>
+                {/* Show "Lag tilknyttet tiltak" button for krav/prosjektkrav in combined workspace */}
+                {onCreateNew && (currentEntityType.toLowerCase() === 'krav' || currentEntityType.toLowerCase() === 'prosjektkrav') && !isNewEntity && (
+                  <button
+                    onClick={handleCreateConnectedTiltak}
+                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    {currentEntityType.toLowerCase() === 'krav' ? 'Lag tilknyttet tiltak' : 'Lag tilknyttet prosjekttiltak'}
+                  </button>
+                )}
                 <button
                   onClick={() => setIsEditing(true)}
                   className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
@@ -342,7 +405,7 @@ const EntityDetailPane = ({
                 )}
               </>
             )}
-            
+
             {onClose && (
               <button
                 onClick={onClose}
@@ -367,7 +430,35 @@ const EntityDetailPane = ({
       {/* Content */}
       <div ref={detailViewRef} className="flex-1 min-h-0 px-6 py-6">
         <ValidationErrorSummary errors={errors} fields={visibleFields} />
-        
+
+        {/* Source Krav Context Box - only shown when created via "Lag tilknyttet tiltak" */}
+        {entity?.__sourceKrav && (
+          <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <span className="text-blue-600 text-sm font-medium">
+                    {entity.__sourceKrav.entityType === 'prosjektkrav' ? 'PK' : 'K'}
+                  </span>
+                </div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium text-gray-900 mb-1">
+                  Tilknyttet {entity.__sourceKrav.entityType === 'prosjektkrav' ? 'prosjektkrav' : 'krav'}: {entity.__sourceKrav.tittel}
+                </div>
+                {entity.__sourceKrav.beskrivelse && (
+                  <div className="text-sm text-gray-600 mt-2">
+                    <TiptapDisplay
+                      content={entity.__sourceKrav.beskrivelse}
+                      className="text-sm"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="space-y-6">
           {Object.entries(sections).map(([sectionName, sectionInfo]) => {
             const sectionFields = getFieldsBySection(visibleFields)[sectionName] || [];

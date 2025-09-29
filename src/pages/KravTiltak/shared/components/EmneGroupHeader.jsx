@@ -1,5 +1,6 @@
 import React from 'react';
 import { ChevronDown, ChevronRight, FileText } from 'lucide-react';
+import { DynamicIcon } from '@/components/ui/DynamicIcon';
 import { generateTypeCountBadges } from '../utils/entityTypeBadges';
 
 /**
@@ -41,7 +42,11 @@ const EmneGroupHeader = ({
           style={{ backgroundColor: emne?.color || "#6b7280" }}
         >
           <div className="text-white">
-            <FileText size={14} />
+            {emne?.icon ? (
+              <DynamicIcon name={emne.icon} size={14} color="white" />
+            ) : (
+              <FileText size={14} />
+            )}
           </div>
         </div>
         

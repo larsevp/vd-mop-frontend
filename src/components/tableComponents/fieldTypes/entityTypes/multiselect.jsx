@@ -24,14 +24,18 @@ export const multiselectType = {
     // For prosjektTiltak context, use 'prosjektTiltak', otherwise default to 'tiltak'
     const inheritanceEntityType = entityType === 'prosjektTiltak' ? 'prosjektTiltak' : 'tiltak';
 
+    // Get entity ID for proper inheritance tracking (same logic as emneSelect)
+    const isNewEntity = formData?.__isNew || row?.__isNew || data?.__isNew;
+    const entityId = isNewEntity ? 'create-new' : (formData?.id || row?.id || data?.id);
+
     // Use the inheritance hook for mutual exclusivity and inheritance logic
-    const { 
-      handleRelatedEntitySelection, 
-      isFieldDisabled, 
+    const {
+      handleRelatedEntitySelection,
+      isFieldDisabled,
       getDisabledPlaceholder,
       hasParentConnection,
       hasRelatedEntityConnection
-    } = useEmneInheritance(inheritanceEntityType);
+    } = useEmneInheritance(inheritanceEntityType, entityId);
     
     // Store API data for emne inheritance logic
     const [apiData, setApiData] = React.useState([]);

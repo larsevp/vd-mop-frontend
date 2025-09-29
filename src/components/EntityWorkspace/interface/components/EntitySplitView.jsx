@@ -21,6 +21,7 @@ const EntitySplitView = ({
   onSave,
   onDelete,
   onClose,
+  onCreateNew,
   listWidth = "35%",
 }) => {
   // Collapsible panel state - persistent with localStorage (global preference)
@@ -189,12 +190,14 @@ const EntitySplitView = ({
             onSave,
             onDelete,
             onClose: onClose || (() => onEntitySelect(null)),
+            onCreateNew,
             entities
           }) : (
             renderDetailPane && renderDetailPane(null, {
               onSave,
-              onDelete, 
+              onDelete,
               onClose: onClose || (() => onEntitySelect(null)),
+              onCreateNew,
               entities
             })
           )}

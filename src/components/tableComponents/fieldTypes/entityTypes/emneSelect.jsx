@@ -22,7 +22,8 @@ export const emneSelectType = {
     const entityType = getEntityTypeFromModel(modelName);
     
     // Get entity ID from formData, row, or data for proper inheritance tracking
-    const entityId = formData?.id || row?.id || data?.id || 'create-new';
+    const isNewEntity = formData?.__isNew || row?.__isNew || data?.__isNew;
+    const entityId = isNewEntity ? 'create-new' : (formData?.id || row?.id || data?.id);
     
     const { 
       inheritedEmne, 
@@ -50,15 +51,15 @@ export const emneSelectType = {
       }
     }, [inheritedEmne, value, onChange, field.name, hasParentConnection, hasRelatedEntityConnection]);
 
-    // Clear field value when switching to new entity (only once per entity, and only if no user interaction)
+    // Clear field value when switching to new entity with no inheritance
     useEffect(() => {
       const isNewEntity = entityId === 'create-new' || entityId?.toString().includes('create');
-      
-      if (isNewEntity && !inheritedEmne && !hasParentConnection && !hasRelatedEntityConnection && value && !clearedEntitiesRef.current.has(entityId) && !userInteractionRef.current) {
+
+      // If this is a new entity and there's no inheritance, clear the field value
+      if (isNewEntity && !inheritedEmne && !hasParentConnection && !hasRelatedEntityConnection && value) {
         onChange({ target: { name: field.name, value: null } });
-        clearedEntitiesRef.current.add(entityId);
       }
-    }, [entityId, inheritedEmne, value, onChange, field.name, hasParentConnection, hasRelatedEntityConnection]);
+    }, [entityId, inheritedEmne, hasParentConnection, hasRelatedEntityConnection, value, onChange, field.name]);
 
     // Reset interaction flag when switching entities
     useEffect(() => {

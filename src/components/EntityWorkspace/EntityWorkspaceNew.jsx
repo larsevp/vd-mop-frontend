@@ -259,9 +259,14 @@ const EntityWorkspaceNew = ({
   }, [ui.executeSearch]);
 
   const handleCreateNew = useCallback(
-    (entityType = null) => {
+    (entityType = null, initialData = {}) => {
+      // Import and clear inheritance store before creating new entity
+      import('@/stores/formInheritanceStore.js').then(({ useFormInheritanceStore }) => {
+        useFormInheritanceStore.getState().clearAllInheritance();
+      });
+
       // Use DTO to create properly structured new entity
-      const newEntity = dto.createNewEntity(entityType);
+      const newEntity = dto.createNewEntity(entityType, initialData);
       // Enhance the new entity through DTO normalization
       const enhancedNewEntity = dto.enhanceEntity(newEntity);
       ui.setSelectedEntity(enhancedNewEntity);
@@ -606,6 +611,7 @@ const EntityWorkspaceNew = ({
               onSave={handleSave}
               onDelete={handleDelete}
               onClose={handleDetailClose}
+              onCreateNew={handleCreateNew}
               renderListPane={({ entities, selectedEntity, onEntitySelect }) => (
                 <EntityListPane
                   items={entities}

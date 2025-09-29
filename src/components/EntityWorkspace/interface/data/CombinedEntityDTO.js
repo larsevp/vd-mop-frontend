@@ -320,7 +320,7 @@ export class CombinedEntityDTO extends EntityDTOInterface {
   /**
    * Create new entity structure (implements EntityDTOInterface)
    */
-  createNewEntity(entityType) {
+  createNewEntity(entityType, initialData = {}) {
     if (!entityType) {
       throw new Error("Combined DTO requires entityType parameter for createNewEntity");
     }
@@ -328,6 +328,7 @@ export class CombinedEntityDTO extends EntityDTOInterface {
     return {
       __isNew: true,
       __entityType: entityType,
+      ...initialData, // Merge any initial data provided
     };
   }
 
