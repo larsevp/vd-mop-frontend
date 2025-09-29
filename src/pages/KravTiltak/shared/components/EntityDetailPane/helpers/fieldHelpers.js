@@ -98,10 +98,12 @@ export const initializeFormData = (allFields, entity, modelName) => {
 
     if (!isHidden && !isVirtual && !isRelationship && !isSystemField) {
       if (isNewEntity) {
-        // For new entities, start with defaults/empty - don't inherit from entity object
-        // The entity object might have leftover values from context that shouldn't be inherited
-        const fieldValue = FieldResolver.initializeFieldValue(field, {}, true, modelName);
-        initialForm[field.name] = fieldValue !== undefined ? fieldValue : "";
+        // For new entities, use explicitly provided initial values, but don't use defaults
+        // This allows passing specific initial data (like tittel from krav) while keeping other fields empty
+        const fieldValue = FieldResolver.initializeFieldValue(field, entity, true, modelName);
+        // Only use the value if it was explicitly provided in the entity object, otherwise empty
+        const hasExplicitValue = entity.hasOwnProperty(field.name) && entity[field.name] !== undefined;
+        initialForm[field.name] = hasExplicitValue ? entity[field.name] : (fieldValue !== undefined ? fieldValue : "");
       } else {
         // For existing entities, use actual values from the entity
         const fieldValue = FieldResolver.initializeFieldValue(field, entity, true, modelName);
