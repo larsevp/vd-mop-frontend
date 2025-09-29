@@ -13,7 +13,7 @@ interface GenericMultiSelectProps {
   onSelectionChange: (values: (string | number)[]) => void;
   disabled?: boolean;
   className?: string;
-  apiEndpoint: () => Promise<any>; // Function that returns a promise with data
+  apiEndpoint: (projectId?: number) => Promise<any>; // Function that returns a promise with data
   valueField?: string; // Field to use for value (default: 'id')
   labelField?: string; // Field to use for label (default: 'tittel')
   placeholder?: string;
@@ -23,6 +23,7 @@ interface GenericMultiSelectProps {
   customLabelFormatter?: (item: any) => string; // Custom function to format labels
   descriptionField?: string; // Field to use for description/tooltip
   onDataLoaded?: (data: any[]) => void; // Callback when API data is loaded
+  projectId?: number; // Optional project context for project-scoped API calls
 }
 
 export function GenericMultiSelect({
@@ -40,9 +41,10 @@ export function GenericMultiSelect({
   customLabelFormatter,
   descriptionField,
   onDataLoaded,
+  projectId,
 }: GenericMultiSelectProps) {
   // Create a unique query key based on the API endpoint function name and field config
-  const queryKey = ["multiselect", apiEndpoint.name || "unknown", valueField, labelField];
+  const queryKey = ["multiselect", apiEndpoint.name || "unknown", valueField, labelField, projectId];
 
   const {
     data: options = [],
@@ -51,7 +53,7 @@ export function GenericMultiSelect({
   } = useQuery({
     queryKey,
     queryFn: async () => {
-      const response = await apiEndpoint();
+      const response = await apiEndpoint(projectId);
       const data = response?.data || response || [];
       //console.log(data);
 

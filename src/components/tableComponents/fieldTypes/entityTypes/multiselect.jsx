@@ -2,6 +2,7 @@ import React from "react";
 import GenericMultiSelect from "../../../ui/form/GenericMultiSelect";
 import { MULTISELECT_ENTITY_CONFIG } from "./config";
 import { useEmneInheritance } from "../../../../hooks/useEmneInheritance";
+import { useProjectStore } from "../../../../stores/userStore";
 
 // Generic multiselect for entity relationships
 export const multiselectType = {
@@ -14,6 +15,10 @@ export const multiselectType = {
       console.error(`No configuration found for multiselect type: ${configKey}`);
       return null;
     }
+
+    // Get project context for project-scoped entities
+    const { currentProject } = useProjectStore();
+    const projectId = currentProject?.id;
 
     // Determine the entity context - use entityType prop or infer from context
     // For prosjektTiltak context, use 'prosjektTiltak', otherwise default to 'tiltak'
@@ -68,6 +73,9 @@ export const multiselectType = {
       }
     }, [selectedValues.length, apiData.length, handleRelatedEntitySelection, field.name]);
 
+    // Determine if this entity type needs project scoping
+    const needsProjectScoping = configKey === 'prosjektKrav' || configKey === 'prosjektTiltak';
+
     return (
       <GenericMultiSelect
         selectedValues={selectedValues}
@@ -75,7 +83,7 @@ export const multiselectType = {
         onSelectionChange={(values) => {
           // Handle inheritance and mutual exclusivity via the store
           const relatedType = field.name === "prosjektKrav" ? "prosjektKrav" : "krav";
-          
+
           // Use the store to handle inheritance and mutual exclusivity
           handleRelatedEntitySelection(values, apiData, relatedType);
 
@@ -99,6 +107,7 @@ export const multiselectType = {
         searchPlaceholder={config.searchPlaceholder}
         emptyMessage={config.emptyMessage}
         loadingMessage={config.loadingMessage}
+        projectId={needsProjectScoping ? projectId : undefined}
       />
     );
   },

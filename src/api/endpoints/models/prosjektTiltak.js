@@ -48,7 +48,10 @@ export const getProsjektTiltak = (config = {}) => {
   return API.get("/prosjekt-tiltak", updatedConfig);
 };
 
-export const getProsjektTiltakSimple = () => API.get("/prosjekt-tiltak/simple");
+export const getProsjektTiltakSimple = (projectId = null) => {
+  const params = projectId ? { projectId: projectId.toString() } : {};
+  return API.get("/prosjekt-tiltak/simple", { params });
+};
 
 export const getProsjektTiltakById = (id, config = {}) => {
   const updatedConfig = addProsjektTiltakFieldExclusion("edit", config);

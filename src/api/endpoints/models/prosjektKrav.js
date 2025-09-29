@@ -48,7 +48,15 @@ export const getProsjektKrav = (config = {}) => {
   return API.get("/prosjekt-krav", updatedConfig);
 };
 
-export const getProsjektKravSimple = () => API.get("/prosjekt-krav/simple", addProsjektKravFieldExclusion("simple"));
+export const getProsjektKravSimple = (projectId = null) => {
+  const config = addProsjektKravFieldExclusion("simple");
+  const params = projectId ? { projectId: projectId.toString() } : {};
+
+  return API.get("/prosjekt-krav/simple", {
+    ...config,
+    params
+  });
+};
 
 export const createProsjektKrav = async (prosjektKravData) => {
   // Get current project from store

@@ -1,7 +1,8 @@
 import React from "react";
 import { getProsjektKravSimple } from "../../../api/endpoints/models/prosjektKrav";
 import { ComboBox, ComboBoxOption } from "./ComboBox";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useProjectStore } from "../../../stores/userStore";
 
 interface ProsjektKrav {
   id: number;
@@ -26,6 +27,7 @@ interface ProsjektKravSelectProps {
   excludeId?: number; // ID to exclude from the options (current record)
   onDataLoaded?: (data: ProsjektKrav[]) => void; // Callback when data is loaded
   onKravSelected?: (krav: ProsjektKrav | null) => void; // Callback when krav is selected
+  projectId?: number; // Optional explicit projectId prop
 }
 
 export function ProsjektKravSelect({
@@ -42,14 +44,32 @@ export function ProsjektKravSelect({
   excludeId,
   onDataLoaded,
   onKravSelected,
+  projectId: propProjectId,
 }: ProsjektKravSelectProps) {
+  const { currentProject } = useProjectStore();
+
+  // Use prop projectId if provided, otherwise fallback to store
+  const projectId = propProjectId || currentProject?.id;
+  const queryClient = useQueryClient();
+
+
+  // Clear old cache entries when project changes
+  React.useEffect(() => {
+    // Remove old cache entries that don't include projectId (legacy cache)
+    queryClient.removeQueries({
+      queryKey: ["prosjektKrav", "simple"],
+      exact: false
+    });
+  }, [projectId, queryClient]);
+
   const {
     data: kravList = [],
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["prosjektKrav", "simple", excludeId],
-    queryFn: getProsjektKravSimple,
+    queryKey: ["prosjektKrav", "simple", projectId, excludeId],
+    queryFn: () => getProsjektKravSimple(projectId),
+    enabled: !!projectId, // Only run query if we have a project
     staleTime: 5 * 60 * 1000, // 5 minutes - data is considered fresh for 5 minutes
     select: (response: any): ProsjektKrav[] => {
       const data = Array.isArray(response) ? response : response.data || [];

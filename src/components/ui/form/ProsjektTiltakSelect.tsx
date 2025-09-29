@@ -1,7 +1,8 @@
 import React from "react";
 import { getProsjektTiltakSimple } from "../../../api/endpoints/models/prosjektTiltak";
 import { ComboBox, ComboBoxOption } from "./ComboBox";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useProjectStore } from "../../../stores/userStore";
 
 interface ProsjektTiltak {
   id: number;
@@ -26,6 +27,7 @@ interface ProsjektTiltakSelectProps {
   excludeId?: number; // ID to exclude from the options (current record)
   onDataLoaded?: (data: ProsjektTiltak[]) => void; // Callback when data is loaded
   onTiltakSelected?: (tiltak: ProsjektTiltak | null) => void; // Callback when tiltak is selected
+  projectId?: number; // Optional explicit projectId prop
 }
 
 export function ProsjektTiltakSelect({
@@ -42,14 +44,31 @@ export function ProsjektTiltakSelect({
   excludeId,
   onDataLoaded,
   onTiltakSelected,
+  projectId: propProjectId,
 }: ProsjektTiltakSelectProps) {
+  const { currentProject } = useProjectStore();
+
+  // Use prop projectId if provided, otherwise fallback to store
+  const projectId = propProjectId || currentProject?.id;
+  const queryClient = useQueryClient();
+
+  // Clear old cache entries when project changes
+  React.useEffect(() => {
+    // Remove old cache entries that don't include projectId (legacy cache)
+    queryClient.removeQueries({
+      queryKey: ["prosjektTiltak", "simple"],
+      exact: false
+    });
+  }, [projectId, queryClient]);
+
   const {
     data: tiltakList = [],
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["prosjektTiltak", "simple", excludeId],
-    queryFn: getProsjektTiltakSimple,
+    queryKey: ["prosjektTiltak", "simple", projectId, excludeId],
+    queryFn: () => getProsjektTiltakSimple(projectId),
+    enabled: !!projectId, // Only run query if we have a project
     staleTime: 5 * 60 * 1000, // 5 minutes - data is considered fresh for 5 minutes
     select: (response: any): ProsjektTiltak[] => {
       const data = Array.isArray(response) ? response : response.data || [];

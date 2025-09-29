@@ -38,14 +38,14 @@ export const entityRelationshipSelects = {
   },
 
   prosjektKravselect: ({ field, value, onChange, error, formData, form, row, data, setFormData }) => {
-    const { 
-      handleParentSelection, 
-      isFieldDisabled, 
+    const {
+      handleParentSelection,
+      isFieldDisabled,
       getDisabledPlaceholder,
       hasParentConnection,
       hasRelatedEntityConnection
     } = useEmneInheritance('prosjektKrav');
-    
+
     const disabled = isFieldDisabled('parent') || field.disabled;
     const placeholder = getDisabledPlaceholder('parent') || field.placeholder;
 
@@ -132,14 +132,14 @@ export const entityRelationshipSelects = {
   },
 
   prosjektTiltakselect: ({ field, value, onChange, error, formData, form, row, data, setFormData }) => {
-    const { 
-      handleParentSelection, 
-      isFieldDisabled, 
+    const {
+      handleParentSelection,
+      isFieldDisabled,
       getDisabledPlaceholder,
       hasParentConnection,
       hasRelatedEntityConnection
     } = useEmneInheritance('prosjektTiltak');
-    
+
     const disabled = isFieldDisabled('parent') || field.disabled;
     const placeholder = getDisabledPlaceholder('parent') || field.placeholder;
 
