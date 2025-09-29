@@ -201,7 +201,17 @@ const EntityDetailPane = ({
     toggleSection(sectionName, setExpandedSections);
   }, []);
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts - create stable refs for handlers
+  const handleCancelRef = useRef();
+  const handleSaveRef = useRef();
+
+  // Update refs when functions change
+  useEffect(() => {
+    handleCancelRef.current = handleCancel;
+    handleSaveRef.current = handleSave;
+  });
+
+  // Keyboard shortcuts with stable listener
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'e' && !isEditing && !e.ctrlKey && !e.metaKey && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'BUTTON') {
@@ -209,16 +219,20 @@ const EntityDetailPane = ({
         setIsEditing(true);
       } else if (e.key === 'Escape' && isEditing) {
         e.preventDefault();
-        handleCancel();
+        if (handleCancelRef.current) {
+          handleCancelRef.current();
+        }
       } else if (e.key === 'Enter' && e.ctrlKey && isEditing) {
         e.preventDefault();
-        handleSave();
+        if (handleSaveRef.current) {
+          handleSaveRef.current();
+        }
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isEditing, handleCancel, handleSave]);
+  }, [isEditing]); // Only depend on isEditing state
 
   if (!entity) {
     return (

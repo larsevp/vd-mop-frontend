@@ -87,6 +87,7 @@ const EntityWorkspaceNew = ({
   const entities = result?.items || [];
   const entityType = dto?.entityType || dto?.getPrimaryEntityType?.() || "entities";
 
+
   // Reset filters when entityType changes (switching workspaces)
   useEffect(() => {
     ui.resetFilters();

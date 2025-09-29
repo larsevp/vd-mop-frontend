@@ -21,7 +21,7 @@ export default function HeaderNav() {
 
   if (tenantError) {
     return (
-      <header className="bg-background-primary border-b border-error-200 sticky top-0 z-20 shadow-sm">
+      <header className="bg-background-primary border-b border-error-200 sticky top-0 z-[70] shadow-sm">
         <div className="max-w-screen-xl mx-auto">
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center gap-2">
@@ -33,7 +33,7 @@ export default function HeaderNav() {
     );
   }
   return (
-    <header className="bg-background-primary border-b border-border-muted sticky top-0 z-20 shadow-sm">
+    <header className="bg-background-primary border-b border-border-muted sticky top-0 z-[70] shadow-sm">
       <div className="max-w-screen-xl mx-auto">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-2">

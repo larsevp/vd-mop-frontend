@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { TableDropdown } from "./TableDropdown";
-import { ImageIcon } from "lucide-react";
+import { ImageIcon, ClipboardPaste } from "lucide-react";
 import { CellSelection, TableMap } from "@tiptap/pm/tables";
 
 const ToolbarButton = React.forwardRef(({ onClick, active, disabled, children, title, className }, ref) => (
@@ -408,6 +408,65 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
     input.click();
   }, [editor, uploadUrl, onShowToast]);
 
+  const copyFromPDF = useCallback(async () => {
+    try {
+      // Check if clipboard API is available
+      if (!navigator.clipboard || !navigator.clipboard.readText) {
+        onShowToast("Clipboard API ikke tilgjengelig i denne nettleseren", "error");
+        return;
+      }
+
+      onShowToast("Leser tekst fra utklippstavle...", "info");
+
+      // Read text from clipboard
+      const clipboardText = await navigator.clipboard.readText();
+
+      if (!clipboardText || !clipboardText.trim()) {
+        onShowToast("Ingen tekst funnet i utklippstavle", "error");
+        return;
+      }
+
+      // Import the PDF text cleaner dynamically (same as used in SmartPasteExtension)
+      const { cleanPDFText } = await import('../utils/pdfTextCleaner');
+
+      // Since this is an explicit PDF button, always force PDF cleaning
+      // (unlike paste detection which only processes when it looks like PDF text)
+      onShowToast("Behandler PDF-tekst...", "info");
+      const processedText = cleanPDFText(clipboardText, true);
+      const wasProcessed = true;
+
+      // Insert the text using the same logic as SmartPasteExtension
+      const paragraphs = processedText.split('\n\n').filter(p => p.trim());
+
+      if (paragraphs.length > 1) {
+        // Create proper HTML with paragraph tags
+        const htmlContent = paragraphs.map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
+        editor.chain().focus().insertContent(htmlContent).run();
+      } else {
+        // Single paragraph - use simple text insertion
+        editor.chain().focus().insertContent(processedText).run();
+      }
+
+      if (wasProcessed) {
+        onShowToast("PDF-tekst renset og formatert", "success");
+      } else {
+        onShowToast("Tekst satt inn i editoren", "success");
+      }
+
+    } catch (error) {
+      console.error("Error copying from clipboard:", error);
+      let errorMessage = "Kunne ikke kopiere fra utklippstavle";
+
+      if (error.name === 'NotAllowedError') {
+        errorMessage = "Tilgang til utklippstavle nektet. Sjekk nettleserinnstillinger.";
+      } else if (error.message) {
+        errorMessage += `: ${error.message}`;
+      }
+
+      onShowToast(errorMessage, "error");
+    }
+  }, [editor, onShowToast]);
+
   const toggleBulletList = useCallback(() => {
     // Always just use the normal bullet list toggle
     // The Safari issues should be prevented by the &nbsp; initialization in useTiptapEditor
@@ -496,11 +555,19 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
           • List
         </ToolbarButton>
 
+        <ToolbarSeparator />
+
+        {/* PDF button - available in both basic and full mode */}
+        <ToolbarButton onClick={copyFromPDF} title="Kopier tekst fra PDF i utklippstavle">
+          <div className="flex items-center gap-1">
+            <ClipboardPaste size={16} />
+            PDF
+          </div>
+        </ToolbarButton>
+
         {!basic && (
           <>
-            <ToolbarSeparator />
-
-            {/* Links & Tables */}
+            {/* Links & Tables - full mode only */}
             <ToolbarButton onClick={onAddLink} active={editor.isActive("link")} title="Add Link (Ctrl+K)">
               Link
             </ToolbarButton>
