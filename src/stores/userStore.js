@@ -38,11 +38,8 @@ export const useUserStore = create(
           const response = await getCurrentUserInfo();
           const userInfo = response.data;
 
-          console.log("UserStore: API response:", response.data);
-
           // Get fresh user state right before merge to avoid stale closure
           const currentUser = get().user;
-          console.log("UserStore: Current user before merge:", currentUser);
 
           // Merge with existing user data or create new user object
           const updatedUser = {
@@ -52,8 +49,6 @@ export const useUserStore = create(
             enhetId: userInfo.enhetId,
           };
 
-          console.log("UserStore: Updated user after merge:", updatedUser);
-
           set({
             user: updatedUser,
             isLoadingUserInfo: false,
@@ -61,8 +56,6 @@ export const useUserStore = create(
 
           // Verify the set worked
           const verifyUser = get().user;
-          console.log("UserStore: User after set() call:", verifyUser);
-          console.log("UserStore: Set successful? Role exists?", !!verifyUser?.rolle);
         } catch (error) {
           set({
             userInfoError: error.message || "Failed to fetch user info",
@@ -74,6 +67,16 @@ export const useUserStore = create(
     {
       name: "user-storage", // unique name for localStorage key
       version: 1, // Add version to handle state migrations
+      migrate: (persistedState, version) => {
+        // Handle migration from previous versions
+        if (version === 0) {
+          // Migration from v0 to v1 - ensure user structure is correct
+          return {
+            user: persistedState.user || null
+          };
+        }
+        return persistedState;
+      },
       // Only persist minimal user data, exclude sensitive information like tokens
       partialize: (state) => {
         const persistedData = {
@@ -118,6 +121,16 @@ export const useProjectStore = create(
     {
       name: "project-storage",
       version: 1, // Add version to handle state migrations
+      migrate: (persistedState, version) => {
+        // Handle migration from previous versions
+        if (version === 0) {
+          // Migration from v0 to v1 - ensure project structure is correct
+          return {
+            currentProject: persistedState.currentProject || null
+          };
+        }
+        return persistedState;
+      },
       // Only persist currentProject, not the full projects list
       partialize: (state) => ({
         currentProject: state.currentProject,

@@ -12,6 +12,17 @@ export const useUserStore = create(persist(
   {
     name: 'user-storage-session',
     version: 1, // Add version to handle state migrations
+    migrate: (persistedState, version) => {
+      // Handle migration from previous versions
+      if (version === 0) {
+        // Migration from v0 to v1 - ensure user structure is correct
+        return {
+          userId: persistedState.userId || null,
+          name: persistedState.name || null
+        };
+      }
+      return persistedState;
+    },
     getStorage: () => sessionStorage, // sessionStorage
   }
 ));
