@@ -261,15 +261,18 @@ const EntityWorkspaceNew = ({
 
   const handleCreateNew = useCallback(
     (entityType = null, initialData = {}) => {
-      // Allow workspace to handle domain-specific cleanup
-      if (typeof initialData?.__onCreateNew === 'function') {
-        initialData.__onCreateNew();
-      }
-
       // Use DTO to create properly structured new entity
       const newEntity = dto.createNewEntity(entityType, initialData);
+
+      // Allow workspace to handle domain-specific cleanup BEFORE setting entity to avoid race conditions
+      if (typeof newEntity?.__onCreateNew === 'function') {
+        newEntity.__onCreateNew();
+      }
+
       // Enhance the new entity through DTO normalization
       const enhancedNewEntity = dto.enhanceEntity(newEntity);
+
+      // Set entity AFTER cleanup to ensure store is clear before components render
       ui.setSelectedEntity(enhancedNewEntity);
     },
     [ui.setSelectedEntity, dto]
