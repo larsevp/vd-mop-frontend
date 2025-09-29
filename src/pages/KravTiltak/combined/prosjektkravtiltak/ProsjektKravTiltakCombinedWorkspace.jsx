@@ -58,6 +58,15 @@ const ProsjektKravTiltakCombinedWorkspace = () => {
     onCreateNew: () => {
       // Clear ProsjektKravTiltak inheritance store when creating new entities
       useProsjektKravTiltakInheritanceStore.getState().clearAllInheritance();
+
+      // Clear all session storage keys that track user interaction for emne fields
+      // This ensures a complete reset when creating new entities
+      const keys = Object.keys(sessionStorage);
+      keys.forEach(key => {
+        if (key.startsWith('emneSelect_userInteraction_')) {
+          sessionStorage.removeItem(key);
+        }
+      });
     }
   });
 

@@ -20,15 +20,24 @@ export const multiselectType = {
     const { currentProject } = useProjectStore();
     const projectId = currentProject?.id;
 
-    // Determine the entity context - use entityType prop or infer from context
-    // For prosjektTiltak context, use 'prosjektTiltak', otherwise default to 'tiltak'
+    // Determine the CURRENT entity type (not the selected entity type)
+    // We need to infer what type of entity is doing the selecting based on what it's selecting
     // IMPORTANT: Stabilize the entity type to prevent hook consistency errors
     const inheritanceEntityType = React.useMemo(() => {
-      // Check if we're in a project context by looking at config or field name
+      // Map selected entity types to current entity types
+      if (configKey === 'prosjektKrav' || field.name === 'prosjektKrav') {
+        return 'prosjektTiltak'; // If selecting prosjektKrav, current entity is prosjektTiltak
+      }
+      if (configKey === 'krav' || field.name === 'krav') {
+        return 'tiltak'; // If selecting krav, current entity is tiltak
+      }
+
+      // If we're in a project context (based on configKey or field name), use project entities
       const isProjectContext = configKey === 'prosjektKrav' || configKey === 'prosjektTiltak' ||
-                               field.name === 'prosjektKrav' || entityType === 'prosjektTiltak' || entityType === 'prosjektKrav';
+                               field.name === 'prosjektKrav' || field.name === 'prosjektTiltak';
+
       return isProjectContext ? 'prosjektTiltak' : 'tiltak';
-    }, [configKey, field.name, entityType]);
+    }, [configKey, field.name]);
 
     // Get entity ID for proper inheritance tracking (same logic as emneSelect)
     const isNewEntity = formData?.__isNew || row?.__isNew || data?.__isNew;

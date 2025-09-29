@@ -39,7 +39,8 @@ export const emneSelectType = {
     const clearedEntitiesRef = useRef(new Set());
     // Track user interaction to prevent clearing after manual selections
     // Use a more persistent key that survives component remounts
-    const userInteractionKey = `emneSelect_userInteraction_${entityType}_${entityId}_${field.name}`;
+    const safeEntityId = entityId || 'unknown';
+    const userInteractionKey = `emneSelect_userInteraction_${entityType}_${safeEntityId}_${field.name}`;
     const hasUserInteracted = sessionStorage.getItem(userInteractionKey) === 'true';
 
 
@@ -50,7 +51,7 @@ export const emneSelectType = {
         return; // User has manually selected a value, don't override it
       }
 
-      // Add a small delay to prevent race conditions with user interactions
+      // Add a delay to prevent race conditions with user interactions
       const timeoutId = setTimeout(() => {
         // Double-check user interaction flag after delay
         if (sessionStorage.getItem(userInteractionKey) === 'true') {
@@ -65,7 +66,7 @@ export const emneSelectType = {
         else if (inheritedEmne && value !== inheritedEmne) {
           onChange({ target: { name: field.name, value: inheritedEmne } });
         }
-      }, 10); // Very short delay to allow user interaction to register
+      }, 50); // Longer delay to ensure user interaction is properly registered
 
       return () => clearTimeout(timeoutId);
     }, [inheritedEmne, value, onChange, field.name, hasParentConnection, hasRelatedEntityConnection]);
