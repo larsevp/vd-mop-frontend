@@ -277,13 +277,22 @@ const EntityDetailPane = ({
             )}
             
             {isEditing ? (
-              <input
-                type="text"
-                value={formData.tittel || ""}
-                onChange={(e) => handleFieldChange("tittel", e.target.value)}
-                className="text-xl font-semibold text-gray-900 leading-tight flex-1 min-w-0 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Tittel..."
-              />
+              <div className="flex-1 min-w-0">
+                <input
+                  type="text"
+                  value={formData.tittel || ""}
+                  onChange={(e) => handleFieldChange("tittel", e.target.value)}
+                  className={`text-xl font-semibold leading-tight w-full border rounded-lg px-3 py-2 focus:ring-2 focus:border-transparent ${
+                    errors.tittel
+                      ? 'border-red-300 text-red-900 focus:ring-red-500'
+                      : 'text-gray-900 border-gray-300 focus:ring-blue-500'
+                  }`}
+                  placeholder="Tittel..."
+                />
+                {errors.tittel && (
+                  <p className="mt-1 text-sm text-red-600">{errors.tittel}</p>
+                )}
+              </div>
             ) : (
               <h2 className="text-xl font-semibold text-gray-900 truncate flex-1 min-w-0">
                 {entityTitle}
