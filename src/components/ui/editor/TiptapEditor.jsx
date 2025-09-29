@@ -116,6 +116,8 @@ export const TiptapEditor = ({
           white-space: pre-wrap;
           word-wrap: break-word;
           outline: none;
+          min-height: 100px;
+          padding: 12px 16px;
         }
         .ProseMirror img {
           cursor: pointer;
@@ -145,12 +147,19 @@ export const TiptapEditor = ({
         }}
       />
 
-      {isFocused && (
-        <div className="tiptap-toolbar">
-          <TiptapToolbar editor={editor} onAddLink={handleAddLink} uploadUrl={uploadUrl} onShowToast={showToast} basic={basic} />
-        </div>
-      )}
-      <div className="min-h-[120px] max-h-[600px] overflow-y-auto">
+      {/* Always show toolbar in edit mode, not just when focused */}
+      <div className="tiptap-toolbar">
+        <TiptapToolbar editor={editor} onAddLink={handleAddLink} uploadUrl={uploadUrl} onShowToast={showToast} basic={basic} />
+      </div>
+      <div
+        className="min-h-[120px] max-h-[600px] overflow-y-auto cursor-text"
+        onClick={() => {
+          // Focus the editor when clicking anywhere in the content area
+          if (editor && !disabled) {
+            editor.chain().focus().run();
+          }
+        }}
+      >
         {/* Safari-safe editor content rendering */}
         {editor && editor.view ? (
           <EditorContent editor={editor} />

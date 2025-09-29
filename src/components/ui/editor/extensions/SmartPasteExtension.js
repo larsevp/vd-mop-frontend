@@ -35,8 +35,8 @@ export const SmartPasteExtension = Extension.create({
             const editor = view.state.tr.doc;
             const options = this.options;
             
-            // Don't process in basic mode (no advanced features)
-            if (options.basic) return false;
+            // In basic mode, only allow text cleaning (no images/tables)
+            const isBasic = options.basic;
 
             const clipboardData = event.clipboardData || window.clipboardData;
             if (!clipboardData) return false;
@@ -87,12 +87,12 @@ export const SmartPasteExtension = Extension.create({
               return pdfIndicators.some(pattern => pattern.test(text));
             };
 
-            // STAGE 1: Check for images - but only if there's no meaningful text content
+            // STAGE 1: Check for images - but only if there's no meaningful text content and not in basic mode
             const imageItem = items.find(item => item.type.indexOf('image') === 0);
             const hasTextContent = textData && textData.trim().length > 0;
             const hasHtmlContent = htmlData && htmlData.trim().length > 0;
 
-            if (imageItem && !hasTextContent && !hasHtmlContent) {
+            if (!isBasic && imageItem && !hasTextContent && !hasHtmlContent) {
               event.preventDefault();
               
               // Handle image paste inline
@@ -132,8 +132,8 @@ export const SmartPasteExtension = Extension.create({
               return true;
             }
 
-            // STAGE 2: Check for Excel/CSV tabular data
-            if (isTabularData(textData)) {
+            // STAGE 2: Check for Excel/CSV tabular data (not in basic mode)
+            if (!isBasic && isTabularData(textData)) {
               event.preventDefault();
               
               try {
@@ -163,39 +163,58 @@ export const SmartPasteExtension = Extension.create({
               return true;
             }
 
-            // STAGE 3: Clean PDF text if detected
-            if (isPDFText(textData)) {
-              event.preventDefault();
-              
-              try {
-                const cleanedText = cleanPDFText(textData, true);
-                const { state } = view;
-                const schema = state.schema;
-                
-                // Convert cleaned text with paragraph breaks to proper HTML
-                const paragraphs = cleanedText.split('\n\n').filter(p => p.trim());
-                
-                if (paragraphs.length > 1) {
-                  // Create proper HTML with paragraph tags
-                  const htmlContent = paragraphs.map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
-                  
-                  // Use TipTap's insertContent command which handles HTML properly
-                  const editor = this.editor;
-                  editor.chain().focus().insertContent(htmlContent).run();
-                } else {
-                  // Single paragraph or no paragraphs - use simple text insertion
-                  const tr = state.tr.insertText(cleanedText);
-                  view.dispatch(tr);
-                }
-                
+            // STAGE 3: Handle text cleaning
+            if (textData && textData.trim().length > 0) {
+              // Check if we should preserve HTML formatting
+              const editor = this.editor;
+              const preserveFormatting = editor.storage.smartPaste?.preserveFormatting || false;
+
+              if (preserveFormatting) {
+                // Reset the flag and let TipTap handle normally (preserves Word/HTML formatting)
+                editor.storage.smartPaste.preserveFormatting = false;
                 if (options.onShowToast) {
-                  options.onShowToast('PDF text cleaned and formatted', 'success');
+                  options.onShowToast('Formatering bevart fra Word/HTML', 'success');
+                }
+                return false; // Let TipTap handle with formatting
+              }
+
+              // For all other text, clean it (no detection needed - always clean)
+              event.preventDefault();
+
+              try {
+                const cleanedText = cleanPDFText(textData, true); // Always force cleaning
+
+                // In basic mode, use simple text insertion without HTML
+                if (isBasic) {
+                  // Basic mode: simple text insertion only
+                  const tr = view.state.tr.insertText(cleanedText);
+                  view.dispatch(tr);
+                } else {
+                  // Full mode: convert cleaned text with paragraph breaks to proper HTML
+                  const paragraphs = cleanedText.split('\n\n').filter(p => p.trim());
+
+                  if (paragraphs.length > 1) {
+                    // Create proper HTML with paragraph tags
+                    const htmlContent = paragraphs.map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
+
+                    // Use TipTap's insertContent command which handles HTML properly
+                    const editor = this.editor;
+                    editor.chain().focus().insertContent(htmlContent).run();
+                  } else {
+                    // Single paragraph - use simple text insertion
+                    const tr = view.state.tr.insertText(cleanedText);
+                    view.dispatch(tr);
+                  }
+                }
+
+                if (options.onShowToast) {
+                  options.onShowToast('Tekst renset og formatert', 'success');
                 }
               } catch (error) {
-                console.error('PDF text cleaning failed:', error);
+                console.error('Text cleaning failed:', error);
                 return false;
               }
-              
+
               return true;
             }
 

@@ -408,62 +408,89 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
     input.click();
   }, [editor, uploadUrl, onShowToast]);
 
-  const copyFromPDF = useCallback(async () => {
+  const pasteAndClean = useCallback(async () => {
     try {
-      // Check if clipboard API is available
-      if (!navigator.clipboard || !navigator.clipboard.readText) {
-        onShowToast("Clipboard API ikke tilgjengelig i denne nettleseren", "error");
-        return;
-      }
+      // Focus editor without scrolling
+      editor.view.dom.focus({ preventScroll: true });
 
-      onShowToast("Leser tekst fra utklippstavle...", "info");
+      // Try to read from clipboard and let the smart paste extension handle it
+      if (navigator.clipboard && navigator.clipboard.readText) {
+        const text = await navigator.clipboard.readText();
+        if (text && text.trim()) {
+          // Create a synthetic paste event with the clipboard text
+          const clipboardData = new DataTransfer();
+          clipboardData.setData('text/plain', text);
 
-      // Read text from clipboard
-      const clipboardText = await navigator.clipboard.readText();
+          const pasteEvent = new ClipboardEvent('paste', {
+            clipboardData: clipboardData,
+            bubbles: true,
+            cancelable: true
+          });
 
-      if (!clipboardText || !clipboardText.trim()) {
-        onShowToast("Ingen tekst funnet i utklippstavle", "error");
-        return;
-      }
-
-      // Import the PDF text cleaner dynamically (same as used in SmartPasteExtension)
-      const { cleanPDFText } = await import('../utils/pdfTextCleaner');
-
-      // Since this is an explicit PDF button, always force PDF cleaning
-      // (unlike paste detection which only processes when it looks like PDF text)
-      onShowToast("Behandler PDF-tekst...", "info");
-      const processedText = cleanPDFText(clipboardText, true);
-      const wasProcessed = true;
-
-      // Insert the text using the same logic as SmartPasteExtension
-      const paragraphs = processedText.split('\n\n').filter(p => p.trim());
-
-      if (paragraphs.length > 1) {
-        // Create proper HTML with paragraph tags
-        const htmlContent = paragraphs.map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
-        editor.chain().focus().insertContent(htmlContent).run();
+          // Dispatch to the editor DOM element
+          editor.view.dom.dispatchEvent(pasteEvent);
+        } else {
+          onShowToast("Ingen tekst funnet i utklippstavle", "error");
+        }
       } else {
-        // Single paragraph - use simple text insertion
-        editor.chain().focus().insertContent(processedText).run();
+        // Fallback: try execCommand
+        editor.view.dom.focus();
+        if (document.execCommand && document.execCommand('paste')) {
+          // execCommand worked
+        } else {
+          onShowToast("Utklippstavle ikke tilgjengelig - bruk Ctrl+V", "error");
+        }
       }
-
-      if (wasProcessed) {
-        onShowToast("PDF-tekst renset og formatert", "success");
-      } else {
-        onShowToast("Tekst satt inn i editoren", "success");
-      }
-
     } catch (error) {
-      console.error("Error copying from clipboard:", error);
-      let errorMessage = "Kunne ikke kopiere fra utklippstavle";
+      console.error('Paste failed:', error);
+      onShowToast("Kunne ikke lime inn - bruk Ctrl+V", "error");
+    }
+  }, [editor, onShowToast]);
 
-      if (error.name === 'NotAllowedError') {
-        errorMessage = "Tilgang til utklippstavle nektet. Sjekk nettleserinnstillinger.";
-      } else if (error.message) {
-        errorMessage += `: ${error.message}`;
+  const pastePreserveFormatting = useCallback(async () => {
+    try {
+      // Set flag to preserve formatting on next paste
+      editor.storage.smartPaste = editor.storage.smartPaste || {};
+      editor.storage.smartPaste.preserveFormatting = true;
+
+      // Focus editor without scrolling
+      editor.view.dom.focus({ preventScroll: true });
+
+      // Try to read from clipboard and let the smart paste extension handle it
+      if (navigator.clipboard && navigator.clipboard.readText) {
+        const text = await navigator.clipboard.readText();
+        if (text && text.trim()) {
+          // Create a synthetic paste event with the clipboard text
+          const clipboardData = new DataTransfer();
+          clipboardData.setData('text/plain', text);
+
+          const pasteEvent = new ClipboardEvent('paste', {
+            clipboardData: clipboardData,
+            bubbles: true,
+            cancelable: true
+          });
+
+          // Dispatch to the editor DOM element
+          editor.view.dom.dispatchEvent(pasteEvent);
+        } else {
+          onShowToast("Ingen tekst funnet i utklippstavle", "error");
+        }
+      } else {
+        // Fallback: try execCommand
+        editor.view.dom.focus();
+        if (document.execCommand && document.execCommand('paste')) {
+          // execCommand worked
+        } else {
+          onShowToast("Utklippstavle ikke tilgjengelig - bruk Ctrl+V", "error");
+        }
       }
-
-      onShowToast(errorMessage, "error");
+    } catch (error) {
+      console.error('Paste with formatting failed:', error);
+      // Reset the flag if paste failed
+      if (editor.storage.smartPaste) {
+        editor.storage.smartPaste.preserveFormatting = false;
+      }
+      onShowToast("Kunne ikke lime inn - bruk Ctrl+V", "error");
     }
   }, [editor, onShowToast]);
 
@@ -557,11 +584,18 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
 
         <ToolbarSeparator />
 
-        {/* PDF button - available in both basic and full mode */}
-        <ToolbarButton onClick={copyFromPDF} title="Kopier tekst fra PDF i utklippstavle">
+        {/* Paste buttons - available in both basic and full mode */}
+        <ToolbarButton onClick={pasteAndClean} title="Lime inn tekst (renses automatisk)">
           <div className="flex items-center gap-1">
             <ClipboardPaste size={16} />
-            PDF
+            Lim inn
+          </div>
+        </ToolbarButton>
+
+        <ToolbarButton onClick={pastePreserveFormatting} title="Lime inn og bevar formatering fra Word/HTML">
+          <div className="flex items-center gap-1">
+            <ClipboardPaste size={16} />
+            Word
           </div>
         </ToolbarButton>
 
