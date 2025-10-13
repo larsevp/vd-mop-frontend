@@ -12,13 +12,23 @@ export const handleSaveAction = async (validateFormData, formData, entity, onSav
   try {
     const isNewEntity = entity?.__isNew;
     let saveData;
-    
+
     if (isNewEntity) {
       saveData = { ...formData };
       delete saveData.id;
     } else {
       saveData = { ...formData, id: entity.id };
     }
+
+    // BEFORE SAVE: Upload localStorage images and replace base64 with Spaces URLs
+    console.log("%c🔍 EntityWorkspace: About to check for localStorage images", "background: blue; color: white; font-size: 16px; padding: 5px;");
+    const { prepareTempImagesForUpload } = await import("@/utils/tempImageStorage");
+    const { uploadImage } = await import("@/api/endpoints");
+
+    saveData = await prepareTempImagesForUpload(saveData, uploadImage, (message) => {
+      console.log(`📤 Image upload: ${message}`);
+    });
+    console.log("✅ EntityWorkspace: Image upload/replacement complete");
     
     if (onSave) {
       const result = await onSave(saveData, !isNewEntity);

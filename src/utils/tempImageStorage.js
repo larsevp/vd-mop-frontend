@@ -166,17 +166,20 @@ export function getStorageStats() {
  */
 export async function prepareTempImagesForUpload(formData, uploadFunction, onToast) {
   try {
-    //console.log("🔍 Frontend: Scanning form data for localStorage images...");
+    //console.log("LOGBACKEND 🔍 === Starting prepareTempImagesForUpload ===");
+    //console.log("LOGBACKEND 🔍 Form data keys:", Object.keys(formData));
 
     const tempImages = getTempImages();
     const tempImageIds = Object.keys(tempImages);
 
+    //console.log(`LOGBACKEND 🔍 Found ${tempImageIds.length} localStorage images:`, tempImageIds);
+
     if (tempImageIds.length === 0) {
-      //console.log("ℹ️ Frontend: No localStorage images found");
+      //console.log("LOGBACKEND ℹ️ No localStorage images to process");
       return formData;
     }
 
-    //console.log(`📋 Frontend: Found ${tempImageIds.length} localStorage images to process`);
+    //console.log(`LOGBACKEND 📋 Processing ${tempImageIds.length} localStorage images...`);
 
     // Create a deep copy of form data
     const updatedFormData = JSON.parse(JSON.stringify(formData));
@@ -190,25 +193,81 @@ export async function prepareTempImagesForUpload(formData, uploadFunction, onToa
       const fieldValue = updatedFormData[fieldName];
 
       if (typeof fieldValue === "string" && fieldValue.includes("data:image/")) {
-        //console.log(`🔍 Frontend: Scanning field "${fieldName}" for localStorage images`);
+        // Extract all base64 images from the field to see what's actually there
+        const base64ImagesInField = fieldValue.match(/data:image\/[^;]+;base64,[^"'\s)]+/g) || [];
 
         // Check if this field contains any of our localStorage images
         tempImageIds.forEach((tempId) => {
           const imageData = tempImages[tempId];
+          const base64Preview = imageData.base64Data.substring(0, 70);
+
           if (fieldValue.includes(imageData.base64Data)) {
             usedImageIds.push(tempId);
-            //console.log(`✅ Frontend: Found localStorage image ${tempId} in field ${fieldName}`);
+          } else {
           }
         });
       }
     });
 
     if (usedImageIds.length === 0) {
-      //console.log("ℹ️ Frontend: No localStorage images are used in form content");
-      return formData;
+      // FALLBACK: Handle base64 images that are in the form but NOT in localStorage
+      // This happens when:
+      // - Page was refreshed (localStorage cleared)
+      // - Images were pasted before localStorage was working
+      // - Images are from database (editing existing entity)
+
+      const orphanImages = [];
+      Object.keys(updatedFormData).forEach((fieldName) => {
+        const fieldValue = updatedFormData[fieldName];
+        if (typeof fieldValue === "string" && fieldValue.includes("data:image/")) {
+          const base64ImagesInField = fieldValue.match(/data:image\/([^;]+);base64,([^"'\s)]+)/g) || [];
+          base64ImagesInField.forEach((base64Url) => {
+            orphanImages.push({ fieldName, base64Url });
+          });
+        }
+      });
+
+      if (orphanImages.length > 0) {
+        // Upload orphan images
+        for (const { fieldName, base64Url } of orphanImages) {
+          try {
+            // Extract mime type and base64 data
+            const match = base64Url.match(/data:image\/([^;]+);base64,(.+)/);
+            if (!match) continue;
+
+            const mimeType = `image/${match[1]}`;
+            const base64Data = match[2];
+
+            // Convert to blob
+            const response = await fetch(base64Url);
+            const blob = await response.blob();
+            const fileName = `orphan-image-${Date.now()}.${match[1]}`;
+            const file = new File([blob], fileName, { type: mimeType });
+
+            // Upload
+            const formData = new FormData();
+            formData.append("file", file);
+            const uploadResponse = await uploadFunction(formData);
+
+            if (!uploadResponse?.data?.digitalOceanUrl) {
+              throw new Error(`Upload failed for ${fileName}`);
+            }
+
+            const uploadedUrl = uploadResponse.data.digitalOceanUrl;
+
+            // Replace in form data
+            updatedFormData[fieldName] = updatedFormData[fieldName].replace(base64Url, uploadedUrl);
+          } catch (error) {
+            console.error(`LOGBACKEND ❌ Failed to upload orphan image:`, error);
+          }
+        }
+
+        return updatedFormData;
+      } else {
+        return formData;
+      }
     }
 
-    //console.log(`📤 Frontend: Uploading ${usedImageIds.length} localStorage images...`);
     onToast(`Laster opp ${usedImageIds.length} bilder...`, "info");
 
     // Upload each used image
@@ -216,8 +275,6 @@ export async function prepareTempImagesForUpload(formData, uploadFunction, onToa
       const imageData = tempImages[tempId];
 
       try {
-        //console.log(`🚀 Frontend: Uploading localStorage image: ${tempId} (${imageData.fileName})`);
-
         // Convert base64 back to File object
         const response = await fetch(imageData.base64Data);
         const blob = await response.blob();
@@ -231,19 +288,21 @@ export async function prepareTempImagesForUpload(formData, uploadFunction, onToa
         const uploadResponse = await uploadFunction(formData);
 
         if (!uploadResponse?.data?.digitalOceanUrl) {
-          throw new Error(`Upload failed for ${imageData.fileName}`);
+          throw new Error(`Upload failed for ${imageData.fileName} - no digitalOceanUrl in response`);
         }
 
         const uploadedUrl = uploadResponse.data.digitalOceanUrl;
-        //console.log(`✅ Frontend: Successfully uploaded ${tempId} to ${uploadedUrl}`);
+        //console.log(`LOGBACKEND ✅ Successfully uploaded ${tempId} to ${uploadedUrl}`);
 
         // Store the URL replacement mapping
         imageReplacements.set(imageData.base64Data, uploadedUrl);
       } catch (uploadError) {
-        console.error(`❌ Frontend: Failed to upload ${tempId}:`, uploadError);
+        console.error(`LOGBACKEND ❌ Failed to upload ${tempId}:`, uploadError);
         throw new Error(`Failed to upload ${imageData.fileName}: ${uploadError.message}`);
       }
     }
+
+    //console.log(`LOGBACKEND ✅ All ${usedImageIds.length} images uploaded. Replacement map size: ${imageReplacements.size}`);
 
     // Replace all base64 URLs with uploaded URLs in form data
     Object.keys(updatedFormData).forEach((fieldName) => {
@@ -251,15 +310,20 @@ export async function prepareTempImagesForUpload(formData, uploadFunction, onToa
 
       if (typeof fieldValue === "string") {
         let updatedValue = fieldValue;
+        let replacementsMade = 0;
 
         imageReplacements.forEach((uploadedUrl, base64Url) => {
           if (updatedValue.includes(base64Url)) {
+            //console.log(`LOGBACKEND ✅ Replacing base64 in ${fieldName} with ${uploadedUrl}`);
             updatedValue = updatedValue.replace(base64Url, uploadedUrl);
-            console.log(`🔄 Frontend: Replaced localStorage image URL with uploaded URL in field ${fieldName}`);
+            replacementsMade++;
           }
         });
 
-        updatedFormData[fieldName] = updatedValue;
+        if (replacementsMade > 0) {
+          //console.log(`LOGBACKEND 🔄 Replaced ${replacementsMade} image URLs in ${fieldName}`);
+          updatedFormData[fieldName] = updatedValue;
+        }
       }
     });
 
@@ -268,12 +332,21 @@ export async function prepareTempImagesForUpload(formData, uploadFunction, onToa
       removeTempImage(tempId);
     });
 
-    console.log("✅ Frontend: All localStorage images uploaded and URLs replaced");
+    // Clean up orphan localStorage images (images that weren't matched/used)
+    const orphanImageIds = tempImageIds.filter((id) => !usedImageIds.includes(id));
+    if (orphanImageIds.length > 0) {
+      //console.log(`LOGBACKEND 🧹 Cleaning up ${orphanImageIds.length} orphan localStorage images:`, orphanImageIds);
+      orphanImageIds.forEach((tempId) => {
+        removeTempImage(tempId);
+      });
+    }
+
+    //console.log("LOGBACKEND ✅ All localStorage images uploaded and URLs replaced");
     onToast(`${usedImageIds.length} bilder lastet opp!`, "success");
 
     return updatedFormData;
   } catch (error) {
-    console.error("❌ Frontend: Failed to process localStorage images:", error);
+    console.error("LOGBACKEND ❌ Failed to process localStorage images:", error);
     throw error;
   }
 }

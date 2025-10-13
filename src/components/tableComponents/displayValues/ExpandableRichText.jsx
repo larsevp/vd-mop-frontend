@@ -45,11 +45,11 @@ export const ExpandableRichText = ({ content, maxLength = 100, className = "" })
     return <span className="text-muted-foreground">Ingen beskrivelse</span>;
   }
 
-  // Check if content contains tables or complex formatting that needs Tiptap rendering
+  // Check if content contains tables, images, or complex formatting that needs Tiptap rendering
   const needsTiptapDisplay = useMemo(() => {
     if (typeof content === 'object' && content !== null) return true;
     if (typeof content === 'string') {
-      return content.includes('<table') || content.includes('class="');
+      return content.includes('<table') || content.includes('<img') || content.includes('class="');
     }
     return false;
   }, [content]);

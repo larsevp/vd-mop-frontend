@@ -103,41 +103,46 @@ export const SmartPasteExtension = Extension.create({
 
             if (!isBasic && imageItem && !hasTextContent && !hasHtmlContent) {
               event.preventDefault();
-              
-              // Handle image paste inline
+
+              // Handle image paste - store in localStorage, upload on save
               const file = imageItem.getAsFile();
               if (!file) return false;
 
               // Show loading toast
               if (options.onShowToast) {
-                options.onShowToast('Processing image...', 'info');
+                options.onShowToast('Behandler bilde...', 'info');
               }
 
-              // Handle file - always use base64 for now (more reliable)
-              const reader = new FileReader();
-              reader.onload = (e) => {
-                const { state } = view;
-                const { schema } = state;
-                
-                // Insert image node
-                if (schema.nodes.image) {
-                  const imageNode = schema.nodes.image.create({ src: e.target.result });
-                  const tr = state.tr.replaceSelectionWith(imageNode);
-                  view.dispatch(tr);
-                  
+              // Store in localStorage and get base64 URL
+              (async () => {
+                try {
+                  const { storeTempImage } = await import('@/utils/tempImageStorage');
+
+                  console.log('LOGBACKEND 📦 SmartPaste: Storing image in localStorage...');
+                  const tempImageData = await storeTempImage(file);
+                  console.log('LOGBACKEND ✅ SmartPaste: Image stored in localStorage:', tempImageData.id);
+
+                  // Insert image with base64 URL (will be replaced with Spaces URL on save)
+                  const { state } = view;
+                  const { schema } = state;
+
+                  if (schema.nodes.image) {
+                    const imageNode = schema.nodes.image.create({ src: tempImageData.url });
+                    const tr = state.tr.replaceSelectionWith(imageNode);
+                    view.dispatch(tr);
+
+                    if (options.onShowToast) {
+                      options.onShowToast('Bilde satt inn', 'success');
+                    }
+                  }
+                } catch (error) {
+                  console.error('LOGBACKEND ❌ SmartPaste: Failed to store image:', error);
                   if (options.onShowToast) {
-                    options.onShowToast('Image inserted successfully', 'success');
+                    options.onShowToast('Kunne ikke sette inn bilde', 'error');
                   }
                 }
-              };
-              
-              reader.onerror = () => {
-                if (options.onShowToast) {
-                  options.onShowToast('Failed to process image', 'error');
-                }
-              };
-              
-              reader.readAsDataURL(file);
+              })();
+
               return true;
             }
 

@@ -264,41 +264,14 @@ const EntityDetailPane = ({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isEditing]); // Only depend on isEditing state
 
-  // IMPORTANT: Early return AFTER all hooks to avoid hook consistency errors
-  if (!entity) {
-    return (
-      <div className="flex items-center justify-center h-full text-gray-500">
-        <p>Ingen element valgt</p>
-      </div>
-    );
-  }
-
-  // IMPORTANT: For consistent hook patterns, ensure modelConfig is always defined
-  if (!modelConfig) {
-    return (
-      <div className="flex items-center justify-center h-full text-gray-500">
-        <p>Laster...</p>
-      </div>
-    );
-  }
-
-  // Entity display info
-  const isNewEntity = entity?.__isNew;
-  const entityTitle = isNewEntity 
-    ? `Ny ${modelName}` 
-    : (entity.tittel || entity.navn || `${entityType} ${entity.id}`);
-  const entityUID = isNewEntity ? null : (entity.kravUID || entity.tiltakUID || entity.uid);
-  const emneTitle = isNewEntity ? null : (entity.emne?.navn || entity.emneTittel);
-  
-  // Get entity type for badge (from entity or fallback to entityType prop)
-  const currentEntityType = entity?.entityType || entity?.__entityType || entityType;
-  const entityConfig = getEntityTypeConfig(currentEntityType);
-
-  // Handle creating connected tiltak from krav
+  // Handle creating connected tiltak from krav - MUST be before early returns
   const handleCreateConnectedTiltak = useCallback(() => {
     if (!onCreateNew || !entity) {
       return;
     }
+
+    // Get entity type for badge (from entity or fallback to entityType prop)
+    const currentEntityType = entity?.entityType || entity?.__entityType || entityType;
 
     // Support both krav -> tiltak and prosjektkrav -> prosjekttiltak
     let targetEntityType, relationshipField, relationshipValue;
@@ -331,7 +304,37 @@ const EntityDetailPane = ({
     };
 
     onCreateNew(targetEntityType, initialData);
-  }, [onCreateNew, entity, currentEntityType]);
+  }, [onCreateNew, entity, entityType]);
+
+  // IMPORTANT: Early return AFTER all hooks to avoid hook consistency errors
+  if (!entity) {
+    return (
+      <div className="flex items-center justify-center h-full text-gray-500">
+        <p>Ingen element valgt</p>
+      </div>
+    );
+  }
+
+  // IMPORTANT: For consistent hook patterns, ensure modelConfig is always defined
+  if (!modelConfig) {
+    return (
+      <div className="flex items-center justify-center h-full text-gray-500">
+        <p>Laster...</p>
+      </div>
+    );
+  }
+
+  // Entity display info
+  const isNewEntity = entity?.__isNew;
+  const entityTitle = isNewEntity
+    ? `Ny ${modelName}`
+    : (entity.tittel || entity.navn || `${entityType} ${entity.id}`);
+  const entityUID = isNewEntity ? null : (entity.kravUID || entity.tiltakUID || entity.uid);
+  const emneTitle = isNewEntity ? null : (entity.emne?.navn || entity.emneTittel);
+
+  // Get entity type for badge (from entity or fallback to entityType prop)
+  const currentEntityType = entity?.entityType || entity?.__entityType || entityType;
+  const entityConfig = getEntityTypeConfig(currentEntityType);
 
 
   return (
