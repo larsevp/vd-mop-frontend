@@ -21,21 +21,21 @@ export const handleSaveAction = async (validateFormData, formData, entity, onSav
     }
 
     // BEFORE SAVE: Upload localStorage images and replace base64 with Spaces URLs
-    console.log("%c🔍 EntityWorkspace: About to check for localStorage images", "background: blue; color: white; font-size: 16px; padding: 5px;");
+    // console.log("%c🔍 EntityWorkspace: About to check for localStorage images", "background: blue; color: white; font-size: 16px; padding: 5px;");
     const { prepareTempImagesForUpload } = await import("@/utils/tempImageStorage");
     const { uploadImage } = await import("@/api/endpoints");
 
     saveData = await prepareTempImagesForUpload(saveData, uploadImage, (message) => {
-      console.log(`📤 Image upload: ${message}`);
+      //console.log(`📤 Image upload: ${message}`);
     });
-    console.log("✅ EntityWorkspace: Image upload/replacement complete");
-    
+    //console.log("✅ EntityWorkspace: Image upload/replacement complete");
+
     if (onSave) {
       const result = await onSave(saveData, !isNewEntity);
       setIsEditing(false);
       return { success: true, result };
     } else {
-      console.error('No onSave handler provided');
+      console.error("No onSave handler provided");
       Swal.fire({
         icon: "error",
         title: "Konfigureringsfeil",
@@ -45,7 +45,7 @@ export const handleSaveAction = async (validateFormData, formData, entity, onSav
       return { success: false, error: "No save handler" };
     }
   } catch (error) {
-    console.error('Save error:', error);
+    console.error("Save error:", error);
 
     // Check if it's a validation error from the backend (400 status with validation details)
     if (error?.response?.status === 400 && error?.response?.data?.errors) {
@@ -54,10 +54,7 @@ export const handleSaveAction = async (validateFormData, formData, entity, onSav
     }
 
     // Check for other structured error responses
-    let errorMessage = error?.response?.data?.message ||
-                      error?.response?.data?.error ||
-                      error?.message ||
-                      "Kunne ikke lagre endringer";
+    let errorMessage = error?.response?.data?.message || error?.response?.data?.error || error?.message || "Kunne ikke lagre endringer";
 
     // Convert database constraint messages to user-friendly Norwegian
     if (errorMessage.includes("notNull Violation:") && errorMessage.includes("tittel cannot be null")) {
@@ -85,14 +82,14 @@ export const handleSaveAction = async (validateFormData, formData, entity, onSav
 
 export const handleDeleteAction = async (entity, onDelete) => {
   const result = await Swal.fire({
-    title: 'Slett element?',
+    title: "Slett element?",
     text: "Denne handlingen kan ikke angres.",
-    icon: 'warning',
+    icon: "warning",
     showCancelButton: true,
-    confirmButtonColor: '#dc2626',
-    cancelButtonColor: '#6b7280',
-    confirmButtonText: 'Slett',
-    cancelButtonText: 'Avbryt'
+    confirmButtonColor: "#dc2626",
+    cancelButtonColor: "#6b7280",
+    confirmButtonText: "Slett",
+    cancelButtonText: "Avbryt",
   });
 
   if (result.isConfirmed) {
@@ -100,7 +97,7 @@ export const handleDeleteAction = async (entity, onDelete) => {
       await onDelete(entity);
       return { success: true };
     } catch (error) {
-      console.error('Delete error:', error);
+      console.error("Delete error:", error);
       Swal.fire({
         icon: "error",
         title: "Slettingsfeil",
