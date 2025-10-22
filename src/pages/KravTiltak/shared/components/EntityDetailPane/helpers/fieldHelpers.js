@@ -1,15 +1,15 @@
 import { FieldResolver } from "@/components/tableComponents/fieldTypes/fieldResolver.jsx";
 
 export const getVisibleFields = (allFields, fieldOverrides, isEditing, workspaceHiddenEdit, workspaceHiddenIndex, sections = {}) => {
-  return allFields
+  const result = allFields
     .map(field => {
       const detailOverrides = fieldOverrides[field.name] || {};
-      
+
       // Find which section and row this field belongs to
       let detailSection = detailOverrides.section || "main";
       let detailRow = detailOverrides.row || null;
       let detailOrder = detailOverrides.order || 0;
-      
+
       // Check sections for this field's configuration
       for (const [sectionName, sectionConfig] of Object.entries(sections)) {
         // Check section-level fieldOverrides
@@ -18,7 +18,7 @@ export const getVisibleFields = (allFields, fieldOverrides, isEditing, workspace
           detailSection = sectionName;
           detailOrder = sectionFieldOverrides[field.name].order || detailOrder;
         }
-        
+
         // Check rows for this field
         const rows = sectionConfig.rows || {};
         for (const [rowName, rowFields] of Object.entries(rows)) {
@@ -29,7 +29,7 @@ export const getVisibleFields = (allFields, fieldOverrides, isEditing, workspace
           }
         }
       }
-      
+
       return {
         ...field,
         detailSection,
@@ -52,6 +52,8 @@ export const getVisibleFields = (allFields, fieldOverrides, isEditing, workspace
       }
       return a.name.localeCompare(b.name);
     });
+
+  return result;
 };
 
 export const getFieldsBySection = (visibleFields) => {
@@ -86,7 +88,7 @@ export const getFieldRowsBySection = (sectionFields) => {
   return { rowGroups, noRowFields };
 };
 
-export const initializeFormData = (allFields, entity, modelName) => {
+export const initializeFormData = (allFields, entity, modelName, fieldOverrides = {}) => {
   const initialForm = {};
   const isNewEntity = entity?.__isNew;
 
@@ -98,12 +100,17 @@ export const initializeFormData = (allFields, entity, modelName) => {
 
     if (!isHidden && !isVirtual && !isRelationship && !isSystemField) {
       if (isNewEntity) {
-        // For new entities, use explicitly provided initial values, but don't use defaults
-        // This allows passing specific initial data (like tittel from krav) while keeping other fields empty
+        // For new entities, use explicitly provided initial values or workspace defaults
         const fieldValue = FieldResolver.initializeFieldValue(field, entity, true, modelName);
-        // Only use the value if it was explicitly provided in the entity object, otherwise empty
         const hasExplicitValue = entity.hasOwnProperty(field.name) && entity[field.name] !== undefined;
-        initialForm[field.name] = hasExplicitValue ? entity[field.name] : (fieldValue !== undefined ? fieldValue : "");
+        const workspaceDefault = fieldOverrides[field.name]?.default;
+
+        // Priority: explicit value > workspace default > field resolver value > empty
+        initialForm[field.name] = hasExplicitValue
+          ? entity[field.name]
+          : workspaceDefault !== undefined
+          ? workspaceDefault
+          : (fieldValue !== undefined ? fieldValue : "");
       } else {
         // For existing entities, use actual values from the entity
         const fieldValue = FieldResolver.initializeFieldValue(field, entity, true, modelName);

@@ -1,15 +1,13 @@
 import React from "react";
-import { List, Briefcase, Home, ArrowLeft, Users } from "lucide-react";
+import { List, Briefcase, Home, Users } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useMsal } from "@azure/msal-react";
 import { useUserStore } from "@/stores/userStore";
 import { UserProjectMenu } from "./UserProjectMenu";
-import { useBackNavigation } from "@/hooks/useBackNavigation";
 
 export default function HeaderNav() {
   const user = useUserStore((state) => state.user);
   const location = useLocation();
-  const { goBack, shouldShowBackButton } = useBackNavigation();
   const { accounts } = useMsal();
   const [tenantError] = React.useState(false);
   const isAdmin = user?.rolle === "ADMIN";
@@ -37,11 +35,6 @@ export default function HeaderNav() {
       <div className="max-w-screen-xl mx-auto">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-2">
-            {shouldShowBackButton() && (
-              <button onClick={goBack} className="p-1 rounded-full hover:bg-background-muted text-text-muted" aria-label="Gå tilbake">
-                <ArrowLeft size={18} />
-              </button>
-            )}
             <Link to="/" className="flex items-center gap-2">
               <Home size={20} className="text-primary-500" />
               <span className="font-semibold text-lg text-text-primary">MOP</span>

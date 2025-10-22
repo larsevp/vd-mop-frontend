@@ -3,3 +3,4 @@ export * from './validationHelpers.js';
 export * from './actionHelpers.js';
 export * from './sectionHelpers.js';
 export * from './useEntityForm.js';
+export * from './useEmneInheritance.js';

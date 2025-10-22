@@ -1,6 +1,7 @@
 import React from 'react';
 import { EntityDetailPane } from '../../shared';
 import { tiltak as tiltakConfig } from '@/modelConfigs/models/tiltak';
+import { krav as kravConfig } from '@/modelConfigs/models/krav';
 
 /**
  * TiltakDetailRenderer - Domain-specific detail renderer
@@ -21,8 +22,8 @@ import { tiltak as tiltakConfig } from '@/modelConfigs/models/tiltak';
  * @returns {JSX.Element} Tiltak detail pane
  */
 export const renderDetailPane = (entity, props) => {
-  const { key, onSave, onDelete, ...restProps } = props;
-  
+  const { key, onSave, onDelete, dto, ...restProps } = props;
+
   // Pass onSave to integrate with EntityWorkspace's post-save logic
   // EntityDetailPane will use this if provided, otherwise fall back to modelConfig
   return (
@@ -33,6 +34,8 @@ export const renderDetailPane = (entity, props) => {
       entityType="tiltak"
       onSave={onSave} // Pass through to enable post-save selection
       onDelete={onDelete} // Pass through for consistency
+      dto={dto}  // NEW: Pass dto for inheritance logic
+      kravConfig={kravConfig}  // NEW: For fetching connected Krav data
       {...restProps}
     />
   );

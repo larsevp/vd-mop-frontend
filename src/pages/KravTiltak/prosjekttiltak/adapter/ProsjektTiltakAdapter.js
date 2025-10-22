@@ -94,6 +94,63 @@ export class ProsjektTiltakAdapter {
     };
   }
 
+  /**
+   * Get effective emneId based on inheritance rules
+   * ProsjektTiltak can inherit from parent ProsjektTiltak OR connected ProsjektKrav (mutual exclusivity)
+   *
+   * @param {Object} entity - Current entity/form data
+   * @param {Object} parentData - Parent ProsjektTiltak data (if parentId exists)
+   * @param {Object} prosjektKravData - ProsjektKrav data (if prosjektKravIds exists, first krav)
+   * @returns {Object} Inheritance information with mutual exclusivity flags
+   */
+  getEffectiveEmneId(entity, parentData, prosjektKravData) {
+    const hasParent = !!entity.parentId;
+    const hasKrav = !!(entity.prosjektKravIds?.length > 0);
+
+    // Priority 1: Parent (if exists)
+    if (hasParent && parentData) {
+      return {
+        emneId: parentData.emneId || null,
+        source: 'parent',
+        sourceData: parentData,
+        isInherited: true,
+        hasParentConnection: true,
+        hasKravConnection: false,
+        emneDisabled: true,
+        parentDisabled: false,
+        kravDisabled: true,  // Mutual exclusivity: krav disabled when parent exists
+      };
+    }
+
+    // Priority 2: ProsjektKrav (if exists)
+    if (hasKrav && prosjektKravData) {
+      return {
+        emneId: prosjektKravData.emneId || null,
+        source: 'prosjektKrav',
+        sourceData: prosjektKravData,
+        isInherited: true,
+        hasParentConnection: false,
+        hasKravConnection: true,
+        emneDisabled: true,
+        parentDisabled: true,  // Mutual exclusivity: parent disabled when krav exists
+        kravDisabled: false,
+      };
+    }
+
+    // No inheritance
+    return {
+      emneId: entity.emneId || null,
+      source: null,
+      sourceData: null,
+      isInherited: false,
+      hasParentConnection: false,
+      hasKravConnection: false,
+      emneDisabled: false,
+      parentDisabled: false,
+      kravDisabled: false,
+    };
+  }
+
   getDisplayType() {
     return "Prosjekttiltak";
   }

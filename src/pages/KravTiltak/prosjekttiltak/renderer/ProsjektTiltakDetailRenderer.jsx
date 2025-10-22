@@ -1,6 +1,7 @@
 import React from "react";
 import { EntityDetailPane } from "../../shared";
 import { prosjektTiltak as prosjektTiltakConfig } from "@/modelConfigs/models/prosjektTiltak";
+import { prosjektKrav as prosjektKravConfig } from "@/modelConfigs/models/prosjektKrav";
 
 /**
  * ProsjektTiltakDetailRenderer - Domain-specific detail renderer
@@ -21,7 +22,7 @@ import { prosjektTiltak as prosjektTiltakConfig } from "@/modelConfigs/models/pr
  * @returns {JSX.Element} ProsjektTiltak detail pane
  */
 export const renderDetailPane = (entity, props) => {
-  const { key, onSave, onDelete, ...restProps } = props;
+  const { key, onSave, onDelete, dto, ...restProps } = props;
 
   // Pass onSave to integrate with EntityWorkspace's post-save logic
   // EntityDetailPane will use this if provided, otherwise fall back to modelConfig
@@ -33,6 +34,8 @@ export const renderDetailPane = (entity, props) => {
       entityType="prosjektTiltak"
       onSave={onSave} // Pass through to enable post-save selection
       onDelete={onDelete} // Pass through for consistency
+      dto={dto}  // NEW: Pass dto for inheritance logic
+      kravConfig={prosjektKravConfig}  // NEW: For fetching connected ProsjektKrav data
       {...restProps}
     />
   );

@@ -26,5 +26,14 @@ export const user = {
     },
     { name: "enhetId", label: "Enhet", type: "enhetselect", required: true, placeholder: "Velg enhet" },
     { name: "fagomradeId", label: "Fagområde", type: "fagomradeselect", required: false, placeholder: "Velg fagområde" },
+    {
+      name: "restricted",
+      label: "Begrenset",
+      type: "bool",
+      required: true,
+      default: false,
+      placeholder: "Velg...",
+      helpText: "Begrensede brukere kan ikke endre sin egen enhet"
+    },
   ],
 };

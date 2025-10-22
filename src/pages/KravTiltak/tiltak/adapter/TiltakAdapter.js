@@ -94,6 +94,63 @@ export class TiltakAdapter {
     };
   }
 
+  /**
+   * Get effective emneId based on inheritance rules
+   * Tiltak can inherit from parent Tiltak OR connected Krav (mutual exclusivity)
+   *
+   * @param {Object} entity - Current entity/form data
+   * @param {Object} parentData - Parent Tiltak data (if parentId exists)
+   * @param {Object} kravData - Krav data (if kravIds exists, first krav)
+   * @returns {Object} Inheritance information with mutual exclusivity flags
+   */
+  getEffectiveEmneId(entity, parentData, kravData) {
+    const hasParent = !!entity.parentId;
+    const hasKrav = !!(entity.kravIds?.length > 0);
+
+    // Priority 1: Parent (if exists)
+    if (hasParent && parentData) {
+      return {
+        emneId: parentData.emneId || null,
+        source: 'parent',
+        sourceData: parentData,
+        isInherited: true,
+        hasParentConnection: true,
+        hasKravConnection: false,
+        emneDisabled: true,
+        parentDisabled: false,
+        kravDisabled: true,  // Mutual exclusivity: krav disabled when parent exists
+      };
+    }
+
+    // Priority 2: Krav (if exists)
+    if (hasKrav && kravData) {
+      return {
+        emneId: kravData.emneId || null,
+        source: 'krav',
+        sourceData: kravData,
+        isInherited: true,
+        hasParentConnection: false,
+        hasKravConnection: true,
+        emneDisabled: true,
+        parentDisabled: true,  // Mutual exclusivity: parent disabled when krav exists
+        kravDisabled: false,
+      };
+    }
+
+    // No inheritance
+    return {
+      emneId: entity.emneId || null,
+      source: null,
+      sourceData: null,
+      isInherited: false,
+      hasParentConnection: false,
+      hasKravConnection: false,
+      emneDisabled: false,
+      parentDisabled: false,
+      kravDisabled: false,
+    };
+  }
+
   getDisplayType() {
     return "Tiltak";
   }

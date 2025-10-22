@@ -63,17 +63,20 @@ export const createProsjektKrav = async (prosjektKravData) => {
   const { useProjectStore } = await import("@/stores/userStore");
   const { currentProject } = useProjectStore.getState();
   const projectId = currentProject?.id;
-  
+
   if (!projectId || isNaN(Number(projectId))) {
     throw new Error('Ingen gyldig prosjekt valgt. Vennligst velg et prosjekt før du oppretter krav.');
   }
-  
+
+  // Strip auto-generated fields that should only be set by backend
+  const { kravUID, id, createdAt, updatedAt, createdBy, updatedBy, ...cleanData } = prosjektKravData;
+
   // Include projectId in the data
   const dataWithProjectId = {
-    ...prosjektKravData,
+    ...cleanData,
     projectId: Number(projectId)
   };
-  
+
   return API.post("prosjekt-krav", dataWithProjectId);
 };
 

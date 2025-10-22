@@ -68,9 +68,12 @@ export const createProsjektTiltak = async (prosjektTiltakData) => {
     throw new Error("Ingen gyldig prosjekt valgt. Vennligst velg et prosjekt før du oppretter tiltak.");
   }
 
+  // Strip auto-generated fields that should only be set by backend
+  const { tiltakUID, id, createdAt, updatedAt, createdBy, updatedBy, ...cleanData } = prosjektTiltakData;
+
   // Include projectId in the data
   const dataWithProjectId = {
-    ...prosjektTiltakData,
+    ...cleanData,
     projectId: Number(projectId),
   };
 

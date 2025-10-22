@@ -616,6 +616,7 @@ const EntityWorkspaceNew = ({
               onDelete={handleDelete}
               onClose={handleDetailClose}
               onCreateNew={handleCreateNew}
+              dto={dto}  // NEW: Pass dto for inheritance logic
               renderListPane={({ entities, selectedEntity, onEntitySelect }) => (
                 <EntityListPane
                   items={entities}

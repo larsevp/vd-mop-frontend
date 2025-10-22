@@ -37,16 +37,25 @@ export default function EnhetSelect({ name, value, onChange, label, required = f
     const enhetMap = new Map();
     const roots = [];
 
-    // First pass: create map and identify roots
+    // First pass: create map
     enheter.forEach((enhet) => {
       enhetMap.set(enhet.id, { ...enhet, children: [] });
-      // A root is either parentId null/undefined, or parentId equals its own id (self-reference)
+    });
+
+    // Second pass: identify roots
+    // A root is either:
+    // 1. No parentId or parentId equals its own id (self-reference)
+    // 2. Has a parentId but parent is not in the accessible list (orphaned due to access control)
+    enheter.forEach((enhet) => {
       if (!enhet.parentId || enhet.parentId === enhet.id) {
+        roots.push(enhet.id);
+      } else if (!enhetMap.has(enhet.parentId)) {
+        // Parent not in accessible list - treat as root
         roots.push(enhet.id);
       }
     });
 
-    // Second pass: build parent-child relationships
+    // Third pass: build parent-child relationships
     enheter.forEach((enhet) => {
       // Only add as child if parentId exists, is different from own id, and parent exists in map
       if (enhet.parentId && enhet.parentId !== enhet.id && enhetMap.has(enhet.parentId)) {

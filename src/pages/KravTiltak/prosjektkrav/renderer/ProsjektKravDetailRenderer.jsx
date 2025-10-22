@@ -21,7 +21,7 @@ import { prosjektKrav as prosjektKravConfig } from "@/modelConfigs/models/prosje
  * @returns {JSX.Element} ProsjektKrav detail pane
  */
 export const renderDetailPane = (entity, props) => {
-  const { key, onSave, onDelete, ...restProps } = props;
+  const { key, onSave, onDelete, dto, ...restProps } = props;
 
   // Pass onSave to integrate with EntityWorkspace's post-save logic
   // EntityDetailPane will use this if provided, otherwise fall back to modelConfig
@@ -33,6 +33,7 @@ export const renderDetailPane = (entity, props) => {
       entityType="prosjektKrav"
       onSave={onSave} // Pass through to enable post-save selection
       onDelete={onDelete} // Pass through for consistency
+      dto={dto}  // NEW: Pass dto for inheritance logic
       {...restProps}
     />
   );

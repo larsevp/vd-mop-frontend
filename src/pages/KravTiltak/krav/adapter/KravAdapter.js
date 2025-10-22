@@ -96,6 +96,44 @@ export class KravAdapter {
     };
   }
 
+  /**
+   * Get effective emneId based on inheritance rules
+   * Krav only inherits from parent Krav (via parentId)
+   *
+   * @param {Object} entity - Current entity/form data
+   * @param {Object} parentData - Parent Krav data (if parentId exists)
+   * @returns {Object} Inheritance information
+   */
+  getEffectiveEmneId(entity, parentData) {
+    // Krav has only one inheritance source: parent
+    if (entity.parentId && parentData) {
+      return {
+        emneId: parentData.emneId || null,
+        source: 'parent',
+        sourceData: parentData,
+        isInherited: true,
+        hasParentConnection: true,
+        hasKravConnection: false,
+        emneDisabled: true,
+        parentDisabled: false,
+        kravDisabled: false,
+      };
+    }
+
+    // No inheritance
+    return {
+      emneId: entity.emneId || null,
+      source: null,
+      sourceData: null,
+      isInherited: false,
+      hasParentConnection: false,
+      hasKravConnection: false,
+      emneDisabled: false,
+      parentDisabled: false,
+      kravDisabled: false,
+    };
+  }
+
   getDisplayType() {
     return "Krav";
   }

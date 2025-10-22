@@ -58,7 +58,8 @@ export function IconWithText({
   iconClassName?: string;
   iconColor?: string;
 }) {
-  if (!iconName) {
+  // Check for both undefined/null and empty strings
+  if (!iconName || iconName.trim() === "") {
     return <span className={className}>{text}</span>;
   }
 

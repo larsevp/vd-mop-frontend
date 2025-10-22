@@ -54,7 +54,53 @@ export function transformWorkspaceConfig(newConfig) {
       ...(sectionConfig.noTitle && { noTitle: sectionConfig.noTitle }),
     };
 
-    // Transform field overrides within sections
+    // NEW: Transform layout array format (simpler, sequential approach)
+    if (sectionConfig.layout && Array.isArray(sectionConfig.layout)) {
+      let orderCounter = 1;
+      let rowCounter = 1;
+
+      sectionConfig.layout.forEach((item) => {
+        if (item.field) {
+          // Single field - full width
+          // Support both string and object format: "fieldName" or { name: "fieldName", default: "value" }
+          const fieldName = typeof item.field === 'string' ? item.field : item.field.name;
+          const fieldConfig = {
+            section: sectionName,
+            order: orderCounter++,
+          };
+
+          // Add default value if specified
+          if (typeof item.field === 'object' && item.field.default !== undefined) {
+            fieldConfig.default = item.field.default;
+          }
+
+          transformed.workspace.detailForm.fieldOverrides[fieldName] = fieldConfig;
+        } else if (item.row && Array.isArray(item.row)) {
+          // Row with multiple fields - side by side
+          const rowName = `row-${rowCounter++}`;
+          item.row.forEach((fieldConfig) => {
+            // Support both string and object format
+            const fieldName = typeof fieldConfig === 'string' ? fieldConfig : fieldConfig.name;
+            const config = {
+              section: sectionName,
+              order: orderCounter,
+              row: rowName,
+            };
+
+            // Add default value if specified
+            if (typeof fieldConfig === 'object' && fieldConfig.default !== undefined) {
+              config.default = fieldConfig.default;
+            }
+
+            transformed.workspace.detailForm.fieldOverrides[fieldName] = config;
+          });
+          transformed.workspace.detailForm.rows[rowName] = {};
+          orderCounter++;
+        }
+      });
+    }
+
+    // LEGACY: Transform field overrides within sections (for backward compatibility)
     if (sectionConfig.fieldOverrides) {
       Object.entries(sectionConfig.fieldOverrides).forEach(([fieldName, fieldConfig]) => {
         transformed.workspace.detailForm.fieldOverrides[fieldName] = {
@@ -64,7 +110,7 @@ export function transformWorkspaceConfig(newConfig) {
       });
     }
 
-    // Transform rows within sections
+    // LEGACY: Transform rows within sections (for backward compatibility)
     if (sectionConfig.rows) {
       // Handle both object and array formats for rows
       if (Array.isArray(sectionConfig.rows)) {

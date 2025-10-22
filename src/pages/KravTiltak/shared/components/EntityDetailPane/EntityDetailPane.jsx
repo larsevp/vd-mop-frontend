@@ -15,7 +15,8 @@ import {
   handleDeleteAction,
   initializeExpandedSections,
   toggleSection,
-  scrollToTop
+  scrollToTop,
+  useEmneInheritance  // NEW: Import emne inheritance hook
 } from "./helpers";
 
 const EntityDetailPane = ({
@@ -25,7 +26,9 @@ const EntityDetailPane = ({
   onDelete,
   onClose,
   onCreateNew,
-  entityType = "entity"
+  entityType = "entity",
+  dto,  // NEW: DTO instance for inheritance logic
+  kravConfig  // NEW: ModelConfig for krav/prosjektKrav (needed for Tiltak entities)
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({});
@@ -37,9 +40,23 @@ const EntityDetailPane = ({
   // Query client for cache invalidation
   const queryClient = useQueryClient();
 
-  // Configuration  
+  // Configuration
   const modelName = modelConfig?.modelPrintName || entityType;
-  const detailFormConfig = useMemo(() => modelConfig?.workspace?.detailForm || {}, [modelConfig?.workspace?.detailForm]);
+
+  // Detect if this is a linked entity creation (created via "Lag tilknyttet tiltak/prosjekttiltak")
+  const isLinkedCreation = useMemo(() =>
+    entity?.__sourceKrav && entity?.__isNew,
+    [entity?.__sourceKrav, entity?.__isNew]
+  );
+
+  // Choose appropriate config: use detailFormLinked for linked creation, otherwise use standard detailForm
+  const detailFormConfig = useMemo(() => {
+    if (isLinkedCreation && modelConfig?.workspace?.detailFormLinked) {
+      return modelConfig.workspace.detailFormLinked;
+    }
+    return modelConfig?.workspace?.detailForm || {};
+  }, [isLinkedCreation, modelConfig?.workspace?.detailFormLinked, modelConfig?.workspace?.detailForm]);
+
   const sections = useMemo(() => {
     return detailFormConfig.sections || { main: { title: "Informasjon", defaultExpanded: true } };
   }, [detailFormConfig.sections]);
@@ -80,7 +97,7 @@ const EntityDetailPane = ({
   // Initialize form data
   useEffect(() => {
     if (entity) {
-      const initialForm = initializeFormData(allFields, entity, modelName);
+      const initialForm = initializeFormData(allFields, entity, modelName, fieldOverrides);
 
       // For new entities, ensure relationship fields from initial data are included
       if (entity.__isNew) {
@@ -95,6 +112,44 @@ const EntityDetailPane = ({
       setFormData(initialForm);
     }
   }, [entity, modelName, allFields]);
+
+  // === EMNE INHERITANCE ===
+  // Use the inheritance hook to manage emne inheritance logic
+  const inheritanceInfo = useEmneInheritance(formData, dto, entityType, {
+    kravConfig,
+    modelConfig  // Pass modelConfig for fetching parent data
+  });
+  const lastSyncedEmneRef = useRef(null);
+
+  // Sync inherited emneId to form (only when editing and inheritance is active)
+  useEffect(() => {
+    let isMounted = true;
+
+    if (isEditing && inheritanceInfo.isInherited && !inheritanceInfo.isLoading) {
+      const inheritedEmne = inheritanceInfo.inheritedEmneId;
+
+      // Only update if value has actually changed (prevent infinite loop)
+      if (inheritedEmne !== lastSyncedEmneRef.current) {
+        lastSyncedEmneRef.current = inheritedEmne;
+
+        if (isMounted) {
+          setFormData(prev => ({
+            ...prev,
+            emneId: inheritedEmne
+          }));
+        }
+      }
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    isEditing,
+    inheritanceInfo.isInherited,
+    inheritanceInfo.inheritedEmneId,
+    inheritanceInfo.isLoading
+  ]);
 
   // Initialize expanded sections
   useEffect(() => {
@@ -211,7 +266,7 @@ const EntityDetailPane = ({
       setIsEditing(false);
       setErrors({});
       if (entity) {
-        const resetForm = initializeFormData(allFields, entity, modelName);
+        const resetForm = initializeFormData(allFields, entity, modelName, fieldOverrides);
         setFormData(resetForm);
       }
     }
@@ -497,51 +552,89 @@ const EntityDetailPane = ({
             const isExpanded = expandedSections.has(sectionName);
             const isMainInfoSection = sectionName === "info" || sectionName === "main";
             const { rowGroups, noRowFields } = getFieldRowsBySection(sectionFields);
-            
+
+            // Create a unified list of items (fields and rows) with their order
+            const items = [];
+
+            // Add individual fields
+            noRowFields.forEach(field => {
+              items.push({
+                type: 'field',
+                order: field.detailOrder || 0,
+                content: field
+              });
+            });
+
+            // Add rows
+            Object.entries(rowGroups).forEach(([rowName, rowFields]) => {
+              const minOrder = Math.min(...rowFields.map(f => f.detailOrder || 0));
+              items.push({
+                type: 'row',
+                order: minOrder,
+                rowName,
+                content: rowFields
+              });
+            });
+
+            // Sort all items by order
+            items.sort((a, b) => a.order - b.order);
+
             const fieldContent = (
               <div className="space-y-4">
-                {noRowFields.map(field => (
-                  <FieldRenderer
-                    key={field.name}
-                    field={field}
-                    value={formData[field.name] ?? ""}
-                    onChange={handleFieldChange}
-                    error={errors[field.name]}
-                    form={formData}
-                    entity={entity}
-                    modelName={modelName}
-                    isEditing={isEditing}
-                  />
-                ))}
-                
-                {Object.entries(rowGroups)
-                  .sort(([,fieldsA], [,fieldsB]) => {
-                    const minOrderA = Math.min(...fieldsA.map(f => f.detailOrder || 0));
-                    const minOrderB = Math.min(...fieldsB.map(f => f.detailOrder || 0));
-                    return minOrderA - minOrderB;
-                  })
-                  .map(([rowName, rowFields]) => (
-                    <div key={rowName} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {rowFields
-                        .sort((a, b) => (a.detailOrder || 0) - (b.detailOrder || 0))
-                        .map(field => (
-                          <div key={field.name}>
-                            <FieldRenderer
-                              field={field}
-                              value={formData[field.name] ?? ""}
-                              onChange={handleFieldChange}
-                              error={errors[field.name]}
-                              form={formData}
-                              entity={entity}
-                              modelName={modelName}
-                              isEditing={isEditing}
-                            />
-                          </div>
-                        ))
-                      }
-                    </div>
-                  ))
-                }
+                {items.map((item, index) => {
+                  if (item.type === 'field') {
+                    const field = item.content;
+                    return (
+                      <FieldRenderer
+                        key={field.name}
+                        field={field}
+                        value={formData[field.name] ?? ""}
+                        onChange={handleFieldChange}
+                        error={errors[field.name]}
+                        form={formData}
+                        entity={entity}
+                        modelName={modelName}
+                        isEditing={isEditing}
+                        inheritanceInfo={inheritanceInfo}
+                      />
+                    );
+                  } else {
+                    // Render row
+                    const rowFields = item.content;
+                    const fieldCount = rowFields.length;
+                    // Determine grid columns based on number of fields
+                    const gridClass = fieldCount === 1
+                      ? "grid grid-cols-1 gap-4"
+                      : fieldCount === 2
+                      ? "grid grid-cols-1 md:grid-cols-2 gap-4"
+                      : fieldCount === 3
+                      ? "grid grid-cols-1 md:grid-cols-3 gap-4"
+                      : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4";
+
+                    return (
+                      <div key={item.rowName} className={gridClass}>
+                        {rowFields
+                          .sort((a, b) => (a.detailOrder || 0) - (b.detailOrder || 0))
+                          .map(field => (
+                            <div key={field.name}>
+                              <FieldRenderer
+                                field={field}
+                                value={formData[field.name] ?? ""}
+                                onChange={handleFieldChange}
+                                error={errors[field.name]}
+                                form={formData}
+                                entity={entity}
+                                modelName={modelName}
+                                isEditing={isEditing}
+                                inheritanceInfo={inheritanceInfo}
+                              />
+                            </div>
+                          ))
+                        }
+                      </div>
+                    );
+                  }
+                })}
               </div>
             );
 

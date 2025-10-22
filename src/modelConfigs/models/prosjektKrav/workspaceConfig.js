@@ -25,7 +25,7 @@ const newProsjektKravWorkspaceConfig = {
       showStatus: false,
       showVurdering: false,
       showPrioritet: false,
-      showObligatorisk: true,
+      showObligatorisk: false,
       showRelations: true,
     },
   },
@@ -44,6 +44,7 @@ const newProsjektKravWorkspaceConfig = {
     "enhetId",
     "givenOrder",
     "obligatorisk",
+    "vurderingId",
   ],
   workspaceHiddenEdit: [
     "kravUID",
@@ -58,6 +59,7 @@ const newProsjektKravWorkspaceConfig = {
     "enhetId",
     "givenOrder",
     "obligatorisk",
+    "vurderingId",
   ],
   workspaceHiddenCreate: [
     "kravUID",
@@ -72,6 +74,7 @@ const newProsjektKravWorkspaceConfig = {
     "enhetId",
     "givenOrder",
     "obligatorisk",
+    "vurderingId",
   ],
 
   // Sections with their field overrides and row definitions
@@ -79,33 +82,23 @@ const newProsjektKravWorkspaceConfig = {
     info: {
       title: "Grunnleggende informasjon",
       defaultExpanded: true,
-      fieldOverrides: {
-        tittel: { order: 1 },
-        beskrivelse: { order: 2 },
-        merknader: { order: 2 },
-        informasjon: { order: 3 },
-      },
-      rows: {
-        "merknad-row": {
-          emneId: { order: 3 },
-          kravreferanse: { order: 3 },
-        },
-        "main-row-2": {
-          vurderingId: { order: 5 },
-          statusId: { order: 6 },
-          prioritet: { order: 7 },
-        },
-      },
+      layout: [
+        { field: "beskrivelse" }, // 1. Description (full-width)
+        { row: [
+          "emneId",
+          "kravreferanse",
+          { name: "kravreferansetypeId", default: 1 }  // 2c. Type with default
+        ]}, // 2. Subject & Reference (side-by-side)
+        { field: "informasjon" }, // 3. Information (full-width)
+        { field: "merknader" }, // 4. Notes (full-width)
+      ],
     },
     status: {
-      title: "Status og vurdering",
-      defaultExpanded: true,
-      fieldOverrides: {},
-      rows: {
-        "status-row": {
-          kravStatus: { order: 7 },
-        },
-      },
+      title: "Status og prioritet",
+      defaultExpanded: false,
+      layout: [
+        { row: ["statusId", "prioritet"] }, // 1. Status & Priority (side-by-side)
+      ],
     },
     details: {
       title: "Detaljert informasjon",
@@ -116,48 +109,34 @@ const newProsjektKravWorkspaceConfig = {
     references: {
       title: "Referanser",
       defaultExpanded: false,
-      fieldOverrides: {},
-      rows: {
-        "reference-row": {
-          parentId: { order: 10 },
-          kravreferansetypeId: { order: 10 },
-          versjon: { order: 11 },
-        },
-      },
+      layout: [
+        { row: ["parentId"] }, // 1. Parent, Ref Type (side-by-side)
+        { field: "versjon" }, // 2. Version (full-width)
+      ],
     },
     admin: {
       title: "Administrative detaljer",
       defaultExpanded: false,
-      fieldOverrides: {},
-      rows: {
-        "admin-row": {
-          enhetId: { order: 14 },
-          givenOrder: { order: 15 },
-          obligatorisk: { order: 15, default: "false" },
-        },
-      },
+      layout: [
+        { row: ["enhetId", "obligatorisk"] }, // 1. Unit, Required (side-by-side)
+        { field: "givenOrder" }, // 2. Order (full-width)
+      ],
     },
     metadata: {
       title: "Metadata",
       defaultExpanded: false,
-      fieldOverrides: {
-        kravUID: { order: 18 },
-      },
-      rows: {
-        "metadata-row": {
-          createdBy: { order: 19 },
-          updatedBy: { order: 20 },
-        },
-      },
+      layout: [
+        { field: "kravUID" }, // 1. Krav UID (full-width)
+        { row: ["createdBy", "updatedBy"] }, // 2. Created/Updated by (side-by-side)
+      ],
     },
     annet: {
       title: "",
       defaultExpanded: true,
       noTitle: true,
-      fieldOverrides: {
-        files: { order: 16 },
-      },
-      rows: {},
+      layout: [
+        { field: "files" }, // 1. Files (full-width)
+      ],
     },
   },
 

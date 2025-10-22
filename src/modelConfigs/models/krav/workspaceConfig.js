@@ -79,16 +79,13 @@ const newKravWorkspaceConfig = {
     info: {
       title: "Grunnleggende informasjon",
       defaultExpanded: true,
-      fieldOverrides: {
-        beskrivelse: { order: 2 },
-        merknader: { order: 2 },
-      },
-      rows: {
-        "merknad-row": {
-          kravreferanse: { order: 3 },
-          emneId: { order: 3 },
-        },
-      },
+      layout: [
+        { field: "tittel" },                        // 1. Title (full-width)
+        { field: "beskrivelse" },                   // 2. Description (full-width)
+        { row: ["emneId", "kravreferanse"] },       // 3. Subject & Reference (side-by-side)
+        { field: "informasjon" },                   // 4. Information (full-width)
+        { field: "merknader" },                     // 5. Notes (full-width)
+      ],
     },
     status: {
       title: "Status og vurdering",
@@ -105,30 +102,18 @@ const newKravWorkspaceConfig = {
     references: {
       title: "Referanser",
       defaultExpanded: false,
-      fieldOverrides: {},
-      rows: {
-        "reference-row": {
-          kravreferansetypeId: { order: 10 },
-          lover: { order: 10 },
-          kravpakker: { order: 10 },
-        },
-        "reference-row-2": {
-          parentId: { order: 11 },
-        },
-      },
+      layout: [
+        { row: ["kravreferansetypeId", "lover", "kravpakker"] },  // 1. Ref type, Laws, Packages
+        { field: "parentId" },                                     // 2. Parent (full-width)
+      ],
     },
     admin: {
       title: "Administrative detaljer",
       defaultExpanded: false,
-      fieldOverrides: {
-        givenOrder: { order: 15 },
-      },
-      rows: {
-        "admin-row": {
-          obligatorisk: { order: 14 },
-          enhetId: { order: 14 },
-        },
-      },
+      layout: [
+        { row: ["obligatorisk", "enhetId"] },     // 1. Required, Unit (side-by-side)
+        { field: "givenOrder" },                  // 2. Order (full-width)
+      ],
     },
     metadata: {
       title: "Metadata",
@@ -140,10 +125,9 @@ const newKravWorkspaceConfig = {
       title: "",
       defaultExpanded: true,
       noTitle: true,
-      fieldOverrides: {
-        informasjon: { order: 16 },
-      },
-      rows: {},
+      layout: [
+        { field: "informasjon" },                 // 1. Information (full-width)
+      ],
     },
   },
 

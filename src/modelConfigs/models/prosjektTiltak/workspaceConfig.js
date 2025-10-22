@@ -18,6 +18,61 @@ const workspaceConfigData = {
       showObligatorisk: false,
       showRelations: true,
     },
+
+    // Configuration for "Lag tilknyttet prosjekttiltak" creation flow
+    detailFormLinked: {
+      sections: {
+        main: {
+          title: "Tilknyttet prosjekttiltak",
+          defaultExpanded: true,
+          layout: [
+            { field: "beskrivelse" },                           // 1. Description (full-width)
+            { field: "merknad" },                               // 2. Note (full-width)
+            { field: "implementasjon" },                        // 3. Implementation (full-width)
+            { row: ["vurderingId", "statusId", "prioritet"] },  // 4. Assessment, Status, Priority
+            { field: "emneId" },                                // 5. Subject
+          ],
+        },
+        implementation: {
+          title: "Implementasjon og tilbakemelding",
+          defaultExpanded: false,
+          layout: [
+            { field: "tilbakemelding" },                        // 1. Feedback (full-width)
+          ],
+        },
+        admin: {
+          title: "Administrative detaljer",
+          defaultExpanded: false,
+          layout: [],
+        }
+      },
+      workspaceHiddenCreate: [
+        "tiltakUID",
+        "updatedBy",
+        "createdBy",
+        "prosjektKrav", // Hidden - pre-filled from source prosjektkrav
+        "parentId", // Not needed for linked prosjekttiltak
+        "givenOrder",
+        "beskrivelseSnippet",
+        "implementasjonSnippet",
+        "tilbakemeldingSnippet",
+        "generalTiltakId",
+        "enhetId",
+        "obligatorisk",
+      ],
+      workspaceHiddenIndex: [
+        "givenOrder",
+        "updatedBy",
+        "createdBy",
+        "tiltakUID",
+        "beskrivelseSnippet",
+        "implementasjonSnippet",
+        "tilbakemeldingSnippet",
+        "generalTiltakId",
+        "enhetId",
+        "obligatorisk",
+      ],
+    },
   },
 
   workspaceHiddenIndex: [
@@ -61,26 +116,14 @@ const workspaceConfigData = {
     info: {
       title: "Grunnleggende informasjon",
       defaultExpanded: true,
-      fieldOverrides: {
-        beskrivelse: { order: 2 },
-        merknad: { order: 2 },
-        implementasjon: { order: 3 },
-      },
-      rows: {
-        "main-row": {
-          navn: {},
-        },
-        "main-row-2": {
-          vurderingId: { order: 5 },
-          statusId: { order: 6 },
-          prioritet: { order: 7 },
-        },
-        "emne-row": {
-          emneId: { order: 3 },
-          prosjektKrav: { order: 4 },
-          parentId: { order: 5 },
-        },
-      },
+      layout: [
+        { row: ["navn"] },                                    // 1. Name (single field in row)
+        { field: "beskrivelse" },                             // 2. Description (full-width)
+        { field: "merknad" },                                 // 3. Note (full-width)
+        { row: ["emneId", "prosjektKrav", "parentId"] },      // 4. Subject, Project Req, Parent (side-by-side)
+        { field: "implementasjon" },                          // 5. Implementation (full-width)
+        { row: ["vurderingId", "statusId", "prioritet"] },    // 6. Assessment, Status, Priority (side-by-side)
+      ],
     },
     status: {
       title: "Status og vurdering",

@@ -25,6 +25,57 @@ const newTiltakWorkspaceConfig = {
       showObligatorisk: false,
       showRelations: true,
     },
+
+    // Configuration for "Lag tilknyttet tiltak" creation flow
+    detailFormLinked: {
+      sections: {
+        main: {
+          title: "Tilknyttet tiltak",
+          defaultExpanded: true,
+          layout: [
+            { field: "beskrivelse" },                           // 1. Description (full-width)
+            { field: "merknad" },                               // 2. Note (full-width)
+            { row: ["vurderingId", "statusId", "prioritet"] },  // 3. Assessment, Status, Priority
+            { row: ["emneId", "obligatorisk"] },                // 4. Subject, Required
+          ],
+        },
+        implementation: {
+          title: "Implementasjon og tilbakemelding",
+          defaultExpanded: false,
+          layout: [
+            { field: "implementasjon" },                        // 1. Implementation (full-width)
+            { field: "tilbakemelding" },                        // 2. Feedback (full-width)
+          ],
+        },
+        admin: {
+          title: "Administrative detaljer",
+          defaultExpanded: false,
+          layout: [
+            { field: "enhetId" },                               // 1. Unit (full-width)
+          ],
+        }
+      },
+      workspaceHiddenCreate: [
+        "tiltakUID",
+        "updatedBy",
+        "createdBy",
+        "krav", // Hidden - pre-filled from source krav
+        "parentId", // Not needed for linked tiltak
+        "givenOrder",
+        "beskrivelseSnippet",
+        "implementasjonSnippet",
+        "tilbakemeldingSnippet",
+      ],
+      workspaceHiddenIndex: [
+        "givenOrder",
+        "updatedBy",
+        "createdBy",
+        "tiltakUID",
+        "beskrivelseSnippet",
+        "implementasjonSnippet",
+        "tilbakemeldingSnippet",
+      ],
+    },
   },
 
   // Hidden fields in different contexts
@@ -70,17 +121,11 @@ const newTiltakWorkspaceConfig = {
     info: {
       title: "Grunnleggende informasjon",
       defaultExpanded: true,
-      fieldOverrides: {
-        beskrivelse: { order: 2 },
-        merknad: { order: 2 },
-      },
-      rows: {
-        "emne-row": {
-          emneId: { order: 3 },
-          krav: { order: 4 },
-          parentId: { order: 5 },
-        },
-      },
+      layout: [
+        { field: "beskrivelse" },                   // 1. Description (full-width)
+        { field: "merknad" },                       // 2. Note (full-width)
+        { row: ["emneId", "krav", "parentId"] },    // 3. Subject, Requirement, Parent (side-by-side)
+      ],
     },
     status: {
       title: "Status og vurdering",
@@ -103,15 +148,10 @@ const newTiltakWorkspaceConfig = {
     admin: {
       title: "Administrative detaljer",
       defaultExpanded: false,
-      fieldOverrides: {
-        givenOrder: { order: 15 },
-      },
-      rows: {
-        "admin-row": {
-          obligatorisk: { order: 14 },
-          enhetId: { order: 14 },
-        },
-      },
+      layout: [
+        { row: ["obligatorisk", "enhetId"] },       // 1. Required, Unit (side-by-side)
+        { field: "givenOrder" },                    // 2. Order (full-width)
+      ],
     },
     metadata: {
       title: "Metadata",
@@ -123,11 +163,10 @@ const newTiltakWorkspaceConfig = {
       title: "",
       defaultExpanded: true,
       noTitle: true,
-      fieldOverrides: {
-        implementasjon: { order: 10 },
-        tilbakemelding: { order: 11 },
-      },
-      rows: {},
+      layout: [
+        { field: "implementasjon" },                // 1. Implementation (full-width)
+        { field: "tilbakemelding" },                // 2. Feedback (full-width)
+      ],
     },
   },
 

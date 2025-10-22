@@ -47,7 +47,11 @@ export const getKrav = (config = {}) => {
   return API.get("/krav", updatedConfig);
 };
 export const getKravSimple = () => API.get("/krav/simple", addKravFieldExclusion("simple"));
-export const createKrav = (kravData) => API.post("krav", kravData);
+export const createKrav = (kravData) => {
+  // Strip auto-generated fields that should only be set by backend
+  const { kravUID, id, createdAt, updatedAt, createdBy, updatedBy, ...cleanData } = kravData;
+  return API.post("krav", cleanData);
+};
 
 export const updateKrav = (id, kravData) => API.put(`krav/${id}`, kravData);
 

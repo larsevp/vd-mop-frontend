@@ -105,8 +105,22 @@ export class ProsjektKravTiltakCombinedAdapter {
   enhanceEntity(entity) {
     if (!entity) return null;
 
+    // Don't enhance empty objects (happens during form initialization)
+    // Check both Object.keys length and if entity has any meaningful properties
+    const hasNoProperties = Object.keys(entity).length === 0;
+    const hasOnlyMetaProperties = Object.keys(entity).every(key => key.startsWith('_') || key.startsWith('$'));
+
+    if (hasNoProperties || hasOnlyMetaProperties) {
+      return entity;
+    }
+
     // Detect entity type dynamically (adapter returns raw data)
     const entityType = this.detectEntityType(entity);
+
+    // If detection failed (empty object or unknown type), return as-is
+    if (!entityType) {
+      return entity;
+    }
 
     return {
       ...entity,
@@ -123,6 +137,17 @@ export class ProsjektKravTiltakCombinedAdapter {
    * Backend provides explicit entityType field for project combined queries
    */
   detectEntityType(rawEntity) {
+    // Skip detection for empty objects (happens during form initialization)
+    if (!rawEntity || Object.keys(rawEntity).length === 0) {
+      return null;
+    }
+
+    // Skip detection for objects with only meta properties
+    const hasOnlyMetaProperties = Object.keys(rawEntity).every(key => key.startsWith('_') || key.startsWith('$'));
+    if (hasOnlyMetaProperties) {
+      return null;
+    }
+
     // Check for explicit entity type markers (used for new entities)
     if (rawEntity?.__entityType) {
       return rawEntity.__entityType.toLowerCase();
@@ -384,6 +409,40 @@ export class ProsjektKravTiltakCombinedAdapter {
     }
 
     throw new Error(`Delete function not available for entity type: ${entityType}`);
+  }
+
+  /**
+   * Get effective emneId based on inheritance rules
+   * Delegates to individual adapters based on entity type
+   *
+   * @param {Object} entity - Current entity/form data
+   * @param {Object} parentData - Parent entity data
+   * @param {Object} prosjektKravData - ProsjektKrav entity data (for ProsjektTiltak only)
+   * @returns {Object} Inheritance information
+   */
+  getEffectiveEmneId(entity, parentData, prosjektKravData) {
+    const entityType = this.detectEntityType(entity);
+
+    if (entityType === "prosjektkrav" && this.prosjektKravAdapter?.getEffectiveEmneId) {
+      return this.prosjektKravAdapter.getEffectiveEmneId(entity, parentData);
+    }
+
+    if (entityType === "prosjekttiltak" && this.prosjektTiltakAdapter?.getEffectiveEmneId) {
+      return this.prosjektTiltakAdapter.getEffectiveEmneId(entity, parentData, prosjektKravData);
+    }
+
+    // Fallback: no inheritance
+    return {
+      emneId: entity.emneId || null,
+      source: null,
+      sourceData: null,
+      isInherited: false,
+      hasParentConnection: false,
+      hasKravConnection: false,
+      emneDisabled: false,
+      parentDisabled: false,
+      kravDisabled: false,
+    };
   }
 
   // === POST-OPERATION HOOKS ===

@@ -55,7 +55,11 @@ export const getTiltakById = (id, config = {}) => {
   return API.get(`/tiltak/${id}`, updatedConfig);
 };
 
-export const createTiltak = (tiltakData) => API.post("/tiltak", tiltakData);
+export const createTiltak = (tiltakData) => {
+  // Strip auto-generated fields that should only be set by backend
+  const { tiltakUID, id, createdAt, updatedAt, createdBy, updatedBy, ...cleanData } = tiltakData;
+  return API.post("/tiltak", cleanData);
+};
 
 export const updateTiltak = (id, tiltakData) => API.put(`/tiltak/${id}`, tiltakData);
 

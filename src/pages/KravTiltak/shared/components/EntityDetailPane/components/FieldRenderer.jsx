@@ -2,10 +2,46 @@ import React from "react";
 import { FieldResolver } from "@/components/tableComponents/fieldTypes/fieldResolver.jsx";
 import { DisplayValueResolver } from "@/components/tableComponents/displayValues/DisplayValueResolver.jsx";
 import { InfoIcon } from "@/components/ui/InfoIcon.jsx";
+import InheritanceIndicator from "./InheritanceIndicator.jsx";
 
-const FieldRenderer = ({ field, value, onChange, error, form, entity, modelName, isEditing }) => {
+const FieldRenderer = ({ field, value, onChange, error, form, entity, modelName, isEditing, inheritanceInfo }) => {
   const Component = FieldResolver.getFieldComponent(field, modelName);
   const componentHandlesOwnLabel = modelName && FieldResolver.getModelSpecificFields(modelName).fieldNames?.[field.name];
+
+  // Determine if this specific field should be disabled due to inheritance
+  const isFieldDisabledByInheritance = React.useMemo(() => {
+    if (!inheritanceInfo || !isEditing) return false;
+
+    // Check each field type for inheritance-based disabling
+    switch (field.name) {
+      case 'emneId':
+      case 'emne':
+        return inheritanceInfo.emneDisabled;
+
+      case 'parentId':
+      case 'parent':
+        return inheritanceInfo.parentDisabled;
+
+      case 'kravIds':
+      case 'krav':
+        return inheritanceInfo.kravDisabled;
+
+      case 'prosjektKravIds':
+      case 'prosjektKrav':
+        return inheritanceInfo.kravDisabled;
+
+      default:
+        return false;
+    }
+  }, [field.name, inheritanceInfo, isEditing]);
+
+  // Determine if we should show inheritance indicator for this field
+  // MUST be called before any early returns to maintain hook order
+  const showInheritanceIndicator = React.useMemo(() => {
+    if (!inheritanceInfo || !isEditing) return false;
+    // Only show for emne field when it's inherited
+    return (field.name === 'emneId' || field.name === 'emne') && inheritanceInfo.isInherited;
+  }, [field.name, inheritanceInfo, isEditing]);
 
   if (componentHandlesOwnLabel) {
     return (
@@ -17,6 +53,7 @@ const FieldRenderer = ({ field, value, onChange, error, form, entity, modelName,
         form={form}
         row={entity}
         modelName={modelName}
+        disabled={isFieldDisabledByInheritance}  // NEW: Pass disabled state
       />
     );
   }
@@ -70,7 +107,14 @@ const FieldRenderer = ({ field, value, onChange, error, form, entity, modelName,
         form={form}
         row={entity}
         modelName={modelName}
+        disabled={isFieldDisabledByInheritance}  // NEW: Pass disabled state
       />
+      {showInheritanceIndicator && (
+        <InheritanceIndicator
+          source={inheritanceInfo.source}
+          sourceData={inheritanceInfo.sourceData}
+        />
+      )}
       {error && (
         <div className="mt-1 flex items-center text-sm text-red-600">
           <svg className="w-4 h-4 mr-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">

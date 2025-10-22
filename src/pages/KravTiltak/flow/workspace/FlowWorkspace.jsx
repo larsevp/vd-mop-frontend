@@ -511,9 +511,9 @@ const FlowWorkspace = ({
         </ReactFlow>
       </div>
 
-      {/* EntityDetailPane Modal */}
+      {/* EntityDetailPane Modal - z-[100] ensures it appears above status line and other UI elements */}
       {showDetailPane && selectedEntity && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-4xl max-h-[90vh] w-full flex flex-col overflow-hidden">
             <div className="flex-1 min-h-0 overflow-auto">
               {renderEntityDetail(selectedEntity)}

@@ -9,6 +9,7 @@ import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import { RecentProjectList } from "@/components/parts/LandingPage/RecentProjectList";
 import HurtigtilgangLandingPage from "@/components/parts/LandingPage/HurtigtilgangLandingPage";
+import { OnboardingModal } from "@/components/parts/LandingPage/OnboardingModal";
 
 export default function LandingPage() {
   const { user } = useUserStore();
@@ -92,6 +93,9 @@ export default function LandingPage() {
 
   return (
     <div className="bg-background-primary min-h-screen">
+      {/* Onboarding modal - shows automatically if user is missing fagområde or enhet */}
+      <OnboardingModal />
+
       {/* Hero section */}
       <section className="bg-primary-900 text-white">
         <div className="max-w-screen-xl mx-auto px-4 py-8 sm:py-12 sm:px-6 md:px-8">
