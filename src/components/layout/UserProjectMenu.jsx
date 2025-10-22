@@ -1,22 +1,68 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ChevronDown, User, Building2, Check, Plus, LogOut, Home } from "lucide-react";
+import { ChevronDown, User, Building2, Check, Plus, LogOut, Home, Layers } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useUserStore, useProjectStore } from "@/stores/userStore";
 import { LogoutButton } from "@/components/ui";
 import LastVisitedProjectsList from "@/components/ui/projects/LastVisitedProjectsList";
 import { useLastVisitedProjects } from "@/hooks/useLastVisitedProjects";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getFagomraderSimple, setActiveFagomrade } from "@/api/endpoints";
+import { DynamicIcon } from "@/components/ui/DynamicIcon";
+import { ComboBox } from "@/components/ui/form/ComboBox";
 
 /**
  * Modern User & Project Menu - Combines user info, project context, and project switching
  * in a single elegant dropdown menu to save header space while improving UX
  */
 export const UserProjectMenu = () => {
-  const { user } = useUserStore();
+  const { user, refreshUser } = useUserStore();
   const { currentProject, setCurrentProject } = useProjectStore();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
   const navigate = useNavigate();
   const { trackProjectVisit } = useLastVisitedProjects();
+  const queryClient = useQueryClient();
+
+  // Fetch available fagomrader
+  const { data: fagomrader = [] } = useQuery({
+    queryKey: ["fagomrader"],
+    queryFn: getFagomraderSimple,
+    select: (response) => {
+      const data = Array.isArray(response) ? response : response.data || [];
+      return data.sort((a, b) => {
+        if (a.sortIt !== undefined && b.sortIt !== undefined) {
+          return a.sortIt - b.sortIt;
+        }
+        return (a.tittel || "").localeCompare(b.tittel || "");
+      });
+    },
+  });
+
+  // Mutation for setting active fagområde
+  const fagomradeMutation = useMutation({
+    mutationFn: setActiveFagomrade,
+    onMutate: async (newFagomradeId) => {
+      // Optimistically update the UI immediately so user sees the selection change
+      const currentUser = useUserStore.getState().user;
+      if (currentUser) {
+        useUserStore.getState().setUser({
+          ...currentUser,
+          fagomradeId: newFagomradeId,
+        });
+      }
+    },
+    onSuccess: async (data, variables) => {
+      // Update backend succeeded - now do a full page refresh
+      // This is the cleanest approach because:
+      // 1. All components remount fresh with new fagområde context
+      // 2. All state (React Query, Zustand, local) is completely reset
+      // 3. No risk of stale data or missed cache invalidations
+      // 4. User gets clear visual feedback that context changed
+
+      // Force a full page reload to refresh all data with new fagområde filters
+      window.location.reload();
+    },
+  });
 
   // Handle clicks outside menu to close
   useEffect(() => {
@@ -48,6 +94,47 @@ export const UserProjectMenu = () => {
     setIsOpen(false);
     navigate("/");
   };
+
+  const handleFagomradeSelect = (event) => {
+    const selectedId = event.target.value;
+    const parsedId = selectedId ? parseInt(selectedId, 10) : null;
+    fagomradeMutation.mutate(parsedId);
+  };
+
+  // Find current fagområde
+  const currentFagomrade = user?.fagomradeId
+    ? fagomrader.find(f => f.id === user.fagomradeId)
+    : null;
+
+  // Prepare fagområde options for ComboBox
+  const fagomradeOptions = React.useMemo(() => {
+    return fagomrader.map((fagomrade) => ({
+      id: fagomrade.id.toString(),
+      label: fagomrade.tittel || `ID: ${fagomrade.id}`,
+      icon: fagomrade.icon,
+      color: fagomrade.color,
+    }));
+  }, [fagomrader]);
+
+  // Render fagområde option with icon
+  const renderFagomradeOption = React.useCallback((option, isSelected, isActive) => {
+    return (
+      <>
+        <Check className={`mr-2 h-4 w-4 flex-shrink-0 ${isSelected ? "opacity-100" : "opacity-0"}`} />
+        <div className="flex items-center flex-1 min-w-0 gap-2">
+          {option.icon && (
+            <div
+              className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: option.color || "#8b5cf6" }}
+            >
+              <DynamicIcon name={option.icon} size={12} color="white" />
+            </div>
+          )}
+          <span className="truncate text-sm">{option.label}</span>
+        </div>
+      </>
+    );
+  }, []);
 
 
   const userName = user?.name || user?.navn;
@@ -111,6 +198,27 @@ export const UserProjectMenu = () => {
                 </p>
               </div>
             </div>
+          </div>
+
+          {/* Fagområde Section */}
+          <div className="p-3 border-b border-gray-100">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Aktivt fagområde
+              </span>
+            </div>
+
+            <ComboBox
+              name="fagomradeId"
+              value={user?.fagomradeId != null ? user.fagomradeId.toString() : null}
+              onChange={handleFagomradeSelect}
+              placeholder="Velg fagområde..."
+              disabled={fagomradeMutation.isPending}
+              allowEmpty={true}
+              emptyLabel="Ingen fagområde"
+              options={fagomradeOptions}
+              renderOption={renderFagomradeOption}
+            />
           </div>
 
           {/* Current Project Section */}

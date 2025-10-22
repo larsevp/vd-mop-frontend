@@ -11,6 +11,7 @@ import { RowNew, RowEdit } from "@/components/tableComponents";
 import Prosjektadministrasjon from "@/pages/models/Prosjektadministrasjon";
 import ProjectLanding from "@/pages/landing/ProjectLanding";
 import Enhetsadministrasjon from "@/pages/models/Enhetsadministrasjon";
+import Fagomradeadministrasjon from "@/pages/models/Fagomradeadministrasjon";
 import Emneadministrasjon from "@/pages/models/Emneadministrasjon";
 import Vurderingadministrasjon from "@/pages/models/Vurderingadministrasjon";
 import Statusadministrasjon from "@/pages/models/Statusadministrasjon";
@@ -64,6 +65,9 @@ export default function AuthenticatedRoutes() {
         <Route path="/enheter" element={<Enhetsadministrasjon />} />
         <Route path="/enheter/ny" element={<RowNew />} />
         <Route path="/enheter/:id/rediger" element={<RowEdit />} />
+        <Route path="/fagomrader" element={<Fagomradeadministrasjon />} />
+        <Route path="/fagomrader/ny" element={<RowNew />} />
+        <Route path="/fagomrader/:id/rediger" element={<RowEdit />} />
         <Route path="/emner" element={<Emneadministrasjon />} />
         <Route path="/emner/ny" element={<RowNew />} />
         <Route path="/emner/:id/rediger" element={<RowEdit />} />

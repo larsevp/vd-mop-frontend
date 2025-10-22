@@ -24,7 +24,8 @@ export default function UserInitializer({ children }) {
     }
 
     // User already validated - allow through
-    const isValidated = (!user.isManualLogin && user.rolle) || (user.isManualLogin && user.enhetId);
+    // IMPORTANT: Always fetch if fagomradeId is missing (for users who logged in before this feature)
+    const isValidated = ((!user.isManualLogin && user.rolle) || (user.isManualLogin && user.enhetId)) && 'fagomradeId' in user;
 
     if (isValidated) {
       setHasFetched(true);

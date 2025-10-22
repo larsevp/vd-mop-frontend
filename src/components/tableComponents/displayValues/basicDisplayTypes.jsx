@@ -256,21 +256,32 @@ export const BASIC_DISPLAY_TYPES = {
 
   // Icon fields
   icon: (row, field, context) => {
-    const value = row[field.name];
-    if (!value) {
+    const iconValue = row[field.name];
+    if (!iconValue) {
       const displayValue = "N/A";
       return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
     }
 
     if (context.format === "REACT") {
+      // Check if the row has a color field to use with the icon
+      const colorValue = row.color || "#6b7280"; // Default gray if no color
+
       return (
         <div className="flex items-center gap-2">
-          <DynamicIcon name={value} size={16} className="flex-shrink-0" />
-          <span className="text-sm text-gray-600">{value}</span>
+          {/* Colored circle with white icon */}
+          <div
+            className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: colorValue }}
+          >
+            <div className="text-white">
+              <DynamicIcon name={iconValue} size={14} color="white" />
+            </div>
+          </div>
+          <span className="text-sm text-gray-600">{iconValue}</span>
         </div>
       );
     }
 
-    return value;
+    return iconValue;
   },
 };

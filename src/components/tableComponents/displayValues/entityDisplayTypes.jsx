@@ -154,6 +154,23 @@ export const ENTITY_DISPLAY_TYPES = {
     ) : label;
   },
 
+  // Fagomrade relationships (generic fallback)
+  fagomradeId: (row, field, context) => {
+    if (row.fagomrade && row.fagomrade.tittel) {
+      const displayValue = row.fagomrade.tittel;
+      if (context.format === "REACT" && row.fagomrade.icon) {
+        return <IconWithText iconName={row.fagomrade.icon} text={displayValue} iconColor={row.fagomrade.color} />;
+      }
+      return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
+    } else if (row[field.name]) {
+      const displayValue = `Fagområde ID: ${row[field.name]}`;
+      return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
+    } else {
+      const displayValue = "Ingen fagområde";
+      return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
+    }
+  },
+
   // Kravreferansetype relationships (generic fallback)
   kravreferansetypeId: (row, field, context) => {
     // Check both camelCase (from backend JSON) and lowercase field names

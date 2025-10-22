@@ -12,6 +12,7 @@ export * from "./models/kravreferansetype";
 export * from "./models/prosjektKrav";
 export * from "./models/prosjektTiltak";
 /* PLOP_IMPORT_MODELS */
+export * from "./models/fagomrade";
 export * from "./models/files";
 export * from "./models/krav";
 export * from "./models/lov";

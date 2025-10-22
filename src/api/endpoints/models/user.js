@@ -9,3 +9,6 @@ export const deleteUser = (id) => API.delete(`/user/${id}`);
 export const getPaginatedUser = (page = 1, pageSize = 10, search = "", sortBy = "", sortOrder = "asc") =>
   getPaginatedData("/user", page, pageSize, search, sortBy, sortOrder);
 export const getUserById = (id) => API.get(`/user/${id}`);
+
+// User preferences (non-admin)
+export const setActiveFagomrade = (fagomradeId) => API.post("/user/set-active-fagomrade", { fagomradeId });

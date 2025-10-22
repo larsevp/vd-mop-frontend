@@ -18,6 +18,38 @@ export const useUserStore = create(
         set({ user: null, userInfoError: null });
       },
 
+      // Refresh user info - force fetch from backend
+      refreshUser: async () => {
+        set({ isLoadingUserInfo: true, userInfoError: null });
+
+        try {
+          const response = await getCurrentUserInfo();
+          const userInfo = response.data;
+
+          // Get fresh user state right before merge to avoid stale closure
+          const currentUser = get().user;
+
+          // Merge with existing user data or create new user object
+          const updatedUser = {
+            ...currentUser,
+            navn: userInfo.navn,
+            rolle: userInfo.rolle,
+            enhetId: userInfo.enhetId,
+            fagomradeId: userInfo.fagomradeId,
+          };
+
+          set({
+            user: updatedUser,
+            isLoadingUserInfo: false,
+          });
+        } catch (error) {
+          set({
+            userInfoError: error.message || "Failed to refresh user info",
+            isLoadingUserInfo: false,
+          });
+        }
+      },
+
       // Fetch current user info (role and name) from backend
       fetchUserInfo: async () => {
         const { user } = get();
@@ -47,6 +79,7 @@ export const useUserStore = create(
             navn: userInfo.navn,
             rolle: userInfo.rolle,
             enhetId: userInfo.enhetId,
+            fagomradeId: userInfo.fagomradeId,
           };
 
           set({
@@ -66,13 +99,16 @@ export const useUserStore = create(
     }),
     {
       name: "user-storage", // unique name for localStorage key
-      version: 1, // Add version to handle state migrations
+      version: 3, // Bump to v3 to force complete refresh
       migrate: (persistedState, version) => {
         // Handle migration from previous versions
-        if (version === 0) {
-          // Migration from v0 to v1 - ensure user structure is correct
+        if (version === 0 || version === 1 || version === 2) {
+          // Migration to v3 - force complete reset to get fagomradeId
+          // Clear old user data to force a fresh fetch
           return {
-            user: persistedState.user || null
+            user: null,
+            isLoadingUserInfo: false,
+            userInfoError: null,
           };
         }
         return persistedState;
@@ -87,6 +123,7 @@ export const useUserStore = create(
                 navn: state.user.navn,
                 name: state.user.name, // Legacy support for HeaderNav
                 enhetId: state.user.enhetId,
+                fagomradeId: state.user.fagomradeId,
                 isManualLogin: state.user.isManualLogin,
                 // Explicitly exclude manualToken and other sensitive data
               }

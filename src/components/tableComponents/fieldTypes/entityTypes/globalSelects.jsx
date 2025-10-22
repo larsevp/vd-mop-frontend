@@ -5,6 +5,7 @@ import { KravreferansetypeSelect } from "../../../ui/form/Kravreferansetype";
 import { PrioritetSelect } from "../../../ui/form/PrioritetSelect";
 import { KravStatusSelect } from "../../../ui/form/EnumSelect";
 import EnhetSelect from "../../EnhetSelect";
+import FagomradeSelect from "../../FagomradeSelect";
 
 // Global entity selects (can be used in any model)
 export const globalSelectTypes = {
@@ -65,6 +66,17 @@ export const globalSelectTypes = {
 
   enhetselect: ({ field, value, onChange, error }) => (
     <EnhetSelect
+      name={field.name}
+      value={value}
+      onChange={onChange}
+      label={field.label}
+      required={field.required}
+      placeholder={field.placeholder}
+    />
+  ),
+
+  fagomradeselect: ({ field, value, onChange, error }) => (
+    <FagomradeSelect
       name={field.name}
       value={value}
       onChange={onChange}

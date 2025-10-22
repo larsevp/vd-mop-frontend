@@ -1,5 +1,6 @@
 // Dynamic model config access for generic components
 /* PLOP_IMPORT_MODELS */
+import { fagomrade } from "./models/fagomrade";
 import { files } from "./models/files";
 import { krav } from "./models/krav";
 import { lov } from "./models/lov";
@@ -17,6 +18,7 @@ import { prosjektTiltak } from "./models/prosjektTiltak";
 // Object mapping for dynamic lookup
 export const modelConfigs = {
   /* PLOP_MODEL_MAPPINGS */
+  fagomrader: fagomrade,
   files: files,
   krav: krav,
   lover: lov,

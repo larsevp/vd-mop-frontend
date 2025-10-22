@@ -20,10 +20,11 @@ export const user = {
       type: "select",
       required: true,
       options: [
-        { value: "user", label: "User" },
-        { value: "admin", label: "Admin" },
+        { value: "USER", label: "User" },
+        { value: "ADMIN", label: "Admin" },
       ],
     },
     { name: "enhetId", label: "Enhet", type: "enhetselect", required: true, placeholder: "Velg enhet" },
+    { name: "fagomradeId", label: "Fagområde", type: "fagomradeselect", required: false, placeholder: "Velg fagområde" },
   ],
 };

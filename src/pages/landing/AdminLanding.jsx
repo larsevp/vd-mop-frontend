@@ -14,6 +14,7 @@ import {
   CheckSquare,
   FolderOpen,
   Layers,
+  FolderTree,
 } from "lucide-react";
 import { useUserStore } from "@/stores/userStore";
 import { getModelConfig } from "@/modelConfigs";
@@ -34,6 +35,12 @@ export default function AdminLanding() {
       link: "/enheter",
       icon: Building2,
       color: "from-green-500 to-green-600",
+    },
+    {
+      config: getModelConfig("fagomrader"),
+      link: "/fagomrader",
+      icon: FolderTree,
+      color: "from-emerald-500 to-emerald-600",
     },
     {
       config: getModelConfig("prosjekter"),
