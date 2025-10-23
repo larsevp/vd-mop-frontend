@@ -155,30 +155,31 @@
     min-width: 200px;
   }
 
-  /* Bullet list with reduced spacing (like Shift+Enter) */
+  /* Bullet list with clean Scandinavian spacing */
   .ProseMirror ul {
-    margin: 0.5rem 0;
-    padding-left: 1rem;
+    margin: 0.75rem 0;
+    padding-left: 1.5rem;
   }
-  
+
   .ProseMirror ul li {
-    margin: 0.2; /* Remove all vertical margin between bullet points */
-    line-height: 1;
+    margin: 0.25rem 0;
+    line-height: 1.6;
   }
-  
-  /* Remove default paragraph margins inside list items */
+
+  /* Paragraph margins inside list items */
   .ProseMirror ul li p {
-    margin: 0.2;
-    line-height: 1;
+    margin: 0;
+    line-height: 1.6;
   }
-  
-  /* Nested lists should have even tighter spacing */
+
+  /* Nested lists */
   .ProseMirror ul ul {
-    margin: 0.2;
+    margin: 0.25rem 0;
+    padding-left: 1.25rem;
   }
-  
+
   .ProseMirror ul ul li {
-    margin: 0.2; /* No spacing for nested lists either */
+    margin: 0.15rem 0;
   }
 
   /* SweetAlert2 toast customization - smaller toast notifications */

@@ -153,11 +153,37 @@ const EntityDetailPane = ({
     inheritanceInfo.isLoading
   ]);
 
-  // Initialize expanded sections
+  // Initialize expanded sections based on config and data
   useEffect(() => {
-    const initialExpanded = initializeExpandedSections(sections);
-    setExpandedSections(initialExpanded);
-  }, [sections]);
+    if (!collapseEmptySectionsInView || isEditing) {
+      // Use default expansion from config
+      const initialExpanded = initializeExpandedSections(sections);
+      setExpandedSections(initialExpanded);
+    } else {
+      // collapseEmptySectionsInView is true in view mode:
+      // Only expand sections that have filled fields
+      const expandedSet = new Set();
+
+      Object.keys(sections).forEach(sectionName => {
+        const sectionFields = getFieldsBySection(visibleFields)[sectionName] || [];
+
+        // Check if section has any filled fields
+        const hasFilledFields = sectionFields.some(field => {
+          const value = formData[field.name];
+          const isEmpty = value === null || value === undefined || value === '' ||
+                         (Array.isArray(value) && value.length === 0) ||
+                         (typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 0);
+          return !isEmpty;
+        });
+
+        if (hasFilledFields) {
+          expandedSet.add(sectionName);
+        }
+      });
+
+      setExpandedSections(expandedSet);
+    }
+  }, [entity?.id, isEditing, collapseEmptySectionsInView, formData]); // Re-run when entity changes, edit mode changes, or formData is ready
 
   // Auto-expand error sections
   useEffect(() => {
@@ -638,12 +664,9 @@ const EntityDetailPane = ({
             });
 
             // Determine if section should be expanded
-            // In edit mode: always respect user toggle
-            // In view mode with collapseEmptySectionsInView: only expand if section has filled fields (ignore user toggle)
-            // In view mode without collapseEmptySectionsInView: respect user toggle
-            const shouldBeExpanded = isEditing
-              ? isExpanded
-              : (collapseEmptySectionsInView ? sectionHasFilledFields : isExpanded);
+            // ALWAYS respect user toggle (isExpanded)
+            // collapseEmptySectionsInView only affects INITIAL state when entity loads
+            const shouldBeExpanded = isExpanded;
 
             const fieldContent = (
               <div className="space-y-6">

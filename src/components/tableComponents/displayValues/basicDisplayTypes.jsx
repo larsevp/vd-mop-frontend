@@ -116,12 +116,9 @@ export const BASIC_DISPLAY_TYPES = {
       // Use ExpandableRichText for React display, but don't collapse in detail views
       const maxLength = context.source === "DETAIL" ? Infinity : 100;
 
-      // Apply styling with indent and border for full richtext fields
-      return (
-        <div className="ml-4 pl-3 border-l-2 border-gray-200">
-          <ExpandableRichText content={value} maxLength={maxLength} />
-        </div>
-      );
+      // Clean Scandinavian styling for richtext fields
+      // Note: Divider is handled by FieldRenderer for proper label alignment
+      return <ExpandableRichText content={value} maxLength={maxLength} />;
     }
 
     // For string format, strip HTML tags and return plain text
@@ -141,12 +138,9 @@ export const BASIC_DISPLAY_TYPES = {
       // Use ExpandableRichText for React display, but don't collapse in detail views
       const maxLength = context.source === "DETAIL" ? Infinity : 100;
 
-      // Simple styling for basic richtext fields - no special borders or indentation
-      return (
-        <div>
-          <ExpandableRichText content={value} maxLength={maxLength} />
-        </div>
-      );
+      // Clean Scandinavian styling for basic richtext fields
+      // Note: Divider is handled by FieldRenderer for proper label alignment
+      return <ExpandableRichText content={value} maxLength={maxLength} />;
     }
 
     // For string format, strip HTML tags and return plain text

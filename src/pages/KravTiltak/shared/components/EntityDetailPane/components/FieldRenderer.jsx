@@ -66,6 +66,9 @@ const FieldRenderer = ({ field, value, onChange, error, form, entity, modelName,
       modelName
     );
 
+    // Check if this is a richtext field for special styling
+    const isRichtextField = field.type === 'richtext' || field.type === 'basicrichtext';
+
     return (
       <div className="space-y-2">
         <div className="flex items-center gap-2">
@@ -75,7 +78,9 @@ const FieldRenderer = ({ field, value, onChange, error, form, entity, modelName,
           </label>
           <InfoIcon info={field.field_info} />
         </div>
-        <div className="text-base text-gray-900 leading-relaxed">
+        {/* Add divider below label for richtext fields */}
+        {isRichtextField && <div className="h-px bg-slate-200" />}
+        <div className={`${isRichtextField ? 'pt-2' : ''} text-base text-gray-900 leading-relaxed`}>
           {displayValue}
         </div>
       </div>
