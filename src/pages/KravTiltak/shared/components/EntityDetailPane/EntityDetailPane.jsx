@@ -3,6 +3,7 @@ import { Edit, X, Save, RotateCcw, Trash2, Plus } from "lucide-react";
 import { useQueryClient } from '@tanstack/react-query';
 import { ValidationErrorSummary, FieldRenderer, FieldSection } from "./components";
 import { getEntityTypeConfig } from "../../utils/entityTypeBadges";
+import EntityBadge from "../EntityBadge/EntityBadge";
 import { TiptapDisplay } from "@/components/ui/editor/TiptapDisplay";
 import {
   getVisibleFields,
@@ -447,15 +448,13 @@ const EntityDetailPane = ({
       <div className={`sticky top-0 border-b px-8 py-6 z-20 transition-all duration-200 ${isEditing ? "bg-slate-50 border-slate-200" : "bg-white border-gray-200"}`}>
         <div className="flex items-center justify-between gap-6">
           <div className="flex-1 min-w-0 flex items-center gap-3">
-            {entityUID && (
-              <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium flex-shrink-0 bg-slate-100 text-slate-700 border border-slate-200`}>
-                {entityUID}
-              </span>
-            )}
             {!isNewEntity && (
-              <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium flex-shrink-0 ${entityConfig.badgeColor}`}>
-                {entityConfig.shortLabel}
-              </span>
+              <EntityBadge
+                uid={entityUID}
+                badgeColor={entityConfig.badgeColor}
+                badgeText={entityConfig.shortLabel}
+                size="md"
+              />
             )}
             {emneTitle && (
               <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200 flex-shrink-0">
