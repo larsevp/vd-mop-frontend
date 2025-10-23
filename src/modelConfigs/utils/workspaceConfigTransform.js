@@ -27,6 +27,7 @@ export function transformWorkspaceConfig(newConfig) {
 
         // Preserve view options
         hideEmptyFieldsInView: newConfig.hideEmptyFieldsInView || false,
+        collapseEmptySectionsInView: newConfig.collapseEmptySectionsInView || false,
 
         // Transform sections
         sections: {},

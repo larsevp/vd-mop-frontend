@@ -39,7 +39,7 @@ export function ProsjektTiltakSelect({
   required = false,
   disabled = false,
   allowEmpty = true,
-  emptyLabel = "Ingen parent",
+  emptyLabel = "Ingen",
   className = "",
   excludeId,
   onDataLoaded,
@@ -57,7 +57,7 @@ export function ProsjektTiltakSelect({
     // Remove old cache entries that don't include projectId (legacy cache)
     queryClient.removeQueries({
       queryKey: ["prosjektTiltak", "simple"],
-      exact: false
+      exact: false,
     });
   }, [projectId, queryClient]);
 
@@ -104,15 +104,15 @@ export function ProsjektTiltakSelect({
 
   const handleValueChange = (event: { target: { name?: string; value: string | null; type: string } }) => {
     const numericValue = event.target.value === null ? null : parseInt(event.target.value, 10);
-    
+
     // Find the selected tiltak for the callback
-    const selectedTiltak = numericValue ? tiltakList.find(t => t.id === numericValue) || null : null;
-    
+    const selectedTiltak = numericValue ? tiltakList.find((t) => t.id === numericValue) || null : null;
+
     // Call the selection callback
     if (onTiltakSelected) {
       onTiltakSelected(selectedTiltak);
     }
-    
+
     // Call the form onChange
     onChange({
       target: {

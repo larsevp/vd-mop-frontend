@@ -64,6 +64,7 @@ const EntityDetailPane = ({
   const workspaceHiddenEdit = useMemo(() => detailFormConfig.workspaceHiddenEdit || [], [detailFormConfig.workspaceHiddenEdit]);
   const workspaceHiddenIndex = useMemo(() => detailFormConfig.workspaceHiddenIndex || [], [detailFormConfig.workspaceHiddenIndex]);
   const hideEmptyFieldsInView = useMemo(() => detailFormConfig.hideEmptyFieldsInView || false, [detailFormConfig.hideEmptyFieldsInView]);
+  const collapseEmptySectionsInView = useMemo(() => detailFormConfig.collapseEmptySectionsInView || false, [detailFormConfig.collapseEmptySectionsInView]);
   const allFields = useMemo(() => modelConfig?.fields || [], [modelConfig?.fields]);
 
   // Get visible fields using helper
@@ -169,6 +170,11 @@ const EntityDetailPane = ({
       scrollToTop(detailViewRef);
     }
   }, [isEditing]);
+
+  // Scroll to top when entity changes (new entity selected)
+  useEffect(() => {
+    scrollToTop(detailViewRef);
+  }, [entity?.id]);
 
   // Field change handler
   const handleFieldChange = useCallback((fieldNameOrEvent, value) => {
@@ -412,7 +418,7 @@ const EntityDetailPane = ({
   return (
     <div className="flex flex-col min-h-full bg-white">
       {/* Header - Scandinavian Clean Design */}
-      <div className={`sticky top-0 border-b px-8 py-6 z-10 transition-all duration-200 ${isEditing ? "bg-slate-50 border-slate-200" : "bg-white border-gray-200"}`}>
+      <div className={`sticky top-0 border-b px-8 py-6 z-20 transition-all duration-200 ${isEditing ? "bg-slate-50 border-slate-200" : "bg-white border-gray-200"}`}>
         <div className="flex items-center justify-between gap-6">
           <div className="flex-1 min-w-0 flex items-center gap-3">
             {entityUID && (
@@ -621,6 +627,24 @@ const EntityDetailPane = ({
               return null;
             }
 
+            // Check if section has any filled fields (for collapseEmptySectionsInView)
+            const sectionHasFilledFields = items.length > 0 && items.some(item => {
+              if (item.type === 'field') {
+                return !isEmptyValue(formData[item.content.name]);
+              } else {
+                // For rows, check if any field in the row has a value
+                return item.content.some(field => !isEmptyValue(formData[field.name]));
+              }
+            });
+
+            // Determine if section should be expanded
+            // In edit mode: always respect user toggle
+            // In view mode with collapseEmptySectionsInView: only expand if section has filled fields (ignore user toggle)
+            // In view mode without collapseEmptySectionsInView: respect user toggle
+            const shouldBeExpanded = isEditing
+              ? isExpanded
+              : (collapseEmptySectionsInView ? sectionHasFilledFields : isExpanded);
+
             const fieldContent = (
               <div className="space-y-6">
                 {items.map((item, index) => {
@@ -680,17 +704,16 @@ const EntityDetailPane = ({
               </div>
             );
 
-            if (isMainInfoSection) {
-              return <div key={sectionName} className="pb-8 border-b border-slate-100">{fieldContent}</div>;
-            }
-
+            // Show all sections with their collapsible headers for visual structure
             return (
-              <div key={sectionName} className="pt-2">
+              <div key={sectionName}>
                 <FieldSection
                   title={sectionInfo.title}
-                  isExpanded={isExpanded}
+                  isExpanded={shouldBeExpanded}
                   onToggle={() => handleToggleSection(sectionName)}
-                  noTitle={sectionInfo.noTitle}
+                  noTitle={sectionInfo.noTitle || isMainInfoSection}
+                  isMainSection={isMainInfoSection}
+                  isEditing={isEditing}
                 >
                   {fieldContent}
                 </FieldSection>

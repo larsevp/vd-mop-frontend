@@ -127,7 +127,7 @@ export const displayFieldValue_old = (row: any, field: any, from: FieldSource | 
     } else if (value) {
       return `Parent ID: ${value}`;
     } else {
-      return "Ingen parent";
+      return "Ingen ";
     }
   }
 

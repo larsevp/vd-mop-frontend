@@ -36,7 +36,7 @@ export const fields = [
   },
   {
     name: "informasjon",
-    label: "Ytterligere informasjon",
+    label: "Utfyllende opplysninger",
     type: "richtext",
     required: false,
     placeholder: "Legg til detaljert informasjon om prosjektkravet...",
@@ -131,7 +131,7 @@ export const fields = [
   },
   {
     name: "merknader",
-    label: "Merknader",
+    label: "Merknad",
     type: "text",
     required: false,
   },

@@ -78,7 +78,8 @@ const newProsjektKravWorkspaceConfig = {
   ],
 
   // View options
-  hideEmptyFieldsInView: true, // Hide fields with no value in view mode
+  hideEmptyFieldsInView: false, // Hide fields with no value in view mode
+  collapseEmptySectionsInView: true, // Auto-collapse sections with no filled fields in view mode
 
   // Sections with their field overrides and row definitions
   sections: {
@@ -87,13 +88,25 @@ const newProsjektKravWorkspaceConfig = {
       defaultExpanded: true,
       layout: [
         { field: "beskrivelse" }, // 1. Description (full-width)
+      ],
+    },
+    kravinformasjon: {
+      title: "Kravinformasjon",
+      defaultExpanded: true,
+      layout: [
         {
           row: [
             "emneId",
             "kravreferanse",
             { name: "kravreferansetypeId", default: 1 }, // 2c. Type with default
           ],
-        }, // 2. Subject & Reference (side-by-side)
+        }, // 1. Status & Priority (side-by-side)
+      ],
+    },
+    merinfo: {
+      title: "Tilleggsinformasjon",
+      defaultExpanded: true,
+      layout: [
         { field: "merknader" }, // 4. Notes (full-width)
         { field: "informasjon" }, // 3. Information (full-width)
       ],

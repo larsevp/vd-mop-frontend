@@ -39,7 +39,7 @@ export function ProsjektKravSelect({
   required = false,
   disabled = false,
   allowEmpty = true,
-  emptyLabel = "Ingen parent",
+  emptyLabel = "Ingen",
   className = "",
   excludeId,
   onDataLoaded,
@@ -52,13 +52,12 @@ export function ProsjektKravSelect({
   const projectId = propProjectId || currentProject?.id;
   const queryClient = useQueryClient();
 
-
   // Clear old cache entries when project changes
   React.useEffect(() => {
     // Remove old cache entries that don't include projectId (legacy cache)
     queryClient.removeQueries({
       queryKey: ["prosjektKrav", "simple"],
-      exact: false
+      exact: false,
     });
   }, [projectId, queryClient]);
 
@@ -105,15 +104,15 @@ export function ProsjektKravSelect({
 
   const handleValueChange = (event: { target: { name?: string; value: string | null; type: string } }) => {
     const numericValue = event.target.value === null ? null : parseInt(event.target.value, 10);
-    
+
     // Find the selected krav for the callback
-    const selectedKrav = numericValue ? kravList.find(k => k.id === numericValue) || null : null;
-    
+    const selectedKrav = numericValue ? kravList.find((k) => k.id === numericValue) || null : null;
+
     // Call the selection callback
     if (onKravSelected) {
       onKravSelected(selectedKrav);
     }
-    
+
     // Call the form onChange
     onChange({
       target: {

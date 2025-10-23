@@ -33,7 +33,7 @@ export function KravSelect({
   required = false,
   disabled = false,
   allowEmpty = true,
-  emptyLabel = "Ingen parent",
+  emptyLabel = "Ingen",
   className = "",
   excludeId,
 }: KravSelectProps) {
