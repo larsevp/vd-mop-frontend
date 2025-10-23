@@ -411,22 +411,22 @@ const EntityDetailPane = ({
 
   return (
     <div className="flex flex-col min-h-full bg-white">
-      {/* Header */}
-      <div className={`sticky top-0 bg-white border-b border-gray-200 px-6 py-4 z-10 transition-colors ${isEditing ? "bg-blue-50" : "bg-white"}`}>
-        <div className="flex items-center justify-between gap-4">
+      {/* Header - Scandinavian Clean Design */}
+      <div className={`sticky top-0 border-b px-8 py-6 z-10 transition-all duration-200 ${isEditing ? "bg-slate-50 border-slate-200" : "bg-white border-gray-200"}`}>
+        <div className="flex items-center justify-between gap-6">
           <div className="flex-1 min-w-0 flex items-center gap-3">
             {entityUID && (
-              <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium flex-shrink-0 ${entityConfig.badgeColor}`}>
+              <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium flex-shrink-0 bg-slate-100 text-slate-700 border border-slate-200`}>
                 {entityUID}
               </span>
             )}
             {!isNewEntity && (
-              <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium flex-shrink-0 ${entityConfig.badgeColor}`}>
+              <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium flex-shrink-0 ${entityConfig.badgeColor}`}>
                 {entityConfig.shortLabel}
               </span>
             )}
             {emneTitle && (
-              <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 flex-shrink-0">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200 flex-shrink-0">
                 {emneTitle}
               </span>
             )}
@@ -437,43 +437,43 @@ const EntityDetailPane = ({
                   type="text"
                   value={formData.tittel || ""}
                   onChange={(e) => handleFieldChange("tittel", e.target.value)}
-                  className={`text-xl font-semibold leading-tight w-full border rounded-lg px-3 py-2 focus:ring-2 focus:border-transparent ${
+                  className={`text-2xl font-light leading-tight w-full border rounded-lg px-4 py-2.5 focus:ring-2 focus:border-transparent transition-all ${
                     errors.tittel
-                      ? 'border-red-300 text-red-900 focus:ring-red-500'
-                      : 'text-gray-900 border-gray-300 focus:ring-blue-500'
+                      ? 'border-red-300 text-red-900 focus:ring-red-400 bg-red-50'
+                      : 'text-gray-900 border-gray-300 focus:ring-slate-400 focus:border-slate-400 bg-white'
                   }`}
                   placeholder="Tittel..."
                 />
                 {errors.tittel && (
-                  <p className="mt-1 text-sm text-red-600">{errors.tittel}</p>
+                  <p className="mt-2 text-sm text-red-600 font-normal">{errors.tittel}</p>
                 )}
               </div>
             ) : (
-              <h2 className="text-xl font-semibold text-gray-900 truncate flex-1 min-w-0">
+              <h2 className="text-2xl font-light text-gray-900 truncate flex-1 min-w-0">
                 {entityTitle}
               </h2>
             )}
           </div>
           
-          <div className="flex items-center gap-2 ml-4">
+          <div className="flex items-center gap-3 ml-6">
             {isEditing ? (
               <>
                 <button
                   onClick={handleSave}
                   disabled={isSubmitting}
                   tabIndex={-1}
-                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                  className="inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow"
                 >
-                  <Save className="w-4 h-4 mr-1" />
+                  <Save className="w-4 h-4 mr-2" />
                   {isSubmitting ? 'Lagrer...' : 'Lagre'}
                 </button>
                 <button
                   onClick={handleCancel}
                   disabled={isSubmitting}
                   tabIndex={-1}
-                  className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                  className="inline-flex items-center px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-all"
                 >
-                  <RotateCcw className="w-4 h-4 mr-1" />
+                  <RotateCcw className="w-4 h-4 mr-2" />
                   Avbryt
                 </button>
               </>
@@ -483,25 +483,25 @@ const EntityDetailPane = ({
                 {onCreateNew && (currentEntityType.toLowerCase() === 'krav' || currentEntityType.toLowerCase() === 'prosjektkrav') && !isNewEntity && (
                   <button
                     onClick={handleCreateConnectedTiltak}
-                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                    className="inline-flex items-center px-4 py-2.5 border border-slate-300 text-sm font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 hover:border-slate-400 transition-all"
                   >
-                    <Plus className="w-4 h-4 mr-1" />
+                    <Plus className="w-4 h-4 mr-2" />
                     {currentEntityType.toLowerCase() === 'krav' ? 'Lag tilknyttet tiltak' : 'Lag tilknyttet prosjekttiltak'}
                   </button>
                 )}
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                  className="inline-flex items-center px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all"
                 >
-                  <Edit className="w-4 h-4 mr-1" />
+                  <Edit className="w-4 h-4 mr-2" />
                   Rediger
                 </button>
                 {onDelete && (
                   <button
                     onClick={handleDelete}
-                    className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-red-600 bg-white hover:bg-red-50"
+                    className="inline-flex items-center px-4 py-2.5 border border-red-200 text-sm font-medium rounded-lg text-red-600 bg-white hover:bg-red-50 hover:border-red-300 transition-all"
                   >
-                    <Trash2 className="w-4 h-4 mr-1" />
+                    <Trash2 className="w-4 h-4 mr-2" />
                     Slett
                   </button>
                 )}
@@ -512,7 +512,7 @@ const EntityDetailPane = ({
               <button
                 onClick={onClose}
                 tabIndex={-1}
-                className="inline-flex items-center px-2 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                className="inline-flex items-center px-2.5 py-2.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-600 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -521,35 +521,35 @@ const EntityDetailPane = ({
         </div>
         
         {isEditing && (
-          <div className="mt-3 text-xs text-blue-700">Redigeringsmodus - trykk Enter for å lagre eller Esc for å avbryte</div>
+          <div className="mt-4 text-xs text-slate-600 font-normal">Redigeringsmodus - trykk Enter for å lagre eller Esc for å avbryte</div>
         )}
 
         {!isEditing && (
-          <div className="mt-3 text-xs text-gray-500">Trykk E for å redigere</div>
+          <div className="mt-4 text-xs text-gray-500 font-normal">Trykk E for å redigere</div>
         )}
       </div>
 
-      {/* Content */}
-      <div ref={detailViewRef} className="flex-1 min-h-0 px-6 py-6">
+      {/* Content - Increased spacing for Nordic minimalism */}
+      <div ref={detailViewRef} className="flex-1 min-h-0 px-8 py-8">
         <ValidationErrorSummary errors={errors} fields={allFields} />
 
-        {/* Source Krav Context Box - only shown when created via "Lag tilknyttet tiltak" */}
+        {/* Source Krav Context Box - Clean Scandinavian card */}
         {entity?.__sourceKrav && (
-          <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-            <div className="flex items-start space-x-3">
+          <div className="mb-8 p-6 bg-slate-50 border border-slate-200 rounded-xl">
+            <div className="flex items-start space-x-4">
               <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <span className="text-blue-600 text-sm font-medium">
+                <div className="w-10 h-10 bg-white border border-slate-200 rounded-lg flex items-center justify-center">
+                  <span className="text-slate-700 text-sm font-medium">
                     {entity.__sourceKrav.entityType === 'prosjektkrav' ? 'PK' : 'K'}
                   </span>
                 </div>
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-gray-900 mb-1">
+                <div className="text-sm font-medium text-gray-900 mb-2">
                   Tilknyttet {entity.__sourceKrav.entityType === 'prosjektkrav' ? 'prosjektkrav' : 'krav'}: {entity.__sourceKrav.tittel}
                 </div>
                 {entity.__sourceKrav.beskrivelse && (
-                  <div className="text-sm text-gray-600 mt-2">
+                  <div className="text-sm text-gray-600 mt-3">
                     <TiptapDisplay
                       content={entity.__sourceKrav.beskrivelse}
                       className="text-sm"
@@ -561,7 +561,7 @@ const EntityDetailPane = ({
           </div>
         )}
 
-        <div className="space-y-6">
+        <div className="space-y-10">
           {Object.entries(sections).map(([sectionName, sectionInfo]) => {
             const sectionFields = getFieldsBySection(visibleFields)[sectionName] || [];
             if (sectionFields.length === 0) return null;
@@ -622,7 +622,7 @@ const EntityDetailPane = ({
             }
 
             const fieldContent = (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {items.map((item, index) => {
                   if (item.type === 'field') {
                     const field = item.content;
@@ -641,17 +641,17 @@ const EntityDetailPane = ({
                       />
                     );
                   } else {
-                    // Render row
+                    // Render row with improved spacing
                     const rowFields = item.content;
                     const fieldCount = rowFields.length;
-                    // Determine grid columns based on number of fields
+                    // Determine grid columns based on number of fields - cleaner gaps
                     const gridClass = fieldCount === 1
-                      ? "grid grid-cols-1 gap-4"
+                      ? "grid grid-cols-1 gap-6"
                       : fieldCount === 2
-                      ? "grid grid-cols-1 md:grid-cols-2 gap-4"
+                      ? "grid grid-cols-1 md:grid-cols-2 gap-6"
                       : fieldCount === 3
-                      ? "grid grid-cols-1 md:grid-cols-3 gap-4"
-                      : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4";
+                      ? "grid grid-cols-1 md:grid-cols-3 gap-6"
+                      : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6";
 
                     return (
                       <div key={item.rowName} className={gridClass}>
@@ -681,19 +681,20 @@ const EntityDetailPane = ({
             );
 
             if (isMainInfoSection) {
-              return <div key={sectionName}>{fieldContent}</div>;
+              return <div key={sectionName} className="pb-8 border-b border-slate-100">{fieldContent}</div>;
             }
 
             return (
-              <FieldSection
-                key={sectionName}
-                title={sectionInfo.title}
-                isExpanded={isExpanded}
-                onToggle={() => handleToggleSection(sectionName)}
-                noTitle={sectionInfo.noTitle}
-              >
-                {fieldContent}
-              </FieldSection>
+              <div key={sectionName} className="pt-2">
+                <FieldSection
+                  title={sectionInfo.title}
+                  isExpanded={isExpanded}
+                  onToggle={() => handleToggleSection(sectionName)}
+                  noTitle={sectionInfo.noTitle}
+                >
+                  {fieldContent}
+                </FieldSection>
+              </div>
             );
           })}
         </div>

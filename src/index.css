@@ -88,6 +88,44 @@
   }
 }
 
+/* Scandinavian Design Input Styles */
+@layer components {
+  /* Base input styling - Contemporary Scandinavian design */
+  .input-base {
+    @apply w-full px-4 py-2.5 text-base text-gray-900 bg-white border rounded-lg transition-all duration-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-0;
+  }
+
+  /* Default state - clean, minimal border */
+  .input-default {
+    @apply border-gray-300 focus:border-slate-400 focus:ring-slate-400/20;
+  }
+
+  /* Error state - subtle red, not aggressive */
+  .input-error {
+    @apply border-red-300 bg-red-50 focus:border-red-400 focus:ring-red-400/20;
+  }
+
+  /* Disabled state - muted */
+  .input-base:disabled {
+    @apply bg-slate-50 text-slate-500 border-slate-200 cursor-not-allowed;
+  }
+
+  /* Select elements */
+  select.input-base {
+    @apply appearance-none bg-no-repeat;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.75rem center;
+    background-size: 1.25rem 1.25rem;
+    padding-right: 2.5rem;
+  }
+
+  /* Textarea specific styling */
+  textarea.input-base {
+    @apply resize-y min-h-[6rem] leading-relaxed;
+  }
+}
+
 /* TipTap Editor Styles */
 @layer components {
   /* Loading placeholder for image uploads */

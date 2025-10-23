@@ -137,17 +137,17 @@ export const createCombinedRenderer = (config) => {
     };
 
     return (
-      <div className="flex gap-2">
+      <div className="flex gap-3">
         <Button
           onClick={handlePrimaryCreate}
-          className="bg-green-600 hover:bg-green-700"
+          className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm hover:shadow transition-all"
         >
           <Plus className="w-4 h-4 mr-2" />
           {primaryCreate}
         </Button>
         <Button
           onClick={handleSecondaryCreate}
-          className="bg-blue-600 hover:bg-blue-700"
+          className="bg-sky-600 hover:bg-sky-700 text-white shadow-sm hover:shadow transition-all"
         >
           <Plus className="w-4 h-4 mr-2" />
           {secondaryCreate}

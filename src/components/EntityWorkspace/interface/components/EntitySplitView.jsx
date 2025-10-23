@@ -115,40 +115,40 @@ const EntitySplitView = ({
   };
 
   return (
-    <div className="flex h-full bg-gray-50 relative">
+    <div className="flex h-full bg-slate-50 relative">
       {/* Left Panel - Entity List */}
-      <div 
+      <div
         ref={leftPanelRef}
-        className={`bg-white border-r border-gray-200 transition-all duration-200 ease-out ${
+        className={`bg-white border-r border-slate-200 transition-all duration-200 ease-out ${
           isCollapsed ? 'w-0' : ''
         }`}
-        style={{ 
+        style={{
           width: isCollapsed ? '0px' : panelWidth,
           minWidth: isCollapsed ? '0px' : '150px' // Match the new lower drag constraint minimum
         }}
       >
         {!isCollapsed && (
           <div className="h-full">
-            {renderListPane && renderListPane({ 
-              entities, 
-              selectedEntity, 
-              onEntitySelect 
+            {renderListPane && renderListPane({
+              entities,
+              selectedEntity,
+              onEntitySelect
             })}
           </div>
         )}
       </div>
 
-      {/* Resizer Handle - Wider for better UX */}
-      <div 
-        className={`relative bg-gray-100 hover:bg-blue-100 cursor-col-resize transition-colors duration-150 ${
-          isDragging ? 'bg-blue-200' : ''
+      {/* Resizer Handle - Scandinavian minimal design */}
+      <div
+        className={`relative bg-slate-100 hover:bg-slate-200 cursor-col-resize transition-colors duration-150 ${
+          isDragging ? 'bg-slate-300' : ''
         }`}
         style={{ width: '12px' }} // Doubled from 6px to 12px for better drag area
         onMouseDown={handleMouseDown}
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
       >
-        {/* Collapse/Expand Button */}
+        {/* Collapse/Expand Button - Scandinavian style */}
         <button
           onMouseDown={(e) => {
             e.stopPropagation();
@@ -159,31 +159,31 @@ const EntitySplitView = ({
             e.preventDefault();
             toggleCollapsed();
           }}
-          className={`absolute left-1/2 transform -translate-x-1/2 z-10 bg-white border border-gray-300 rounded-full p-2 hover:bg-gray-50 hover:border-gray-400 transition-all duration-150 shadow-sm ${
+          className={`absolute left-1/2 transform -translate-x-1/2 z-10 bg-white border border-slate-300 rounded-full p-2 hover:bg-slate-50 hover:border-slate-400 transition-all duration-150 shadow-sm ${
             isHovering || isCollapsed ? 'opacity-100' : 'opacity-0'
           }`}
           style={{ pointerEvents: 'auto', top: 'calc(50% - 40px)' }}
           title={isCollapsed ? "Vis liste" : "Skjul liste"}
         >
           {isCollapsed ? (
-            <ChevronRight className="w-3 h-3 text-gray-600" />
+            <ChevronRight className="w-3 h-3 text-slate-600" />
           ) : (
-            <ChevronLeft className="w-3 h-3 text-gray-600" />
+            <ChevronLeft className="w-3 h-3 text-slate-600" />
           )}
         </button>
 
         {/* Drag Handle */}
         {!isCollapsed && (
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-            <GripVertical className="w-3 h-3 text-gray-400" />
+            <GripVertical className="w-3 h-3 text-slate-400" />
           </div>
         )}
       </div>
 
       {/* Right Panel - Detail View */}
       <div className="flex-1 bg-white min-w-0">
-        <FlexScrollableContainer 
-          className="h-full" 
+        <FlexScrollableContainer
+          className="h-full"
           dependencies={[selectedEntity]}
           fadeColor="from-white"
         >

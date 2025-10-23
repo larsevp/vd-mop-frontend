@@ -7,25 +7,26 @@
 
 /**
  * Entity type configurations with colors and labels
+ * Scandinavian design: muted, sophisticated colors
  */
 export const ENTITY_TYPE_CONFIGS = {
   krav: {
-    badgeColor: "bg-green-100 text-green-700",
+    badgeColor: "bg-emerald-100 text-emerald-800 border border-emerald-200",
     label: "krav",
     shortLabel: "Krav",
   },
   tiltak: {
-    badgeColor: "bg-blue-100 text-blue-700",
+    badgeColor: "bg-sky-100 text-sky-800 border border-sky-200",
     label: "tiltak",
     shortLabel: "Tiltak",
   },
   prosjektkrav: {
-    badgeColor: "bg-green-100 text-green-700",
+    badgeColor: "bg-emerald-100 text-emerald-800 border border-emerald-200",
     label: "p-krav",
     shortLabel: "Krav",
   },
   prosjekttiltak: {
-    badgeColor: "bg-blue-100 text-blue-700",
+    badgeColor: "bg-sky-100 text-sky-800 border border-sky-200",
     label: "p-tiltak",
     shortLabel: "Tiltak",
   },
