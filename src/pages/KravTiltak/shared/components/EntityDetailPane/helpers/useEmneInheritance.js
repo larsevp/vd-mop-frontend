@@ -96,8 +96,8 @@ export function useEmneInheritance(formData, dto, entityType, options = {}) {
     },
     enabled: !!parentId,
     staleTime: 1000 * 60 * 5,      // Cache for 5 minutes
-    refetchOnWindowFocus: true,     // Refetch when window regains focus
-    refetchOnMount: true,           // Refetch on component mount
+    refetchOnWindowFocus: false,    // Don't refetch on window focus (causes coordinate issues)
+    refetchOnMount: false,          // Don't refetch on mount (causes coordinate issues) - rely on cache
     retry: 1,                       // Retry failed requests once
   });
 
@@ -130,8 +130,8 @@ export function useEmneInheritance(formData, dto, entityType, options = {}) {
     },
     enabled: shouldFetchKrav && !!kravConfig,
     staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
+    refetchOnWindowFocus: false,    // Don't refetch on window focus (causes coordinate issues)
+    refetchOnMount: false,          // Don't refetch on mount (causes coordinate issues) - rely on cache
     retry: 1,
   });
 

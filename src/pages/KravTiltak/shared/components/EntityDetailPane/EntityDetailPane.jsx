@@ -63,6 +63,7 @@ const EntityDetailPane = ({
   const fieldOverrides = useMemo(() => detailFormConfig.fieldOverrides || {}, [detailFormConfig.fieldOverrides]);
   const workspaceHiddenEdit = useMemo(() => detailFormConfig.workspaceHiddenEdit || [], [detailFormConfig.workspaceHiddenEdit]);
   const workspaceHiddenIndex = useMemo(() => detailFormConfig.workspaceHiddenIndex || [], [detailFormConfig.workspaceHiddenIndex]);
+  const hideEmptyFieldsInView = useMemo(() => detailFormConfig.hideEmptyFieldsInView || false, [detailFormConfig.hideEmptyFieldsInView]);
   const allFields = useMemo(() => modelConfig?.fields || [], [modelConfig?.fields]);
 
   // Get visible fields using helper
@@ -206,10 +207,18 @@ const EntityDetailPane = ({
       } else {
         throw new Error(`${isUpdate ? 'Update' : 'Create'} function not available in modelConfig`);
       }
-      
+
       // Invalidate relevant query caches to refresh data
-      await queryClient.invalidateQueries({ 
-        queryKey: ['entities'] 
+      await queryClient.invalidateQueries({
+        queryKey: ['entities']
+      });
+
+      // Invalidate inheritance-related caches to ensure emne inheritance data is fresh
+      await queryClient.invalidateQueries({
+        queryKey: ['parent']
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['krav']
       });
     } else {
       throw new Error('No save handler available');
@@ -237,10 +246,18 @@ const EntityDetailPane = ({
     } else if (modelConfig && modelConfig.deleteFn) {
       // Create delete handler from modelConfig
       result = await modelConfig.deleteFn(entityToDelete.id, entityToDelete);
-      
+
       // Invalidate relevant query caches to refresh data
-      await queryClient.invalidateQueries({ 
-        queryKey: ['entities'] 
+      await queryClient.invalidateQueries({
+        queryKey: ['entities']
+      });
+
+      // Invalidate inheritance-related caches to ensure emne inheritance data is fresh
+      await queryClient.invalidateQueries({
+        queryKey: ['parent']
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['krav']
       });
     } else {
       throw new Error('Delete function not available');
@@ -395,7 +412,7 @@ const EntityDetailPane = ({
   return (
     <div className="flex flex-col min-h-full bg-white">
       {/* Header */}
-      <div className={`sticky top-0 bg-white border-b border-gray-200 px-6 py-4 z-50 transition-colors ${isEditing ? "bg-blue-50" : "bg-white"}`}>
+      <div className={`sticky top-0 bg-white border-b border-gray-200 px-6 py-4 z-10 transition-colors ${isEditing ? "bg-blue-50" : "bg-white"}`}>
         <div className="flex items-center justify-between gap-4">
           <div className="flex-1 min-w-0 flex items-center gap-3">
             {entityUID && (
@@ -553,11 +570,27 @@ const EntityDetailPane = ({
             const isMainInfoSection = sectionName === "info" || sectionName === "main";
             const { rowGroups, noRowFields } = getFieldRowsBySection(sectionFields);
 
+            // Helper to check if a value is empty
+            const isEmptyValue = (value) => {
+              return value === null || value === undefined || value === '' ||
+                     (Array.isArray(value) && value.length === 0) ||
+                     (typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 0);
+            };
+
+            // Filter fields based on hideEmptyFieldsInView setting
+            const filterEmptyFields = (fields) => {
+              if (!hideEmptyFieldsInView || isEditing) {
+                return fields; // Show all fields in edit mode or if feature is disabled
+              }
+              return fields.filter(field => !isEmptyValue(formData[field.name]));
+            };
+
             // Create a unified list of items (fields and rows) with their order
             const items = [];
 
-            // Add individual fields
-            noRowFields.forEach(field => {
+            // Add individual fields (filtered for empty values in view mode)
+            const filteredNoRowFields = filterEmptyFields(noRowFields);
+            filteredNoRowFields.forEach(field => {
               items.push({
                 type: 'field',
                 order: field.detailOrder || 0,
@@ -565,19 +598,28 @@ const EntityDetailPane = ({
               });
             });
 
-            // Add rows
+            // Add rows (filtered for empty values in view mode)
             Object.entries(rowGroups).forEach(([rowName, rowFields]) => {
-              const minOrder = Math.min(...rowFields.map(f => f.detailOrder || 0));
-              items.push({
-                type: 'row',
-                order: minOrder,
-                rowName,
-                content: rowFields
-              });
+              const filteredRowFields = filterEmptyFields(rowFields);
+              // Only add row if it has at least one non-empty field
+              if (filteredRowFields.length > 0) {
+                const minOrder = Math.min(...filteredRowFields.map(f => f.detailOrder || 0));
+                items.push({
+                  type: 'row',
+                  order: minOrder,
+                  rowName,
+                  content: filteredRowFields
+                });
+              }
             });
 
             // Sort all items by order
             items.sort((a, b) => a.order - b.order);
+
+            // If hideEmptyFieldsInView is enabled and we're in view mode, skip empty sections
+            if (hideEmptyFieldsInView && !isEditing && items.length === 0) {
+              return null;
+            }
 
             const fieldContent = (
               <div className="space-y-4">

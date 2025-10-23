@@ -25,6 +25,9 @@ export function transformWorkspaceConfig(newConfig) {
         workspaceHiddenEdit: newConfig.workspaceHiddenEdit || [],
         workspaceHiddenCreate: newConfig.workspaceHiddenCreate || [],
 
+        // Preserve view options
+        hideEmptyFieldsInView: newConfig.hideEmptyFieldsInView || false,
+
         // Transform sections
         sections: {},
 

@@ -77,6 +77,9 @@ const newProsjektKravWorkspaceConfig = {
     "vurderingId",
   ],
 
+  // View options
+  hideEmptyFieldsInView: true, // Hide fields with no value in view mode
+
   // Sections with their field overrides and row definitions
   sections: {
     info: {
@@ -84,13 +87,15 @@ const newProsjektKravWorkspaceConfig = {
       defaultExpanded: true,
       layout: [
         { field: "beskrivelse" }, // 1. Description (full-width)
-        { row: [
-          "emneId",
-          "kravreferanse",
-          { name: "kravreferansetypeId", default: 1 }  // 2c. Type with default
-        ]}, // 2. Subject & Reference (side-by-side)
-        { field: "informasjon" }, // 3. Information (full-width)
+        {
+          row: [
+            "emneId",
+            "kravreferanse",
+            { name: "kravreferansetypeId", default: 1 }, // 2c. Type with default
+          ],
+        }, // 2. Subject & Reference (side-by-side)
         { field: "merknader" }, // 4. Notes (full-width)
+        { field: "informasjon" }, // 3. Information (full-width)
       ],
     },
     status: {
