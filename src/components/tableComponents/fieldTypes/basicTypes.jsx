@@ -223,12 +223,13 @@ export const BASIC_FIELD_TYPES = {
     );
   },
 
-  fileupload: ({ field, value, onChange, error, row, modelName }) => {
+  fileupload: ({ field, value, onChange, error, row, modelName, isEditing }) => {
     return (
       <FileUpload
         modelType={modelName}
         modelId={row?.id}
         label={field.label}
+        showUpload={isEditing !== false}  // Hide upload/delete buttons in view mode
         onFilesChange={() => {
           // Trigger a form refresh if needed
           const syntheticEvent = {

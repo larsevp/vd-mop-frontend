@@ -22,35 +22,48 @@ const workspaceConfigData = {
     // Configuration for "Lag tilknyttet prosjekttiltak" creation flow
     detailFormLinked: {
       sections: {
-        main: {
-          title: "Tilknyttet prosjekttiltak",
+        info: {
+          title: "Grunnleggende informasjon",
           defaultExpanded: true,
           layout: [
-            { field: "beskrivelse" },                           // 1. Description (full-width)
-            { field: "merknad" },                               // 2. Note (full-width)
-            { field: "implementasjon" },                        // 3. Implementation (full-width)
-            { row: ["vurderingId", "statusId", "prioritet"] },  // 4. Assessment, Status, Priority
-            { field: "emneId" },                                // 5. Subject
+            { field: "navn" }, // 1. Name (full-width)
+            { field: "beskrivelse" }, // 2. Description (full-width)
+            { field: "implementasjon" }, // 3. Implementation (full-width)
           ],
         },
-        implementation: {
-          title: "Implementasjon og tilbakemelding",
+        prioritering: {
+          title: "Organisering og prioritering",
+          defaultExpanded: true,
+          layout: [
+            { row: ["emneId", "statusId", "prioritet"] }, // 1. Subject, Status, Priority (side-by-side)
+            { field: "merknad" }, // 2. Note (full-width)
+          ],
+        },
+        merinfo: {
+          title: "Tilbakemelding og notater",
           defaultExpanded: false,
           layout: [
-            { field: "tilbakemelding" },                        // 1. Feedback (full-width)
+            { field: "tilbakemelding" }, // 1. Feedback (full-width)
+            { field: "vurderingId" }, // 2. Assessment
+          ],
+        },
+        references: {
+          title: "Tilknytning",
+          defaultExpanded: true,
+          layout: [
+            { field: "prosjektKrav" }, // Show which prosjektkrav this is connected to
           ],
         },
         admin: {
           title: "Administrative detaljer",
           defaultExpanded: false,
           layout: [],
-        }
+        },
       },
       workspaceHiddenCreate: [
         "tiltakUID",
         "updatedBy",
         "createdBy",
-        "prosjektKrav", // Hidden - pre-filled from source prosjektkrav
         "parentId", // Not needed for linked prosjekttiltak
         "givenOrder",
         "beskrivelseSnippet",
@@ -74,6 +87,9 @@ const workspaceConfigData = {
       ],
     },
   },
+
+  // View mode behavior settings
+  // autoExpandSectionsWithContent: false, // Disable auto-expansion of sections with content in view mode
 
   workspaceHiddenIndex: [
     "givenOrder",
@@ -117,46 +133,59 @@ const workspaceConfigData = {
       title: "Grunnleggende informasjon",
       defaultExpanded: true,
       layout: [
-        { row: ["navn"] },                                    // 1. Name (single field in row)
-        { field: "beskrivelse" },                             // 2. Description (full-width)
-        { field: "merknad" },                                 // 3. Note (full-width)
-        { row: ["emneId", "prosjektKrav", "parentId"] },      // 4. Subject, Project Req, Parent (side-by-side)
-        { field: "implementasjon" },                          // 5. Implementation (full-width)
-        { row: ["vurderingId", "statusId", "prioritet"] },    // 6. Assessment, Status, Priority (side-by-side)
+        { field: "navn" }, // 1. Name (full-width)
+        { field: "beskrivelse" }, // 2. Description (full-width)
+        { field: "implementasjon" }, // 3. Implementation (full-width)
       ],
     },
-    status: {
-      title: "Status og vurdering",
+
+    prioritering: {
+      title: "Organisering og prioritering",
       defaultExpanded: true,
-      fieldOverrides: {},
-      rows: {},
+      layout: [
+        { row: ["emneId", "statusId", "prioritet"] }, // 1. Assessment, Status, Priority (side-by-side)
+        { field: "merknad" }, // 1. Note (full-width)
+      ],
     },
-    implementation: {
-      title: "Implementasjon og tilbakemelding",
+    merinfo: {
+      title: "Tilbakemelding og notater",
       defaultExpanded: false,
-      fieldOverrides: {},
-      rows: {},
+      layout: [
+        { field: "tilbakemelding" }, // 2. Feedback (full-width)
+        { field: "vurderingId" },
+      ],
     },
     references: {
       title: "Referanser",
       defaultExpanded: false,
-      fieldOverrides: {},
-      rows: {},
+      layout: [
+        { row: ["prosjektKrav", "parentId"] }, // 1. Project Req, Parent ProsjektTiltak (side-by-side)
+        { row: ["generalTiltakId"] }, // 2. General Tiltak reference
+      ],
+    },
+    admin: {
+      title: "Administrative detaljer",
+      defaultExpanded: false,
+      layout: [
+        { row: ["enhetId", "obligatorisk"] }, // 1. Unit, Required (side-by-side)
+        { field: "givenOrder" }, // 2. Order (full-width)
+      ],
     },
     metadata: {
       title: "Metadata",
       defaultExpanded: false,
-      fieldOverrides: {},
-      rows: {},
+      layout: [
+        { field: "tiltakUID" }, // 1. Tiltak UID (full-width)
+        { row: ["createdBy", "updatedBy"] }, // 2. Created/Updated by (side-by-side)
+      ],
     },
     annet: {
       title: "",
       defaultExpanded: true,
       noTitle: true,
-      fieldOverrides: {
-        tilbakemelding: { order: 10 },
-      },
-      rows: {},
+      layout: [
+        { field: "files" }, // 1. Files (full-width)
+      ],
     },
   },
 

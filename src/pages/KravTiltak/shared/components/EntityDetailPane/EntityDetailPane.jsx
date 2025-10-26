@@ -37,6 +37,7 @@ const EntityDetailPane = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expandedSections, setExpandedSections] = useState(new Set());
   const detailViewRef = useRef(null);
+  const lastInitializedEntityId = useRef(null); // Track which entity we initialized sections for
   
   // Query client for cache invalidation
   const queryClient = useQueryClient();
@@ -66,10 +67,11 @@ const EntityDetailPane = ({
   const workspaceHiddenIndex = useMemo(() => detailFormConfig.workspaceHiddenIndex || [], [detailFormConfig.workspaceHiddenIndex]);
   const hideEmptyFieldsInView = useMemo(() => detailFormConfig.hideEmptyFieldsInView || false, [detailFormConfig.hideEmptyFieldsInView]);
   const collapseEmptySectionsInView = useMemo(() => detailFormConfig.collapseEmptySectionsInView || false, [detailFormConfig.collapseEmptySectionsInView]);
+  const autoExpandSectionsWithContent = useMemo(() => detailFormConfig.autoExpandSectionsWithContent !== false, [detailFormConfig.autoExpandSectionsWithContent]); // Default: true
   const allFields = useMemo(() => modelConfig?.fields || [], [modelConfig?.fields]);
 
   // Get visible fields using helper
-  const visibleFields = useMemo(() => 
+  const visibleFields = useMemo(() =>
     getVisibleFields(allFields, fieldOverrides, isEditing, workspaceHiddenEdit, workspaceHiddenIndex, sections),
     [allFields, fieldOverrides, isEditing, workspaceHiddenEdit, workspaceHiddenIndex, sections]
   );
@@ -100,6 +102,20 @@ const EntityDetailPane = ({
   // Initialize form data
   useEffect(() => {
     if (entity) {
+      // Create a stable entity key to prevent unnecessary reinitializations
+      // For new entities, use a combination of __isNew flag and relationship data
+      // For existing entities, use the ID
+      const entityKey = entity.__isNew
+        ? `new-${entity.krav?.[0] || entity.prosjektKrav?.[0] || 'empty'}`
+        : `existing-${entity.id}`;
+
+      // Skip if we've already initialized this exact entity
+      if (entityKey === lastInitializedEntityRef.current) {
+        return;
+      }
+
+      lastInitializedEntityRef.current = entityKey;
+
       const initialForm = initializeFormData(allFields, entity, modelName, fieldOverrides);
 
       // For new entities, ensure relationship fields from initial data are included
@@ -112,6 +128,20 @@ const EntityDetailPane = ({
         });
       }
 
+      // Extract IDs from krav/prosjektKrav arrays for inheritance hook
+      // Backend returns: krav: [{id: 1}, {id: 2}] (objects)
+      // Frontend needs: kravIds: [1, 2] (IDs) for inheritance logic
+      if (entity.krav && Array.isArray(entity.krav)) {
+        initialForm.kravIds = entity.krav.map(k => k.id || k).filter(Boolean);
+      }
+      if (entity.prosjektKrav && Array.isArray(entity.prosjektKrav)) {
+        initialForm.prosjektKravIds = entity.prosjektKrav.map(k => k.id || k).filter(Boolean);
+      }
+
+      // Reset inheritance sync ref when form is reinitialized
+      // This ensures inherited values get synced again after form reset
+      lastSyncedEmneRef.current = null;
+
       setFormData(initialForm);
     }
   }, [entity, modelName, allFields]);
@@ -123,6 +153,7 @@ const EntityDetailPane = ({
     modelConfig  // Pass modelConfig for fetching parent data
   });
   const lastSyncedEmneRef = useRef(null);
+  const lastInitializedEntityRef = useRef(null);
 
   // Sync inherited emneId to form (only when editing and inheritance is active)
   useEffect(() => {
@@ -131,15 +162,23 @@ const EntityDetailPane = ({
     if (isEditing && inheritanceInfo.isInherited && !inheritanceInfo.isLoading) {
       const inheritedEmne = inheritanceInfo.inheritedEmneId;
 
-      // Only update if value has actually changed (prevent infinite loop)
+      // Always update if inherited value changes, or if we haven't synced this value yet
+      // This handles both initial load and form resets
       if (inheritedEmne !== lastSyncedEmneRef.current) {
         lastSyncedEmneRef.current = inheritedEmne;
 
         if (isMounted) {
-          setFormData(prev => ({
-            ...prev,
-            emneId: inheritedEmne
-          }));
+          setFormData(prev => {
+            // Only update if the current value is different from inherited
+            // Use loose equality to handle null/undefined/empty string
+            if (prev.emneId != inheritedEmne) {
+              return {
+                ...prev,
+                emneId: inheritedEmne
+              };
+            }
+            return prev;
+          });
         }
       }
     }
@@ -151,21 +190,29 @@ const EntityDetailPane = ({
     isEditing,
     inheritanceInfo.isInherited,
     inheritanceInfo.inheritedEmneId,
-    inheritanceInfo.isLoading
+    inheritanceInfo.isLoading,
   ]);
 
   // Initialize expanded sections based on config and data
+  // Only run when entity changes or edit mode changes, NOT on every formData change
   useEffect(() => {
-    if (!collapseEmptySectionsInView || isEditing) {
-      // Use default expansion from config
+    // Skip if we've already initialized for this entity and edit mode hasn't changed
+    const entityKey = `${entity?.id}-${isEditing}`;
+    if (lastInitializedEntityId.current === entityKey) {
+      return;
+    }
+    lastInitializedEntityId.current = entityKey;
+
+    if (isEditing) {
+      // In edit mode: Use default expansion from config
       const initialExpanded = initializeExpandedSections(sections);
       setExpandedSections(initialExpanded);
     } else {
-      // collapseEmptySectionsInView is true in view mode:
-      // Only expand sections that have filled fields
+      // In view mode: Smart expansion based on content and config
       const expandedSet = new Set();
 
       Object.keys(sections).forEach(sectionName => {
+        const section = sections[sectionName];
         const sectionFields = getFieldsBySection(visibleFields)[sectionName] || [];
 
         // Check if section has any filled fields
@@ -177,14 +224,28 @@ const EntityDetailPane = ({
           return !isEmpty;
         });
 
-        if (hasFilledFields) {
+        // Expansion logic for view mode:
+        let shouldExpand = false;
+
+        if (section.defaultExpanded === true) {
+          // Always expand if defaultExpanded: true
+          shouldExpand = true;
+        } else if (autoExpandSectionsWithContent && hasFilledFields) {
+          // Auto-expand sections with content (if feature enabled)
+          shouldExpand = true;
+        } else if (!autoExpandSectionsWithContent && section.defaultExpanded !== false) {
+          // Fallback to default expansion if auto-expand is disabled
+          shouldExpand = true;
+        }
+
+        if (shouldExpand) {
           expandedSet.add(sectionName);
         }
       });
 
       setExpandedSections(expandedSet);
     }
-  }, [entity?.id, isEditing, collapseEmptySectionsInView, formData]); // Re-run when entity changes, edit mode changes, or formData is ready
+  }, [entity?.id, isEditing, collapseEmptySectionsInView]); // Only re-run when entity or edit mode changes
 
   // Auto-expand error sections
   useEffect(() => {
@@ -386,11 +447,11 @@ const EntityDetailPane = ({
     if (entityTypeLower === 'krav') {
       targetEntityType = 'tiltak';
       relationshipField = 'krav';
-      relationshipValue = { krav: [entity.id] };
+      relationshipValue = { krav: [entity.id] }; // Backend expects 'krav' array of IDs
     } else if (entityTypeLower === 'prosjektkrav') {
       targetEntityType = 'prosjekttiltak';
       relationshipField = 'prosjektKrav';
-      relationshipValue = { prosjektKrav: [entity.id] };
+      relationshipValue = { prosjektKrav: [entity.id] }; // Backend expects 'prosjektKrav' array of IDs
     } else {
       return; // Not a supported entity type
     }
@@ -748,4 +809,17 @@ const EntityDetailPane = ({
   );
 };
 
-export default EntityDetailPane;
+// Memoize EntityDetailPane to prevent re-renders when props haven't changed
+// This is especially important since the component has many internal state updates
+// Only re-render if entity, modelConfig, or dto change (onSave, onDelete, onClose callbacks are intentionally excluded)
+export default React.memo(EntityDetailPane, (prevProps, nextProps) => {
+  return (
+    prevProps.entity === nextProps.entity &&
+    prevProps.modelConfig === nextProps.modelConfig &&
+    prevProps.dto === nextProps.dto &&
+    prevProps.entityType === nextProps.entityType &&
+    prevProps.kravConfig === nextProps.kravConfig
+    // Note: We intentionally don't compare callback props (onSave, onDelete, onClose, onCreateNew)
+    // to avoid re-renders from function reference changes
+  );
+});

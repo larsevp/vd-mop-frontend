@@ -19,44 +19,44 @@ const ProsjektKravTiltakCombinedCard = (props) => {
     case 'prosjektkrav':
       config = {
         uidField: 'kravUID',
-        badgeText: 'PROSJEKTKRAV',
-        badgeColor: 'bg-blue-100 text-blue-700',
+        badgeText: 'Krav',
+        badgeColor: 'bg-emerald-100 text-emerald-800 border border-emerald-200',
         childrenLabel: 'underkrav',
         relations: [
           {
             field: 'prosjektTiltak',
             label: 'prosjekttiltak',
             prefix: '→',
-            color: 'text-green-600'
+            color: 'text-sky-600'
           },
           {
             field: 'generalKrav',
             label: 'basert på',
             prefix: '⊃',
-            color: 'text-gray-600'
+            color: 'text-slate-600'
           }
         ]
       };
       break;
-      
+
     case 'prosjekttiltak':
       config = {
         uidField: 'tiltakUID',
-        badgeText: 'PROSJEKTTILTAK',
-        badgeColor: 'bg-green-100 text-green-700',
+        badgeText: 'Tiltak',
+        badgeColor: 'bg-sky-100 text-sky-800 border border-sky-200',
         childrenLabel: 'undertiltak',
         relations: [
           {
             field: 'prosjektKrav',
             label: 'prosjektkrav',
             prefix: '←',
-            color: 'text-blue-600'
+            color: 'text-emerald-600'
           },
           {
             field: 'generalTiltak',
             label: 'basert på',
             prefix: '⊃',
-            color: 'text-gray-600'
+            color: 'text-slate-600'
           }
         ]
       };

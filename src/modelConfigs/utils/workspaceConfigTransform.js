@@ -10,49 +10,22 @@
  * @param {Object} newConfig - New simplified config structure
  * @returns {Object} Legacy config structure
  */
-export function transformWorkspaceConfig(newConfig) {
-  if (!newConfig || !newConfig.sections) {
-    // If it's already in legacy format or empty, return as-is
-    return newConfig;
-  }
-
-  const transformed = {
-    workspace: {
-      ...newConfig.workspace,
-      detailForm: {
-        // Preserve existing arrays
-        workspaceHiddenIndex: newConfig.workspaceHiddenIndex || [],
-        workspaceHiddenEdit: newConfig.workspaceHiddenEdit || [],
-        workspaceHiddenCreate: newConfig.workspaceHiddenCreate || [],
-
-        // Preserve view options
-        hideEmptyFieldsInView: newConfig.hideEmptyFieldsInView || false,
-        collapseEmptySectionsInView: newConfig.collapseEmptySectionsInView || false,
-
-        // Transform sections
-        sections: {},
-
-        // Transform field overrides
-        fieldOverrides: {},
-
-        // Transform rows
-        rows: {},
-      },
-    },
+/**
+ * Helper function to transform sections structure
+ */
+function transformSections(sections, baseHiddenIndex = [], baseHiddenEdit = [], baseHiddenCreate = []) {
+  const result = {
+    workspaceHiddenIndex: baseHiddenIndex,
+    workspaceHiddenEdit: baseHiddenEdit,
+    workspaceHiddenCreate: baseHiddenCreate,
+    sections: {},
+    fieldOverrides: {},
+    rows: {},
   };
 
   // Transform sections structure
-  Object.entries(newConfig.sections).forEach(([sectionName, sectionConfig]) => {
-    // Handle both object and array formats
-    if (Array.isArray(newConfig.sections)) {
-      // Array format - find section by name
-      const section = newConfig.sections.find((s) => s.name === sectionName);
-      if (section) {
-        sectionConfig = section;
-      }
-    }
-
-    transformed.workspace.detailForm.sections[sectionName] = {
+  Object.entries(sections).forEach(([sectionName, sectionConfig]) => {
+    result.sections[sectionName] = {
       title: sectionConfig.title,
       defaultExpanded: sectionConfig.defaultExpanded,
       ...(sectionConfig.noTitle && { noTitle: sectionConfig.noTitle }),
@@ -78,7 +51,7 @@ export function transformWorkspaceConfig(newConfig) {
             fieldConfig.default = item.field.default;
           }
 
-          transformed.workspace.detailForm.fieldOverrides[fieldName] = fieldConfig;
+          result.fieldOverrides[fieldName] = fieldConfig;
         } else if (item.row && Array.isArray(item.row)) {
           // Row with multiple fields - side by side
           const rowName = `row-${rowCounter++}`;
@@ -96,9 +69,9 @@ export function transformWorkspaceConfig(newConfig) {
               config.default = fieldConfig.default;
             }
 
-            transformed.workspace.detailForm.fieldOverrides[fieldName] = config;
+            result.fieldOverrides[fieldName] = config;
           });
-          transformed.workspace.detailForm.rows[rowName] = {};
+          result.rows[rowName] = {};
           orderCounter++;
         }
       });
@@ -107,7 +80,7 @@ export function transformWorkspaceConfig(newConfig) {
     // LEGACY: Transform field overrides within sections (for backward compatibility)
     if (sectionConfig.fieldOverrides) {
       Object.entries(sectionConfig.fieldOverrides).forEach(([fieldName, fieldConfig]) => {
-        transformed.workspace.detailForm.fieldOverrides[fieldName] = {
+        result.fieldOverrides[fieldName] = {
           section: sectionName,
           ...fieldConfig,
         };
@@ -122,7 +95,7 @@ export function transformWorkspaceConfig(newConfig) {
           if (row.name) {
             // Remove unsupported properties like className
             const { className, fields, ...supportedRowConfig } = row;
-            transformed.workspace.detailForm.rows[row.name] = supportedRowConfig;
+            result.rows[row.name] = supportedRowConfig;
           }
         });
       } else {
@@ -130,24 +103,80 @@ export function transformWorkspaceConfig(newConfig) {
           // Extract field configurations from rows and add them to fieldOverrides
           const { className, ...fieldConfigs } = rowConfig;
           Object.entries(fieldConfigs).forEach(([fieldName, fieldConfig]) => {
-            if (!transformed.workspace.detailForm.fieldOverrides[fieldName]) {
-              transformed.workspace.detailForm.fieldOverrides[fieldName] = {
+            if (!result.fieldOverrides[fieldName]) {
+              result.fieldOverrides[fieldName] = {
                 section: sectionName,
               };
             }
             // Merge row-based field config with existing fieldOverrides
-            transformed.workspace.detailForm.fieldOverrides[fieldName] = {
-              ...transformed.workspace.detailForm.fieldOverrides[fieldName],
+            result.fieldOverrides[fieldName] = {
+              ...result.fieldOverrides[fieldName],
               ...fieldConfig,
               row: rowName // Preserve row information for EntityDetailPane
             };
           });
           // Keep only supported properties in rows
-          transformed.workspace.detailForm.rows[rowName] = {};
+          result.rows[rowName] = {};
         });
       }
     }
   });
+
+  return result;
+}
+
+export function transformWorkspaceConfig(newConfig) {
+  if (!newConfig || !newConfig.sections) {
+    // If it's already in legacy format or empty, return as-is
+    return newConfig;
+  }
+
+  const transformed = {
+    workspace: {
+      ...newConfig.workspace,
+      detailForm: {
+        // Preserve view options
+        hideEmptyFieldsInView: newConfig.hideEmptyFieldsInView || false,
+        collapseEmptySectionsInView: newConfig.collapseEmptySectionsInView || false,
+
+        // Transform main sections
+        ...transformSections(
+          newConfig.sections,
+          newConfig.workspaceHiddenIndex || [],
+          newConfig.workspaceHiddenEdit || [],
+          newConfig.workspaceHiddenCreate || []
+        ),
+      },
+    },
+  };
+
+  // Transform detailFormLinked if it exists (for linked entity creation)
+  if (newConfig.workspace?.detailFormLinked) {
+    const linkedConfig = newConfig.workspace.detailFormLinked;
+    transformed.workspace.detailFormLinked = {
+      // Preserve view options
+      hideEmptyFieldsInView: linkedConfig.hideEmptyFieldsInView || false,
+      collapseEmptySectionsInView: linkedConfig.collapseEmptySectionsInView || false,
+
+      // Transform linked sections
+      ...transformSections(
+        linkedConfig.sections,
+        linkedConfig.workspaceHiddenIndex || [],
+        linkedConfig.workspaceHiddenEdit || [],
+        linkedConfig.workspaceHiddenCreate || []
+      ),
+    };
+
+    // Handle global field overrides for linked form
+    if (linkedConfig.fieldOverrides) {
+      Object.entries(linkedConfig.fieldOverrides).forEach(([fieldName, fieldConfig]) => {
+        transformed.workspace.detailFormLinked.fieldOverrides[fieldName] = {
+          ...transformed.workspace.detailFormLinked.fieldOverrides[fieldName],
+          ...fieldConfig,
+        };
+      });
+    }
+  }
 
   // Handle global field overrides (outside of sections)
   if (newConfig.fieldOverrides) {

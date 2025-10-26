@@ -24,10 +24,10 @@ export const fields = [
   {
     name: "beskrivelse",
     label: "Beskrivelse",
-    type: "basicrichtext",
+    type: "richtext",
     required: true,
     placeholder: "Beskriv kravet i detalj...",
-    field_info: "Detaljert beskrivelse av kravet med grunnleggende formatering (fet, kursiv, understreking, overskrifter).",
+    field_info: "Detaljert beskrivelse av kravet med full formatering, lenker, tabeller og bilder. Lim inn bilder direkte fra utklippstavlen.",
     hiddenIndex: true,
   },
   {

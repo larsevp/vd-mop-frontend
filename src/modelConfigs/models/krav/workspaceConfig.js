@@ -33,7 +33,17 @@ const newKravWorkspaceConfig = {
     },
     cardFields: ["kravUID", "tittel", "beskrivelse", "obligatorisk"],
     relationships: ["files", "tiltak", "lover", "kravpakker"],
+
+    // Article View Configuration (Cards Mode)
+    articleView: {
+      mainContentFields: ['beskrivelse', 'informasjon'],  // Rich text fields shown in article body
+      merknadField: 'merknader',                           // Note field
+      statusFields: ['vurderingId', 'statusId', 'prioritet', 'obligatorisk'], // Status metadata
+    },
   },
+
+  // View mode behavior settings
+  // autoExpandSectionsWithContent: false, // Disable auto-expansion of sections with content in view mode
 
   workspaceHiddenIndex: [
     "versjon",
@@ -82,16 +92,29 @@ const newKravWorkspaceConfig = {
       layout: [
         { field: "tittel" },                        // 1. Title (full-width)
         { field: "beskrivelse" },                   // 2. Description (full-width)
-        { row: ["emneId", "kravreferanse"] },       // 3. Subject & Reference (side-by-side)
-        { field: "informasjon" },                   // 4. Information (full-width)
-        { field: "merknader" },                     // 5. Notes (full-width)
+      ],
+    },
+    kravinformasjon: {
+      title: "Kravinformasjon",
+      defaultExpanded: true,
+      layout: [
+        { row: ["emneId", "kravreferanse", "kravreferansetypeId"] },  // 1. Subject, Reference, Type (side-by-side)
+      ],
+    },
+    merinfo: {
+      title: "Tilleggsinformasjon",
+      defaultExpanded: false,
+      layout: [
+        { field: "merknader" },                     // 1. Notes (full-width)
+        { field: "informasjon" },                   // 2. Information (full-width)
       ],
     },
     status: {
-      title: "Status og vurdering",
-      defaultExpanded: true,
-      fieldOverrides: {},
-      rows: {},
+      title: "Status og prioritet",
+      defaultExpanded: false,
+      layout: [
+        { row: ["statusId", "prioritet"] },         // 1. Status & Priority (side-by-side)
+      ],
     },
     details: {
       title: "Detaljert informasjon",
@@ -103,30 +126,32 @@ const newKravWorkspaceConfig = {
       title: "Referanser",
       defaultExpanded: false,
       layout: [
-        { row: ["kravreferansetypeId", "lover", "kravpakker"] },  // 1. Ref type, Laws, Packages
-        { field: "parentId" },                                     // 2. Parent (full-width)
+        { row: ["parentId"] },                      // 1. Parent (full-width as row to match pattern)
+        { row: ["lover", "kravpakker"] },           // 2. Laws, Packages (side-by-side)
       ],
     },
     admin: {
       title: "Administrative detaljer",
       defaultExpanded: false,
       layout: [
-        { row: ["obligatorisk", "enhetId"] },     // 1. Required, Unit (side-by-side)
-        { field: "givenOrder" },                  // 2. Order (full-width)
+        { row: ["enhetId", "obligatorisk"] },       // 1. Unit, Required (side-by-side)
+        { field: "givenOrder" },                    // 2. Order (full-width)
       ],
     },
     metadata: {
       title: "Metadata",
       defaultExpanded: false,
-      fieldOverrides: {},
-      rows: {},
+      layout: [
+        { field: "kravUID" },                       // 1. Krav UID (full-width)
+        { row: ["createdBy", "updatedBy"] },        // 2. Created/Updated by (side-by-side)
+      ],
     },
     annet: {
       title: "",
       defaultExpanded: true,
       noTitle: true,
       layout: [
-        { field: "informasjon" },                 // 1. Information (full-width)
+        { field: "files" },                         // 1. Files (full-width)
       ],
     },
   },

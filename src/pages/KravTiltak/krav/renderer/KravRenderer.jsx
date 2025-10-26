@@ -1,16 +1,25 @@
 import React from "react";
+import { EmneGroupHeader, RowListHeading, KravTiltakSearchBar } from "../../shared";
 import KravCard from "./components/KravCard.jsx";
-import { EmneGroupHeader, RowListHeading, EntityDetailPane, KravTiltakSearchBar } from "../../shared";
+import { krav as kravConfig } from "@/modelConfigs/models/krav";
 
 /**
- * Krav-specific renderer functions
+ * KravRenderer - Render functions for Krav entities
  *
- * These functions provide domain-specific rendering for Krav entities
- * while maintaining consistency with the EntityWorkspace pattern.
+ * This module exports render functions that the EntityWorkspace interface calls
+ * to generate the actual JSX for Krav entities and groups.
  */
 
 /**
  * Render a single Krav entity card
+ *
+ * @param {Object} entity - The entity data (normalized by adapter)
+ * @param {Object} props - Render props from EntityWorkspace
+ * @param {Object} dto - The DTO instance for performing updates
+ * @param {boolean} props.isSelected - Whether this entity is selected
+ * @param {Function} props.onClick - Click handler for entity selection
+ * @param {Object} props.viewOptions - Current view options state
+ * @returns {JSX.Element} Krav card component
  */
 export const renderEntityCard = (entity, props, dto) => {
   const { key, onSave, ...restProps } = props;
@@ -49,10 +58,18 @@ export const renderEntityCard = (entity, props, dto) => {
 };
 
 /**
- * Render emne group header for Krav entities
+ * Render an emne group header
+ *
+ * @param {Object} groupData - The group data with emne information
+ * @param {Object} props - Render props from EntityWorkspace
+ * @param {boolean} props.isCollapsed - Whether this group is collapsed
+ * @param {Function} props.onToggle - Toggle handler for group collapse
+ * @param {number} props.itemCount - Number of items in this group
+ * @returns {JSX.Element} EmneGroupHeader component (shared)
  */
-export const renderGroupHeader = (groupData, options = {}) => {
-  return <EmneGroupHeader groupData={groupData} itemCount={groupData.items?.length || 0} entityType="krav" {...options} />;
+export const renderGroupHeader = (groupData, props) => {
+  const { key, ...restProps } = props;
+  return <EmneGroupHeader key={key || `group-${groupData.group?.emne?.id || "no-emne"}`} groupData={groupData} {...restProps} />;
 };
 
 /**
@@ -85,15 +102,50 @@ export const renderSearchBar = (props) => {
 
 /**
  * Get available view options for Krav
+ * This defines what toggles appear in the "Visning" dropdown
+ * Only includes options that are enabled in modelConfig ui section
+ *
+ * @returns {Object} Available view options with labels
  */
 export const getAvailableViewOptions = () => {
-  return {
-    showHierarchy: "Vis hierarki",
-    showMerknad: "Vis merknader",
-    showStatus: "Vis status",
-    showVurdering: "Vis vurdering",
-    showPrioritet: "Vis prioritet",
-    showObligatorisk: "Vis obligatorisk",
-    showRelations: "Vis relasjoner",
+  const uiConfig = kravConfig?.workspace?.ui || {};
+
+  const allOptions = {
+    showHierarchy: "Hierarki og relasjoner",
+    showMerknader: "Merknader",
+    showVurdering: "Vurdering",
+    showStatus: "Status",
+    showPrioritet: "Prioritet",
+    showObligatorisk: "Obligatorisk/Valgfri",
+    showRelations: "Tilknyttede relasjoner",
   };
+
+  // Only return options that are not explicitly disabled in modelConfig
+  const availableOptions = {};
+  Object.keys(allOptions).forEach((key) => {
+    if (uiConfig[key] !== false) {
+      availableOptions[key] = allOptions[key];
+    }
+  });
+
+  return availableOptions;
+};
+
+/**
+ * Get default view options for Krav
+ * Reads from modelConfig ui section
+ *
+ * @returns {Object} Default view options state
+ */
+export const getDefaultViewOptions = () => {
+  return (
+    kravConfig?.workspace?.ui || {
+      showHierarchy: true,
+      showVurdering: true,
+      showStatus: false,
+      showPrioritet: true,
+      showObligatorisk: true,
+      showRelations: true,
+    }
+  );
 };

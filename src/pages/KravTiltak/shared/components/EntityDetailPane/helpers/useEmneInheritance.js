@@ -57,24 +57,19 @@ export function useEmneInheritance(formData, dto, entityType, options = {}) {
     queryFn: async () => {
       if (!parentId) return null;
 
-      console.log('LOGBACKEND useEmneInheritance - Fetching parent:', {
-        entityType,
-        parentId,
-        hasModelConfig: !!modelConfig,
-        hasDtoAdapterConfig: !!dto?.adapter?.config
-      });
+      // Debug: Fetching parent entity for inheritance
 
       // Use modelConfig if provided, otherwise fall back to dto.adapter.config
       const config = modelConfig || dto?.adapter?.config;
       if (!config) {
-        console.warn('LOGBACKEND useEmneInheritance - No config available');
+        // No config available for parent fetch
         return null;
       }
 
       // Use getByIdFn for fetching single entity (NOT queryFn which is for paginated queries)
       const getByIdFn = config.getByIdFn;
       if (!getByIdFn) {
-        console.warn(`LOGBACKEND useEmneInheritance - No getByIdFn available for entity type: ${entityType}`, config);
+        // No getByIdFn available for entity type
         return null;
       }
 
@@ -82,15 +77,7 @@ export function useEmneInheritance(formData, dto, entityType, options = {}) {
       const result = await getByIdFn(parentId);
       const data = result?.data || result;
 
-      console.log('LOGBACKEND useEmneInheritance - Parent fetched:', {
-        parentId,
-        hasData: !!data,
-        parentTitle: data?.tittel || data?.title,
-        parentUID: data?.kravUID || data?.tiltakUID,
-        emneId: data?.emneId,
-        emne: data?.emne,
-        fullParentData: data
-      });
+      // Parent entity fetched successfully
 
       return data;
     },
@@ -120,7 +107,7 @@ export function useEmneInheritance(formData, dto, entityType, options = {}) {
       // Use getByIdFn for fetching single krav entity
       const getByIdFn = kravConfig.getByIdFn;
       if (!getByIdFn) {
-        console.warn('LOGBACKEND useEmneInheritance - No getByIdFn available for krav config');
+        // No getByIdFn available for krav config
         return null;
       }
 
@@ -162,18 +149,7 @@ export function useEmneInheritance(formData, dto, entityType, options = {}) {
       kravData
     );
 
-    // Debug logging
-    if (formData?.parentId) {
-      console.log('LOGBACKEND useEmneInheritance - Inheritance computed:', {
-        entityType,
-        parentId: formData.parentId,
-        hasParentData: !!parentData,
-        parentEmneId: parentData?.emneId,
-        inheritedEmneId: result.emneId,
-        source: result.source,
-        isInherited: result.isInherited
-      });
-    }
+    // Inheritance computed
 
     return result;
   }, [

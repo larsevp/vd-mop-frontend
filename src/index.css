@@ -124,6 +124,15 @@
   textarea.input-base {
     @apply resize-y min-h-[6rem] leading-relaxed;
   }
+
+  /* Card edit mode - transparent background to show container highlight */
+  .input-card-edit {
+    @apply bg-transparent border-slate-300;
+  }
+
+  .input-card-edit:focus {
+    @apply bg-white;
+  }
 }
 
 /* TipTap Editor Styles */

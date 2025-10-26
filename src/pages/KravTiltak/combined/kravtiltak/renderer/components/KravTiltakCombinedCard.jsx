@@ -19,32 +19,32 @@ const KravTiltakCombinedCard = (props) => {
     case 'krav':
       config = {
         uidField: 'kravUID',
-        badgeText: 'KRAV',
-        badgeColor: 'bg-blue-100 text-blue-700',
+        badgeText: 'Krav',
+        badgeColor: 'bg-emerald-100 text-emerald-800 border border-emerald-200',
         childrenLabel: 'underkrav',
         relations: [
           {
             field: 'tiltak',
             label: 'tiltak',
             prefix: '→',
-            color: 'text-green-600'
+            color: 'text-sky-600'
           }
         ]
       };
       break;
-      
+
     case 'tiltak':
       config = {
         uidField: 'tiltakUID',
-        badgeText: 'TILTAK',
-        badgeColor: 'bg-green-100 text-green-700',
+        badgeText: 'Tiltak',
+        badgeColor: 'bg-sky-100 text-sky-800 border border-sky-200',
         childrenLabel: 'undertiltak',
         relations: [
           {
             field: 'krav',
             label: 'krav',
             prefix: '←',
-            color: 'text-blue-600'
+            color: 'text-emerald-600'
           }
         ]
       };

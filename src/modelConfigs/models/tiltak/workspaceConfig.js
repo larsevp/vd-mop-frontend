@@ -26,40 +26,59 @@ const newTiltakWorkspaceConfig = {
       showRelations: true,
     },
 
+    // Article View Configuration (Cards Mode)
+    articleView: {
+      mainContentFields: ["beskrivelse", "informasjon"], // Rich text fields shown in article body
+      merknadField: "merknad", // Note field (tiltak uses 'merknad', not 'merknader')
+      statusFields: ["vurderingId", "statusId", "prioritet", "obligatorisk"], // Status metadata
+    },
+
     // Configuration for "Lag tilknyttet tiltak" creation flow
     detailFormLinked: {
       sections: {
-        main: {
-          title: "Tilknyttet tiltak",
+        info: {
+          title: "Grunnleggende informasjon",
           defaultExpanded: true,
           layout: [
-            { field: "beskrivelse" },                           // 1. Description (full-width)
-            { field: "merknad" },                               // 2. Note (full-width)
-            { row: ["vurderingId", "statusId", "prioritet"] },  // 3. Assessment, Status, Priority
-            { row: ["emneId", "obligatorisk"] },                // 4. Subject, Required
+            { field: "beskrivelse" }, // 1. Description (full-width)
+            { field: "implementasjon" }, // 2. Implementation (full-width)
           ],
         },
-        implementation: {
-          title: "Implementasjon og tilbakemelding",
+        prioritering: {
+          title: "Organisering og prioritering",
+          defaultExpanded: true,
+          layout: [
+            { row: ["emneId", "statusId", "prioritet"] }, // 1. Subject, Status, Priority (side-by-side)
+            { field: "merknad" }, // 2. Note (full-width)
+          ],
+        },
+        merinfo: {
+          title: "Tilbakemelding og notater",
           defaultExpanded: false,
           layout: [
-            { field: "implementasjon" },                        // 1. Implementation (full-width)
-            { field: "tilbakemelding" },                        // 2. Feedback (full-width)
+            { field: "tilbakemelding" }, // 1. Feedback (full-width)
+            { field: "vurderingId" }, // 2. Assessment
+          ],
+        },
+        references: {
+          title: "Tilknytning",
+          defaultExpanded: true,
+          layout: [
+            { field: "krav" }, // Show which krav this is connected to
           ],
         },
         admin: {
           title: "Administrative detaljer",
           defaultExpanded: false,
           layout: [
-            { field: "enhetId" },                               // 1. Unit (full-width)
+            { field: "enhetId" }, // 1. Unit (full-width)
           ],
-        }
+        },
       },
       workspaceHiddenCreate: [
         "tiltakUID",
         "updatedBy",
         "createdBy",
-        "krav", // Hidden - pre-filled from source krav
         "parentId", // Not needed for linked tiltak
         "givenOrder",
         "beskrivelseSnippet",
@@ -78,6 +97,9 @@ const newTiltakWorkspaceConfig = {
     },
   },
 
+  // View mode behavior settings
+  // autoExpandSectionsWithContent: false, // Disable auto-expansion of sections with content in view mode
+
   // Hidden fields in different contexts
   workspaceHiddenIndex: [
     "givenOrder",
@@ -87,6 +109,7 @@ const newTiltakWorkspaceConfig = {
     "beskrivelseSnippet",
     "implementasjonSnippet",
     "tilbakemeldingSnippet",
+    "tilbakemelding",
     "vurderingId",
     "statusId",
     "prioritet",
@@ -99,6 +122,7 @@ const newTiltakWorkspaceConfig = {
     "beskrivelseSnippet",
     "implementasjonSnippet",
     "tilbakemeldingSnippet",
+    "tilbakemelding",
     "vurderingId",
     "statusId",
     "prioritet",
@@ -111,6 +135,7 @@ const newTiltakWorkspaceConfig = {
     "beskrivelseSnippet",
     "implementasjonSnippet",
     "tilbakemeldingSnippet",
+    "tilbakemelding",
     "vurderingId",
     "statusId",
     "prioritet",
@@ -122,50 +147,55 @@ const newTiltakWorkspaceConfig = {
       title: "Grunnleggende informasjon",
       defaultExpanded: true,
       layout: [
-        { field: "beskrivelse" },                   // 1. Description (full-width)
-        { field: "merknad" },                       // 2. Note (full-width)
-        { row: ["emneId", "krav", "parentId"] },    // 3. Subject, Requirement, Parent (side-by-side)
+        { field: "beskrivelse" }, // 1. Description (full-width)
+        { field: "implementasjon" }, // 2. Implementation (full-width)
       ],
     },
-    status: {
-      title: "Status og vurdering",
+    prioritering: {
+      title: "Organisering og prioritering",
       defaultExpanded: true,
-      fieldOverrides: {},
-      rows: {},
+      layout: [
+        { row: ["emneId", "statusId", "prioritet"] }, // 1. Subject, Status, Priority (side-by-side)
+        { field: "merknad" }, // 2. Note (full-width)
+      ],
     },
-    implementation: {
-      title: "Implementasjon og tilbakemelding",
+    merinfo: {
+      title: "Tilbakemelding og notater",
       defaultExpanded: false,
-      fieldOverrides: {},
-      rows: {},
+      layout: [
+        { field: "tilbakemelding" }, // 1. Feedback (full-width)
+        { field: "vurderingId" }, // 2. Assessment
+      ],
     },
     references: {
       title: "Referanser",
       defaultExpanded: false,
-      fieldOverrides: {},
-      rows: {},
+      layout: [
+        { row: ["krav", "parentId"] }, // 1. Requirement, Parent Tiltak (side-by-side)
+      ],
     },
     admin: {
       title: "Administrative detaljer",
       defaultExpanded: false,
       layout: [
-        { row: ["obligatorisk", "enhetId"] },       // 1. Required, Unit (side-by-side)
-        { field: "givenOrder" },                    // 2. Order (full-width)
+        { row: ["enhetId", "obligatorisk"] }, // 1. Unit, Required (side-by-side)
+        { field: "givenOrder" }, // 2. Order (full-width)
       ],
     },
     metadata: {
       title: "Metadata",
       defaultExpanded: false,
-      fieldOverrides: {},
-      rows: {},
+      layout: [
+        { field: "tiltakUID" }, // 1. Tiltak UID (full-width)
+        { row: ["createdBy", "updatedBy"] }, // 2. Created/Updated by (side-by-side)
+      ],
     },
     annet: {
       title: "",
       defaultExpanded: true,
       noTitle: true,
       layout: [
-        { field: "implementasjon" },                // 1. Implementation (full-width)
-        { field: "tilbakemelding" },                // 2. Feedback (full-width)
+        { field: "files" }, // 1. Files (full-width)
       ],
     },
   },

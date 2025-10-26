@@ -73,11 +73,18 @@ const EntityCard = ({
   }
   const allFields = modelConfig?.fields || [];
   const modelName = modelConfig?.modelPrintName || entity?.entityType || 'entity';
-  
+
+  // Get article view configuration from modelConfig
+  const articleViewConfig = modelConfig?.workspaceConfig?.workspace?.articleView || {
+    mainContentFields: ['beskrivelse', 'informasjon'],
+    merknadField: 'merknader',
+    statusFields: ['vurderingId', 'statusId', 'prioritet', 'obligatorisk'],
+  };
+
   // Use shared form hook when inline editing is active
   const { formData, handleFieldChange } = useEntityForm(
-    editMode && onFieldSave ? entity : null, 
-    allFields, 
+    editMode && onFieldSave ? entity : null,
+    allFields,
     modelName
   );
 
@@ -101,7 +108,13 @@ const EntityCard = ({
   };
 
   const handleDoubleClick = () => {
-    onDoubleClick(entity);
+    // In cards mode, double-click enters edit mode (same as Rediger button)
+    if (isExpandedCards) {
+      onClick(entity, 'editCard');
+    } else {
+      // In split mode, double-click opens detail pane
+      onDoubleClick(entity);
+    }
   };
 
   // Get computed values
@@ -116,16 +129,19 @@ const EntityCard = ({
    * Uses DisplayValueResolver for rich text in cards mode
    */
   const getDescription = () => {
-    if (isExpandedCards && entity.beskrivelse) {
-      // Use DisplayValueResolver for rich text rendering in expanded cards mode
-      const beskrivelseField = { name: 'beskrivelse', type: 'basicrichtext' };
-      const context = { 
-        format: 'REACT', 
-        source: 'DETAIL' // Show full content without truncation
-      };
-      return DisplayValueResolver.resolveDisplayValue(entity, beskrivelseField, context);
+    if (isExpandedCards) {
+      // For cards mode, show full content - no snippets
+      if (entity.beskrivelse) {
+        return DisplayValueResolver.getDisplayComponent(
+          entity,
+          { name: 'beskrivelse', type: 'basicrichtext' },
+          'DETAIL',
+          entity.entityType
+        );
+      }
+      return null;
     } else {
-      // Use snippet for compact split view
+      // Use snippet for compact split view - plain text
       return entity.beskrivelseSnippet || entity.descriptionSnippet || '';
     }
   };
@@ -143,16 +159,8 @@ const EntityCard = ({
     }
   };
 
-  // Helper to get the correct merknad field name (merknad vs merknader)
-  const getMerknadFieldName = () => {
-    const merknadConfig = getFieldConfig('merknad');
-    const merknaderConfig = getFieldConfig('merknader');
-    if (merknadConfig) return 'merknad';
-    if (merknaderConfig) return 'merknader';
-    return 'merknad'; // fallback
-  };
-
-  const merknadFieldName = getMerknadFieldName();
+  // Use merknad field from article config
+  const merknadFieldName = articleViewConfig.merknadField;
   const merknadValue = entity[merknadFieldName];
 
   // Debounced save for text fields
@@ -194,10 +202,10 @@ const EntityCard = ({
 
     const handleKeyPress = (event) => {
       const activeElement = document.activeElement;
-      const isInputFocused = ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeElement?.tagName) || 
+      const isInputFocused = ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeElement?.tagName) ||
                             activeElement?.contentEditable === 'true';
       const isTextareaFocused = activeElement?.tagName === 'TEXTAREA';
-      
+
       // Handle Enter key for single-line inputs in edit mode
       if (event.key === 'Enter' && editMode && viewOptions?.viewMode === 'cards' && isInputFocused && !isTextareaFocused) {
         event.preventDefault();
@@ -237,6 +245,29 @@ const EntityCard = ({
     return () => document.removeEventListener('keydown', handleKeyPress);
   }, [isSelected, onClick, entity]);
 
+  // Click outside handler - deselect card when clicking outside
+  const cardRef = useRef(null);
+  useEffect(() => {
+    if (!isSelected || !isExpandedCards) return;
+
+    const handleClickOutside = (event) => {
+      if (cardRef.current && !cardRef.current.contains(event.target)) {
+        // Click is outside the card, deselect it (which also exits edit mode if active)
+        onClick(null, 'deselect');
+      }
+    };
+
+    // Add a small delay to avoid immediate trigger
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+    }, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isSelected, isExpandedCards, onClick]);
+
   const renderStatusField = (fieldName, displayFn, label) => {
     const display = displayFn(entity);
     // Show field if it's in edit mode and editable, even if no current value
@@ -251,7 +282,7 @@ const EntityCard = ({
 
         return (
           <div
-            className="flex flex-col gap-1.5 py-1"
+            className="flex flex-col gap-1.5"
             onClick={(e) => e.stopPropagation()}
           >
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-600">{label}</span>
@@ -308,47 +339,43 @@ const EntityCard = ({
 
   return (
     <div
+      ref={cardRef}
       data-entity-id={dataEntityId}
       className={`
-        relative cursor-pointer block ${shouldIndent && isExpandedCards ? '' : 'w-full'}
+        relative cursor-pointer
         ${isExpandedCards
-          ? `bg-white rounded-lg border mb-6 p-8 transition-all duration-200 ${shouldIndent ? 'ml-8' : ''} ${isSelected ? 'border-slate-300 bg-slate-50/50 shadow-sm' : 'border-slate-200 hover:border-slate-300 hover:shadow-sm'}`
-          : `mb-1 px-4 py-3 rounded-md transition-colors duration-150 ${isSelected ? 'bg-slate-50 border-l-2 border-l-slate-400' : 'hover:bg-slate-50/60 border-l-2 border-l-transparent'} ${shouldIndent ? 'relative' : ''}`
+          ? `max-w-5xl mx-auto py-4 px-8 transition-all duration-200 ${isSelected ? '' : 'hover:bg-slate-50/20'}`
+          : `block w-full mb-1 px-4 py-3 rounded-md transition-colors duration-150 ${isSelected ? 'bg-slate-50 border-l-2 border-l-slate-400' : 'hover:bg-slate-50/60 border-l-2 border-l-transparent'} ${shouldIndent ? 'relative' : ''}`
         }
       `}
-      style={shouldIndent && isExpandedCards ? { width: 'calc(100% - 2rem)' } : undefined}
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
     >
 
       <div className={isExpandedCards ? '' : (shouldIndent ? 'ml-8' : '')}>
         {isExpandedCards ? (
-          /* 🎨 CARDS MODE - Main content on left, status box on right */
-        <div className="flex gap-4">
-          {/* Main content area */}
-          <div className="flex-1">
-            {/* Line 1: Special and parent references */}
-            <div className="flex items-center gap-2 mb-1 min-w-0 overflow-hidden">
-              {/* Special reference (e.g., generalTiltak) */}
-              {getSpecialReference(entity)}
-
-              {/* Parent reference for child elements */}
-              {getParentReference(entity)}
-            </div>
-
-            {/* Line 2: Combined UID/Type Badge, Title, and action buttons */}
-            <div className="mb-2 flex items-center justify-between">
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <EntityBadge
-                  uid={uid}
-                  badgeColor={config.badgeColor}
-                  badgeText={config.badgeText}
-                  size="md"
-                />
-
-                <span className={`text-slate-900 ${shouldUseCompactMode ? 'text-sm font-normal' : 'text-lg font-light'}`}>{title}</span>
+          /* 📰 ARTICLE MODE - Clean editorial layout */
+        <article className={`space-y-3 transition-all duration-200 ${isSelected ? (editMode ? 'border-2 border-slate-300 p-6 rounded-xl -mx-8 -my-4' : 'bg-slate-50 p-6 rounded-xl -mx-8 -my-4') : ''}`}>
+          {/* Article Header */}
+          <header className="space-y-2">
+            {/* References (parent, special) */}
+            {(getSpecialReference(entity) || getParentReference(entity)) && (
+              <div className="flex items-center gap-3 text-xs text-slate-500">
+                {getSpecialReference(entity)}
+                {getParentReference(entity)}
               </div>
-              {/* Action buttons for cards mode - Only show when selected */}
+            )}
+
+            {/* Badge */}
+            <div className="flex items-center justify-between">
+              <EntityBadge
+                uid={uid}
+                badgeColor={config.badgeColor}
+                badgeText={config.badgeText}
+                size="md"
+              />
+
+              {/* Action buttons - only when selected */}
               {isSelected && (
                 <div className="flex gap-2 ml-4">
                   <button
@@ -389,18 +416,141 @@ const EntityCard = ({
               )}
             </div>
 
-            {/* Line 3: Rich description - MAIN DIFFERENCE: Full rich text in cards */}
-            {(entity.beskrivelse || entity.beskrivelseSnippet || entity.descriptionSnippet) && (
-              <div className={`${shouldUseCompactMode ? 'text-xs' : 'text-sm'} text-slate-600 mb-3 prose prose-sm max-w-none`}>
-                {getDescription()}
-              </div>
-            )}
+            {/* Title */}
+            {editMode && onFieldSave && !editingDisabled ? (
+              <div onClick={(e) => e.stopPropagation()}>
+                {(() => {
+                  // Find the title field (tittel, navn, name, or title)
+                  const titleFieldName = entity.tittel !== undefined ? 'tittel' :
+                                        entity.navn !== undefined ? 'navn' :
+                                        entity.name !== undefined ? 'name' : 'title';
+                  const titleFieldConfig = allFields.find(f => f.name === titleFieldName);
 
-            {/* Merknad */}
-            {viewOptions.showMerknad && (
-              editMode && onFieldSave && !editingDisabled && isExpandedCards ? (
-                <div className={`${shouldUseCompactMode ? 'text-xs' : 'text-sm'} bg-amber-50 rounded px-2 py-1 mb-3`} onClick={(e) => e.stopPropagation()}>
-                  <span className={`${shouldUseCompactMode ? 'text-xs' : 'text-xs'} font-medium text-amber-800`}>Merknad:</span>
+                  if (titleFieldConfig) {
+                    const FieldComponent = FieldResolver.getFieldComponent(titleFieldConfig, entity.entityType);
+                    return (
+                      <FieldComponent
+                        field={titleFieldConfig}
+                        value={formData[titleFieldName] ?? entity[titleFieldName] ?? ""}
+                        onChange={(eventOrValue) => {
+                          handleFieldChange(eventOrValue);
+
+                          let actualValue;
+                          if (typeof eventOrValue === "object" && eventOrValue?.target) {
+                            actualValue = eventOrValue.target.value;
+                          } else {
+                            actualValue = eventOrValue;
+                          }
+
+                          debouncedSave(titleFieldName, actualValue, entity);
+                        }}
+                        onBlur={(eventOrValue) => {
+                          let actualValue;
+                          if (typeof eventOrValue === "object" && eventOrValue?.target) {
+                            actualValue = eventOrValue.target.value;
+                          } else {
+                            actualValue = formData[titleFieldName] ?? entity[titleFieldName] ?? "";
+                          }
+                          immediateSave(titleFieldName, actualValue, entity);
+                        }}
+                        className="text-xl font-light"
+                        error={null}
+                      />
+                    );
+                  }
+                  return <h2 className="text-xl font-light text-slate-900 leading-snug">{title}</h2>;
+                })()}
+              </div>
+            ) : (
+              <h2 className="text-xl font-light text-slate-900 leading-snug">
+                {title}
+              </h2>
+            )}
+          </header>
+
+          {/* Article Body - Dynamic main content fields from config */}
+          {articleViewConfig.mainContentFields.map((fieldName, index) => {
+            const fieldValue = entity[fieldName];
+
+            // Get field config to use proper label and type
+            const fieldConfig = allFields.find(f => f.name === fieldName);
+            if (!fieldConfig) return null;
+
+            // Show field if it has value OR if in edit mode
+            const shouldShow = fieldValue || (editMode && onFieldSave && !editingDisabled);
+            if (!shouldShow) return null;
+
+            // First field (beskrivelse) has no header, others get a section header
+            const showHeader = index > 0;
+
+            return (
+              <div key={fieldName} className={showHeader ? "space-y-2" : ""}>
+                {showHeader && (
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-600">
+                    {fieldConfig.label}
+                  </h3>
+                )}
+                {editMode && onFieldSave && !editingDisabled ? (
+                  <div onClick={(e) => e.stopPropagation()}>
+                    {(() => {
+                      const FieldComponent = FieldResolver.getFieldComponent(fieldConfig, entity.entityType);
+                      return (
+                        <FieldComponent
+                          field={fieldConfig}
+                          value={formData[fieldName] ?? entity[fieldName] ?? ""}
+                          onChange={(eventOrValue) => {
+                            // Update form data immediately
+                            handleFieldChange(eventOrValue);
+
+                            // Extract actual value
+                            let actualValue;
+                            if (typeof eventOrValue === "object" && eventOrValue?.target) {
+                              actualValue = eventOrValue.target.value;
+                            } else {
+                              actualValue = eventOrValue;
+                            }
+
+                            // Use debounced save for rich text fields
+                            debouncedSave(fieldName, actualValue, entity);
+                          }}
+                          onBlur={(eventOrValue) => {
+                            // Save immediately on blur
+                            let actualValue;
+                            if (typeof eventOrValue === "object" && eventOrValue?.target) {
+                              actualValue = eventOrValue.target.value;
+                            } else {
+                              actualValue = formData[fieldName] ?? entity[fieldName] ?? "";
+                            }
+                            immediateSave(fieldName, actualValue, entity);
+                          }}
+                          className="text-base"
+                          error={null}
+                        />
+                      );
+                    })()}
+                  </div>
+                ) : (
+                  <div className="text-sm text-slate-700 leading-normal">
+                    {DisplayValueResolver.getDisplayComponent(
+                      entity,
+                      fieldConfig,
+                      'DETAIL',
+                      entity.entityType
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Merknad */}
+          {viewOptions.showMerknad && (formData[merknadFieldName] || merknadValue || (editMode && onFieldSave && !editingDisabled)) && (
+            <div className="space-y-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-600">Merknad</h3>
+              {editMode && onFieldSave && !editingDisabled ? (
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <div className="mt-1">
                     {(() => {
                       const fieldConfig = getFieldConfig(merknadFieldName);
@@ -413,7 +563,7 @@ const EntityCard = ({
                             onChange={(eventOrValue) => {
                               // Update form data immediately (same pattern as detail view)
                               handleFieldChange(eventOrValue);
-                              
+
                               // Extract actual value
                               let actualValue;
                               if (typeof eventOrValue === "object" && eventOrValue?.target) {
@@ -421,7 +571,7 @@ const EntityCard = ({
                               } else {
                                 actualValue = eventOrValue;
                               }
-                              
+
                               // Use debounced save for text fields
                               debouncedSave(merknadFieldName, actualValue, entity);
                             }}
@@ -445,67 +595,26 @@ const EntityCard = ({
                   </div>
                 </div>
               ) : (
-                // View mode: only show merknad if it has content
-                (formData[merknadFieldName] || merknadValue) && (
-                  <div className={`${shouldUseCompactMode ? 'text-xs' : 'text-sm'} text-amber-700 bg-amber-50 rounded px-2 py-1 mb-3`}>
-                    <span className={`${shouldUseCompactMode ? 'text-xs' : 'text-xs'} font-medium text-amber-800`}>Merknad:</span>
-                    <div className="mt-1 whitespace-pre-wrap">
-                      {formatCardText(formData[merknadFieldName] || merknadValue, isExpandedCards)}
-                    </div>
-                  </div>
-                )
-              )
-            )}
-
-            {/* Footer: Meta info and relations */}
-            <div className="flex justify-between items-center text-xs text-gray-500">
-              <div className="flex items-center gap-3">
-                {/* Child count */}
-                {viewOptions.showRelations && entity.children?.length > 0 && (
-                  <span className="text-emerald-600 font-medium">
-                    {entity.children.length} {config.childrenLabel || "underelementer"}
-                  </span>
-                )}
-                
-                {/* Related entities */}
-                {config.relations && config.relations.map((relation) => {
-                  const count = Array.isArray(entity[relation.field]) ? entity[relation.field].length : (entity[relation.field] ? 1 : 0);
-                  if (count > 0) {
-                    return (
-                      <span key={relation.field} className={`font-medium ${relation.color}`}>
-                        {relation.prefix} {count} {relation.label}
-                      </span>
-                    );
-                  }
-                  return null;
-                })}
-
-                {/* Favoritter */}
-                {viewOptions.showFavorites && entity.favorittAvBrukere?.length > 0 && (
-                  <span className="text-yellow-600 font-medium">
-                    ★ {entity.favorittAvBrukere.length} favoritter
-                  </span>
-                )}
-                
-                {/* File attachments */}
-                {viewOptions.showRelations && entity.files?.length > 0 && (
-                  <span>{entity.files.length} vedlegg</span>
-                )}
-              </div>
+                <div className="text-sm text-slate-700 leading-relaxed pl-4 border-l-2 border-amber-200 bg-amber-50/30 py-2">
+                  {formatCardText(formData[merknadFieldName] || merknadValue, isExpandedCards)}
+                </div>
+              )}
             </div>
-          </div>
+          )}
 
-          {/* Status section on the right */}
-          <div className="pl-6 min-w-[160px] relative">
-            <div className="space-y-2 text-xs">
-              {viewOptions.showVurdering && renderStatusField('vurderingId', getVurderingDisplay, 'Vurdering')}
-              {viewOptions.showStatus && renderStatusField('statusId', getStatusDisplay, 'Status')}
-              {viewOptions.showPrioritet && renderStatusField('prioritet', getPrioritetDisplay, 'Prioritet')}
-              
-              {viewOptions.showObligatorisk && entity.obligatorisk !== undefined && (
+          {/* Metadata Section */}
+          <div className="space-y-3 pt-2">
+            {/* Status Fields - Horizontal */}
+            {(viewOptions.showVurdering || viewOptions.showStatus || viewOptions.showPrioritet || viewOptions.showObligatorisk) && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {viewOptions.showVurdering && renderStatusField('vurderingId', getVurderingDisplay, 'Vurdering')}
+                {viewOptions.showStatus && renderStatusField('statusId', getStatusDisplay, 'Status')}
+                {viewOptions.showPrioritet && renderStatusField('prioritet', getPrioritetDisplay, 'Prioritet')}
+
+                {viewOptions.showObligatorisk && entity.obligatorisk !== undefined && (
                 editMode && onFieldSave && !editingDisabled ? (
                   <div
-                    className="flex flex-col gap-1.5 py-1"
+                    className="flex flex-col gap-1.5"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <span className="text-xs font-semibold uppercase tracking-wider text-slate-600">{(() => {
@@ -563,25 +672,103 @@ const EntityCard = ({
                   </div>
                 )
               )}
-            </div>
-            
-            {/* View Details Button - Only show when selected */}
-            {isSelected && (
-              <div className="mt-4 pt-3 border-t border-slate-200">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation(); // Prevent triggering the card click
-                    handleDoubleClick();
-                  }}
-                  className="w-full px-3 py-2 text-sm font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 hover:border-slate-300 transition-all duration-200 flex items-center justify-center gap-2"
-                >
-                  <Eye className="w-4 h-4" />
-                  Vis detaljer
-                </button>
               </div>
             )}
+
+            {/* Relations & Metadata - Only show if there are any relations */}
+            {viewOptions.showRelations && (() => {
+              const hasChildren = entity.children?.length > 0;
+              const hasFiles = entity.files?.length > 0;
+              const hasFavorites = viewOptions.showFavorites && entity.favorittAvBrukere?.length > 0;
+
+              // Check if any config relations have data
+              const hasConfigRelations = config.relations?.some((relation) => {
+                const relatedEntities = entity[relation.field];
+                return Array.isArray(relatedEntities) ? relatedEntities.length > 0 : !!relatedEntities;
+              });
+
+              const hasAnyRelations = hasChildren || hasFiles || hasFavorites || hasConfigRelations;
+
+              if (!hasAnyRelations) return null;
+
+              return (
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-600">Relasjoner</h3>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-700">
+                    {/* Children with UIDs */}
+                    {hasChildren && (() => {
+                      const childrenUids = entity.children
+                        .map(child => child.kravUID || child.tiltakUID || child.uid || child.id)
+                        .filter(Boolean)
+                        .join(', ');
+
+                      return (
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold uppercase tracking-wider text-slate-600">
+                            {config.childrenLabel || "Underelementer"}:
+                          </span>
+                          <span className="font-mono text-xs">{childrenUids}</span>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Related entities with UIDs */}
+                    {config.relations && config.relations.map((relation) => {
+                      const relatedEntities = entity[relation.field];
+                      const entitiesArray = Array.isArray(relatedEntities)
+                        ? relatedEntities
+                        : (relatedEntities ? [relatedEntities] : []);
+
+                      if (entitiesArray.length === 0) return null;
+
+                      // Get UID field based on relation type
+                      const getUidFromEntity = (ent) => {
+                        if (!ent) return null;
+                        // Try common UID fields
+                        return ent.kravUID || ent.tiltakUID || ent.uid || ent.id;
+                      };
+
+                      // Generate list of UIDs
+                      const uidList = entitiesArray
+                        .map(getUidFromEntity)
+                        .filter(Boolean)
+                        .join(', ');
+
+                      // Capitalize first letter of label
+                      const capitalizedLabel = relation.label.charAt(0).toUpperCase() + relation.label.slice(1);
+
+                      return (
+                        <div key={relation.field} className="flex items-center gap-2">
+                          <span className="text-xs font-semibold uppercase tracking-wider text-slate-600">
+                            {capitalizedLabel}:
+                          </span>
+                          <span className="font-mono text-xs">{uidList || `${entitiesArray.length} item(s)`}</span>
+                        </div>
+                      );
+                    })}
+
+                    {/* File attachments */}
+                    {hasFiles && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-slate-600">Vedlegg:</span>
+                        <span className="text-xs">{entity.files.length}</span>
+                      </div>
+                    )}
+
+                    {/* Favoritter */}
+                    {hasFavorites && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-slate-600">Favoritter:</span>
+                        <span className="text-xs">{entity.favorittAvBrukere.length}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
-        </div>
+
+        </article>
       ) : (
         /* 📋 SPLIT MODE - Compact table-like layout */
         <>

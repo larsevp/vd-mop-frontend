@@ -206,6 +206,7 @@ const EntityListPane = ({
                         isCollapsed,
                         onToggle: () => toggleGroupCollapse(groupKey),
                         itemCount: groupItems.length,
+                        viewMode: isCardsMode ? 'cards' : 'split',
                       })}
 
                     {/* Group items */}

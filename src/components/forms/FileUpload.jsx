@@ -17,6 +17,7 @@ const FileUpload = ({
   showTitle = false,
   thumbnailSize = 100, // Default 60px for better visibility
 }) => {
+
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -251,7 +252,7 @@ const FileUpload = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {showTitle && (
         <div className="flex items-center justify-between">
           <label className="block text-sm font-medium text-gray-700">{label}</label>
@@ -259,11 +260,11 @@ const FileUpload = ({
       )}
 
       {files.length > 0 && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-600">{files.length} fil(er)</div>
+        <div className="space-y-4">
+          {/* Header row - Scandinavian minimal styling */}
+          <div className="flex items-center gap-3">
             {showUpload && (
-              <div className="flex items-center gap-2">
+              <>
                 <input
                   type="file"
                   multiple
@@ -272,34 +273,29 @@ const FileUpload = ({
                   id={`file-upload-${modelType}-${modelId || "new"}`}
                   disabled={uploading}
                 />
-                <Button
+                <button
                   type="button"
-                  variant="outline"
-                  size="sm"
                   onClick={() => document.getElementById(`file-upload-${modelType}-${modelId || "new"}`).click()}
                   disabled={uploading}
-                  className="flex items-center gap-2 bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300 hover:text-blue-800 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-normal rounded-lg text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 hover:border-slate-400 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Upload size={16} className={uploading ? "animate-pulse" : ""} />
-                  {uploading ? "Laster opp..." : "Last opp filer"}
-                </Button>
-              </div>
+                  <Upload size={14} className={uploading ? "animate-pulse" : ""} />
+                  {uploading ? "Laster opp..." : "Last opp"}
+                </button>
+              </>
             )}
+            <div className="text-sm text-slate-600 font-normal">
+              {files.length} {files.length === 1 ? 'fil' : 'filer'}
+            </div>
           </div>
-          <div
-            className="flex flex-wrap gap-4"
-            style={
-              {
-                // Calculate how many thumbnails can fit based on container width and thumbnail size
-                // This creates a responsive layout that adapts to the thumbnail size
-              }
-            }
-          >
+
+          {/* File grid - clean and minimal */}
+          <div className="flex flex-wrap gap-4">
             {files.map((file) => (
               <div key={file.id} className="relative group flex-shrink-0">
                 <div className="space-y-2">
                   <div
-                    className="relative rounded-lg overflow-hidden shadow-sm group-hover:shadow-md transition-all duration-200 border border-gray-200"
+                    className="relative rounded-lg overflow-hidden transition-all duration-200 border border-slate-200 group-hover:border-slate-300"
                     style={{
                       width: `${thumbnailSize}px`,
                       height: `${thumbnailSize}px`,
@@ -307,58 +303,51 @@ const FileUpload = ({
                   >
                     {getThumbnail(file)}
 
-                    {/* Action buttons - integrated into corners */}
+                    {/* Action buttons - subtle overlay on hover */}
                     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
-                      <Button
+                      <button
                         type="button"
-                        variant="ghost"
-                        size="sm"
                         onClick={() => handleDownloadFile(file)}
-                        className="h-7 w-7 p-0 bg-white/90 text-gray-700 hover:bg-white hover:text-blue-600 shadow-sm backdrop-blur-sm rounded-full transition-all duration-200"
+                        className="h-7 w-7 flex items-center justify-center bg-white/95 text-slate-700 hover:text-slate-900 border border-slate-200 hover:border-slate-300 rounded-full transition-all duration-200"
                         title="Åpne fil"
                       >
-                        <Download size={14} />
-                      </Button>
+                        <Download size={13} />
+                      </button>
                     </div>
 
                     {showUpload && (
                       <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
-                        <Button
+                        <button
                           type="button"
-                          variant="ghost"
-                          size="sm"
                           onClick={() => handleDeleteFile(file.id)}
-                          className="h-7 w-7 p-0 bg-white/90 text-gray-700 hover:bg-white hover:text-red-600 shadow-sm backdrop-blur-sm rounded-full transition-all duration-200"
+                          className="h-7 w-7 flex items-center justify-center bg-white/95 text-slate-700 hover:text-red-600 border border-slate-200 hover:border-red-300 rounded-full transition-all duration-200"
                           title="Slett fil"
                         >
-                          <Trash2 size={14} />
-                        </Button>
+                          <Trash2 size={13} />
+                        </button>
                       </div>
                     )}
                   </div>
-                  <div className="text-xs text-gray-600 truncate" title={file.fileName}>
+                  <div className="text-xs text-slate-600 truncate max-w-[100px]" title={file.fileName}>
                     {(() => {
                       if (file.fileName.length <= 15) return file.fileName;
 
                       const lastDotIndex = file.fileName.lastIndexOf(".");
                       if (lastDotIndex === -1) {
-                        // No extension found
                         return `${file.fileName.substring(0, 15)}...`;
                       }
 
                       const extension = file.fileName.substring(lastDotIndex);
                       const nameWithoutExt = file.fileName.substring(0, lastDotIndex);
-                      const maxNameLength = 15 - extension.length - 3; // 3 for "..."
+                      const maxNameLength = 15 - extension.length - 3;
 
                       if (maxNameLength <= 0) {
-                        // Extension is too long, fallback to simple truncation
                         return `${file.fileName.substring(0, 15)}...`;
                       }
 
                       return `${nameWithoutExt.substring(0, maxNameLength)}...${extension}`;
                     })()}
                   </div>
-                  {/*<div className="text-xs text-gray-400">{(file.fileSize / 1024 / 1024).toFixed(1)} MB</div>*/}
                 </div>
               </div>
             ))}
@@ -368,9 +357,9 @@ const FileUpload = ({
 
       {files.length === 0 && !uploading && (
         <div className="space-y-3">
-          <div className="text-sm text-gray-500 italic">Ingen filer lastet opp</div>
+          <div className="text-sm text-slate-500 font-normal">Ingen filer lastet opp</div>
           {showUpload && (
-            <div className="flex justify-center">
+            <div>
               <input
                 type="file"
                 multiple
@@ -379,17 +368,15 @@ const FileUpload = ({
                 id={`file-upload-${modelType}-${modelId || "new"}`}
                 disabled={uploading}
               />
-              <Button
+              <button
                 type="button"
-                variant="outline"
-                size="sm"
                 onClick={() => document.getElementById(`file-upload-${modelType}-${modelId || "new"}`).click()}
                 disabled={uploading}
-                className="flex items-center gap-2 bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300 hover:text-blue-800 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-normal rounded-lg text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 hover:border-slate-400 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Upload size={16} className={uploading ? "animate-pulse" : ""} />
+                <Upload size={14} className={uploading ? "animate-pulse" : ""} />
                 {uploading ? "Laster opp..." : "Last opp filer"}
-              </Button>
+              </button>
             </div>
           )}
         </div>
@@ -400,4 +387,15 @@ const FileUpload = ({
   );
 };
 
-export default FileUpload;
+// Memoize the component to prevent unnecessary re-renders
+// Only re-render if modelType, modelId, showUpload, or label changes
+export default React.memo(FileUpload, (prevProps, nextProps) => {
+  return (
+    prevProps.modelType === nextProps.modelType &&
+    prevProps.modelId === nextProps.modelId &&
+    prevProps.showUpload === nextProps.showUpload &&
+    prevProps.label === nextProps.label &&
+    prevProps.thumbnailSize === nextProps.thumbnailSize
+    // Note: We intentionally don't compare onFilesChange to avoid re-renders from function reference changes
+  );
+});

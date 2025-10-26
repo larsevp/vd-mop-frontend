@@ -59,6 +59,33 @@ const FieldRenderer = ({ field, value, onChange, error, form, entity, modelName,
   }
 
   if (!isEditing) {
+    // Special handling for fileupload fields - render the actual component in view mode
+    // so users can view, download files (but not upload/delete)
+    if (field.type === 'fileupload') {
+      return (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-600">
+              {field.label}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
+            </label>
+            <InfoIcon info={field.field_info} />
+          </div>
+          <Component
+            field={field}
+            value={value}
+            onChange={onChange}
+            error={error}
+            form={form}
+            row={entity}
+            modelName={modelName}
+            disabled={false}
+            isEditing={false}  // Pass false to hide upload/delete buttons
+          />
+        </div>
+      );
+    }
+
     const displayValue = DisplayValueResolver.getDisplayComponent(
       entity,
       field,
@@ -104,7 +131,8 @@ const FieldRenderer = ({ field, value, onChange, error, form, entity, modelName,
         form={form}
         row={entity}
         modelName={modelName}
-        disabled={isFieldDisabledByInheritance}  // NEW: Pass disabled state
+        disabled={isFieldDisabledByInheritance}
+        isEditing={isEditing}  // Pass edit mode to components
       />
       {showInheritanceIndicator && (
         <InheritanceIndicator

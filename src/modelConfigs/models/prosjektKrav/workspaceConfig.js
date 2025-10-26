@@ -80,6 +80,7 @@ const newProsjektKravWorkspaceConfig = {
   // View options
   hideEmptyFieldsInView: false, // Hide fields with no value in view mode
   collapseEmptySectionsInView: true, // Auto-collapse sections with no filled fields in view mode
+  // autoExpandSectionsWithContent: false, // Disable auto-expansion of sections with content in view mode
 
   // Sections with their field overrides and row definitions
   sections: {
@@ -105,7 +106,7 @@ const newProsjektKravWorkspaceConfig = {
     },
     merinfo: {
       title: "Tilleggsinformasjon",
-      defaultExpanded: true,
+      defaultExpanded: false,
       layout: [
         { field: "merknader" }, // 4. Notes (full-width)
         { field: "informasjon" }, // 3. Information (full-width)
