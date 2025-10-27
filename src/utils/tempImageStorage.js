@@ -258,7 +258,7 @@ export async function prepareTempImagesForUpload(formData, uploadFunction, onToa
             // Replace in form data
             updatedFormData[fieldName] = updatedFormData[fieldName].replace(base64Url, uploadedUrl);
           } catch (error) {
-            console.error(`LOGBACKEND ❌ Failed to upload orphan image:`, error);
+            console.error(`Failed to upload orphan image:`, error);
           }
         }
 
@@ -297,7 +297,7 @@ export async function prepareTempImagesForUpload(formData, uploadFunction, onToa
         // Store the URL replacement mapping
         imageReplacements.set(imageData.base64Data, uploadedUrl);
       } catch (uploadError) {
-        console.error(`LOGBACKEND ❌ Failed to upload ${tempId}:`, uploadError);
+        console.error(`Failed to upload ${tempId}:`, uploadError);
         throw new Error(`Failed to upload ${imageData.fileName}: ${uploadError.message}`);
       }
     }
@@ -346,7 +346,7 @@ export async function prepareTempImagesForUpload(formData, uploadFunction, onToa
 
     return updatedFormData;
   } catch (error) {
-    console.error("LOGBACKEND ❌ Failed to process localStorage images:", error);
+    console.error("Failed to process localStorage images:", error);
     throw error;
   }
 }

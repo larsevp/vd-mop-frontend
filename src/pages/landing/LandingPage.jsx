@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { getProsjekter } from "@/api/endpoints";
 import { useQuery } from "@tanstack/react-query";
 import { useUserStore } from "@/stores/userStore";
@@ -10,17 +10,13 @@ import "react-loading-skeleton/dist/skeleton.css";
 import { RecentProjectList } from "@/components/parts/LandingPage/RecentProjectList";
 import HurtigtilgangLandingPage from "@/components/parts/LandingPage/HurtigtilgangLandingPage";
 import { OnboardingModal } from "@/components/parts/LandingPage/OnboardingModal";
+import CreateProjectModal from "@/components/ui/projects/CreateProjectModal";
 
 export default function LandingPage() {
   const { user } = useUserStore();
   const isAdmin = user?.rolle === "ADMIN";
   const navigate = useNavigate();
-
-  function newProject() {
-    navigate("/prosjekter/ny", {
-      state: { modelType: "prosjekter" },
-    });
-  }
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const {
     data,
@@ -95,7 +91,7 @@ export default function LandingPage() {
             </p>
             <button
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg transition-colors text-sm font-normal"
-              onClick={() => newProject()}
+              onClick={() => setShowCreateModal(true)}
             >
               Opprett prosjekt
             </button>
@@ -110,6 +106,12 @@ export default function LandingPage() {
       <section className="bg-white border-t border-gray-200">
         <ProjectLandingTable projects={projects} />
       </section>
+
+      {/* Create Project Modal */}
+      <CreateProjectModal
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+      />
     </div>
   );
 }

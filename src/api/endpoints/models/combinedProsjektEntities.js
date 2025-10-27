@@ -42,7 +42,9 @@ export const getPaginatedCombinedProsjektEntities = async (page = 1, pageSize = 
   });
 
   // Use the dedicated project combined entities route
-  return API.get(`/combined-entities/project?${queryParams}`);
+  const url = `/combined-entities/project?${queryParams}`;
+  const response = await API.get(url);
+  return response;
 };
 
 /**

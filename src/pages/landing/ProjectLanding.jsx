@@ -8,6 +8,7 @@ import { SimpleCard } from "@/components/ui";
 import { useRecentProjectsStore } from "@/stores/recentProjectsStore";
 import { ExpandableRichText } from "@/components/tableComponents/displayValues/ExpandableRichText";
 import ImportKravWizard from "@/components/ui/projects/ImportKravWizard";
+import CreateProjectModal from "@/components/ui/projects/CreateProjectModal";
 import { updateProsjekt } from "@/api/endpoints/models/prosjekt";
 
 export default function ProjectLanding() {
@@ -19,6 +20,7 @@ export default function ProjectLanding() {
   const isAdmin = user?.rolle === "ADMIN";
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showImportWizard, setShowImportWizard] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Use the store for consistent project visit tracking
   const { trackProjectVisit } = useRecentProjectsStore();
@@ -153,8 +155,8 @@ export default function ProjectLanding() {
     };
 
     const handleImportComplete = () => {
-      // Navigate to the combined view after successful import
-      navigate('/prosjekt-krav-tiltak-combined');
+      // Import complete - user can now navigate to workspace from project cards
+      // No automatic navigation to avoid cache timing issues
     };
 
     // Check if import has been completed
@@ -383,6 +385,12 @@ export default function ProjectLanding() {
           projectId={project?.id}
           onImportComplete={handleImportComplete}
         />
+
+        {/* Create Project Modal */}
+        <CreateProjectModal
+          open={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+        />
       </div>
     );
   }
@@ -483,13 +491,18 @@ export default function ProjectLanding() {
           </div>
 
           {/* New project card */}
-          <div className="bg-background-primary rounded-xl border border-border-muted p-6 shadow-sm flex flex-col items-center justify-center text-center">
-            <div className="h-16 w-16 bg-primary-50 rounded-full flex items-center justify-center mb-4">
-              <Plus size={28} className="text-primary-600" />
+          <div className="bg-gradient-to-br from-sky-50 to-blue-50 rounded-xl border-2 border-sky-200 p-6 shadow-sm flex flex-col items-center justify-center text-center hover:shadow-md transition-shadow">
+            <div className="h-16 w-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm">
+              <Plus size={28} className="text-sky-600" />
             </div>
-            <h2 className="text-lg font-semibold text-text-primary mb-2">Opprett nytt prosjekt</h2>
-            <p className="text-text-muted mb-6">Start et nytt prosjekt med predefinerte tiltak</p>
-            <button className="btn btn-primary rounded-lg px-5 py-2.5 font-medium shadow-sm transition-all">Nytt prosjekt</button>
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">Opprett nytt prosjekt</h2>
+            <p className="text-gray-600 mb-6">Start et nytt prosjekt med krav og tiltak</p>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="bg-sky-600 hover:bg-sky-700 text-white rounded-lg px-6 py-2.5 font-medium shadow-sm transition-all hover:shadow"
+            >
+              Nytt prosjekt
+            </button>
           </div>
 
           {/* Recent projects */}
@@ -536,7 +549,10 @@ export default function ProjectLanding() {
               <FolderOpen size={16} />
               <span>Arkiverte</span>
             </button>
-            <button className="inline-flex items-center gap-1 bg-sky-500 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-sky-600 transition-colors">
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="inline-flex items-center gap-1 bg-sky-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-sky-700 transition-colors shadow-sm hover:shadow"
+            >
               <Plus size={16} />
               <span>Nytt prosjekt</span>
             </button>
@@ -586,6 +602,12 @@ export default function ProjectLanding() {
           </table>
         </div>
       </section>
+
+      {/* Create Project Modal */}
+      <CreateProjectModal
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+      />
     </div>
   );
 }

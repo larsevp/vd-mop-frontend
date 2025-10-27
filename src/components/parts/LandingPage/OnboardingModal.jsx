@@ -61,26 +61,19 @@ export function OnboardingModal() {
     setError(null);
 
     try {
-      console.log("LOGBACKEND Onboarding - Sending data:", { fagomradeId: formData.fagomradeId, enhetId: formData.enhetId });
-
       // Update user on backend using the new profile endpoint
       const response = await updateCurrentUserProfile({
         fagomradeId: formData.fagomradeId,
         enhetId: formData.enhetId,
       });
 
-      console.log("LOGBACKEND Onboarding - Response:", response);
-
       // Refresh user info in store
       await refreshUser();
-
-      console.log("LOGBACKEND Onboarding - User refreshed, about to reload page");
 
       // Force a full page reload to ensure all data is refetched with new access control
       window.location.reload();
     } catch (err) {
-      console.error("LOGBACKEND Onboarding - Error:", err);
-      console.error("LOGBACKEND Onboarding - Error response:", err.response);
+      console.error("Onboarding error:", err.message);
 
       // Handle specific error messages
       if (err.response?.data?.error) {

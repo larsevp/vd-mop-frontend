@@ -7,6 +7,7 @@ import { getKravpakkerSimple } from "@/api/endpoints/models/kravpakker";
 import { copyKravToProject, getImportPreview } from "@/api/endpoints/models/prosjektKrav";
 import { updateProsjekt, getProsjektById } from "@/api/endpoints/models/prosjekt";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 
 /**
  * Multi-step wizard for importing obligatory Krav and Kravpakker into a project
@@ -19,6 +20,7 @@ import { useQueryClient } from "@tanstack/react-query";
  */
 const ImportKravWizard = ({ open, onClose, projectId, onImportComplete }) => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -87,7 +89,9 @@ const ImportKravWizard = ({ open, onClose, projectId, onImportComplete }) => {
       setLoading(true);
       setError(null);
 
-      const filters = {};
+      const filters = {
+        includeRelatedTiltak: true, // Always import related tiltak
+      };
 
       if (includeObligatorisk) {
         filters.obligatorisk = true;
@@ -103,14 +107,10 @@ const ImportKravWizard = ({ open, onClose, projectId, onImportComplete }) => {
         return;
       }
 
-      console.log('LOGBACKEND Calling getImportPreview with:', { projectId, filters });
       const response = await getImportPreview(projectId, filters);
-      console.log('LOGBACKEND getImportPreview response:', response.data);
       setPreviewData(response.data);
       setStep(2);
     } catch (err) {
-      console.error('LOGBACKEND Error in getImportPreview:', err);
-      console.error('LOGBACKEND Error response:', err.response?.data);
       setError("Kunne ikke hente forhåndsvisning: " + (err.response?.data?.error || err.message));
     } finally {
       setLoading(false);
@@ -174,25 +174,28 @@ const ImportKravWizard = ({ open, onClose, projectId, onImportComplete }) => {
         prosjektJson: updatedProsjektJson,
       });
 
+      setImportProgress(95);
+
+      // Clear all entity queries for this project from cache
+      // This forces a fresh fetch when components mount
+      queryClient.removeQueries({
+        predicate: (query) => {
+          const key = query.queryKey;
+          // Match: ["entities", entityType, projectId, ...]
+          return (
+            Array.isArray(key) &&
+            key.length >= 3 &&
+            key[0] === 'entities' &&
+            key[2] === projectId
+          );
+        },
+      });
+
       setImportProgress(100);
 
       setImportResult({
         kravCount,
         tiltakCount,
-      });
-
-      // Invalidate all queries to force refetch of workspace data
-      // EntityWorkspace uses complex query keys: ["entities", entityType, projectId, ...]
-      // Using partial matching to invalidate all queries for these entity types
-      queryClient.invalidateQueries({
-        predicate: (query) => {
-          const key = query.queryKey;
-          if (!Array.isArray(key) || key[0] !== 'entities') return false;
-          const entityType = key[1];
-          return entityType === 'prosjektKrav' ||
-                 entityType === 'prosjektTiltak' ||
-                 entityType === 'krav-tiltak-combined';
-        }
       });
 
       setStep(4);

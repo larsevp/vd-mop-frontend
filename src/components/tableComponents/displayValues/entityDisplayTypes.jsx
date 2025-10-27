@@ -94,7 +94,7 @@ export const ENTITY_DISPLAY_TYPES = {
       return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
     }
 
-    const displayValue = "Ingen parent";
+    const displayValue = "Ingen";
     return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
   },
 
@@ -140,7 +140,7 @@ export const ENTITY_DISPLAY_TYPES = {
       color = "#dc2626";
       label = "Høy";
     } else if (prioritetValue >= 20) {
-      icon = "AlertCircle"; 
+      icon = "AlertCircle";
       color = "#d97706";
       label = "Middels";
     } else {
@@ -149,9 +149,7 @@ export const ENTITY_DISPLAY_TYPES = {
       label = "Lav";
     }
 
-    return context.format === "REACT" ? (
-      <IconWithText iconName={icon} text={label} iconColor={color} iconSize={14} />
-    ) : label;
+    return context.format === "REACT" ? <IconWithText iconName={icon} text={label} iconColor={color} iconSize={14} /> : label;
   },
 
   // Fagomrade relationships (generic fallback)
@@ -178,7 +176,7 @@ export const ENTITY_DISPLAY_TYPES = {
 
     if (kravreferansetype && (kravreferansetype.navn || kravreferansetype.tittel)) {
       const displayValue = kravreferansetype.navn || kravreferansetype.tittel;
-      
+
       // Only use IconWithText if we actually have an icon
       if (context.format === "REACT" && kravreferansetype.icon) {
         return <IconWithText iconName={kravreferansetype.icon} text={displayValue} iconColor={kravreferansetype.color} />;

@@ -21,23 +21,25 @@ export const useEntityData = (dto, options = {}) => {
     filters = {},
     pagination = { page: 1, pageSize: 50 },
     enabled = true,
-    staleTime = 5 * 60 * 1000, // 5 minutes
-    cacheTime = 10 * 60 * 1000, // 10 minutes
+    staleTime = 30 * 1000, // 30 seconds - balance between freshness and performance
+    cacheTime = 5 * 60 * 1000, // 5 minutes
     ...queryOptions
   } = options;
 
   // Include current project in query key to invalidate cache when project changes
   const { currentProject } = useProjectStore();
 
+  const queryKey = [
+    "entities",
+    dto?.entityType || dto?.getPrimaryEntityType?.() || "unknown",
+    currentProject?.id || null, // Include project ID for cache invalidation
+    searchQuery,
+    filters,
+    pagination,
+  ];
+
   return useQuery({
-    queryKey: [
-      "entities",
-      dto?.entityType || dto?.getPrimaryEntityType?.() || "unknown",
-      currentProject?.id || null, // Include project ID for cache invalidation
-      searchQuery,
-      filters,
-      pagination,
-    ],
+    queryKey,
 
     queryFn: async () => {
       if (!dto || !dto.loadData) {

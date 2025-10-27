@@ -373,15 +373,9 @@ const EntityWorkspaceNew = ({
              error.response?.data?.error?.includes('Not found'));
 
           if (isNotFound) {
-            console.log(`LOGBACKEND Entity ${uiKey} already deleted, treating as success`);
             results.success.push(uiKey);
           } else {
-            // Log full error details for actual failures
-            console.log(`LOGBACKEND Failed to delete item ${uiKey}:`, {
-              message: error.message,
-              response: error.response?.data,
-              status: error.response?.status,
-            });
+            console.error(`Failed to delete item ${uiKey}:`, error.message);
             results.failed.push({ id: uiKey, error });
           }
         }

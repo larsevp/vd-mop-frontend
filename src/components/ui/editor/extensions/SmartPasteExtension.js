@@ -118,9 +118,7 @@ export const SmartPasteExtension = Extension.create({
                 try {
                   const { storeTempImage } = await import('@/utils/tempImageStorage');
 
-                  console.log('LOGBACKEND 📦 SmartPaste: Storing image in localStorage...');
                   const tempImageData = await storeTempImage(file);
-                  console.log('LOGBACKEND ✅ SmartPaste: Image stored in localStorage:', tempImageData.id);
 
                   // Insert image with base64 URL (will be replaced with Spaces URL on save)
                   const { state } = view;
@@ -136,7 +134,7 @@ export const SmartPasteExtension = Extension.create({
                     }
                   }
                 } catch (error) {
-                  console.error('LOGBACKEND ❌ SmartPaste: Failed to store image:', error);
+                  console.error('SmartPaste: Failed to store image:', error);
                   if (options.onShowToast) {
                     options.onShowToast('Kunne ikke sette inn bilde', 'error');
                   }

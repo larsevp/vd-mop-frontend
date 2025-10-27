@@ -340,16 +340,12 @@ export class KravTiltakCombinedAdapter {
     // If we can't detect the type (only have ID), try deleting from both tables
     // The backend will return 404 for the wrong table, which we can ignore
     if (entityType === "unknown" && entity.id) {
-      console.log(`LOGBACKEND Cannot detect entity type for ID ${entity.id}, trying both adapters...`);
-
       // Try Krav first
       if (this.kravAdapter?.config?.deleteFn) {
         try {
           await this.kravAdapter.config.deleteFn(entity.id);
-          console.log(`LOGBACKEND Successfully deleted entity ${entity.id} as Krav`);
           return;
         } catch (error) {
-          console.log(`LOGBACKEND Not a Krav (ID ${entity.id}):`, error.message);
           // Continue to try Tiltak
         }
       }
@@ -358,10 +354,8 @@ export class KravTiltakCombinedAdapter {
       if (this.tiltakAdapter?.config?.deleteFn) {
         try {
           await this.tiltakAdapter.config.deleteFn(entity.id);
-          console.log(`LOGBACKEND Successfully deleted entity ${entity.id} as Tiltak`);
           return;
         } catch (error) {
-          console.log(`LOGBACKEND Not a Tiltak (ID ${entity.id}):`, error.message);
           throw new Error(`Failed to delete entity ${entity.id}: Not found in either Krav or Tiltak`);
         }
       }
@@ -371,12 +365,10 @@ export class KravTiltakCombinedAdapter {
 
     // If we know the entity type, delete directly
     if (entityType === "krav" && this.kravAdapter?.config?.deleteFn) {
-      console.log(`LOGBACKEND Deleting Krav with ID ${entity.id}`);
       return await this.kravAdapter.config.deleteFn(entity.id);
     }
 
     if (entityType === "tiltak" && this.tiltakAdapter?.config?.deleteFn) {
-      console.log(`LOGBACKEND Deleting Tiltak with ID ${entity.id}`);
       return await this.tiltakAdapter.config.deleteFn(entity.id);
     }
 
