@@ -37,6 +37,10 @@ const EntityCard = ({
   editMode = false,
   compactMode = false, // New prop for compact text sizing
   'data-entity-id': dataEntityId,
+  // Multi-select props
+  selectionMode = 'single', // 'single' | 'multi'
+  isItemSelected = false, // Is this specific item selected in multi-select mode
+  onToggleSelection = () => {}, // Callback for toggling selection
   ...restProps
 }) => {
   // Helper to map backend entityType to modelConfig key
@@ -95,15 +99,30 @@ const EntityCard = ({
     const isInteractiveElement = interactiveElements.includes(target.tagName);
     const isInsideSelect = target.closest('[role="combobox"], [role="listbox"], [data-radix-select-trigger], [data-radix-select-content]');
     const isInsideRadixSelect = target.closest('[data-radix-collection-item], [data-state], .obligatorisk-field');
-    
+
+    // Check if click is on checkbox - handle differently
+    const isCheckbox = target.type === 'checkbox' || target.closest('[data-multi-select-checkbox]');
+
     // Also check if the click originated from our action buttons specifically
     const isActionButton = target.closest('button[title="Rediger (trykk E)"], button[title="Slett"]');
-    
-    if (isInteractiveElement || isInsideSelect || isInsideRadixSelect || isActionButton) {
+
+    // Don't handle click if it's on an interactive element (except checkbox which is handled separately)
+    if (!isCheckbox && (isInteractiveElement || isInsideSelect || isInsideRadixSelect || isActionButton)) {
       return;
     }
-    
-    // Just select the card, don't go into edit mode
+
+    // In multi-select mode, clicking the card (or checkbox) toggles selection
+    if (selectionMode === 'multi') {
+      event.stopPropagation();
+      // Pass entity metadata for combined views (needed for bulk delete)
+      onToggleSelection(entity.id, {
+        entityType: entity.entityType,
+        renderId: entity.renderId
+      });
+      return;
+    }
+
+    // In single-select mode, just select the card
     onClick(entity, 'select');
   };
 
@@ -345,7 +364,13 @@ const EntityCard = ({
         relative cursor-pointer
         ${isExpandedCards
           ? `max-w-5xl mx-auto py-4 px-8 transition-all duration-200 ${isSelected ? '' : 'hover:bg-slate-50/20'}`
-          : `block w-full mb-1 px-4 py-3 rounded-md transition-colors duration-150 ${isSelected ? 'bg-slate-50 border-l-2 border-l-slate-400' : 'hover:bg-slate-50/60 border-l-2 border-l-transparent'} ${shouldIndent ? 'relative' : ''}`
+          : `block w-full mb-1 px-4 py-3 rounded-md transition-colors duration-150 ${
+              isSelected
+                ? 'bg-slate-50 border-l-2 border-l-slate-400'
+                : (selectionMode === 'multi' && isItemSelected)
+                  ? 'bg-primary/5 border-l-2 border-l-primary'
+                  : 'hover:bg-slate-50/60 border-l-2 border-l-transparent'
+            } ${shouldIndent ? 'relative' : ''}`
         }
       `}
       onClick={handleClick}
@@ -400,18 +425,21 @@ const EntityCard = ({
                     <Edit className="w-3.5 h-3.5" />
                     {editMode ? 'Ferdig' : 'Rediger'}
                   </button>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      onClick(entity, 'delete');
-                    }}
-                    className="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100 border border-red-200 transition-all duration-200 flex items-center gap-1.5"
-                    title="Slett"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    Slett
-                  </button>
+                  {/* Hide delete button in multi-select mode */}
+                  {selectionMode === 'single' && (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onClick(entity, 'delete');
+                      }}
+                      className="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100 border border-red-200 transition-all duration-200 flex items-center gap-1.5"
+                      title="Slett"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Slett
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -804,6 +832,23 @@ const EntityCard = ({
           {/* Line 2: Combined UID/Type Badge, Title, and action buttons */}
           <div className="mb-1 flex items-center justify-between">
             <div className="flex items-center gap-2 min-w-0 flex-1">
+              {/* Multi-select checkbox (only in multi-select mode) */}
+              {selectionMode === 'multi' && (
+                <input
+                  type="checkbox"
+                  checked={isItemSelected}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    onToggleSelection(entity.id, {
+                      entityType: entity.entityType,
+                      renderId: entity.renderId
+                    });
+                  }}
+                  className="w-4 h-4 text-primary border-border rounded focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              )}
+
               <EntityBadge
                 uid={uid}
                 badgeColor={config.badgeColor}

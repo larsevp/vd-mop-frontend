@@ -15,14 +15,15 @@ import { ChevronDown } from "lucide-react";
  * - Responsive to window resize and content changes
  * - Works with flexbox layouts (flex-1, h-full, etc.)
  */
-const FlexScrollableContainer = ({
+const FlexScrollableContainer = React.forwardRef(({
   children,
   className = "",
   fadeColor = "from-white",
   dependencies = [],
   showScrollIndicator = true,
-}) => {
-  const scrollContainerRef = useRef(null);
+}, forwardedRef) => {
+  const internalScrollContainerRef = useRef(null);
+  const scrollContainerRef = forwardedRef || internalScrollContainerRef;
   const [hasOverflow, setHasOverflow] = useState(false);
   const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
 
@@ -59,7 +60,7 @@ const FlexScrollableContainer = ({
         scrollContainer.removeEventListener("scroll", handleScroll);
       }
     };
-  }, dependencies); // Re-check when dependencies change
+  }, [...dependencies, forwardedRef]); // Re-check when dependencies change
 
   return (
     <div className={`relative min-h-0 ${className}`}>
@@ -77,6 +78,8 @@ const FlexScrollableContainer = ({
       )}
     </div>
   );
-};
+});
+
+FlexScrollableContainer.displayName = 'FlexScrollableContainer';
 
 export default FlexScrollableContainer;

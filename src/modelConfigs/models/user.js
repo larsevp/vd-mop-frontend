@@ -22,6 +22,10 @@ export const user = {
       options: [
         { value: "USER", label: "User" },
         { value: "ADMIN", label: "Admin" },
+        { value: "PROJECT", label: "Project" },
+        { value: "EXPERIENCED", label: "Experienced" },
+        { value: "SUPER", label: "Super" },
+        { value: "KING", label: "King" },
       ],
     },
     { name: "enhetId", label: "Enhet", type: "enhetselect", required: true, placeholder: "Velg enhet" },

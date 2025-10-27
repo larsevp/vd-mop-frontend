@@ -231,7 +231,11 @@ export const UserProjectMenu = () => {
             
             {currentProject ? (
               <div className="flex items-center justify-between p-2 rounded-lg bg-green-50 border border-green-200">
-                <div className="flex items-center gap-2 flex-1 min-w-0">
+                <Link
+                  to={`/prosjekt/${currentProject.id}`}
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-2 flex-1 min-w-0 hover:bg-green-100 p-1 -m-1 rounded transition-colors"
+                >
                   <Building2 size={16} className="text-green-600 flex-shrink-0" />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-green-900 truncate">
@@ -243,7 +247,7 @@ export const UserProjectMenu = () => {
                       </p>
                     )}
                   </div>
-                </div>
+                </Link>
                 <button
                   onClick={handleClearProject}
                   className="text-green-600 hover:text-green-800 p-1 rounded"

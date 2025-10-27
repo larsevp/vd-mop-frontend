@@ -241,6 +241,16 @@ export class CombinedEntityDTO extends EntityDTOInterface {
     return true;
   }
 
+  /**
+   * Get UI key for entity - uses renderId for uniqueness in combined views
+   * This prevents ID collisions when ProsjektKrav id=5 and ProsjektTiltak id=5 both exist
+   * @param {Object} entity - Entity to get key for
+   * @returns {string} UI key (renderId like "prosjektkrav-5")
+   */
+  getUIKey(entity) {
+    return entity?.renderId || entity?.id;
+  }
+
   getPrimaryEntityType() {
     return this.primaryEntityType;
   }

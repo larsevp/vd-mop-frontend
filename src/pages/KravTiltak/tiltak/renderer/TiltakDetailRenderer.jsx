@@ -22,16 +22,17 @@ import { krav as kravConfig } from '@/modelConfigs/models/krav';
  * @returns {JSX.Element} Tiltak detail pane
  */
 export const renderDetailPane = (entity, props) => {
-  const { key, onSave, onDelete, dto, ...restProps } = props;
+  const { key, onSave, onDelete, dto, workspaceType, ...restProps } = props;
 
   // Pass onSave to integrate with EntityWorkspace's post-save logic
   // EntityDetailPane will use this if provided, otherwise fall back to modelConfig
+  // Use workspaceType if provided (for combined views), otherwise use "tiltak"
   return (
     <EntityDetailPane
       key={key || `detail-${entity?.id || 'no-id'}`}
       entity={entity}
       modelConfig={tiltakConfig}
-      entityType="tiltak"
+      entityType={workspaceType || "tiltak"}
       onSave={onSave} // Pass through to enable post-save selection
       onDelete={onDelete} // Pass through for consistency
       dto={dto}  // NEW: Pass dto for inheritance logic

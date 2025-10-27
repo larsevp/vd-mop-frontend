@@ -25,7 +25,7 @@ export const fields = [
     name: "beskrivelse",
     label: "Beskrivelse",
     type: "basicrichtext",
-    required: true,
+    required: false, // Changed to false - required only for non-linked creation (enforced by workspaceConfig)
     placeholder: "Beskriv tiltaket i detalj...",
     field_info: "Detaljert beskrivelse av tiltaket med grunnleggende formatering (fet, kursiv, understreking, overskrifter).",
     hiddenIndex: true,

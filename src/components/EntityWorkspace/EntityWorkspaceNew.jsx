@@ -12,12 +12,13 @@
  * but replaces complex state management with TanStack Query + simple Zustand UI state.
  */
 
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { Button } from "@/components/ui/primitives/button";
 import { Plus, ArrowLeft, LayoutGrid, Columns, Network } from "lucide-react";
+import { useUserStore } from "@/stores/userStore";
 
 // Existing components (reuse these)
 import EntitySplitView from "./interface/components/EntitySplitView";
@@ -54,6 +55,9 @@ const EntityWorkspaceNew = ({
   const queryClient = useQueryClient();
   const { goBack } = useBackNavigation();
   const cardsContainerRef = useRef(null);
+  const isCreatingNewRef = useRef(false); // Track when we're creating new entity to prevent race conditions
+  const uiRef = useRef(null); // Store latest UI actions to prevent effect dependency loops
+  const hasRestoredSelectionRef = useRef(false); // Track if we've already restored selection from URL
 
   // Validate DTO implements required interface
   useEffect(() => {
@@ -73,6 +77,9 @@ const EntityWorkspaceNew = ({
   // Get UI state (search, filters, selection) - use provided hook or default
   const ui = useWorkspaceUIHook ? useWorkspaceUIHook() : useDefaultWorkspaceUI();
 
+  // Keep uiRef updated with latest UI actions (avoids dependency loops in effects)
+  uiRef.current = ui;
+
   // Get server data via TanStack Query + DTO
   const {
     data: result,
@@ -85,20 +92,47 @@ const EntityWorkspaceNew = ({
     enabled: !!dto,
   });
 
-  const entities = result?.items || [];
+  // Memoize entities to prevent creating new array reference on every render
+  const entities = useMemo(() => result?.items || [], [result?.items]);
   const entityType = dto?.entityType || dto?.getPrimaryEntityType?.() || "entities";
 
+  // Memoize viewOptions to prevent unnecessary re-renders and effect triggers
+  const cardsViewOptions = useMemo(() => ({
+    ...viewOptions,
+    viewMode: "cards",
+    selectionMode: ui.selectionMode
+  }), [viewOptions, ui.selectionMode]);
+
+  const splitViewOptions = useMemo(() => ({
+    ...viewOptions,
+    viewMode: "split",
+    selectionMode: ui.selectionMode
+  }), [viewOptions, ui.selectionMode]);
 
   // Reset filters when entityType changes (switching workspaces)
   useEffect(() => {
     ui.resetFilters();
+    // Reset selection restoration flag when switching workspaces
+    hasRestoredSelectionRef.current = false;
   }, [entityType, ui.resetFilters]);
 
   // Clear selections and scroll to top when entering workspace (fresh page load)
   useEffect(() => {
+    // ARCHITECTURAL FIX: Don't run this effect if we're in the middle of creating a new entity
+    // This prevents race condition where effect clears selection right after handleCreateNew sets it
+    if (isCreatingNewRef.current) {
+      return;
+    }
+
     // Read selected id from URL once on mount
     const urlParams = new URLSearchParams(window.location.search);
     const desiredSelectedId = urlParams.get("selected");
+
+    // ARCHITECTURAL FIX: If we've already successfully restored a selection from URL, don't run again
+    // This prevents infinite loop where effect keeps re-setting the same entity
+    if (hasRestoredSelectionRef.current && desiredSelectedId) {
+      return;
+    }
 
     // Helper to try restore from loaded entities
     const tryRestoreFromEntities = () => {
@@ -110,9 +144,11 @@ const EntityWorkspaceNew = ({
       });
       if (found) {
         // Only set if we don't already have this entity selected (avoid overriding recent selections)
-        if (ui.selectedEntity?.id?.toString() !== found.id?.toString()) {
-          ui.setSelectedEntity(found);
+        if (uiRef.current.selectedEntity?.id?.toString() !== found.id?.toString()) {
+          uiRef.current.setSelectedEntity(found);
         }
+        // Mark that we've successfully restored selection to prevent re-running
+        hasRestoredSelectionRef.current = true;
         return true;
       }
       return false;
@@ -121,19 +157,33 @@ const EntityWorkspaceNew = ({
     // If no selection in URL, just clear any existing selection
     if (!desiredSelectedId) {
       // Clear selection if user navigated without specific entity selection
-      if (ui.selectedEntity) {
-        ui.setSelectedEntity(null);
+      // BUT: Don't clear if the current entity is a new entity being created (__isNew)
+      if (uiRef.current.selectedEntity && !uiRef.current.selectedEntity.__isNew) {
+        uiRef.current.setSelectedEntity(null);
       }
 
-      // Scroll all containers to top
-      setTimeout(() => {
-        const scrollContainers = document.querySelectorAll(".overflow-y-auto");
-        scrollContainers.forEach((container) => {
-          container.scrollTop = 0;
-        });
-      }, 100);
+      // Scroll all containers to top (only if we're not creating a new entity AND not in multi-select mode)
+      if (!ui.selectedEntity?.__isNew && ui.selectionMode !== 'multi') {
+        setTimeout(() => {
+          const scrollContainers = document.querySelectorAll(".overflow-y-auto");
+          scrollContainers.forEach((container) => {
+            container.scrollTop = 0;
+          });
+        }, 100);
+      }
       return;
-    } // If entities are already loaded, try restore immediately
+    }
+
+    // If entities list is empty, don't try to fetch - the entity definitely doesn't exist
+    if (entities.length === 0) {
+      // Only clear selection if there is currently a selection AND it's not a new entity being created
+      if (uiRef.current.selectedEntity && !uiRef.current.selectedEntity.__isNew) {
+        uiRef.current.setSelectedEntity(null);
+      }
+      return;
+    }
+
+    // If entities are already loaded, try restore immediately
     if (tryRestoreFromEntities()) return;
 
     // Add a small delay before trying to fetch single entity (give time for recent refetch to complete)
@@ -164,7 +214,9 @@ const EntityWorkspaceNew = ({
             // Some functions return { data: entity } while others return entity directly
             const fetched = fetchedRaw && fetchedRaw.data ? fetchedRaw.data : fetchedRaw;
             if (fetched) {
-              ui.setSelectedEntity(fetched);
+              uiRef.current.setSelectedEntity(fetched);
+              // Mark that we've successfully restored selection to prevent re-running
+              hasRestoredSelectionRef.current = true;
               return;
             }
           }
@@ -180,8 +232,12 @@ const EntityWorkspaceNew = ({
 
     return () => clearTimeout(delayedRestore);
 
-    // Also try to restore whenever entities change (in case they load later)
-  }, [/* run once + when entities change */ entities.length, ui.setSelectedEntity, dto]);
+    // NOTE: Intentionally NOT including ui.setSelectedEntity in deps to avoid infinite loop
+    // The function reference changes on every render but the underlying Zustand action is stable
+    // ARCHITECTURAL FIX: Removed entities.length from deps - this effect is for navigation/mount only
+    // Entity data changes should NOT trigger this effect (was causing scroll on checkbox click)
+  }, [dto, location.pathname]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
 
   // Event handlers
   const handleEntitySelect = useCallback(
@@ -254,6 +310,124 @@ const EntityWorkspaceNew = ({
     [ui.setSelectedEntity, ui.setViewMode, dto, refetch, ui.selectedEntity, debug]
   );
 
+  /**
+   * Handle bulk delete of multiple entities
+   * Deletes entities in parallel and shows feedback
+   */
+  const handleBulkDelete = useCallback(
+    async (uiKeys) => {
+      if (!uiKeys || uiKeys.size === 0) return;
+
+      // Confirmation dialog
+      const confirmed = window.confirm(
+        `Er du sikker på at du vil slette ${uiKeys.size} ${uiKeys.size === 1 ? 'element' : 'elementer'}? Dette kan ikke angres.`
+      );
+
+      if (!confirmed) return;
+
+      // Track success/failure
+      const results = {
+        success: [],
+        failed: [],
+      };
+
+      // Delete in parallel for better performance
+      const deletePromises = Array.from(uiKeys).map(async (uiKey) => {
+        try {
+          // Find the full entity from the entities list using dto.getUIKey()
+          const entity = entities.find(e => dto.getUIKey(e) === uiKey);
+
+          if (entity) {
+            // Entity found in current page - pass full entity
+            await dto.delete(entity);
+          } else {
+            // Entity not in current page - extract ID and type from uiKey
+            // For combined views: "prosjektkrav-5" -> { id: 5, entityType: "prosjektkrav" }
+            // For single views: 5 -> { id: 5 }
+            let entityToDelete = { id: uiKey };
+
+            if (typeof uiKey === 'string' && uiKey.includes('-')) {
+              // Parse "entityType-id" format
+              const parts = uiKey.split('-');
+              const numericId = parseInt(parts[parts.length - 1], 10);
+              const entityType = parts.slice(0, -1).join('-'); // Handle multi-word types
+
+              entityToDelete = {
+                id: numericId,
+                entityType: entityType,
+                // Add renderId to help adapter detect type
+                renderId: uiKey
+              };
+            }
+
+            // Pass minimal entity with ID and type
+            await dto.delete(entityToDelete);
+          }
+
+          results.success.push(uiKey);
+        } catch (error) {
+          // Handle "not found" errors gracefully - entity already deleted
+          const isNotFound =
+            error.response?.status === 400 &&
+            (error.response?.data?.error?.includes('not found') ||
+             error.response?.data?.error?.includes('Not found'));
+
+          if (isNotFound) {
+            console.log(`LOGBACKEND Entity ${uiKey} already deleted, treating as success`);
+            results.success.push(uiKey);
+          } else {
+            // Log full error details for actual failures
+            console.log(`LOGBACKEND Failed to delete item ${uiKey}:`, {
+              message: error.message,
+              response: error.response?.data,
+              status: error.response?.status,
+            });
+            results.failed.push({ id: uiKey, error });
+          }
+        }
+      });
+
+      // Wait for all deletes to complete
+      await Promise.all(deletePromises);
+
+      // Clear selection
+      if (ui.clearSelection) {
+        ui.clearSelection();
+      }
+
+      // Refetch list
+      await refetch();
+
+      // Show feedback only for errors (silent success is better UX)
+      if (results.failed.length > 0) {
+        if (results.success.length === 0) {
+          // All failed - show error
+          alert(`❌ Kunne ikke slette noen elementer`);
+        } else {
+          // Partial success - show warning
+          alert(
+            `⚠️ ${results.success.length} elementer slettet\n` +
+            `${results.failed.length} feilet`
+          );
+        }
+      }
+      // Silent success: Items disappear from list = visual confirmation
+
+      // Clear selected entity if it was deleted (compare using UI key)
+      if (ui.selectedEntity && results.success.includes(dto.getUIKey(ui.selectedEntity))) {
+        ui.setSelectedEntity(null);
+
+        // Also clear URL parameter to prevent trying to fetch deleted entity
+        const url = new URL(window.location);
+        if (url.searchParams.has('selected')) {
+          url.searchParams.delete('selected');
+          window.history.replaceState({}, '', url);
+        }
+      }
+    },
+    [dto, refetch, ui, entities]
+  );
+
   const handleSearch = useCallback(() => {
     ui.executeSearch(); // Update activeSearchQuery from searchInput
     // TanStack Query will automatically refetch when activeSearchQuery changes
@@ -261,6 +435,9 @@ const EntityWorkspaceNew = ({
 
   const handleCreateNew = useCallback(
     (entityType = null, initialData = {}) => {
+      // ARCHITECTURAL FIX: Set flag to prevent URL selection effect from interfering
+      isCreatingNewRef.current = true;
+
       // Use DTO to create properly structured new entity
       const newEntity = dto.createNewEntity(entityType, initialData);
 
@@ -272,13 +449,29 @@ const EntityWorkspaceNew = ({
       // Enhance the new entity through DTO normalization
       const enhancedNewEntity = dto.enhanceEntity(newEntity);
 
+      // Set default organisasjonstilhorlighet from user's enhetId (only once, on creation)
+      if (!enhancedNewEntity.organisasjonstilhorlighet) {
+        const user = useUserStore.getState().user;
+        if (user?.enhetId) {
+          enhancedNewEntity.organisasjonstilhorlighet = user.enhetId;
+        }
+      }
+
       // Set entity AFTER cleanup to ensure store is clear before components render
       ui.setSelectedEntity(enhancedNewEntity);
+
+      // Clear the flag after a brief delay to allow the selection to settle
+      setTimeout(() => {
+        isCreatingNewRef.current = false;
+      }, 100);
     },
     [ui.setSelectedEntity, dto]
   );
 
   const handleDetailClose = useCallback(async () => {
+    // Clear creation flag when closing detail pane
+    isCreatingNewRef.current = false;
+
     // Check if we're closing a new entity creation
     if (ui.selectedEntity?.__isNew) {
       // Restore selection from URL if available
@@ -432,7 +625,16 @@ const EntityWorkspaceNew = ({
         await refetch();
 
         // Let DTO handle post-delete logic (deselection, etc.)
-        dto.onDeleteComplete(entity, () => ui.setSelectedEntity(null));
+        dto.onDeleteComplete(entity, () => {
+          ui.setSelectedEntity(null);
+
+          // Also clear URL parameter to prevent trying to fetch deleted entity
+          const url = new URL(window.location);
+          if (url.searchParams.has('selected')) {
+            url.searchParams.delete('selected');
+            window.history.replaceState({}, '', url);
+          }
+        });
       } catch (error) {
         console.error("Delete error:", error);
         throw error;
@@ -601,8 +803,9 @@ const EntityWorkspaceNew = ({
                 EntityListCard={renderEntityCard}
                 EntityListGroupHeader={renderGroupHeader}
                 EntityListHeading={renderListHeading}
-                viewOptions={{ ...viewOptions, viewMode: "cards" }}
+                viewOptions={cardsViewOptions}
                 onSave={handleSave} // Pass onSave for card editing
+                onBulkDelete={handleBulkDelete} // Pass bulk delete handler
               />
             </div>
           ) : (
@@ -628,8 +831,9 @@ const EntityWorkspaceNew = ({
                   EntityListCard={renderEntityCard}
                   EntityListGroupHeader={renderGroupHeader}
                   EntityListHeading={renderListHeading}
-                  viewOptions={{ ...viewOptions, viewMode: "split" }}
+                  viewOptions={splitViewOptions}
                   onSave={handleSave} // Pass onSave for split mode editing too
+                  onBulkDelete={handleBulkDelete} // Pass bulk delete handler
                 />
               )}
               renderDetailPane={

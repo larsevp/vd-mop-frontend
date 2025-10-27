@@ -30,6 +30,7 @@ const EntityListPane = ({
   EntityListHeading = null,
   viewOptions: externalViewOptions = {},
   onSave = null, // Add onSave prop to pass through to renderers
+  onBulkDelete = null, // Add onBulkDelete prop for multi-select mass delete
 }) => {
   const location = useLocation();
   const [focusedIndex, setFocusedIndex] = useState(0);
@@ -56,8 +57,16 @@ const EntityListPane = ({
   // Get selected entity ID (use normalized renderId from adapter)
   const selectedEntityId = selectedEntity?.renderId;
 
+
   // Reset scroll position on navigation (multiple triggers for reliability)
+  // Only trigger on actual navigation changes, not on re-renders
+  // Skip in multi-select mode to prevent disrupting user's selection workflow
   useEffect(() => {
+    // Don't reset scroll in multi-select mode - user is building a selection set
+    if (externalViewOptions.selectionMode === 'multi') {
+      return;
+    }
+
     const resetScroll = () => {
       if (listContainerRef.current) {
         listContainerRef.current.scrollTop = 0;
@@ -71,13 +80,35 @@ const EntityListPane = ({
     const timeoutId = setTimeout(resetScroll, 50);
 
     return () => clearTimeout(timeoutId);
-  }, [location.pathname, entityType, items.length > 0]); // Multiple triggers to ensure reset
+  }, [location.pathname, entityType, externalViewOptions.selectionMode]);
 
   // Auto-scroll to selected entity when it changes
   useEffect(() => {
     if (selectedEntityId && listContainerRef.current) {
       // Add a small delay to ensure DOM has updated
       const timeoutId = setTimeout(() => {
+        // Don't scroll in multi-select mode - users are building a selection set, not navigating
+        if (externalViewOptions.selectionMode === 'multi') {
+          return;
+        }
+
+        // Don't scroll if user is actively interacting with form elements (prevents disruption during inline editing)
+        const activeElement = document.activeElement;
+        const isInteractingWithForm =
+          activeElement && (
+            activeElement.tagName === 'INPUT' ||
+            activeElement.tagName === 'SELECT' ||
+            activeElement.tagName === 'TEXTAREA' ||
+            activeElement.closest('[role="combobox"]') ||
+            activeElement.closest('[role="listbox"]') ||
+            activeElement.closest('[data-radix-select-trigger]') ||
+            activeElement.closest('[data-radix-select-content]')
+          );
+
+        if (isInteractingWithForm) {
+          return;
+        }
+
         const selectedElement = listContainerRef.current?.querySelector(`[data-entity-id="${selectedEntityId}"]`);
         if (selectedElement) {
           selectedElement.scrollIntoView({
@@ -86,11 +117,11 @@ const EntityListPane = ({
             inline: "nearest",
           });
         }
-      }, 100); // Small delay to allow DOM updates
+      }, 100);
 
       return () => clearTimeout(timeoutId);
     }
-  }, [selectedEntityId, allItems.length]);
+  }, [selectedEntityId, externalViewOptions.selectionMode]);
 
   // If the selected entity is a newly created placeholder, scroll the list to the top
   // so the user sees the create form / top of the list. This handles the case where
@@ -108,7 +139,7 @@ const EntityListPane = ({
     } catch (e) {
       // ignore
     }
-  }, [selectedEntity?.__isNew]);
+  }, [selectedEntity?.__isNew, externalViewOptions.selectionMode]);
 
   // Group collapse/expand functions
   const toggleGroupCollapse = (groupKey) => {
@@ -163,6 +194,9 @@ const EntityListPane = ({
           hasGroups: hasGroupedData && groupedItems.length > 0,
           allGroupsExpanded: !allGroupsCollapsed,
           onToggleAllGroups: allGroupsCollapsed ? expandAll : collapseAll,
+          // Multi-select support - pass entities and bulk delete handler
+          entities: allItems,
+          onBulkDelete: onBulkDelete, // Will be undefined if not provided
         };
         //console.log('EntityListPane: Passing props to EntityListHeading:', headingProps);
         //console.log('EntityListPane: hasGroupedData =', hasGroupedData);
@@ -172,8 +206,8 @@ const EntityListPane = ({
       })()}
 
       {/* Entity List */}
-      <FlexScrollableContainer className="flex-1" dependencies={[allItems.length, collapsedGroups]} fadeColor="from-white">
-        <div ref={listContainerRef}>
+      <FlexScrollableContainer ref={listContainerRef} className="flex-1" dependencies={[allItems.length, collapsedGroups]} fadeColor="from-white">
+        <div>
           {isLoading && allItems.length === 0 ? (
             <div className="flex items-center justify-center h-32 text-gray-500">
               <div className="text-center">

@@ -179,3 +179,61 @@ export const updateProsjektTiltakVurdering = (id, vurderingId) => {
 export const updateProsjektTiltakMerknad = (id, merknad) => {
   return API.patch(`/prosjekt-tiltak/${id}/merknad`, { merknad });
 };
+
+/**
+ * Copy Tiltak to ProsjektTiltak for a specific project
+ * @param {number} projectId - The project ID
+ * @param {number[]} tiltakIds - Optional array of specific Tiltak IDs to copy
+ * @param {object} filters - Optional filters: { tiltakpakkeIds, emneIds, statusIds }
+ */
+export const copyTiltakToProject = (projectId, tiltakIds = null, filters = null) => {
+  const payload = { projectId };
+
+  if (tiltakIds && Array.isArray(tiltakIds) && tiltakIds.length > 0) {
+    payload.tiltakIds = tiltakIds;
+  }
+
+  if (filters) {
+    payload.filters = filters;
+  }
+
+  return API.post("/prosjekt-tiltak/copy-from-tiltak", payload);
+};
+
+/**
+ * Get import preview with counts and duplicate detection for Tiltak
+ * @param {number} projectId - The project ID
+ * @param {object} filters - Filters: { tiltakpakkeIds, emneIds, statusIds }
+ */
+export const getImportPreview = (projectId, filters) => {
+  return API.post("/prosjekt-tiltak/import-preview", {
+    projectId,
+    filters
+  });
+};
+
+/**
+ * Check if specific Tiltak IDs are already copied to project
+ * @param {number} projectId - The project ID
+ * @param {number[]} tiltakIds - Array of Tiltak IDs to check
+ */
+export const checkTiltakDuplicates = (projectId, tiltakIds) => {
+  return API.post("/prosjekt-tiltak/check-duplicates", {
+    projectId,
+    tiltakIds
+  });
+};
+
+/**
+ * Mass copy ProsjektTiltak from one project to another
+ * @param {number[]} prosjektTiltakIds - Array of ProsjektTiltak IDs to copy
+ * @param {number} targetProjectId - Target project ID
+ * @param {number} sourceProjectId - Source project ID
+ */
+export const massKopyProsjektTiltakToProject = (prosjektTiltakIds, targetProjectId, sourceProjectId) => {
+  return API.post("/prosjekt-tiltak/mass-copy", {
+    prosjektTiltakIds,
+    targetProjectId,
+    sourceProjectId
+  });
+};

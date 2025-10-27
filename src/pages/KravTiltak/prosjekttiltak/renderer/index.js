@@ -3,6 +3,7 @@ export {
   renderGroupHeader,
   renderListHeading,
   renderSearchBar,
+  renderActionButtons,
   getAvailableViewOptions,
 } from "./ProsjektTiltakRenderer.jsx";
 

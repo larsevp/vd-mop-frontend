@@ -49,12 +49,12 @@ export const useWorkspaceUIStore = create(
       setSelectedEntity: (entity) => {
         set({ selectedEntity: entity });
       },
-      
+
       clearSelection: () => {
-        set({ 
-          selectedEntity: null, 
+        set({
+          selectedEntity: null,
           selectedEntities: new Set(),
-          focusedEntity: null 
+          focusedEntity: null
         });
       },
       

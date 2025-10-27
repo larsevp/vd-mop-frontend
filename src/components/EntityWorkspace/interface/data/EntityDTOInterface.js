@@ -121,7 +121,27 @@ export class EntityDTOInterface {
   enhanceEntity(rawEntity) {
     throw new Error('EntityDTO must implement enhanceEntity()');
   }
-  
+
+  /**
+   * Get UI key for entity (used for selection, rendering keys, etc.)
+   * In combined views, uses renderId for uniqueness (e.g., "prosjektkrav-5")
+   * In single views, uses id directly (e.g., 5)
+   * @param {Object} entity - Entity to get key for
+   * @returns {string|number} UI key for entity
+   */
+  getUIKey(entity) {
+    // Default implementation: single view uses id
+    return entity?.id;
+  }
+
+  /**
+   * Check if this is a combined view (handles multiple entity types)
+   * @returns {boolean} True if combined view
+   */
+  isCombinedView() {
+    return false;
+  }
+
   // === DEBUG/UTILITY METHODS ===
   
   /**

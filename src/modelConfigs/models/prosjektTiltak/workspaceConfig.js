@@ -27,8 +27,7 @@ const workspaceConfigData = {
           defaultExpanded: true,
           layout: [
             { field: "navn" }, // 1. Name (full-width)
-            { field: "beskrivelse" }, // 2. Description (full-width)
-            { field: "implementasjon" }, // 3. Implementation (full-width)
+            { field: "implementasjon" }, // 2. Implementation (full-width)
           ],
         },
         prioritering: {
@@ -57,7 +56,9 @@ const workspaceConfigData = {
         admin: {
           title: "Administrative detaljer",
           defaultExpanded: false,
-          layout: [],
+          layout: [
+            { field: "beskrivelse" }, // 1. Description (full-width) - moved from info section
+          ],
         },
       },
       workspaceHiddenCreate: [
@@ -134,7 +135,7 @@ const workspaceConfigData = {
       defaultExpanded: true,
       layout: [
         { field: "navn" }, // 1. Name (full-width)
-        { field: "beskrivelse" }, // 2. Description (full-width)
+        { field: "beskrivelse", required: true }, // 2. Description (full-width) - required for non-linked creation
         { field: "implementasjon" }, // 3. Implementation (full-width)
       ],
     },

@@ -22,16 +22,17 @@ import { prosjektKrav as prosjektKravConfig } from "@/modelConfigs/models/prosje
  * @returns {JSX.Element} ProsjektTiltak detail pane
  */
 export const renderDetailPane = (entity, props) => {
-  const { key, onSave, onDelete, dto, ...restProps } = props;
+  const { key, onSave, onDelete, dto, workspaceType, ...restProps } = props;
 
   // Pass onSave to integrate with EntityWorkspace's post-save logic
   // EntityDetailPane will use this if provided, otherwise fall back to modelConfig
+  // Use workspaceType if provided (for combined views), otherwise use "prosjektTiltak"
   return (
     <EntityDetailPane
       key={key || `detail-${entity?.id || "no-id"}`}
       entity={entity}
       modelConfig={prosjektTiltakConfig}
-      entityType="prosjektTiltak"
+      entityType={workspaceType || "prosjektTiltak"}
       onSave={onSave} // Pass through to enable post-save selection
       onDelete={onDelete} // Pass through for consistency
       dto={dto}  // NEW: Pass dto for inheritance logic

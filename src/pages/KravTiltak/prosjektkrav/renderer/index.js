@@ -8,6 +8,7 @@ export {
   renderEntityCard,
   renderGroupHeader,
   renderSearchBar,
+  renderActionButtons,
   getAvailableViewOptions,
   getDefaultViewOptions,
 } from "./ProsjektKravRenderer.jsx";

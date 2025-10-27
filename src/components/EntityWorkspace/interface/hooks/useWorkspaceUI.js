@@ -14,7 +14,9 @@ export const useWorkspaceUI = () => {
   // Selection state
   const selectedEntity = useWorkspaceUIStore(state => state.selectedEntity);
   const selectedEntities = useWorkspaceUIStore(state => state.selectedEntities);
+  const selectedEntitiesMetadata = useWorkspaceUIStore(state => state.selectedEntitiesMetadata);
   const focusedEntity = useWorkspaceUIStore(state => state.focusedEntity);
+  const selectionMode = useWorkspaceUIStore(state => state.selectionMode);
   
   // Search & filter state  
   const searchInput = useWorkspaceUIStore(state => state.searchInput);
@@ -36,6 +38,9 @@ export const useWorkspaceUI = () => {
   const setSelectedEntities = useWorkspaceUIStore(state => state.setSelectedEntities);
   const toggleEntitySelection = useWorkspaceUIStore(state => state.toggleEntitySelection);
   const setFocusedEntity = useWorkspaceUIStore(state => state.setFocusedEntity);
+  const setSelectionMode = useWorkspaceUIStore(state => state.setSelectionMode);
+  const toggleSelectionMode = useWorkspaceUIStore(state => state.toggleSelectionMode);
+  const selectAll = useWorkspaceUIStore(state => state.selectAll);
   
   const setSearchInput = useWorkspaceUIStore(state => state.setSearchInput);
   const setActiveSearchQuery = useWorkspaceUIStore(state => state.setActiveSearchQuery);
@@ -61,7 +66,9 @@ export const useWorkspaceUI = () => {
     // State
     selectedEntity,
     selectedEntities,
+    selectedEntitiesMetadata,
     focusedEntity,
+    selectionMode,
     searchInput,
     activeSearchQuery,
     filters,
@@ -70,13 +77,16 @@ export const useWorkspaceUI = () => {
     viewMode,
     expandedEntities,
     collapsedSections,
-    
+
     // Selection actions
     setSelectedEntity,
     clearSelection,
     setSelectedEntities,
     toggleEntitySelection,
     setFocusedEntity,
+    setSelectionMode,
+    toggleSelectionMode,
+    selectAll,
     
     // Search & filter actions
     setSearchInput,

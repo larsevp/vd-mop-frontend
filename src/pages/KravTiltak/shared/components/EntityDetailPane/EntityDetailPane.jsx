@@ -196,6 +196,10 @@ const EntityDetailPane = ({
   // Initialize expanded sections based on config and data
   // Only run when entity changes or edit mode changes, NOT on every formData change
   useEffect(() => {
+    const currentEntityId = `${entity?.id}`;
+    const previousEntityId = lastInitializedEntityId.current?.split('-')[0];
+    const entityChanged = currentEntityId !== previousEntityId;
+
     // Skip if we've already initialized for this entity and edit mode hasn't changed
     const entityKey = `${entity?.id}-${isEditing}`;
     if (lastInitializedEntityId.current === entityKey) {
@@ -203,6 +207,13 @@ const EntityDetailPane = ({
     }
     lastInitializedEntityId.current = entityKey;
 
+    // If only edit mode changed (not entity), preserve current expanded state
+    if (!entityChanged && previousEntityId) {
+      // Keep existing expanded sections when toggling edit mode
+      return;
+    }
+
+    // Entity changed - initialize based on mode
     if (isEditing) {
       // In edit mode: Use default expansion from config
       const initialExpanded = initializeExpandedSections(sections);
@@ -251,13 +262,6 @@ const EntityDetailPane = ({
   useEffect(() => {
     autoExpandErrorSections(errors, visibleFields, setExpandedSections);
   }, [errors, visibleFields]);
-
-  // Scroll to top when editing
-  useEffect(() => {
-    if (isEditing) {
-      scrollToTop(detailViewRef);
-    }
-  }, [isEditing]);
 
   // Scroll to top when entity changes (new entity selected)
   useEffect(() => {
@@ -571,8 +575,11 @@ const EntityDetailPane = ({
               </>
             ) : (
               <>
-                {/* Show "Lag tilknyttet tiltak" button for krav/prosjektkrav in combined workspace */}
-                {onCreateNew && (currentEntityType.toLowerCase() === 'krav' || currentEntityType.toLowerCase() === 'prosjektkrav') && !isNewEntity && (
+                {/* Show "Lag tilknyttet tiltak" button for krav/prosjektkrav ONLY in combined workspace */}
+                {onCreateNew &&
+                 (currentEntityType.toLowerCase() === 'krav' || currentEntityType.toLowerCase() === 'prosjektkrav') &&
+                 !isNewEntity &&
+                 entityType.toLowerCase().includes('combined') && (
                   <button
                     onClick={handleCreateConnectedTiltak}
                     className="inline-flex items-center px-4 py-2.5 border border-slate-300 text-sm font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 hover:border-slate-400 transition-all"

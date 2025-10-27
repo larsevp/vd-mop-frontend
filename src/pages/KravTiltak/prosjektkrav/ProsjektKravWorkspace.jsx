@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useCallback, useEffect, useState } from "react";
 import { EntityWorkspace } from "@/components/EntityWorkspace";
 import { prosjektKrav as prosjektKravConfig } from "@/modelConfigs/models/prosjektKrav";
 import { createSingleEntityDTO } from "@/components/EntityWorkspace/interface/data";
@@ -9,7 +9,9 @@ import { useProsjektKravViewStore, useProsjektKravUIStore } from "./store";
 import { RowListHeading } from "../shared";
 import { useProjectStore } from "@/stores/userStore";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Building } from "lucide-react";
+import { ArrowLeft, Building, Trash2, Copy } from "lucide-react";
+import { CopyToProjectModal } from "../shared/components/CopyToProjectModal";
+import { massKopyProsjektKravToProject } from "@/api/endpoints/models/prosjektKrav";
 
 /**
  * ProsjektKrav Workspace using the generic EntityWorkspace component
@@ -31,6 +33,7 @@ import { ArrowLeft, Building } from "lucide-react";
  */
 const ProsjektKravWorkspace = () => {
   const { currentProject } = useProjectStore();
+  const [showCopyModal, setShowCopyModal] = useState(false);
 
   // Show message if no project is selected
   if (!currentProject) {
@@ -61,37 +64,115 @@ const ProsjektKravWorkspace = () => {
   };
 
   // Create ProsjektKrav adapter
-  const adapter = createProsjektKravAdapter(dynamicConfig);
+  const adapter = useMemo(() => createProsjektKravAdapter(dynamicConfig), []);
 
   // Wrap adapter in DTO for unified interface
-  const dto = createSingleEntityDTO(adapter);
+  const dto = useMemo(() => createSingleEntityDTO(adapter), [adapter]);
 
   // Get view options state
   const { viewOptions, setViewOptions } = useProsjektKravViewStore();
 
+  // Get UI store for multi-select state
+  const ui = useProsjektKravUIStore();
+
   // Create workspace-specific UI hook
-  const { useWorkspaceUI } = createWorkspaceUIHook(useProsjektKravUIStore);
+  const { useWorkspaceUI } = useMemo(() => createWorkspaceUIHook(useProsjektKravUIStore), []);
+
+  // Reset UI state when navigating away from workspace
+  useEffect(() => {
+    return () => {
+      ui.clearSelection();
+      if (ui.selectionMode) {
+        ui.toggleSelectionMode();
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - only run on mount/unmount
+
+  // Get all visible entity IDs for "select all" functionality
+  const getAllVisibleIds = (entities) => {
+    return entities.map(e => e.id);
+  };
+
+  // Memoize renderEntityCard
+  const renderEntityCardMemoized = useCallback((entity, props) => {
+    return renderEntityCard(entity, {
+      ...props,
+      selectionMode: ui.selectionMode,
+      isItemSelected: ui.selectedEntities.has(entity.id),
+      onToggleSelection: ui.toggleEntitySelection,
+    }, dto);
+  }, [ui.selectionMode, ui.selectedEntities, ui.toggleEntitySelection, dto]);
+
+  // Memoize renderListHeading
+  const renderListHeadingMemoized = useCallback((props) => {
+    // Get all IDs from entities in props
+    const allIds = props.entities ? getAllVisibleIds(props.entities) : [];
+
+    // Define bulk actions (shown in dropdown menu)
+    const bulkActions = [
+      {
+        label: 'Kopier til prosjekt',
+        icon: Copy,
+        onClick: (selectedIds) => {
+          setShowCopyModal(true);
+        },
+        disabled: false,
+      },
+      {
+        label: 'Slett',
+        icon: Trash2,
+        variant: 'destructive',
+        separator: true, // Show separator before destructive actions
+        onClick: (selectedIds) => props.onBulkDelete?.(selectedIds),
+      },
+    ];
+
+    return (
+      <RowListHeading
+        {...props}
+        viewOptions={viewOptions}
+        onViewOptionsChange={setViewOptions}
+        availableViewOptions={getAvailableViewOptions()}
+        // Multi-select props
+        selectionMode={ui.selectionMode}
+        selectedIds={ui.selectedEntities}
+        onToggleSelectionMode={ui.toggleSelectionMode}
+        onSelectAll={ui.selectAll}
+        onClearSelection={ui.clearSelection}
+        allItemIds={allIds}
+        bulkActions={bulkActions}
+      />
+    );
+  }, [viewOptions, setViewOptions, ui.selectionMode, ui.selectedEntities, ui.toggleSelectionMode, ui.selectAll, ui.clearSelection]);
 
   return (
-    <EntityWorkspace
-      key={`${dto.entityType || "workspace"}-${currentProject?.id || "no-project"}`} // Force remount on project change
-      dto={dto}
-      renderEntityCard={(entity, props) => renderEntityCard(entity, props, dto)}
-      renderGroupHeader={renderGroupHeader}
-      renderSearchBar={renderSearchBar}
-      renderDetailPane={renderDetailPane}
-      renderListHeading={(props) => (
-        <RowListHeading
-          {...props}
-          viewOptions={viewOptions}
-          onViewOptionsChange={setViewOptions}
-          availableViewOptions={getAvailableViewOptions()}
-        />
-      )}
-      useWorkspaceUIHook={useWorkspaceUI}
-      viewOptions={viewOptions}
-      debug={false}
-    />
+    <>
+      <EntityWorkspace
+        key={`${dto.entityType || "workspace"}-${currentProject?.id || "no-project"}`} // Force remount on project change
+        dto={dto}
+        renderEntityCard={renderEntityCardMemoized}
+        renderGroupHeader={renderGroupHeader}
+        renderSearchBar={renderSearchBar}
+        renderDetailPane={renderDetailPane}
+        renderListHeading={renderListHeadingMemoized}
+        useWorkspaceUIHook={useWorkspaceUI}
+        viewOptions={viewOptions}
+        debug={false}
+      />
+
+      {/* Copy to Project Modal */}
+      <CopyToProjectModal
+        open={showCopyModal}
+        onClose={() => {
+          setShowCopyModal(false);
+          ui.clearSelection();
+        }}
+        selectedEntities={ui.selectedEntities}
+        entityType="prosjektkrav"
+        copyFunction={massKopyProsjektKravToProject}
+      />
+    </>
   );
 };
 

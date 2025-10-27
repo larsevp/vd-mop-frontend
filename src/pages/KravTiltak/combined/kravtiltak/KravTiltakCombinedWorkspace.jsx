@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useCallback, useEffect } from "react";
 import { EntityWorkspace } from "@/components/EntityWorkspace";
 import { createCombinedEntityDTO } from "@/components/EntityWorkspace/interface/data";
 import { createKravTiltakCombinedAdapter } from "./adapter";
@@ -6,7 +6,7 @@ import { renderEntityCard, renderGroupHeader, renderSearchBar, renderDetailPane,
 import { createWorkspaceUIHook } from "@/components/EntityWorkspace/interface/hooks/createWorkspaceUIHook";
 import { useKravTiltakCombinedViewStore, useKravTiltakCombinedUIStore } from "./store";
 import { RowListHeading } from "../../shared";
-import { useKravTiltakInheritanceStore, useProsjektKravTiltakInheritanceStore } from "@/stores/formInheritanceStore";
+import { Trash2, Copy } from "lucide-react";
 
 /**
  * KravTiltakCombinedWorkspace - Combined workspace for Krav and Tiltak entities
@@ -28,56 +28,114 @@ import { useKravTiltakInheritanceStore, useProsjektKravTiltakInheritanceStore } 
  * - File attachments and rich text editing
  */
 const KravTiltakCombinedWorkspace = () => {
-  // Clear both inheritance stores when this workspace mounts (only once)
-  React.useEffect(() => {
-    useKravTiltakInheritanceStore.getState().clearAllInheritance();
-    useProsjektKravTiltakInheritanceStore.getState().clearAllInheritance();
-  }, []); // Empty dependency array - only run once on mount
-
   // Create combined adapter
-  const adapter = createKravTiltakCombinedAdapter({ debug: true });
+  const adapter = useMemo(() => createKravTiltakCombinedAdapter({ debug: true }), []);
 
-  // Create combined DTO with workspace-specific cleanup
-  const dto = createCombinedEntityDTO(adapter, {
+  // Create combined DTO
+  // Inheritance now managed by EntityDetailPane + adapters (no global state cleanup needed)
+  const dto = useMemo(() => createCombinedEntityDTO(adapter, {
     debug: true,
-    onCreateNew: () => {
-      // Clear KravTiltak inheritance store when creating new entities
-      useKravTiltakInheritanceStore.getState().clearAllInheritance();
-
-      // Clear all session storage keys that track user interaction for emne fields
-      // This ensures a complete reset when creating new entities
-      const keys = Object.keys(sessionStorage);
-      keys.forEach(key => {
-        if (key.startsWith('emneSelect_userInteraction_')) {
-          sessionStorage.removeItem(key);
-        }
-      });
-    }
-  });
+  }), [adapter]);
 
   // Get view options state
   const { viewOptions, setViewOptions } = useKravTiltakCombinedViewStore();
 
+  // Get UI store for multi-select state
+  const ui = useKravTiltakCombinedUIStore();
+
   // Create workspace-specific UI hook
-  const { useWorkspaceUI } = createWorkspaceUIHook(useKravTiltakCombinedUIStore);
+  const { useWorkspaceUI } = useMemo(() => createWorkspaceUIHook(useKravTiltakCombinedUIStore), []);
+
+  // Reset UI state when navigating away from workspace
+  useEffect(() => {
+    return () => {
+      ui.clearSelection();
+      if (ui.selectionMode) {
+        ui.toggleSelectionMode();
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - only run on mount/unmount
+
+  // Get all visible entity IDs for "select all" functionality
+  const getAllVisibleIds = (entities) => {
+    return entities.map(e => dto.getUIKey(e));
+  };
+
+  // Memoize renderEntityCard
+  const renderEntityCardMemoized = useCallback((entity, props) => {
+    // Use dto.getUIKey() for uniqueness in combined views
+    const uiKey = dto.getUIKey(entity);
+    return renderEntityCard(entity, {
+      ...props,
+      selectionMode: ui.selectionMode,
+      isItemSelected: ui.selectedEntities.has(uiKey),
+      onToggleSelection: (_, metadata) => ui.toggleEntitySelection(uiKey, metadata),
+    }, dto);
+  }, [ui.selectionMode, ui.selectedEntities, ui.toggleEntitySelection, dto]);
+
+  // Memoize renderListHeading
+  const renderListHeadingMemoized = useCallback((props) => {
+    // Get all UI keys from entities in props using dto.getUIKey()
+    const allIds = props.entities ? getAllVisibleIds(props.entities) : [];
+
+    // Extract entity metadata for combined views (needed for bulk operations)
+    const allEntitiesMetadata = props.entities ? props.entities.map(e => ({
+      id: e.id,
+      entityType: e.entityType,
+      renderId: e.renderId,
+      uiKey: dto.getUIKey(e)
+    })) : [];
+
+    // Define bulk actions (shown in dropdown menu)
+    const bulkActions = [
+      {
+        label: 'Kopier',
+        icon: Copy,
+        onClick: (selectedIds) => {
+          // TODO: Implement copy functionality
+          alert(`Kopier funksjonalitet kommer snart! (${selectedIds.size} valgt)`);
+        },
+        disabled: false,
+      },
+      {
+        label: 'Slett',
+        icon: Trash2,
+        variant: 'destructive',
+        separator: true, // Show separator before destructive actions
+        onClick: (selectedIds) => props.onBulkDelete?.(selectedIds),
+      },
+    ];
+
+    return (
+      <RowListHeading
+        {...props}
+        viewOptions={viewOptions}
+        onViewOptionsChange={setViewOptions}
+        availableViewOptions={getAvailableViewOptions()}
+        // Multi-select props
+        selectionMode={ui.selectionMode}
+        selectedIds={ui.selectedEntities}
+        onToggleSelectionMode={ui.toggleSelectionMode}
+        onSelectAll={ui.selectAll}
+        onClearSelection={ui.clearSelection}
+        allItemIds={allIds}
+        allEntitiesMetadata={allEntitiesMetadata}
+        bulkActions={bulkActions}
+      />
+    );
+  }, [viewOptions, setViewOptions, ui.selectionMode, ui.selectedEntities, ui.toggleSelectionMode, ui.selectAll, ui.clearSelection, dto]);
 
   return (
     <EntityWorkspace
       key="krav-tiltak-combined-workspace-fixed"
       dto={dto}
-      renderEntityCard={(entity, props) => renderEntityCard(entity, props, dto)}
+      renderEntityCard={renderEntityCardMemoized}
       renderGroupHeader={renderGroupHeader}
       renderDetailPane={renderDetailPane}
       renderSearchBar={renderSearchBar}
       renderActionButtons={renderActionButtons}
-      renderListHeading={(props) => (
-        <RowListHeading
-          {...props}
-          viewOptions={viewOptions}
-          onViewOptionsChange={setViewOptions}
-          availableViewOptions={getAvailableViewOptions()}
-        />
-      )}
+      renderListHeading={renderListHeadingMemoized}
       useWorkspaceUIHook={useWorkspaceUI}
       viewOptions={viewOptions}
       debug={false}

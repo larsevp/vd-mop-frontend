@@ -40,8 +40,7 @@ const newTiltakWorkspaceConfig = {
           title: "Grunnleggende informasjon",
           defaultExpanded: true,
           layout: [
-            { field: "beskrivelse" }, // 1. Description (full-width)
-            { field: "implementasjon" }, // 2. Implementation (full-width)
+            { field: "implementasjon" }, // 1. Implementation (full-width)
           ],
         },
         prioritering: {
@@ -72,6 +71,7 @@ const newTiltakWorkspaceConfig = {
           defaultExpanded: false,
           layout: [
             { field: "enhetId" }, // 1. Unit (full-width)
+            { field: "beskrivelse" }, // 2. Description (full-width) - moved from info section
           ],
         },
       },
@@ -147,7 +147,7 @@ const newTiltakWorkspaceConfig = {
       title: "Grunnleggende informasjon",
       defaultExpanded: true,
       layout: [
-        { field: "beskrivelse" }, // 1. Description (full-width)
+        { field: "beskrivelse", required: true }, // 1. Description (full-width) - required for non-linked creation
         { field: "implementasjon" }, // 2. Implementation (full-width)
       ],
     },

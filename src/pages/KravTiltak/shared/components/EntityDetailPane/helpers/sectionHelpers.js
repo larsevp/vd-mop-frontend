@@ -25,7 +25,7 @@ export const scrollToTop = (detailViewRef) => {
     setTimeout(() => {
       // Find the actual scroll container (FlexScrollableContainer creates it)
       let scrollContainer = detailViewRef.current;
-      
+
       // Look for parent with overflow-y-auto (the FlexScrollableContainer's scroll div)
       while (scrollContainer && scrollContainer !== document.body) {
         const computedStyle = window.getComputedStyle(scrollContainer);
@@ -34,16 +34,19 @@ export const scrollToTop = (detailViewRef) => {
         }
         scrollContainer = scrollContainer.parentElement;
       }
-      
+
       // Fallback to the original element if no scroll container found
       if (!scrollContainer || scrollContainer === document.body) {
         scrollContainer = detailViewRef.current;
       }
-      
-      scrollContainer.scrollTo({
-        top: 0,
-        behavior: 'auto'
-      });
+
+      // Safety check: ensure scrollContainer is not null and has scrollTo method
+      if (scrollContainer && typeof scrollContainer.scrollTo === 'function') {
+        scrollContainer.scrollTo({
+          top: 0,
+          behavior: 'auto'
+        });
+      }
     }, 100);
   }
 };

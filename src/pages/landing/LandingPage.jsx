@@ -36,51 +36,26 @@ export default function LandingPage() {
   const projects = data || [];
 
   if (queryLoading) {
-    // Use queryLoading instead of isLoading
     return (
-      <div className="bg-background-primary min-h-screen">
-        {/* Hero section skeleton */}
-        <section className="bg-primary-900 text-white">
-          <div className="max-w-screen-xl mx-auto px-4 py-8 sm:py-12 sm:px-6 md:px-8">
-            <div className="text-center">
-              <Skeleton height={40} width={200} className="mx-auto" />
-              <Skeleton height={20} width={300} className="mx-auto mt-4" />
-            </div>
+      <div className="bg-gray-50 min-h-screen">
+        {/* Header skeleton */}
+        <section className="bg-white border-b border-gray-200">
+          <div className="max-w-6xl mx-auto px-6 py-16 sm:px-8 text-center">
+            <Skeleton height={40} width={120} className="mx-auto" />
+            <Skeleton height={16} width={400} className="mx-auto mt-4" />
           </div>
         </section>
 
         {/* Main content skeleton */}
-        <section className="max-w-screen-xl mx-auto px-4 py-12 sm:px-6 md:px-8">
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {/* Quick access card skeleton */}
-            <div className="bg-primary-50 rounded-xl border border-primary-100 p-6 shadow-sm">
-              <Skeleton height={20} width={150} className="mb-4" />
-              <ul className="space-y-3">
-                <Skeleton height={15} width={200} />
-                <Skeleton height={15} width={200} />
-                <Skeleton height={15} width={200} />
-              </ul>
-            </div>
-
-            {/* New project card skeleton */}
-            <div className="bg-primary-50 rounded-xl border border-primary-100 p-6 shadow-sm">
-              <Skeleton height={20} width={150} className="mb-4" />
-              <Skeleton height={40} width={200} />
-            </div>
-
-            {/* Recent projects skeleton */}
-            <div className="md:col-span-2 lg:col-span-1">
-              <Skeleton height={20} width={200} className="mb-4" />
-              <div className="space-y-4">
-                {Array.from({ length: 3 }).map((_, index) => (
-                  <div key={index} className="bg-white rounded-lg border border-neutral-200 p-4 shadow-sm">
-                    <Skeleton height={20} width={150} />
-                    <Skeleton height={15} width={250} className="mt-2" />
-                    <Skeleton height={10} width={100} className="mt-4" />
-                  </div>
-                ))}
+        <section className="max-w-6xl mx-auto px-6 py-16 sm:px-8">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div key={index} className="bg-white border border-gray-200 rounded-lg p-6">
+                <Skeleton height={18} width={150} className="mb-3" />
+                <Skeleton height={14} width={200} className="mb-4" />
+                <Skeleton height={36} width={120} />
               </div>
-            </div>
+            ))}
           </div>
         </section>
       </div>
@@ -92,46 +67,49 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="bg-background-primary min-h-screen">
-      {/* Onboarding modal - shows automatically if user is missing fagområde or enhet */}
+    <div className="bg-gray-50 min-h-screen">
+      {/* Onboarding modal */}
       <OnboardingModal />
 
-      {/* Hero section */}
-      <section className="bg-primary-900 text-white">
-        <div className="max-w-screen-xl mx-auto px-4 py-8 sm:py-12 sm:px-6 md:px-8">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">MOP</h1>
-            <p className="max-w-2xl mx-auto mt-6 text-xl">Miljø og Prosjekthåndteringssystem for oversikt over tiltak og prosjekter</p>
-          </div>
+      {/* Vibrant but crisp header */}
+      <section className="bg-blue-700 border-b border-blue-800">
+        <div className="max-w-6xl mx-auto px-6 py-20 sm:px-8 text-center">
+          <h1 className="text-4xl font-medium tracking-tight text-white sm:text-5xl">MOP</h1>
+          <p className="max-w-2xl mx-auto mt-4 text-blue-50 leading-relaxed">
+            Miljø og Prosjekthåndteringssystem for oversikt over tiltak og prosjekter
+          </p>
         </div>
       </section>
 
       {/* Main content */}
-      <section className="max-w-screen-xl mx-auto px-4 py-12 sm:px-6 md:px-8">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+      <section className="max-w-6xl mx-auto px-6 py-16 sm:px-8">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {/* Quick access card */}
           <HurtigtilgangLandingPage />
 
           {/* New project card */}
+          <div className="bg-white border border-gray-200 rounded-lg p-6 hover:border-gray-300 hover:shadow-sm transition-all">
+            <h3 className="text-base font-medium text-gray-900 mb-2">Nytt prosjekt</h3>
+            <p className="text-gray-600 text-sm leading-relaxed mb-6">
+              Lag et nytt prosjekt og fyll det med tiltak
+            </p>
+            <button
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg transition-colors text-sm font-normal"
+              onClick={() => newProject()}
+            >
+              Opprett prosjekt
+            </button>
+          </div>
 
-          <SimpleCard
-            title="Nytt prosjekt"
-            subtitle="Lag et nytt prosjekt og fyll det med tiltak"
-            content={
-              <button
-                className="btn btn-primary rounded-lg px-5 py-2.5 font-medium shadow-sm transition-all"
-                onClick={() => newProject()}
-              >
-                Nytt prosjekt
-              </button>
-            }
-          />
           {/* Recent projects */}
           <RecentProjectList />
         </div>
       </section>
 
-      <ProjectLandingTable projects={projects}> </ProjectLandingTable>
+      {/* Project table */}
+      <section className="bg-white border-t border-gray-200">
+        <ProjectLandingTable projects={projects} />
+      </section>
     </div>
   );
 }

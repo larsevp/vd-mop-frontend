@@ -13,6 +13,7 @@ import { createTiltakAdapter } from "../../../tiltak/adapter";
 import { krav as kravConfig } from "@/modelConfigs/models/krav";
 import { tiltak as tiltakConfig } from "@/modelConfigs/models/tiltak";
 import { extractAvailableFilters } from "../../../shared/utils/filterUtils.js";
+import { cleanEntityData } from "../../../shared/utils/dataCleaningUtils.js";
 
 export class KravTiltakCombinedAdapter {
   constructor(options = {}) {
@@ -113,6 +114,7 @@ export class KravTiltakCombinedAdapter {
     if (!entityType) {
       return entity;
     }
+
 
     return {
       ...entity,
@@ -302,18 +304,16 @@ export class KravTiltakCombinedAdapter {
   async save(entityData, isUpdate) {
     const entityType = this.detectEntityType(entityData);
 
-    // Strip entityType from data before passing to individual adapters
-    // Individual model backends don't allow entityType in update operations
-    const { entityType: _, ...cleanEntityData } = entityData;
-
-    // Debug: Check what we're sending to individual adapter
+    // Clean entity data using shared utility
+    // Removes internal fields (__*), UI metadata, and junction table fields
+    const cleanData = cleanEntityData(entityData);
 
     if (entityType === "krav" && this.kravAdapter?.config) {
       const config = this.kravAdapter.config;
       if (isUpdate && config.updateFn) {
-        return await config.updateFn(cleanEntityData.id, cleanEntityData);
+        return await config.updateFn(cleanData.id, cleanData);
       } else if (!isUpdate && config.createFn) {
-        return await config.createFn(cleanEntityData);
+        return await config.createFn(cleanData);
       }
       throw new Error(`${isUpdate ? "Update" : "Create"} function not available for krav`);
     }
@@ -321,9 +321,9 @@ export class KravTiltakCombinedAdapter {
     if (entityType === "tiltak" && this.tiltakAdapter?.config) {
       const config = this.tiltakAdapter.config;
       if (isUpdate && config.updateFn) {
-        return await config.updateFn(cleanEntityData.id, cleanEntityData);
+        return await config.updateFn(cleanData.id, cleanData);
       } else if (!isUpdate && config.createFn) {
-        return await config.createFn(cleanEntityData);
+        return await config.createFn(cleanData);
       }
       throw new Error(`${isUpdate ? "Update" : "Create"} function not available for tiltak`);
     }
@@ -335,13 +335,48 @@ export class KravTiltakCombinedAdapter {
    * Delete entity (implements DTO interface requirement)
    */
   async delete(entity) {
-    const entityType = this.detectEntityType(entity);
+    let entityType = this.detectEntityType(entity);
 
+    // If we can't detect the type (only have ID), try deleting from both tables
+    // The backend will return 404 for the wrong table, which we can ignore
+    if (entityType === "unknown" && entity.id) {
+      console.log(`LOGBACKEND Cannot detect entity type for ID ${entity.id}, trying both adapters...`);
+
+      // Try Krav first
+      if (this.kravAdapter?.config?.deleteFn) {
+        try {
+          await this.kravAdapter.config.deleteFn(entity.id);
+          console.log(`LOGBACKEND Successfully deleted entity ${entity.id} as Krav`);
+          return;
+        } catch (error) {
+          console.log(`LOGBACKEND Not a Krav (ID ${entity.id}):`, error.message);
+          // Continue to try Tiltak
+        }
+      }
+
+      // Try Tiltak
+      if (this.tiltakAdapter?.config?.deleteFn) {
+        try {
+          await this.tiltakAdapter.config.deleteFn(entity.id);
+          console.log(`LOGBACKEND Successfully deleted entity ${entity.id} as Tiltak`);
+          return;
+        } catch (error) {
+          console.log(`LOGBACKEND Not a Tiltak (ID ${entity.id}):`, error.message);
+          throw new Error(`Failed to delete entity ${entity.id}: Not found in either Krav or Tiltak`);
+        }
+      }
+
+      throw new Error(`No delete functions available for entity ${entity.id}`);
+    }
+
+    // If we know the entity type, delete directly
     if (entityType === "krav" && this.kravAdapter?.config?.deleteFn) {
+      console.log(`LOGBACKEND Deleting Krav with ID ${entity.id}`);
       return await this.kravAdapter.config.deleteFn(entity.id);
     }
 
     if (entityType === "tiltak" && this.tiltakAdapter?.config?.deleteFn) {
+      console.log(`LOGBACKEND Deleting Tiltak with ID ${entity.id}`);
       return await this.tiltakAdapter.config.deleteFn(entity.id);
     }
 

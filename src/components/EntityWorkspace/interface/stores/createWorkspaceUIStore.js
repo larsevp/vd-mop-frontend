@@ -23,7 +23,9 @@ export const createWorkspaceUIStore = (workspaceId) => {
         // ============ SELECTION STATE ============
         selectedEntity: null,
         selectedEntities: new Set(),
+        selectedEntitiesMetadata: new Map(), // Map<id, {entityType, renderId}> for combined views
         focusedEntity: null,
+        selectionMode: 'single', // 'single' | 'multi'
 
         // ============ SEARCH & FILTER STATE ============
         searchInput: '', // What user types in search box
@@ -59,6 +61,7 @@ export const createWorkspaceUIStore = (workspaceId) => {
           set({
             selectedEntity: null,
             selectedEntities: new Set(),
+            selectedEntitiesMetadata: new Map(),
             focusedEntity: null
           });
         },
@@ -67,20 +70,71 @@ export const createWorkspaceUIStore = (workspaceId) => {
           set({ selectedEntities: new Set(entities) });
         },
 
-        toggleEntitySelection: (entity) => {
+        toggleEntitySelection: (entityId, entityMetadata) => {
           set((state) => {
             const newSelected = new Set(state.selectedEntities);
-            if (newSelected.has(entity.id)) {
-              newSelected.delete(entity.id);
+            const newMetadata = new Map(state.selectedEntitiesMetadata);
+
+            if (newSelected.has(entityId)) {
+              newSelected.delete(entityId);
+              newMetadata.delete(entityId);
             } else {
-              newSelected.add(entity.id);
+              newSelected.add(entityId);
+              // Store metadata if provided (entityType, renderId for combined views)
+              if (entityMetadata) {
+                newMetadata.set(entityId, entityMetadata);
+              }
             }
-            return { selectedEntities: newSelected };
+            return {
+              selectedEntities: newSelected,
+              selectedEntitiesMetadata: newMetadata
+            };
           });
         },
 
         setFocusedEntity: (entity) => {
           set({ focusedEntity: entity });
+        },
+
+        // Multi-select mode actions
+        setSelectionMode: (mode) => {
+          set({
+            selectionMode: mode,
+            // Clear multi-selection when switching to single mode
+            selectedEntities: mode === 'single' ? new Set() : get().selectedEntities,
+            selectedEntitiesMetadata: mode === 'single' ? new Map() : get().selectedEntitiesMetadata
+          });
+        },
+
+        toggleSelectionMode: () => {
+          set((state) => ({
+            selectionMode: state.selectionMode === 'single' ? 'multi' : 'single',
+            // Clear multi-selection when switching to single mode
+            selectedEntities: state.selectionMode === 'multi' ? new Set() : state.selectedEntities,
+            selectedEntitiesMetadata: state.selectionMode === 'multi' ? new Map() : state.selectedEntitiesMetadata
+          }));
+        },
+
+        selectAll: (ids, entitiesMetadata) => {
+          const newMetadata = new Map();
+          if (entitiesMetadata && Array.isArray(entitiesMetadata)) {
+            entitiesMetadata.forEach(meta => {
+              // Use uiKey if available (for combined views), otherwise use id
+              const key = meta.uiKey || meta.id;
+              if (key && meta.entityType) {
+                newMetadata.set(key, {
+                  id: meta.id,
+                  entityType: meta.entityType,
+                  renderId: meta.renderId,
+                  uiKey: meta.uiKey
+                });
+              }
+            });
+          }
+          set({
+            selectedEntities: new Set(ids),
+            selectedEntitiesMetadata: newMetadata
+          });
         },
 
         // Search & filter actions
@@ -184,6 +238,7 @@ export const createWorkspaceUIStore = (workspaceId) => {
             selectedEntity: null,
             selectedEntities: new Set(),
             focusedEntity: null,
+            selectionMode: 'single',
             searchInput: '',
             activeSearchQuery: '',
             filters: {

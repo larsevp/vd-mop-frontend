@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { ChevronDown, Settings, Maximize2, Minimize2 } from 'lucide-react';
+import { ChevronDown, Settings, Maximize2, Minimize2, CheckSquare, ListChecks } from 'lucide-react';
 import { Button } from '@/components/ui/primitives/button';
+import BulkActionsMenu from './BulkActionsMenu';
 
 /**
  * RowListHeading - Shared component for KravTiltak entity list headers
- * 
+ *
  * Provides:
  * - Item count display
  * - Visning (view options) dropdown
  * - Configurable view options per entity type
+ * - Multi-select mode with contextual bulk actions
  */
 const RowListHeading = ({
   itemCount = 0,
@@ -19,6 +21,16 @@ const RowListHeading = ({
   hasGroups = false,
   allGroupsExpanded = true,
   onToggleAllGroups = () => {},
+  // Multi-select props
+  selectionMode = 'single',
+  selectedIds = new Set(),
+  onToggleSelectionMode = () => {},
+  onSelectAll = () => {},
+  onClearSelection = () => {},
+  allItemIds = [],
+  allEntitiesMetadata = [], // Metadata for combined views (optional)
+  // Bulk action handlers (array of action configs)
+  bulkActions = [],
   children
 }) => {
   const [showViewOptions, setShowViewOptions] = useState(false);
@@ -31,18 +43,19 @@ const RowListHeading = ({
   };
 
   return (
-    <div className="flex-shrink-0 p-3 border-b border-gray-200 bg-white">
-      <div className="flex items-center justify-between">
+    <div className="flex-shrink-0 border-b border-gray-200 bg-white">
+      {/* Main toolbar - always visible */}
+      <div className="flex items-center justify-between px-3 py-2">
         <div className="flex items-center gap-2">
           <div className="text-xs font-medium text-gray-900">
             {itemCount} {itemCount === 1 ? 'element' : 'elementer'}
           </div>
-          
-          {/* Expand/Collapse All Groups Button - Only show when hasGroups */}
+
+          {/* Expand/Collapse All Groups Button */}
           {hasGroups && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -55,16 +68,35 @@ const RowListHeading = ({
             </Button>
           )}
 
-          
           {children}
         </div>
-        
+
         <div className="flex items-center gap-2">
+          {/* Multi-select toggle button */}
+          <Button
+            variant={selectionMode === 'multi' ? 'default' : 'outline'}
+            size="sm"
+            onClick={onToggleSelectionMode}
+            className="h-8 flex items-center gap-1.5"
+          >
+            {selectionMode === 'multi' ? (
+              <>
+                <CheckSquare size={14} />
+                Avbryt
+              </>
+            ) : (
+              <>
+                <ListChecks size={14} />
+                Velg
+              </>
+            )}
+          </Button>
+
           {/* View Options */}
           <div className="relative">
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setShowViewOptions(!showViewOptions)}
               className="flex items-center gap-2"
             >
@@ -72,7 +104,7 @@ const RowListHeading = ({
               Visning
               <ChevronDown size={14} className={`transition-transform ${showViewOptions ? "rotate-180" : ""}`} />
             </Button>
-            
+
             {showViewOptions && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setShowViewOptions(false)} />
@@ -101,6 +133,45 @@ const RowListHeading = ({
               </>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Multi-select toolbar - always rendered with fixed height to prevent jumps */}
+      <div
+        className={`flex items-center justify-between px-3 border-t py-2 min-h-[44px] transition-colors duration-200 ${
+          selectionMode === 'multi'
+            ? 'bg-blue-50 border-blue-100'
+            : 'bg-white border-gray-200 invisible h-0 py-0 min-h-0 overflow-hidden'
+        }`}
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-gray-900 whitespace-nowrap">
+            {selectedIds.size} valgt
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClearSelection}
+            className={`h-7 text-xs ${selectedIds.size === 0 ? 'invisible' : ''}`}
+          >
+            Fjern valg
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onSelectAll(allItemIds, allEntitiesMetadata)}
+            className={`h-7 text-xs ${selectedIds.size === allItemIds.length || allItemIds.length === 0 ? 'invisible' : ''}`}
+          >
+            Velg alle ({allItemIds.length})
+          </Button>
+        </div>
+
+        {/* Bulk actions dropdown - always rendered to maintain height */}
+        <div className={selectedIds.size === 0 ? 'invisible' : ''}>
+          <BulkActionsMenu
+            actions={bulkActions}
+            selectedIds={selectedIds}
+          />
         </div>
       </div>
     </div>

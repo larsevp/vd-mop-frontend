@@ -19,7 +19,9 @@ export const createWorkspaceUIHook = (useUIStore) => {
     // Selection state
     const selectedEntity = useUIStore(state => state.selectedEntity);
     const selectedEntities = useUIStore(state => state.selectedEntities);
+    const selectedEntitiesMetadata = useUIStore(state => state.selectedEntitiesMetadata);
     const focusedEntity = useUIStore(state => state.focusedEntity);
+    const selectionMode = useUIStore(state => state.selectionMode);
 
     // Search & filter state
     const searchInput = useUIStore(state => state.searchInput);
@@ -41,6 +43,9 @@ export const createWorkspaceUIHook = (useUIStore) => {
     const setSelectedEntities = useUIStore(state => state.setSelectedEntities);
     const toggleEntitySelection = useUIStore(state => state.toggleEntitySelection);
     const setFocusedEntity = useUIStore(state => state.setFocusedEntity);
+    const setSelectionMode = useUIStore(state => state.setSelectionMode);
+    const toggleSelectionMode = useUIStore(state => state.toggleSelectionMode);
+    const selectAll = useUIStore(state => state.selectAll);
 
     const setSearchInput = useUIStore(state => state.setSearchInput);
     const setActiveSearchQuery = useUIStore(state => state.setActiveSearchQuery);
@@ -66,7 +71,9 @@ export const createWorkspaceUIHook = (useUIStore) => {
       // State
       selectedEntity,
       selectedEntities,
+      selectedEntitiesMetadata,
       focusedEntity,
+      selectionMode,
       searchInput,
       activeSearchQuery,
       filters,
@@ -82,6 +89,9 @@ export const createWorkspaceUIHook = (useUIStore) => {
       setSelectedEntities,
       toggleEntitySelection,
       setFocusedEntity,
+      setSelectionMode,
+      toggleSelectionMode,
+      selectAll,
 
       // Search & filter actions
       setSearchInput,

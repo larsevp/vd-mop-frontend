@@ -13,6 +13,7 @@ import { createProsjektKravAdapter } from "../../../prosjektkrav/adapter";
 import { createProsjektTiltakAdapter } from "../../../prosjekttiltak/adapter";
 import { prosjektKrav as prosjektKravConfig } from "@/modelConfigs/models/prosjektKrav";
 import { prosjektTiltak as prosjektTiltakConfig } from "@/modelConfigs/models/prosjektTiltak";
+import { cleanEntityData } from "../../../shared/utils/dataCleaningUtils.js";
 
 export class ProsjektKravTiltakCombinedAdapter {
   constructor(options = {}) {
@@ -122,6 +123,19 @@ export class ProsjektKravTiltakCombinedAdapter {
       return entity;
     }
 
+    // Debug: Log ONLY if entityType is just "tiltak" (not "prosjekttiltak")
+    if (entityType === "tiltak") {
+      console.log(`LOGBACKEND ⚠️  WRONG ENTITY TYPE! Entity ${entity.id}:`, {
+        backendEntityType: entity.entityType,
+        detectedEntityType: entityType,
+        renderId: `${entityType}-${entity.id}`,
+        hasTiltakUID: !!entity.tiltakUID,
+        hasKravUID: !!entity.kravUID,
+        hasGeneralTiltakId: entity.generalTiltakId !== undefined,
+        fullEntity: entity,
+      });
+    }
+
     return {
       ...entity,
       // Adapter provides raw entity type - DTO handles normalization
@@ -183,7 +197,17 @@ export class ProsjektKravTiltakCombinedAdapter {
       return "prosjekttiltak";
     }
 
-    console.warn("ProsjektKravTiltakCombinedAdapter: Could not detect entity type for entity:", rawEntity);
+    console.log("LOGBACKEND ProsjektKravTiltakCombinedAdapter: Could not detect entity type");
+    console.log("LOGBACKEND Entity keys:", JSON.stringify(Object.keys(rawEntity)));
+    console.log("LOGBACKEND Entity sample:", JSON.stringify({
+      id: rawEntity.id,
+      entityType: rawEntity.entityType,
+      kravUID: rawEntity.kravUID,
+      tiltakUID: rawEntity.tiltakUID,
+      renderId: rawEntity.renderId,
+      generalKravId: rawEntity.generalKravId,
+      generalTiltakId: rawEntity.generalTiltakId,
+    }));
     return "unknown";
   }
 
@@ -353,25 +377,21 @@ export class ProsjektKravTiltakCombinedAdapter {
   async save(entityData, isUpdate) {
     const entityType = this.detectEntityType(entityData);
 
-    // More explicit stripping - create completely clean object without entityType
-    const cleanEntityData = {};
-    Object.keys(entityData).forEach((key) => {
-      if (key !== "entityType" && key !== "__entityType") {
-        cleanEntityData[key] = entityData[key];
-      }
-    });
+    // Clean entity data using shared utility
+    // Removes internal fields (__*), UI metadata, and junction table fields
+    const cleanData = cleanEntityData(entityData);
 
     if (entityType === "prosjektkrav" && this.prosjektKravAdapter?.config) {
       const config = this.prosjektKravAdapter.config;
       // Use the modelConfig save handler which includes validation
       if (config.save) {
-        return await config.save(cleanEntityData, isUpdate);
+        return await config.save(cleanData, isUpdate);
       }
       // Fallback to direct API calls only if no save handler exists
       if (isUpdate && config.updateFn) {
-        return await config.updateFn(cleanEntityData.id, cleanEntityData);
+        return await config.updateFn(cleanData.id, cleanData);
       } else if (!isUpdate && config.createFn) {
-        return await config.createFn(cleanEntityData);
+        return await config.createFn(cleanData);
       }
       throw new Error(`${isUpdate ? "Update" : "Create"} function not available for prosjektkrav`);
     }
@@ -380,13 +400,13 @@ export class ProsjektKravTiltakCombinedAdapter {
       const config = this.prosjektTiltakAdapter.config;
       // Use the modelConfig save handler which includes validation
       if (config.save) {
-        return await config.save(cleanEntityData, isUpdate);
+        return await config.save(cleanData, isUpdate);
       }
       // Fallback to direct API calls only if no save handler exists
       if (isUpdate && config.updateFn) {
-        return await config.updateFn(cleanEntityData.id, cleanEntityData);
+        return await config.updateFn(cleanData.id, cleanData);
       } else if (!isUpdate && config.createFn) {
-        return await config.createFn(cleanEntityData);
+        return await config.createFn(cleanData);
       }
       throw new Error(`${isUpdate ? "Update" : "Create"} function not available for prosjekttiltak`);
     }
@@ -398,8 +418,53 @@ export class ProsjektKravTiltakCombinedAdapter {
    * Delete entity (implements DTO interface requirement)
    */
   async delete(entity) {
-    const entityType = this.detectEntityType(entity);
+    let entityType = this.detectEntityType(entity);
 
+    // Handle "tiltak" as "prosjekttiltak" in project context (backend sometimes returns wrong type)
+    if (entityType === "tiltak") {
+      console.log(`LOGBACKEND Converting "tiltak" to "prosjekttiltak" for entity ${entity.id} in project context`);
+      entityType = "prosjekttiltak";
+    }
+
+    // Handle "krav" as "prosjektkrav" in project context
+    if (entityType === "krav") {
+      console.log(`LOGBACKEND Converting "krav" to "prosjektkrav" for entity ${entity.id} in project context`);
+      entityType = "prosjektkrav";
+    }
+
+    // If we can't detect the type (only have ID), try deleting from both tables
+    // The backend will return 404 for the wrong table, which we can ignore
+    if (!entityType || entityType === "unknown") {
+      console.log(`LOGBACKEND Cannot detect entity type for ID ${entity.id}, trying both adapters...`);
+
+      // Try ProsjektKrav first
+      if (this.prosjektKravAdapter?.config?.deleteFn) {
+        try {
+          await this.prosjektKravAdapter.config.deleteFn(entity.id);
+          console.log(`LOGBACKEND Successfully deleted entity ${entity.id} as ProsjektKrav`);
+          return;
+        } catch (error) {
+          console.log(`LOGBACKEND Not a ProsjektKrav (ID ${entity.id}):`, error.message);
+          // Continue to try ProsjektTiltak
+        }
+      }
+
+      // Try ProsjektTiltak
+      if (this.prosjektTiltakAdapter?.config?.deleteFn) {
+        try {
+          await this.prosjektTiltakAdapter.config.deleteFn(entity.id);
+          console.log(`LOGBACKEND Successfully deleted entity ${entity.id} as ProsjektTiltak`);
+          return;
+        } catch (error) {
+          console.log(`LOGBACKEND Not a ProsjektTiltak (ID ${entity.id}):`, error.message);
+          throw new Error(`Failed to delete entity ${entity.id}: Not found in either ProsjektKrav or ProsjektTiltak`);
+        }
+      }
+
+      throw new Error(`No delete functions available for entity ${entity.id}`);
+    }
+
+    // If we know the entity type, delete directly
     if (entityType === "prosjektkrav" && this.prosjektKravAdapter?.config?.deleteFn) {
       return await this.prosjektKravAdapter.config.deleteFn(entity.id);
     }

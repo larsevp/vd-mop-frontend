@@ -1,7 +1,5 @@
 import React from "react";
-import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/primitives/button";
-import { EmneGroupHeader, RowListHeading, EntityDetailPane, KravTiltakSearchBar } from "../../shared";
+import { EmneGroupHeader, RowListHeading, EntityDetailPane, KravTiltakSearchBar, KravCreateButton, TiltakCreateButton, ProsjektKravCreateButton, ProsjektTiltakCreateButton } from "../../shared";
 import { WordExporter } from "@/components/export/WordExporter";
 
 /**
@@ -124,34 +122,27 @@ export const createCombinedRenderer = (config) => {
    * Shows separate create buttons that delegate to individual model configs
    */
   const renderActionButtons = ({ handleCreateNew, currentFilters }) => {
-    const handlePrimaryCreate = () => {
-      // EntityWorkspace's handleCreateNew expects just the entity type string
-      // It will create the entity structure: { __isNew: true, __entityType: entityType }
-      handleCreateNew(primaryType);
+    // Select appropriate button components based on entity types
+    const buttonMap = {
+      'krav': KravCreateButton,
+      'tiltak': TiltakCreateButton,
+      'prosjektkrav': ProsjektKravCreateButton,
+      'prosjekttiltak': ProsjektTiltakCreateButton,
     };
 
-    const handleSecondaryCreate = () => {
-      // EntityWorkspace's handleCreateNew expects just the entity type string
-      // It will create the entity structure: { __isNew: true, __entityType: entityType }
-      handleCreateNew(secondaryType);
-    };
+    const PrimaryButtonComponent = buttonMap[primaryType.toLowerCase()] || KravCreateButton;
+    const SecondaryButtonComponent = buttonMap[secondaryType.toLowerCase()] || TiltakCreateButton;
 
     return (
       <div className="flex gap-3">
-        <Button
-          onClick={handlePrimaryCreate}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm hover:shadow transition-all"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          {primaryCreate}
-        </Button>
-        <Button
-          onClick={handleSecondaryCreate}
-          className="bg-sky-600 hover:bg-sky-700 text-white shadow-sm hover:shadow transition-all"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          {secondaryCreate}
-        </Button>
+        <PrimaryButtonComponent
+          onClick={() => handleCreateNew(primaryType)}
+          label={primaryCreate}
+        />
+        <SecondaryButtonComponent
+          onClick={() => handleCreateNew(secondaryType)}
+          label={secondaryCreate}
+        />
         <WordExporter
           currentFilters={currentFilters}
           variant="outline"
@@ -192,8 +183,9 @@ export const createCombinedRenderer = (config) => {
 
     // Delegate to the appropriate entity-specific renderer
     // Pass through the save/delete handlers from EntityWorkspace (via combined DTO)
-    const rendererProps = props || {};
-    
+    // Also pass workspaceType so individual renderers know they're in a combined workspace
+    const rendererProps = { ...props, workspaceType } || {};
+
     if (entityTypeLower === primaryTypeLower) {
       return primaryDetailRenderer(selectedEntity, rendererProps);
     } else if (entityTypeLower === secondaryTypeLower) {

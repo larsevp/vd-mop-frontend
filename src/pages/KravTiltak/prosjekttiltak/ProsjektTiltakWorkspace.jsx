@@ -1,15 +1,18 @@
-import React from "react";
+import React, { useMemo, useCallback, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { EntityWorkspace } from "@/components/EntityWorkspace";
 import { prosjektTiltak as prosjektTiltakConfig } from "@/modelConfigs/models/prosjektTiltak";
 import { createSingleEntityDTO } from "@/components/EntityWorkspace/interface/data";
 import { createProsjektTiltakAdapter } from "./adapter";
 import { renderEntityCard, renderGroupHeader, renderDetailPane, renderSearchBar, getAvailableViewOptions } from "./renderer";
-import { useProsjektTiltakViewStore } from "./store";
+import { useProsjektTiltakViewStore, useProsjektTiltakUIStore } from "./store";
+import { createWorkspaceUIHook } from "@/components/EntityWorkspace/interface/hooks/createWorkspaceUIHook";
 import { RowListHeading } from "../shared";
 import { useProjectStore } from "@/stores/userStore";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Building } from "lucide-react";
+import { ArrowLeft, Building, Trash2, Copy } from "lucide-react";
+import { CopyToProjectModal } from "../shared/components/CopyToProjectModal";
+import { massKopyProsjektTiltakToProject } from "@/api/endpoints/models/prosjektTiltak";
 
 /**
  * ProsjektTiltak Workspace using the generic EntityWorkspace component
@@ -34,6 +37,7 @@ const ProsjektTiltakWorkspace = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { currentProject } = useProjectStore();
+  const [showCopyModal, setShowCopyModal] = useState(false);
 
   // Show message if no project is selected
   if (!currentProject) {
@@ -64,13 +68,35 @@ const ProsjektTiltakWorkspace = () => {
   };
 
   // Create ProsjektTiltak adapter
-  const adapter = createProsjektTiltakAdapter(dynamicConfig);
+  const adapter = useMemo(() => createProsjektTiltakAdapter(dynamicConfig), []);
 
   // Wrap adapter in DTO for unified interface
-  const dto = createSingleEntityDTO(adapter);
+  const dto = useMemo(() => createSingleEntityDTO(adapter), [adapter]);
 
   // Get view options state
   const { viewOptions, setViewOptions } = useProsjektTiltakViewStore();
+
+  // Get UI store for multi-select state
+  const ui = useProsjektTiltakUIStore();
+
+  // Create workspace-specific UI hook
+  const { useWorkspaceUI } = useMemo(() => createWorkspaceUIHook(useProsjektTiltakUIStore), []);
+
+  // Reset UI state when navigating away from workspace
+  useEffect(() => {
+    return () => {
+      ui.clearSelection();
+      if (ui.selectionMode) {
+        ui.toggleSelectionMode();
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - only run on mount/unmount
+
+  // Get all visible entity IDs for "select all" functionality
+  const getAllVisibleIds = (entities) => {
+    return entities.map(e => e.id);
+  };
 
   // Handle Flow toggle - navigate to Flow workspace while preserving state
   const handleFlowToggle = () => {
@@ -84,28 +110,88 @@ const ProsjektTiltakWorkspace = () => {
     }
   };
 
+  // Memoize renderEntityCard
+  const renderEntityCardMemoized = useCallback((entity, props) => {
+    return renderEntityCard(entity, {
+      ...props,
+      selectionMode: ui.selectionMode,
+      isItemSelected: ui.selectedEntities.has(entity.id),
+      onToggleSelection: ui.toggleEntitySelection,
+    }, dto);
+  }, [ui.selectionMode, ui.selectedEntities, ui.toggleEntitySelection, dto]);
+
+  // Memoize renderListHeading
+  const renderListHeadingMemoized = useCallback((props) => {
+    // Get all IDs from entities in props
+    const allIds = props.entities ? getAllVisibleIds(props.entities) : [];
+
+    // Define bulk actions (shown in dropdown menu)
+    const bulkActions = [
+      {
+        label: 'Kopier til prosjekt',
+        icon: Copy,
+        onClick: (selectedIds) => {
+          setShowCopyModal(true);
+        },
+        disabled: false,
+      },
+      {
+        label: 'Slett',
+        icon: Trash2,
+        variant: 'destructive',
+        separator: true, // Show separator before destructive actions
+        onClick: (selectedIds) => props.onBulkDelete?.(selectedIds),
+      },
+    ];
+
+    return (
+      <RowListHeading
+        {...props}
+        viewOptions={viewOptions}
+        onViewOptionsChange={setViewOptions}
+        availableViewOptions={getAvailableViewOptions()}
+        // Multi-select props
+        selectionMode={ui.selectionMode}
+        selectedIds={ui.selectedEntities}
+        onToggleSelectionMode={ui.toggleSelectionMode}
+        onSelectAll={ui.selectAll}
+        onClearSelection={ui.clearSelection}
+        allItemIds={allIds}
+        bulkActions={bulkActions}
+      />
+    );
+  }, [viewOptions, setViewOptions, ui.selectionMode, ui.selectedEntities, ui.toggleSelectionMode, ui.selectAll, ui.clearSelection]);
+
   return (
-    <EntityWorkspace
-      key={`${dto.entityType || "prosjekttiltak-workspace"}-${currentProject?.id || "no-project"}`} // Force remount on project change
-      dto={dto}
-      renderEntityCard={(entity, props) => renderEntityCard(entity, props, dto)}
-      renderGroupHeader={renderGroupHeader}
-      renderDetailPane={renderDetailPane}
-      renderSearchBar={renderSearchBar}
-      renderListHeading={(props) => (
-        <RowListHeading
-          {...props}
-          viewOptions={viewOptions}
-          onViewOptionsChange={setViewOptions}
-          availableViewOptions={getAvailableViewOptions()}
-        />
-      )}
-      viewOptions={viewOptions}
-      debug={false}
-      // Pass Flow toggle to EntityWorkspace header
-      flowViewMode={null} // Not in flow mode
-      onFlowToggle={handleFlowToggle}
-    />
+    <>
+      <EntityWorkspace
+        key={`${dto.entityType || "prosjekttiltak-workspace"}-${currentProject?.id || "no-project"}`} // Force remount on project change
+        dto={dto}
+        renderEntityCard={renderEntityCardMemoized}
+        renderGroupHeader={renderGroupHeader}
+        renderDetailPane={renderDetailPane}
+        renderSearchBar={renderSearchBar}
+        renderListHeading={renderListHeadingMemoized}
+        useWorkspaceUIHook={useWorkspaceUI}
+        viewOptions={viewOptions}
+        debug={false}
+        // Pass Flow toggle to EntityWorkspace header
+        flowViewMode={null} // Not in flow mode
+        onFlowToggle={handleFlowToggle}
+      />
+
+      {/* Copy to Project Modal */}
+      <CopyToProjectModal
+        open={showCopyModal}
+        onClose={() => {
+          setShowCopyModal(false);
+          ui.clearSelection();
+        }}
+        selectedEntities={ui.selectedEntities}
+        entityType="prosjekttiltak"
+        copyFunction={massKopyProsjektTiltakToProject}
+      />
+    </>
   );
 };
 

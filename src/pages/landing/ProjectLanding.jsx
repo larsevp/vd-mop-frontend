@@ -7,6 +7,8 @@ import { useUserStore, useProjectStore } from "@/stores/userStore";
 import { SimpleCard } from "@/components/ui";
 import { useRecentProjectsStore } from "@/stores/recentProjectsStore";
 import { ExpandableRichText } from "@/components/tableComponents/displayValues/ExpandableRichText";
+import ImportKravWizard from "@/components/ui/projects/ImportKravWizard";
+import { updateProsjekt } from "@/api/endpoints/models/prosjekt";
 
 export default function ProjectLanding() {
   const { user } = useUserStore();
@@ -16,6 +18,7 @@ export default function ProjectLanding() {
   const { prosjektId } = useParams();
   const isAdmin = user?.rolle === "ADMIN";
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const [showImportWizard, setShowImportWizard] = useState(false);
 
   // Use the store for consistent project visit tracking
   const { trackProjectVisit } = useRecentProjectsStore();
@@ -121,7 +124,8 @@ export default function ProjectLanding() {
         desc: "Modern håndtering av prosjektspesifikke krav med kortvisning, avanserte søkefilter og sømløs filhåndtering",
         link: `/prosjekt-krav-workspace`,
         icon: Briefcase,
-        color: "from-red-500 to-red-600",
+        iconBg: "bg-red-100",
+        iconColor: "text-red-600",
         available: true, // Now implemented
       },
       {
@@ -129,7 +133,8 @@ export default function ProjectLanding() {
         desc: "Modern håndtering av prosjektspesifikke tiltak med kortvisning, avanserte søkefilter og sømløs filhåndtering",
         link: `/prosjekt-tiltak-workspace`,
         icon: Briefcase,
-        color: "from-green-500 to-green-600",
+        iconBg: "bg-green-100",
+        iconColor: "text-green-600",
         available: true, // Now implemented
       },
       {
@@ -137,179 +142,230 @@ export default function ProjectLanding() {
         desc: "Unified view av prosjektspesifikke krav og tiltak med hierarkiske forhold og kryssreferanser",
         link: `/prosjekt-krav-tiltak-combined`,
         icon: Briefcase,
-        color: "from-violet-500 to-purple-600",
+        iconBg: "bg-purple-100",
+        iconColor: "text-purple-600",
         available: true, // Now implemented
       },
     ];
 
     const handleImportObligatoryRequirements = () => {
-      // Mockup function - not yet implemented
-      alert("Importer obligatoriske krav - ikke implementert ennå");
+      setShowImportWizard(true);
     };
+
+    const handleImportComplete = () => {
+      // Navigate to the combined view after successful import
+      navigate('/prosjekt-krav-tiltak-combined');
+    };
+
+    // Check if import has been completed
+    const importMetadata = project?.prosjektJson?.importMetadata;
+    const hasImported = importMetadata?.completed === true;
 
     // Individual Project View
     return (
-      <div className="bg-background-primary min-h-screen">
-        {/* Hero section */}
-        <section className="bg-primary-900 text-white">
-          <div className="max-w-screen-xl mx-auto px-4 py-12 sm:px-6 md:px-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center mb-4">
-                  <Link to="/" className="inline-flex items-center text-primary-200 hover:text-white transition-colors mr-4">
-                    <ArrowLeft size={20} className="mr-2" />
-                    Tilbake til prosjekter
-                  </Link>
-                </div>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{project.navn || "Uten navn"}</h1>
-                    <p className="text-primary-100 mt-2">Prosjektnummer: {project.prosjektnummer || "N/A"}</p>
-                    {project.beskrivelse && (
-                      <div className="mt-2 max-w-2xl">
-                        <p className="text-primary-200">{project.beskrivelseSnippet || 
-                          (typeof project.beskrivelse === 'string' ? 
-                            project.beskrivelse.replace(/<[^>]*>/g, '').substring(0, 100) + '...' : 
-                            'Se fullstendig beskrivelse')
-                        }</p>
-                      </div>
-                    )}
-                  </div>
-                  {project.beskrivelse && (
-                    <button
-                      onClick={() => setShowFullDescription(true)}
-                      className="ml-4 inline-flex items-center gap-2 px-3 py-2 bg-primary-800 hover:bg-primary-700 text-white rounded-lg transition-colors text-sm font-medium"
-                    >
-                      <FileText size={16} />
-                      Vis fullstendig beskrivelse
-                    </button>
+      <div className="bg-white min-h-screen">
+        {/* Vibrant header section */}
+        <section className="border-b border-sky-700 bg-sky-600">
+          <div className="max-w-6xl mx-auto px-6 py-8 sm:px-8">
+            {/* Back link */}
+            <Link to="/" className="inline-flex items-center text-sky-100 hover:text-white transition-colors text-sm mb-6">
+              <ArrowLeft size={16} className="mr-2" />
+              Tilbake til prosjekter
+            </Link>
+
+            {/* Project header */}
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h1 className="text-3xl font-medium text-white tracking-tight">{project.navn || "Uten navn"}</h1>
+                <p className="text-sky-100 mt-2 text-sm">Prosjektnummer: {project.prosjektnummer || "N/A"}</p>
+
+                {/* Meta information */}
+                <div className="flex items-center gap-6 mt-4 text-sm text-sky-50">
+                  {project.enhet && (
+                    <div className="flex items-center gap-2">
+                      <Building2 size={16} className="text-sky-200" />
+                      <span>{project.enhet.navn}</span>
+                    </div>
                   )}
+                  <div className="flex items-center gap-2">
+                    <Calendar size={16} className="text-sky-200" />
+                    <span>{project.createdAt ? new Date(project.createdAt).toLocaleDateString("nb-NO") : "N/A"}</span>
+                  </div>
                 </div>
               </div>
-              <div className="hidden md:flex items-center space-x-4 text-primary-200">
-                {project.enhet && (
-                  <div className="flex items-center">
-                    <Building2 size={16} className="mr-2" />
-                    <span>{project.enhet.navn}</span>
-                  </div>
+
+              {/* Action buttons - vibrant and crisp */}
+              <div className="flex flex-col gap-2 ml-8">
+                {project.beskrivelse && (
+                  <button
+                    onClick={() => setShowFullDescription(true)}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 border border-white/20 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors text-sm font-normal backdrop-blur-sm"
+                  >
+                    <FileText size={16} />
+                    Vis beskrivelse
+                  </button>
                 )}
-                <div className="flex items-center">
-                  <Calendar size={16} className="mr-2" />
-                  <span>{project.createdAt ? new Date(project.createdAt).toLocaleDateString("nb-NO") : "N/A"}</span>
-                </div>
+                {hasImported && (
+                  <button
+                    onClick={handleImportObligatoryRequirements}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-sky-50 text-sky-600 rounded-lg transition-colors text-sm font-normal shadow-sm"
+                  >
+                    <Download size={16} />
+                    Re-importer krav
+                  </button>
+                )}
               </div>
             </div>
           </div>
         </section>
 
-        {/* Full Description Modal */}
+        {/* Clean modal */}
         {showFullDescription && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          <div
+            className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-6 z-50"
             onClick={() => setShowFullDescription(false)}
           >
-            <div 
-              className="bg-white rounded-xl max-w-4xl w-full max-h-[80vh] overflow-hidden shadow-2xl"
+            <div
+              className="bg-white rounded-lg max-w-3xl w-full max-h-[85vh] overflow-hidden shadow-lg"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                <h2 className="text-xl font-bold text-gray-900">Prosjektbeskrivelse</h2>
+              <div className="flex items-center justify-between px-8 py-6 border-b border-gray-200">
+                <h2 className="text-xl font-medium text-gray-900">Prosjektinformasjon</h2>
                 <button
                   onClick={() => setShowFullDescription(false)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  <X size={20} className="text-gray-500" />
+                  <X size={20} className="text-gray-400" />
                 </button>
               </div>
-              <div className="p-6 overflow-y-auto max-h-[calc(80vh-120px)]">
-                <div className="prose max-w-none">
-                  <ExpandableRichText 
-                    content={project.beskrivelse} 
-                    maxLength={Infinity}
-                    className="text-gray-900"
-                  />
+              <div className="px-8 py-6 overflow-y-auto max-h-[calc(85vh-88px)] space-y-8">
+                {/* Project Description */}
+                <div>
+                  <h3 className="text-base font-medium text-gray-900 mb-3">Beskrivelse</h3>
+                  <div className="prose prose-sm max-w-none text-gray-700">
+                    <ExpandableRichText
+                      content={project.beskrivelse}
+                      maxLength={Infinity}
+                      className="text-gray-700"
+                    />
+                  </div>
                 </div>
+
+                {/* Import Section in Modal (only show if imported) */}
+                {hasImported && (
+                  <div className="border-t border-gray-200 pt-8">
+                    <h3 className="text-base font-medium text-gray-900 mb-3">Import av krav</h3>
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-5">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="text-sm font-medium text-green-900 flex items-center mb-2">
+                            <Download size={16} className="mr-2" />
+                            Krav importert
+                          </h4>
+                          <p className="text-green-700 text-sm mb-3">
+                            Obligatoriske krav har blitt importert til prosjektet.
+                          </p>
+                          <div className="text-xs text-green-600 space-y-1">
+                            <p>Importert: {new Date(importMetadata.timestamp).toLocaleString('nb-NO')}</p>
+                            {importMetadata.importedCounts && (
+                              <p>
+                                {importMetadata.importedCounts.krav} krav og {importMetadata.importedCounts.tiltak || 0} tiltak importert
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleImportObligatoryRequirements();
+                          }}
+                          className="ml-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors text-sm font-normal whitespace-nowrap"
+                        >
+                          <Download size={14} className="inline mr-1" />
+                          Re-importer
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         )}
 
         {/* Main content */}
-        <section className="max-w-screen-xl mx-auto px-4 py-12 sm:px-6 md:px-8">
-          {/* Import section */}
-          <div className="mb-8">
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
-              <h2 className="text-lg font-bold text-blue-900 mb-2 flex items-center">
-                <Download size={20} className="mr-2" />
-                Importer obligatoriske krav
-              </h2>
-              <p className="text-blue-700 mb-4">
-                Importer alle obligatoriske generelle krav og tiltak til dette prosjektet. Dette vil kopiere relevante krav som må følges
-                opp i prosjektet.
-              </p>
-              <button
-                onClick={handleImportObligatoryRequirements}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors font-medium"
-              >
-                <Download size={16} className="inline mr-2" />
-                Importer obligatoriske krav
-              </button>
+        <section className="max-w-6xl mx-auto px-6 py-16 sm:px-8">
+          {/* Import section - only show if not imported yet */}
+          {!hasImported && (
+            <div className="mb-16">
+              <div className="border border-sky-200 rounded-lg p-6 bg-sky-50/50">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h2 className="text-base font-medium mb-2 flex items-center text-gray-900">
+                      <Download size={18} className="mr-2 text-sky-600" />
+                      Importer obligatoriske krav
+                    </h2>
+                    <p className="text-gray-600 text-sm leading-relaxed">
+                      Importer alle obligatoriske generelle krav og tiltak til dette prosjektet. Dette vil kopiere relevante krav som må følges opp i prosjektet.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center ml-6">
+                    <button
+                      onClick={handleImportObligatoryRequirements}
+                      className="bg-sky-600 hover:bg-sky-700 text-white px-5 py-2.5 rounded-lg transition-colors text-sm font-normal whitespace-nowrap"
+                    >
+                      <Download size={16} className="inline mr-2" />
+                      Importer krav
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Project modules */}
           <div>
-            <h2 className="text-2xl font-bold text-text-primary mb-6">Prosjektmoduler</h2>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <h2 className="text-lg font-medium text-gray-900 mb-8">Moduler</h2>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {projectCards.map((card) => {
                 const IconComponent = card.icon;
                 const isAvailable = card.available;
 
                 if (isAvailable) {
                   return (
-                    <Link 
-                      key={card.title} 
-                      to={card.link} 
+                    <Link
+                      key={card.title}
+                      to={card.link}
                       state={{ returnTo: location.pathname }}
-                      className="group block transform transition-all duration-200 hover:scale-105"
+                      className="group block"
                     >
-                      <div className="card-base card-hover rounded-xl p-6 h-full transition-all duration-200 group-hover:shadow-xl">
-                        <div className={`inline-flex p-3 rounded-xl bg-gradient-to-r ${card.color} text-white mb-4 shadow-md`}>
-                          <IconComponent size={24} />
+                      <div className="bg-white border-2 border-gray-200 rounded-lg p-6 h-full hover:border-sky-300 hover:shadow-md transition-all">
+                        <div className={`inline-flex p-2.5 rounded-lg ${card.iconBg} ${card.iconColor} mb-4`}>
+                          <IconComponent size={20} />
                         </div>
-                        <h3 className="text-lg font-bold text-text-primary mb-2 group-hover:text-primary-700 transition-colors">
+                        <h3 className="text-base font-medium text-gray-900 mb-2">
                           {card.title}
                         </h3>
-                        <p className="text-text-secondary text-sm leading-relaxed">{card.desc}</p>
-                        <div className="flex items-center mt-4 text-primary-600 font-medium text-sm">
-                          <span>Åpne modul</span>
-                          <svg
-                            className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
+                        <p className="text-gray-600 text-sm leading-relaxed">{card.desc}</p>
+                        <div className="flex items-center mt-4 text-sky-600 text-sm font-medium">
+                          <span>Åpne</span>
+                          <ArrowRight size={16} className="ml-1 transition-transform group-hover:translate-x-0.5" />
                         </div>
                       </div>
                     </Link>
                   );
                 } else {
-                  // Not available - show as disabled mockup
                   return (
-                    <div key={card.title} className="block cursor-not-allowed opacity-60">
-                      <div className="card-base rounded-xl p-6 h-full bg-gray-50 border-dashed border-2 border-gray-300">
-                        <div className="inline-flex p-3 rounded-xl bg-gray-400 text-white mb-4">
-                          <IconComponent size={24} />
+                    <div key={card.title} className="block cursor-not-allowed">
+                      <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-6 h-full">
+                        <div className="inline-flex p-2.5 rounded-lg bg-gray-200 text-gray-400 mb-4">
+                          <IconComponent size={20} />
                         </div>
-                        <h3 className="text-lg font-bold text-gray-600 mb-2">{card.title}</h3>
-                        <p className="text-gray-500 text-sm leading-relaxed mb-4">{card.desc}</p>
-                        <div className="flex items-center text-gray-400 font-medium text-sm">
-                          <span>Kommer snart...</span>
+                        <h3 className="text-base font-medium text-gray-500 mb-2">{card.title}</h3>
+                        <p className="text-gray-400 text-sm leading-relaxed mb-4">{card.desc}</p>
+                        <div className="flex items-center text-gray-400 text-sm">
+                          <span>Kommer snart</span>
                         </div>
                       </div>
                     </div>
@@ -319,6 +375,14 @@ export default function ProjectLanding() {
             </div>
           </div>
         </section>
+
+        {/* Import Wizard */}
+        <ImportKravWizard
+          open={showImportWizard}
+          onClose={() => setShowImportWizard(false)}
+          projectId={project?.id}
+          onImportComplete={handleImportComplete}
+        />
       </div>
     );
   }
@@ -431,7 +495,7 @@ export default function ProjectLanding() {
           {/* Recent projects */}
           <div className="md:col-span-2 lg:col-span-1">
             <h2 className="text-xl font-semibold text-text-primary mb-4">Sist brukte prosjekter</h2>
-            <div className="space-y-4">
+            <div className="space-y-4 max-h-[400px] overflow-y-auto">
               {projects.slice(0, 3).map((project) => (
                 <div
                   key={project.id}
@@ -446,7 +510,7 @@ export default function ProjectLanding() {
                     </div>
                     <button
                       onClick={() => handleProjectOpen(project)}
-                      className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 transition-colors ml-4"
+                      className="flex items-center gap-1 text-sm text-sky-600 hover:text-sky-700 transition-colors ml-4"
                     >
                       <span>Åpne</span>
                       <ArrowRight size={14} />
@@ -472,7 +536,7 @@ export default function ProjectLanding() {
               <FolderOpen size={16} />
               <span>Arkiverte</span>
             </button>
-            <button className="inline-flex items-center gap-1 bg-blue-500 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-blue-600 transition-colors">
+            <button className="inline-flex items-center gap-1 bg-sky-500 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-sky-600 transition-colors">
               <Plus size={16} />
               <span>Nytt prosjekt</span>
             </button>
@@ -512,7 +576,7 @@ export default function ProjectLanding() {
                     {new Date(project.updatedAt).toLocaleDateString("nb-NO")}
                   </td>
                   <td className="whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                    <button onClick={() => handleProjectOpen(project)} className="text-blue-600 hover:text-blue-900 transition-colors">
+                    <button onClick={() => handleProjectOpen(project)} className="text-sky-600 hover:text-sky-900 transition-colors">
                       Åpne<span className="sr-only">, {project.navn}</span>
                     </button>
                   </td>

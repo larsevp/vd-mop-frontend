@@ -150,3 +150,64 @@ export const getProsjektKravById = (id, config = {}) => {
   const updatedConfig = addProsjektKravFieldExclusion("edit", config);
   return API.get(`/prosjekt-krav/${id}`, updatedConfig);
 };
+
+/**
+ * Copy Krav to ProsjektKrav for a specific project
+ * @param {number} projectId - The project ID
+ * @param {number[]} kravIds - Optional array of specific Krav IDs to copy
+ * @param {object} filters - Optional filters: { obligatorisk, kravpakkeIds, emneIds, statusIds }
+ */
+export const copyKravToProject = (projectId, kravIds = null, filters = null) => {
+  const payload = { projectId };
+
+  if (kravIds && Array.isArray(kravIds) && kravIds.length > 0) {
+    payload.kravIds = kravIds;
+  }
+
+  if (filters) {
+    payload.filters = filters;
+  }
+
+  return API.post("/prosjekt-krav/copy-from-krav", payload);
+};
+
+/**
+ * Get import preview with counts and duplicate detection
+ * @param {number} projectId - The project ID
+ * @param {object} filters - Filters: { obligatorisk, kravpakkeIds, emneIds, statusIds }
+ */
+export const getImportPreview = (projectId, filters) => {
+  return API.post("/prosjekt-krav/import-preview", {
+    projectId,
+    filters
+  });
+};
+
+/**
+ * Check if specific Krav IDs are already copied to project
+ * @param {number} projectId - The project ID
+ * @param {number[]} kravIds - Array of Krav IDs to check
+ */
+export const checkKravDuplicates = (projectId, kravIds) => {
+  return API.post("/prosjekt-krav/check-duplicates", {
+    projectId,
+    kravIds
+  });
+};
+
+/**
+ * Mass copy ProsjektKrav from one project to another
+ * @param {number[]} prosjektKravIds - Array of ProsjektKrav IDs to copy
+ * @param {number} targetProjectId - Target project ID
+ * @param {number} sourceProjectId - Source project ID
+ * @param {boolean} includeRelatedTiltak - Whether to copy related ProsjektTiltak (default: false)
+ */
+export const massKopyProsjektKravToProject = (prosjektKravIds, targetProjectId, sourceProjectId, includeRelatedTiltak = false) => {
+  return API.post("/prosjekt-krav/mass-copy", {
+    prosjektKravIds,
+    targetProjectId,
+    sourceProjectId,
+    includeRelatedTiltak
+  });
+};
+

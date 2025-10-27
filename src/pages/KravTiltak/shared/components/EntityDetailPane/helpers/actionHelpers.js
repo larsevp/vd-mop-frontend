@@ -53,6 +53,16 @@ export const handleSaveAction = async (validateFormData, formData, entity, onSav
       return { success: false, errors: error.response.data.errors };
     }
 
+    // Check if it's a unique constraint violation from the backend
+    if (error?.response?.status === 400 && error?.response?.data?.details) {
+      // Transform backend details format to errors format for form display
+      const errors = error.response.data.details.reduce((acc, detail) => {
+        acc[detail.field] = detail.message;
+        return acc;
+      }, {});
+      return { success: false, errors };
+    }
+
     // Check for other structured error responses
     let errorMessage = error?.response?.data?.message || error?.response?.data?.error || error?.message || "Kunne ikke lagre endringer";
 
