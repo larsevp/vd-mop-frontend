@@ -18,6 +18,9 @@ export const TiptapEditor = ({
 }) => {
   const [toast, setToast] = useState({ show: false, message: "", type: "info" });
   const [isFocused, setIsFocused] = useState(false);
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [linkText, setLinkText] = useState("");
+  const [linkUrl, setLinkUrl] = useState("");
 
   const showToast = useCallback((message, type = "info") => {
     setToast({ show: true, message, type });
@@ -41,16 +44,57 @@ export const TiptapEditor = ({
     uploadUrl,
   });
 
-  // Handle link addition - defined after editor is created
+  // Handle link addition - open modal
   const handleAddLink = useCallback(() => {
     if (!editor) return;
-    const url = window.prompt("Enter full URL (including http:// or https://):");
-    if (url) {
-      // Ensure URL starts with protocol
-      const fullUrl = url.startsWith("http://") || url.startsWith("https://") ? url : `https://${url}`;
-      editor.chain().focus().extendMarkRange("link").setLink({ href: fullUrl }).run();
-    }
+
+    // Check if there's selected text
+    const { from, to } = editor.state.selection;
+    const selectedText = editor.state.doc.textBetween(from, to, '');
+
+    // Pre-fill with selected text if any
+    setLinkText(selectedText || '');
+    setLinkUrl('');
+    setLinkDialogOpen(true);
   }, [editor]);
+
+  // Insert the link when modal is submitted
+  const handleInsertLink = useCallback(() => {
+    if (!editor || !linkText || !linkUrl) return;
+
+    // Ensure URL starts with protocol
+    const fullUrl = linkUrl.startsWith("http://") || linkUrl.startsWith("https://") ? linkUrl : `https://${linkUrl}`;
+
+    // Check if there's selected text
+    const { from, to } = editor.state.selection;
+    const selectedText = editor.state.doc.textBetween(from, to, '');
+
+    // If there was selected text, replace it with the link
+    if (selectedText) {
+      editor.chain().focus().extendMarkRange("link").setLink({ href: fullUrl }).unsetLink().insertContent(' ').run();
+    } else {
+      // Insert new text with link, then add a space after it WITHOUT the link mark
+      editor.chain()
+        .focus()
+        .insertContent([
+          {
+            type: 'text',
+            text: linkText,
+            marks: [{ type: 'link', attrs: { href: fullUrl } }]
+          },
+          {
+            type: 'text',
+            text: ' '
+          }
+        ])
+        .run();
+    }
+
+    // Close modal and reset
+    setLinkDialogOpen(false);
+    setLinkText('');
+    setLinkUrl('');
+  }, [editor, linkText, linkUrl]);
 
   // Sync external value changes
   React.useEffect(() => {
@@ -181,6 +225,69 @@ export const TiptapEditor = ({
       )}
 
       <Toast show={toast.show} message={toast.message} type={toast.type} onClose={hideToast} />
+
+      {/* Link Dialog Modal */}
+      {linkDialogOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+            <h3 className="text-lg font-semibold mb-4">Sett inn lenke</h3>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Lenketekst
+                </label>
+                <input
+                  type="text"
+                  value={linkText}
+                  onChange={(e) => setLinkText(e.target.value)}
+                  placeholder="F.eks: Klikk her"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  URL
+                </label>
+                <input
+                  type="url"
+                  value={linkUrl}
+                  onChange={(e) => setLinkUrl(e.target.value)}
+                  placeholder="https://example.com"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && linkText && linkUrl) {
+                      handleInsertLink();
+                    }
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                onClick={() => {
+                  setLinkDialogOpen(false);
+                  setLinkText('');
+                  setLinkUrl('');
+                }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Avbryt
+              </button>
+              <button
+                onClick={handleInsertLink}
+                disabled={!linkText || !linkUrl}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+              >
+                Sett inn lenke
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
