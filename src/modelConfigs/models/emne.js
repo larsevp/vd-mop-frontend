@@ -21,7 +21,7 @@ export const emne = {
     {
       name: "beskrivelse",
       label: "Beskrivelse",
-      type: "text",
+      type: "textarea",
       required: false,
     },
     {

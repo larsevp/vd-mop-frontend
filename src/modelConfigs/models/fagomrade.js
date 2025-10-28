@@ -21,7 +21,7 @@ export const fagomrade = {
     {
       name: "beskrivelse",
       label: "Beskrivelse",
-      type: "text",
+      type: "textarea",
       required: false,
     },
     {

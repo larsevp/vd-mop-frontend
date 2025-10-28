@@ -20,10 +20,10 @@ export const lov = {
       type: "text", 
       required: true
     },
-    { 
-      name: "beskrivelse", 
-      label: "Beskrivelse", 
-      type: "text", 
+    {
+      name: "beskrivelse",
+      label: "Beskrivelse",
+      type: "textarea",
       required: false
     },
     { 

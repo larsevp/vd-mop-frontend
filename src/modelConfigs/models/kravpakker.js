@@ -28,7 +28,7 @@ export const kravpakker = {
     {
       name: "beskrivelse",
       label: "Beskrivelse",
-      type: "text",
+      type: "textarea",
       required: false,
     },
     {

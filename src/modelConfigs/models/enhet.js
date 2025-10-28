@@ -13,7 +13,7 @@ export const enhet = {
   newButtonLabelText: "Ny organisasjonsenhet",
   fields: [
     { name: "navn", label: "Navn", type: "text", required: true },
-    { name: "beskrivelse", label: "Beskrivelse", type: "text", required: false },
+    { name: "beskrivelse", label: "Beskrivelse", type: "textarea", required: false },
     {
       name: "parentId",
       label: "Parent",
