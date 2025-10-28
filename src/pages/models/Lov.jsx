@@ -8,12 +8,12 @@ export default function Lov() {
   const config = getModelConfig("lover");
 
   function handleEdit(row) {
-    navigate(`/lov/${row.id}/rediger`, {
+    navigate(`/lover/${row.id}/rediger`, {
       state: { modelType: "lover" },
     });
   }
   function handleNew() {
-    navigate("/lov/ny", {
+    navigate("/lover/ny", {
       state: { modelType: "lover" },
     });
   }
