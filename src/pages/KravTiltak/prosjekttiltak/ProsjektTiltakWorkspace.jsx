@@ -82,13 +82,16 @@ const ProsjektTiltakWorkspace = () => {
   // Create workspace-specific UI hook
   const { useWorkspaceUI } = useMemo(() => createWorkspaceUIHook(useProsjektTiltakUIStore), []);
 
-  // Reset UI state when navigating away from workspace
+  // Reset UI state on mount and when navigating away from workspace
   useEffect(() => {
+    // Reset on mount
+    ui.setSelectionMode('single');
+    ui.clearSelection();
+
     return () => {
+      // Reset on unmount
+      ui.setSelectionMode('single');
       ui.clearSelection();
-      if (ui.selectionMode) {
-        ui.toggleSelectionMode();
-      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty deps - only run on mount/unmount

@@ -1,6 +1,7 @@
 // Generated API endpoints for Tiltak
 import { API } from "@/api";
 import { getPaginatedData } from "@/api/endpoints/common/pagination";
+import { cleanEntityData } from "@/pages/KravTiltak/shared/utils/dataCleaningUtils";
 
 // Field exclusion configuration for Tiltak
 const TILTAK_FIELD_EXCLUSION = {
@@ -56,12 +57,24 @@ export const getTiltakById = (id, config = {}) => {
 };
 
 export const createTiltak = (tiltakData) => {
-  // Strip auto-generated fields that should only be set by backend
-  const { tiltakUID, id, createdAt, updatedAt, createdBy, updatedBy, ...cleanData } = tiltakData;
-  return API.post("/tiltak", cleanData);
+  // Use common data cleaning utility to strip frontend-only fields
+  const cleanData = cleanEntityData(tiltakData);
+
+  // Also strip auto-generated fields that should only be set by backend
+  const { tiltakUID, id, createdAt, updatedAt, createdBy, updatedBy, ...finalData } = cleanData;
+
+  return API.post("/tiltak", finalData);
 };
 
-export const updateTiltak = (id, tiltakData) => API.put(`/tiltak/${id}`, tiltakData);
+export const updateTiltak = (id, tiltakData) => {
+  // Use common data cleaning utility to strip frontend-only fields
+  const cleanData = cleanEntityData(tiltakData);
+
+  // Also strip auto-generated fields that should only be set by backend
+  const { tiltakUID, createdAt, updatedAt, createdBy, updatedBy, ...finalData } = cleanData;
+
+  return API.put(`/tiltak/${id}`, finalData);
+};
 
 export const deleteTiltak = (id) => API.delete(`/tiltak/${id}`);
 
@@ -85,6 +98,31 @@ export const getPaginatedTiltakAll = (page = 1, pageSize = 10, search = "", sort
 export const getPaginatedTiltakGroupedByEmne = (page = 1, pageSize = 10, search = "", sortBy = "", sortOrder = "asc") => {
   const config = addTiltakFieldExclusion("index");
   return getPaginatedData("/tiltak/grouped-by-emne", page, pageSize, search, sortBy, sortOrder, config);
+};
+
+// Generelle Tiltak - independent tiltak (not obligatory, not linked to krav)
+export const getPaginatedGenerelleTiltak = (page = 1, pageSize = 10, search = "", sortBy = "", sortOrder = "asc") => {
+  const config = addTiltakFieldExclusion("index");
+  return getPaginatedData("/tiltak", page, pageSize, search, sortBy, sortOrder, {
+    ...config,
+    params: {
+      ...config.params,
+      excludeObligatory: true,
+      excludeLinkedToKrav: true,
+    },
+  });
+};
+
+export const getPaginatedGenerelleTiltakGroupedByEmne = (page = 1, pageSize = 10, search = "", sortBy = "", sortOrder = "asc") => {
+  const config = addTiltakFieldExclusion("index");
+  return getPaginatedData("/tiltak/grouped-by-emne", page, pageSize, search, sortBy, sortOrder, {
+    ...config,
+    params: {
+      ...config.params,
+      excludeObligatory: true,
+      excludeLinkedToKrav: true,
+    },
+  });
 };
 
 // Relationship management - Tiltak-Krav

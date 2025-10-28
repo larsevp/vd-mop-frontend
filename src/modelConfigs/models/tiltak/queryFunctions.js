@@ -11,6 +11,8 @@ import {
   getPaginatedTiltak,
   getPaginatedTiltakAll,
   getPaginatedTiltakGroupedByEmne,
+  getPaginatedGenerelleTiltak,
+  getPaginatedGenerelleTiltakGroupedByEmne,
   getTiltakById,
 } from "@/api/endpoints";
 
@@ -19,6 +21,8 @@ export const queryFunctions = {
   queryFn: getPaginatedTiltak,
   queryFnAll: getPaginatedTiltakAll, // Get all fields including rich text content
   queryFnGroupedByEmne: getPaginatedTiltakGroupedByEmne, // Get Tiltak grouped by Emne
+  queryFnGenerelle: getPaginatedGenerelleTiltak, // Get only generelle tiltak (not obligatory, not linked to krav)
+  queryFnGenerelleGroupedByEmne: getPaginatedGenerelleTiltakGroupedByEmne, // Get generelle tiltak grouped by Emne
   getByIdFn: getTiltakById,
   createFn: createTiltak,
   updateFn: updateTiltak,

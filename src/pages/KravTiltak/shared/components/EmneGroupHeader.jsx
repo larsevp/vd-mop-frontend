@@ -16,7 +16,8 @@ const EmneGroupHeader = ({
   itemCount = 0,
   entityType,
   subtitle,
-  viewMode = 'split' // 'cards' or 'split'
+  viewMode = 'split', // 'cards' or 'split'
+  viewOptions = {} // Accept viewOptions for TOC mode detection
 }) => {
   const emne = groupData?.group?.emne || groupData?.emne;
 
@@ -24,18 +25,52 @@ const EmneGroupHeader = ({
   const typeCounts = groupData?._typeCounts;
   const isCombinedView = entityType?.includes('combined');
   const isCardsMode = viewMode === 'cards';
+  const isTOCMode = viewOptions?.isTOCMode; // Compact mode for table of contents
 
   return (
     <div
-      className={`sticky top-0 bg-white cursor-pointer transition-colors z-10 ${
-        isCardsMode
+      className={`sticky top-0 bg-white transition-colors z-10 ${
+        isTOCMode
+          ? 'py-2 px-2'
+          : isCardsMode
           ? 'py-5'
-          : 'px-4 py-3 border-b border-gray-100 hover:bg-gray-50'
+          : 'px-4 py-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer'
       }`}
-      onClick={onToggle}
+      onClick={isTOCMode || isCardsMode ? undefined : onToggle}
     >
-      {isCardsMode ? (
-        /* 📰 ARTICLE MODE - Centered with decorative lines */
+      {isTOCMode ? (
+        /* 📑 TOC MODE - Compact with article styling, no counts, not collapsible */
+        <div className="flex items-center gap-2">
+          {/* Left line */}
+          <div className="flex-1 h-px bg-slate-200" />
+
+          {/* Center content */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Emne Icon with Color */}
+            <div
+              className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: emne?.color || "#6b7280" }}
+            >
+              <div className="text-white">
+                {emne?.icon ? (
+                  <DynamicIcon name={emne.icon} size={10} color="white" />
+                ) : (
+                  <FileText size={10} />
+                )}
+              </div>
+            </div>
+
+            {/* Emne Title */}
+            <h3 className="text-xs font-light text-slate-900 uppercase tracking-wider">
+              {emne?.tittel || "Uten emne"}
+            </h3>
+          </div>
+
+          {/* Right line */}
+          <div className="flex-1 h-px bg-slate-200" />
+        </div>
+      ) : isCardsMode ? (
+        /* 📰 ARTICLE MODE - Centered with decorative lines, only chevron clickable */
         <div className="max-w-5xl mx-auto px-8">
           <div className="flex items-center gap-4">
             {/* Left line */}
@@ -43,12 +78,21 @@ const EmneGroupHeader = ({
 
             {/* Center content */}
             <div className="flex items-center gap-3 flex-shrink-0">
-              {/* Collapse/Expand Icon */}
-              {isCollapsed ? (
-                <ChevronRight className="w-4 h-4 text-slate-400" />
-              ) : (
-                <ChevronDown className="w-4 h-4 text-slate-400" />
-              )}
+              {/* Collapse/Expand Icon - only this is clickable */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggle();
+                }}
+                className="cursor-pointer hover:bg-slate-100 rounded p-1 transition-colors"
+                aria-label={isCollapsed ? "Utvid gruppe" : "Skjul gruppe"}
+              >
+                {isCollapsed ? (
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-slate-400" />
+                )}
+              </button>
 
               {/* Emne Icon with Color */}
               <div

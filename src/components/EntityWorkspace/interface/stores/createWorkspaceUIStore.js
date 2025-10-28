@@ -14,9 +14,13 @@ import { devtools } from 'zustand/middleware';
  * Each workspace gets its own isolated instance of the UI state
  *
  * @param {string} workspaceId - Unique identifier for the workspace (e.g., 'krav', 'tiltak', 'krav-tiltak-combined')
+ * @param {Object} options - Optional configuration
+ * @param {string} options.defaultViewMode - Default view mode ('split', 'cards', 'list', 'flow')
  * @returns {Function} Zustand store hook for the specific workspace
  */
-export const createWorkspaceUIStore = (workspaceId) => {
+export const createWorkspaceUIStore = (workspaceId, options = {}) => {
+  const { defaultViewMode = 'split' } = options;
+
   return create(
     devtools(
       (set, get) => ({
@@ -25,6 +29,7 @@ export const createWorkspaceUIStore = (workspaceId) => {
         selectedEntities: new Set(),
         selectedEntitiesMetadata: new Map(), // Map<id, {entityType, renderId}> for combined views
         focusedEntity: null,
+        // Always start in 'single' mode, never persist multi-select mode across sessions
         selectionMode: 'single', // 'single' | 'multi'
 
         // ============ SEARCH & FILTER STATE ============
@@ -43,7 +48,7 @@ export const createWorkspaceUIStore = (workspaceId) => {
         viewMode: (() => {
           // Initialize viewMode from localStorage with workspace-specific key
           const saved = localStorage.getItem(`entityWorkspace-${workspaceId}-viewMode`);
-          return saved && ['split', 'cards', 'list', 'flow'].includes(saved) ? saved : 'split';
+          return saved && ['split', 'cards', 'list', 'flow'].includes(saved) ? saved : defaultViewMode;
         })(),
 
         // ============ EXPANSION STATE ============
@@ -289,10 +294,7 @@ export const createWorkspaceUIStore = (workspaceId) => {
       }),
       {
         name: `workspace-ui-store-${workspaceId}`,
-        serialize: {
-          set: false, // Don't serialize Set objects
-          map: false  // Don't serialize Map objects
-        }
+        enabled: process.env.NODE_ENV !== 'production',
       }
     )
   );

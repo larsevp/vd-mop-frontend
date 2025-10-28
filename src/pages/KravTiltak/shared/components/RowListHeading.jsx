@@ -33,6 +33,8 @@ const RowListHeading = ({
   bulkActions = [],
   children
 }) => {
+  // Extract viewMode from viewOptions to hide multiselect in cards mode
+  const viewMode = viewOptions.viewMode || 'split';
   const [showViewOptions, setShowViewOptions] = useState(false);
 
   const handleViewOptionToggle = (key) => {
@@ -43,9 +45,9 @@ const RowListHeading = ({
   };
 
   return (
-    <div className="flex-shrink-0 border-b border-gray-200 bg-white">
+    <div className="flex-shrink-0 border-b border-gray-200 bg-white h-[60px]">
       {/* Main toolbar - always visible */}
-      <div className="flex items-center justify-between px-3 py-2">
+      <div className="flex items-center justify-between px-3 h-full">
         <div className="flex items-center gap-2">
           <div className="text-xs font-medium text-gray-900">
             {itemCount} {itemCount === 1 ? 'element' : 'elementer'}
@@ -72,78 +74,83 @@ const RowListHeading = ({
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Multi-select toggle button */}
-          <Button
-            variant={selectionMode === 'multi' ? 'default' : 'outline'}
-            size="sm"
-            onClick={onToggleSelectionMode}
-            className="h-8 flex items-center gap-1.5"
-          >
-            {selectionMode === 'multi' ? (
-              <>
-                <CheckSquare size={14} />
-                Avbryt
-              </>
-            ) : (
-              <>
-                <ListChecks size={14} />
-                Velg
-              </>
-            )}
-          </Button>
-
-          {/* View Options */}
-          <div className="relative">
+          {/* Multi-select toggle button - hide in cards/article mode */}
+          {viewMode !== 'cards' && (
             <Button
-              variant="outline"
+              variant={selectionMode === 'multi' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setShowViewOptions(!showViewOptions)}
-              className="flex items-center gap-2"
+              onClick={onToggleSelectionMode}
+              className="h-8 flex items-center gap-1.5"
             >
-              <Settings size={16} />
-              Visning
-              <ChevronDown size={14} className={`transition-transform ${showViewOptions ? "rotate-180" : ""}`} />
+              {selectionMode === 'multi' ? (
+                <>
+                  <CheckSquare size={14} />
+                  Avbryt
+                </>
+              ) : (
+                <>
+                  <ListChecks size={14} />
+                  Velg
+                </>
+              )}
             </Button>
+          )}
 
-            {showViewOptions && (
-              <>
-                <div className="fixed inset-0 z-10" onClick={() => setShowViewOptions(false)} />
-                <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
-                  <div className="p-4">
-                    <h3 className="text-sm font-medium text-gray-900 mb-3">Vis informasjon</h3>
-                    <div className="space-y-2">
-                      {Object.entries(availableViewOptions).map(([key, label]) => (
-                        <div key={key} className="flex items-center justify-between">
-                          <span className="text-sm text-gray-700">{label}</span>
-                          <button
-                            onClick={() => handleViewOptionToggle(key)}
-                            className={`w-10 h-5 rounded-full relative transition-colors ${
-                              viewOptions[key] ? 'bg-blue-500' : 'bg-gray-300'
-                            }`}
-                          >
-                            <div className={`w-4 h-4 bg-white rounded-full shadow-sm absolute top-0.5 transition-transform ${
-                              viewOptions[key] ? 'translate-x-5' : 'translate-x-0.5'
-                            }`} />
-                          </button>
-                        </div>
-                      ))}
+          {/* View Options - hide in cards/article mode */}
+          {viewMode !== 'cards' && (
+            <div className="relative">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowViewOptions(!showViewOptions)}
+                className="flex items-center gap-2"
+              >
+                <Settings size={16} />
+                Visning
+                <ChevronDown size={14} className={`transition-transform ${showViewOptions ? "rotate-180" : ""}`} />
+              </Button>
+
+              {showViewOptions && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setShowViewOptions(false)} />
+                  <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
+                    <div className="p-4">
+                      <h3 className="text-sm font-medium text-gray-900 mb-3">Vis informasjon</h3>
+                      <div className="space-y-2">
+                        {Object.entries(availableViewOptions).map(([key, label]) => (
+                          <div key={key} className="flex items-center justify-between">
+                            <span className="text-sm text-gray-700">{label}</span>
+                            <button
+                              onClick={() => handleViewOptionToggle(key)}
+                              className={`w-10 h-5 rounded-full relative transition-colors ${
+                                viewOptions[key] ? 'bg-blue-500' : 'bg-gray-300'
+                              }`}
+                            >
+                              <div className={`w-4 h-4 bg-white rounded-full shadow-sm absolute top-0.5 transition-transform ${
+                                viewOptions[key] ? 'translate-x-5' : 'translate-x-0.5'
+                              }`} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </>
-            )}
-          </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Multi-select toolbar - always rendered with fixed height to prevent jumps */}
-      <div
-        className={`flex items-center justify-between px-3 border-t py-2 min-h-[44px] transition-colors duration-200 ${
-          selectionMode === 'multi'
-            ? 'bg-blue-50 border-blue-100'
-            : 'bg-white border-gray-200 invisible h-0 py-0 min-h-0 overflow-hidden'
-        }`}
-      >
+      {/* Multi-select toolbar - conditionally rendered to not take up space when hidden */}
+      {viewMode !== 'cards' && (
+        <div
+          className={`flex items-center justify-between px-3 border-t transition-colors duration-200 ${
+            selectionMode === 'multi'
+              ? 'bg-blue-50 border-blue-100 py-2 min-h-[44px]'
+              : 'bg-white border-gray-200 h-0 py-0 overflow-hidden opacity-0'
+          }`}
+        >
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-gray-900 whitespace-nowrap">
             {selectedIds.size} valgt
@@ -174,6 +181,7 @@ const RowListHeading = ({
           />
         </div>
       </div>
+      )}
     </div>
   );
 };

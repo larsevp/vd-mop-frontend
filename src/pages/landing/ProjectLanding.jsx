@@ -468,7 +468,7 @@ export default function ProjectLanding() {
             <h2 className="text-lg font-semibold text-primary-900 mb-4">Hurtigtilgang</h2>
             <ul className="space-y-3">
               <li>
-                <Link to="/tiltak" className="flex items-center gap-2 text-primary-700 hover:text-primary-800 transition-colors">
+                <Link to="/tiltak-workspace?preset=generelle" className="flex items-center gap-2 text-primary-700 hover:text-primary-800 transition-colors">
                   <Book size={18} />
                   <span>Generelle tiltak</span>
                 </Link>
@@ -508,7 +508,7 @@ export default function ProjectLanding() {
           {/* Recent projects */}
           <div className="md:col-span-2 lg:col-span-1">
             <h2 className="text-xl font-semibold text-text-primary mb-4">Sist brukte prosjekter</h2>
-            <div className="space-y-4 max-h-[400px] overflow-y-auto">
+            <div className="space-y-4 max-h-[360px] overflow-y-auto pr-2">
               {projects.slice(0, 3).map((project) => (
                 <div
                   key={project.id}

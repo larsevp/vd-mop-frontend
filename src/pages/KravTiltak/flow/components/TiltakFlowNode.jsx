@@ -40,7 +40,19 @@ const TiltakFlowNode = ({ data, selected }) => {
             )}
 
             {/* Description snippet */}
-            {entity?.beskrivelseSnippet && <p className="text-xs text-gray-600 line-clamp-2">{entity.beskrivelseSnippet}</p>}
+            {entity?.beskrivelseSnippet && (
+              <div className="mb-2">
+                <p className="text-xs text-gray-600 line-clamp-2">{entity.beskrivelseSnippet}</p>
+              </div>
+            )}
+
+            {/* Implementation snippet */}
+            {entity?.implementasjonSnippet && (
+              <div className="text-xs text-gray-600 bg-gray-50 rounded px-2 py-1 border-l-2 border-blue-300">
+                <span className="font-medium text-gray-700">Implementasjon:</span>
+                <p className="mt-0.5 line-clamp-2">{entity.implementasjonSnippet}</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

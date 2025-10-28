@@ -27,18 +27,21 @@ export const fields = [
     type: "richtext",
     required: true,
     placeholder: "Beskriv kravet i detalj...",
-    field_info: "Detaljert beskrivelse av kravet med full formatering, lenker, tabeller og bilder. Lim inn bilder direkte fra utklippstavlen.",
+    field_info:
+      "Detaljert beskrivelse av kravet med full formatering, lenker, tabeller og bilder. Lim inn bilder direkte fra utklippstavlen.",
     hiddenIndex: true,
   },
   {
     name: "informasjon",
-    label: "Informasjon",
+    label: "Utvidet beskrivelse",
     type: "richtext",
     required: false,
     placeholder: "Legg til detaljert informasjon om kravet...",
     field_info: "Rik tekst med støtte for formatering, lenker, tabeller og bilder. Lim inn bilder direkte fra utklippstavlen.",
     suppressIndex: true, // Don't include this rich text field in index/list views
     hiddenIndex: true,
+    collapsibleInView: true, // Show snippet with expand button in view mode
+    snippetField: "informasjonSnippet", // Field to use for collapsed snippet
   },
   {
     name: "beskrivelseSnippet",

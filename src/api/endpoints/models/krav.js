@@ -1,6 +1,7 @@
 // Generated API endpoints for Krav
 import { API } from "@/api";
 import { getPaginatedData } from "@/api/endpoints/common/pagination";
+import { cleanEntityData } from "@/pages/KravTiltak/shared/utils/dataCleaningUtils";
 
 // Field exclusion configuration for Krav
 const KRAV_FIELD_EXCLUSION = {
@@ -48,12 +49,24 @@ export const getKrav = (config = {}) => {
 };
 export const getKravSimple = () => API.get("/krav/simple", addKravFieldExclusion("simple"));
 export const createKrav = (kravData) => {
-  // Strip auto-generated fields that should only be set by backend
-  const { kravUID, id, createdAt, updatedAt, createdBy, updatedBy, ...cleanData } = kravData;
-  return API.post("krav", cleanData);
+  // Use common data cleaning utility to strip frontend-only fields
+  const cleanData = cleanEntityData(kravData);
+
+  // Also strip auto-generated fields that should only be set by backend
+  const { kravUID, id, createdAt, updatedAt, createdBy, updatedBy, ...finalData } = cleanData;
+
+  return API.post("krav", finalData);
 };
 
-export const updateKrav = (id, kravData) => API.put(`krav/${id}`, kravData);
+export const updateKrav = (id, kravData) => {
+  // Use common data cleaning utility to strip frontend-only fields
+  const cleanData = cleanEntityData(kravData);
+
+  // Also strip auto-generated fields that should only be set by backend
+  const { kravUID, createdAt, updatedAt, createdBy, updatedBy, ...finalData } = cleanData;
+
+  return API.put(`krav/${id}`, finalData);
+};
 
 export const updateKravMerknad = (kravId, merknader) => API.patch(`krav/${kravId}/merknad`, { merknader });
 

@@ -89,6 +89,7 @@ const newProsjektKravWorkspaceConfig = {
       defaultExpanded: true,
       layout: [
         { field: "beskrivelse" }, // 1. Description (full-width)
+        { field: "informasjon" }, // 3. Information (full-width)
       ],
     },
     kravinformasjon: {
@@ -109,7 +110,6 @@ const newProsjektKravWorkspaceConfig = {
       defaultExpanded: false,
       layout: [
         { field: "merknader" }, // 4. Notes (full-width)
-        { field: "informasjon" }, // 3. Information (full-width)
       ],
     },
     status: {

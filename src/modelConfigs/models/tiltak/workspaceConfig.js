@@ -28,7 +28,7 @@ const newTiltakWorkspaceConfig = {
 
     // Article View Configuration (Cards Mode)
     articleView: {
-      mainContentFields: ["beskrivelse", "informasjon"], // Rich text fields shown in article body
+      mainContentFields: ["beskrivelse", "implementasjon", "informasjon"], // Rich text fields shown in article body
       merknadField: "merknad", // Note field (tiltak uses 'merknad', not 'merknader')
       statusFields: ["vurderingId", "statusId", "prioritet", "obligatorisk"], // Status metadata
     },

@@ -31,14 +31,20 @@ const extensions = [
   Heading.configure({ levels: [1, 2, 3] }),
 ];
 
-export const ExpandableRichText = ({ content, maxLength = 100, className = "" }) => {
+export const ExpandableRichText = ({
+  content,
+  maxLength = 100,
+  className = "",
+  snippet = null, // Optional snippet text for collapsed state
+  collapsible = false // If true, always start collapsed with expand button
+}) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  
-  
+
+
   // Handle empty, whitespace-only, or minimal content
-  if (!content || 
-      content === "" || 
-      content === "<p></p>" || 
+  if (!content ||
+      content === "" ||
+      content === "<p></p>" ||
       content === "<div></div>" ||
       /^<p[^>]*>\s*<\/p>$/.test(content) || // Empty paragraph with classes
       (typeof content === 'string' && content.replace(/<[^>]*>/g, '').trim() === "")) {
@@ -149,11 +155,15 @@ export const ExpandableRichText = ({ content, maxLength = 100, className = "" })
   // Strip HTML tags and get plain text for length calculation
   const plainText = htmlContent.replace(/<[^>]*>/g, '').trim();
   const needsTruncation = plainText.length > maxLength;
-  
-  if (!needsTruncation) {
+
+  // If collapsible is explicitly true, always show expand/collapse button
+  // Otherwise, only show if content needs truncation
+  const shouldShowToggle = collapsible || needsTruncation;
+
+  if (!shouldShowToggle) {
     if (needsTiptapDisplay) {
       return (
-        <TiptapDisplay 
+        <TiptapDisplay
           content={content}
           className={className}
           basic={false}
@@ -161,7 +171,7 @@ export const ExpandableRichText = ({ content, maxLength = 100, className = "" })
       );
     }
     return (
-      <div 
+      <div
         className={cn("tiptap-content", className)}
         dangerouslySetInnerHTML={{ __html: htmlContent }}
       />
@@ -169,57 +179,58 @@ export const ExpandableRichText = ({ content, maxLength = 100, className = "" })
   }
   
   return (
-    <div className={cn("space-y-2", className)}>
-      {/* Truncated/Full content - clickable to expand */}
-      <div 
-        className={`text-foreground ${!isExpanded ? 'cursor-pointer hover:bg-gray-50 rounded p-1 -m-1 transition-colors' : ''}`}
-        onClick={(e) => {
-          if (!isExpanded) {
-            e.stopPropagation(); // Prevent row click events
-            setIsExpanded(true);
-          }
-        }}
-      >
+    <div className={cn(className)}>
+      {/* Content area */}
+      <div className="text-foreground">
         {isExpanded ? (
-          needsTiptapDisplay ? (
-            <TiptapDisplay 
-              content={content}
-              className=""
-              basic={false}
-            />
-          ) : (
-            <div 
-              className="tiptap-content"
-              dangerouslySetInnerHTML={{ __html: htmlContent }} 
-            />
-          )
+          // Expanded: Show full content
+          <>
+            {needsTiptapDisplay ? (
+              <TiptapDisplay
+                key={`expanded-${isExpanded}`}
+                content={content}
+                className=""
+                basic={false}
+              />
+            ) : (
+              <div
+                className="tiptap-content"
+                dangerouslySetInnerHTML={{ __html: htmlContent }}
+              />
+            )}
+
+            {/* Collapse button - placed after content */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded(false);
+              }}
+              className="inline-flex items-center gap-1 mt-2 px-2 py-1 -mx-2 -my-1 rounded text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-all"
+            >
+              <ChevronUp size={12} />
+              Vis mindre
+            </button>
+          </>
         ) : (
-          <span>
-            {plainText.substring(0, maxLength)}...
-          </span>
+          // Collapsed: Show snippet with trailing dots and inline expand button
+          <div className="flex items-baseline gap-1 flex-wrap">
+            <span className="text-slate-700">
+              {snippet || `${plainText.substring(0, maxLength)}`}
+              {!snippet?.endsWith('...') && !snippet?.endsWith('.') && <span className="text-slate-400">...</span>}
+            </span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded(true);
+              }}
+              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-all whitespace-nowrap"
+            >
+              <ChevronDown size={12} />
+              vis mer
+            </button>
+          </div>
         )}
       </div>
-      
-      {/* Toggle button - more clickable area */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation(); // Prevent row click events
-          setIsExpanded(!isExpanded);
-        }}
-        className="inline-flex items-center gap-1 px-2 py-1 -mx-2 -my-1 rounded text-xs text-primary hover:text-primary/80 hover:bg-primary/5 transition-all"
-      >
-        {isExpanded ? (
-          <>
-            <ChevronUp size={12} />
-            Vis mindre
-          </>
-        ) : (
-          <>
-            <ChevronDown size={12} />
-            Vis mer
-          </>
-        )}
-      </button>
     </div>
   );
 };

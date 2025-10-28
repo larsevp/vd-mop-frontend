@@ -113,6 +113,18 @@ export const BASIC_DISPLAY_TYPES = {
     }
 
     if (context.format === "REACT") {
+      // Check if field should be collapsible in view mode (DETAIL context)
+      const isCollapsibleInView = field.collapsibleInView && context.source === "DETAIL";
+
+      if (isCollapsibleInView && field.snippetField && row[field.snippetField]) {
+        // Show snippet with expand button in DETAIL view
+        return <ExpandableRichText
+          content={value}
+          snippet={row[field.snippetField]}
+          collapsible={true}
+        />;
+      }
+
       // Use ExpandableRichText for React display, but don't collapse in detail views
       const maxLength = context.source === "DETAIL" ? Infinity : 100;
 

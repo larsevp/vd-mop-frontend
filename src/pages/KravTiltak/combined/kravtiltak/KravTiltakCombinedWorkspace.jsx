@@ -46,13 +46,16 @@ const KravTiltakCombinedWorkspace = () => {
   // Create workspace-specific UI hook
   const { useWorkspaceUI } = useMemo(() => createWorkspaceUIHook(useKravTiltakCombinedUIStore), []);
 
-  // Reset UI state when navigating away from workspace
+  // Reset selection mode on mount
   useEffect(() => {
+    // Force reset to single mode and clear any selected entities
+    ui.setSelectionMode('single');
+    ui.clearSelection();
+
+    // Cleanup on unmount
     return () => {
+      ui.setSelectionMode('single');
       ui.clearSelection();
-      if (ui.selectionMode) {
-        ui.toggleSelectionMode();
-      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty deps - only run on mount/unmount

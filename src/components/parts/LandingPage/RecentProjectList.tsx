@@ -3,11 +3,12 @@
  */
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Heading, CardWrapper } from "@/components/ui";
+import { Clock } from "lucide-react";
 import LastVisitedProjectsList from "@/components/ui/projects/LastVisitedProjectsList";
 import { useRecentProjectsStore } from "@/stores/recentProjectsStore";
 import { useUserStore, useProjectStore } from "@/stores/userStore";
 import { getProsjektById } from "@/api/endpoints";
+import ScrollableContainer from "@/components/ui/layout/scrollable-container";
 
 interface RecentProjectListProps {
   // No longer need items prop as we get data from the hook
@@ -53,22 +54,26 @@ const RecentProjectList = (): JSX.Element => {
   };
 
   return (
-    <CardWrapper>
-      <Heading level={6} className="mb-4">
-        Sist brukte prosjekter
-      </Heading>
-      <div className="p-2">
+    <div className="bg-white border-2 border-gray-200 rounded-lg p-6 hover:border-sky-300 hover:shadow-md transition-all h-full">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="inline-flex p-2.5 rounded-lg bg-blue-100 text-blue-600">
+          <Clock size={20} />
+        </div>
+        <h2 className="text-base font-medium text-gray-900">Sist brukte prosjekter</h2>
+      </div>
+
+      <ScrollableContainer maxHeight="105px" fadeColor="from-white" dependencies={[recentProjects.length]}>
         <LastVisitedProjectsList
           onProjectSelect={handleProjectSelect}
-          variant="landing"
-          limit={5}
+          variant="menu"
+          limit={10}
           showCurrentFirst={false}
           projects={recentProjects}
           isLoading={isLoading}
           hasProjects={recentProjects.length > 0}
         />
-      </div>
-    </CardWrapper>
+      </ScrollableContainer>
+    </div>
   );
 };
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Eye, Edit, Trash2 } from 'lucide-react';
+import { Eye, Edit, Trash2, Copy } from 'lucide-react';
 import { DisplayValueResolver } from "@/components/tableComponents/displayValues/DisplayValueResolver.jsx";
 
 // Import helpers
@@ -41,6 +41,8 @@ const EntityCard = ({
   selectionMode = 'single', // 'single' | 'multi'
   isItemSelected = false, // Is this specific item selected in multi-select mode
   onToggleSelection = () => {}, // Callback for toggling selection
+  // Copy to project handler (for read-only mode)
+  onCopyToProject = null,
   ...restProps
 }) => {
   // Helper to map backend entityType to modelConfig key
@@ -358,6 +360,7 @@ const EntityCard = ({
 
   return (
     <div
+      id={`entity-card-${entity.id}`}
       ref={cardRef}
       data-entity-id={dataEntityId}
       className={`
@@ -383,8 +386,8 @@ const EntityCard = ({
         <article className={`space-y-3 transition-all duration-200 ${isSelected ? (editMode ? 'border-2 border-slate-300 p-6 rounded-xl -mx-8 -my-4' : 'bg-slate-50 p-6 rounded-xl -mx-8 -my-4') : ''}`}>
           {/* Article Header */}
           <header className="space-y-2">
-            {/* References (parent, special) */}
-            {(getSpecialReference(entity) || getParentReference(entity)) && (
+            {/* References (parent, special) - hide in TOC mode */}
+            {!viewOptions.isTOCMode && (getSpecialReference(entity) || getParentReference(entity)) && (
               <div className="flex items-center gap-3 text-xs text-slate-500">
                 {getSpecialReference(entity)}
                 {getParentReference(entity)}
@@ -403,42 +406,63 @@ const EntityCard = ({
               {/* Action buttons - only when selected */}
               {isSelected && (
                 <div className="flex gap-2 ml-4">
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      if (editMode) {
-                        // Exit edit mode by selecting without edit
-                        onClick(entity, 'select');
-                      } else {
-                        // Enter edit mode
-                        onClick(entity, 'editCard');
-                      }
-                    }}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
-                      editMode
-                        ? 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200'
-                        : 'text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200'
-                    }`}
-                    title={editMode ? "Avslutt redigering" : "Rediger (trykk E)"}
-                  >
-                    <Edit className="w-3.5 h-3.5" />
-                    {editMode ? 'Ferdig' : 'Rediger'}
-                  </button>
-                  {/* Hide delete button in multi-select mode */}
-                  {selectionMode === 'single' && (
+                  {/* Read-only mode: Show copy button */}
+                  {(!onFieldSave || editingDisabled) && onCopyToProject && (
                     <button
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        onClick(entity, 'delete');
+                        onCopyToProject(entity);
                       }}
-                      className="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100 border border-red-200 transition-all duration-200 flex items-center gap-1.5"
-                      title="Slett"
+                      className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 flex items-center gap-1.5 text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200"
+                      title="Kopier til prosjekt"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      Slett
+                      <Copy className="w-3.5 h-3.5" />
+                      Kopier til prosjekt
                     </button>
+                  )}
+
+                  {/* Edit mode: Show edit/delete buttons */}
+                  {onFieldSave && !editingDisabled && (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (editMode) {
+                            // Exit edit mode by selecting without edit
+                            onClick(entity, 'select');
+                          } else {
+                            // Enter edit mode
+                            onClick(entity, 'editCard');
+                          }
+                        }}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
+                          editMode
+                            ? 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200'
+                            : 'text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200'
+                        }`}
+                        title={editMode ? "Avslutt redigering" : "Rediger (trykk E)"}
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                        {editMode ? 'Ferdig' : 'Rediger'}
+                      </button>
+                      {/* Hide delete button in multi-select mode */}
+                      {selectionMode === 'single' && (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onClick(entity, 'delete');
+                          }}
+                          className="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100 border border-red-200 transition-all duration-200 flex items-center gap-1.5"
+                          title="Slett"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          Slett
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               )}
@@ -688,11 +712,11 @@ const EntityCard = ({
                       return fieldConfig?.label || 'Type';
                     })()}</span>
                     <div className="flex items-center gap-1.5">
-                      <div
-                        className={`flex-shrink-0 ${entity.obligatorisk ? 'text-sky-600' : 'text-emerald-600'}`}
-                      >
-                        {getIcon("Check", 14)}
-                      </div>
+                      {entity.obligatorisk && (
+                        <div className="flex-shrink-0 text-sky-600">
+                          {getIcon("Check", 14)}
+                        </div>
+                      )}
                       <span className="text-slate-900 text-sm font-medium">
                         {entity.obligatorisk ? "Ja" : "Nei"}
                       </span>
@@ -804,11 +828,11 @@ const EntityCard = ({
           <div className="flex items-center justify-between gap-2 mb-1 min-w-0">
             {/* Left side: References */}
             <div className="flex items-center gap-2 flex-shrink-0 min-w-0 overflow-hidden">
-              {/* Special reference (e.g., generalTiltak) */}
-              {getSpecialReference(entity)}
+              {/* Special reference (e.g., generalTiltak) - hide in TOC mode */}
+              {!viewOptions.isTOCMode && getSpecialReference(entity)}
 
-              {/* Parent reference for child elements */}
-              {getParentReference(entity)}
+              {/* Parent reference for child elements - hide in TOC mode */}
+              {!viewOptions.isTOCMode && getParentReference(entity)}
             </div>
 
             {/* Right side: Status indicators */}
@@ -816,16 +840,6 @@ const EntityCard = ({
               {viewOptions.showVurdering && <StatusIndicator display={getVurderingDisplay(entity)} iconOnly />}
               {viewOptions.showStatus && <StatusIndicator display={getStatusDisplay(entity)} iconOnly />}
               {viewOptions.showPrioritet && <StatusIndicator display={getPrioritetDisplay(entity)} iconOnly />}
-              
-              {/* Obligatorisk indicator */}
-              {viewOptions.showObligatorisk && entity.obligatorisk !== undefined && (
-                <div 
-                  className={`flex-shrink-0 ${entity.obligatorisk ? 'text-blue-600' : 'text-green-600'}`} 
-                  title={entity.obligatorisk ? "Obligatorisk" : "Valgfri"}
-                >
-                  {getIcon("Check", 12)}
-                </div>
-              )}
             </div>
           </div>
 
@@ -861,7 +875,7 @@ const EntityCard = ({
           </div>
 
           {/* Line 3: Description preview (full width, readable) */}
-          {(entity.beskrivelseSnippet || entity.descriptionSnippet) && (
+          {!viewOptions.hideDescriptionSnippet && (entity.beskrivelseSnippet || entity.descriptionSnippet) && (
             <div className={`${shouldUseCompactMode ? 'text-xs' : 'text-sm'} text-slate-600 mb-2`}>
               {truncateText(getDescription())}
             </div>

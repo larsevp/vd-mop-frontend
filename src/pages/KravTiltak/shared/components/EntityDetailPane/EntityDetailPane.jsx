@@ -45,6 +45,15 @@ const EntityDetailPane = ({
   // Configuration
   const modelName = modelConfig?.modelPrintName || entityType;
 
+  // Check if save/delete operations are actually available
+  const canSave = useMemo(() => {
+    return (onSave && typeof onSave === 'function') || (modelConfig?.updateFn || modelConfig?.createFn);
+  }, [onSave, modelConfig?.updateFn, modelConfig?.createFn]);
+
+  const canDelete = useMemo(() => {
+    return (onDelete && typeof onDelete === 'function') || modelConfig?.deleteFn;
+  }, [onDelete, modelConfig?.deleteFn]);
+
   // Detect if this is a linked entity creation (created via "Lag tilknyttet tiltak/prosjekttiltak")
   const isLinkedCreation = useMemo(() =>
     entity?.__sourceKrav && entity?.__isNew,
@@ -588,14 +597,16 @@ const EntityDetailPane = ({
                     {currentEntityType.toLowerCase() === 'krav' ? 'Lag tilknyttet tiltak' : 'Lag tilknyttet prosjekttiltak'}
                   </button>
                 )}
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="inline-flex items-center px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all"
-                >
-                  <Edit className="w-4 h-4 mr-2" />
-                  Rediger
-                </button>
-                {onDelete && (
+                {canSave && (
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="inline-flex items-center px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all"
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Rediger
+                  </button>
+                )}
+                {canDelete && (
                   <button
                     onClick={handleDelete}
                     className="inline-flex items-center px-4 py-2.5 border border-red-200 text-sm font-medium rounded-lg text-red-600 bg-white hover:bg-red-50 hover:border-red-300 transition-all"

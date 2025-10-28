@@ -1,6 +1,7 @@
 // Generated API endpoints for ProsjektKrav
 import { API } from "@/api";
 import { getPaginatedData } from "@/api/endpoints/common/pagination";
+import { cleanEntityData } from "@/pages/KravTiltak/shared/utils/dataCleaningUtils";
 
 // Field exclusion configuration for ProsjektKrav
 const PROSJEKTKRAV_FIELD_EXCLUSION = {
@@ -68,19 +69,30 @@ export const createProsjektKrav = async (prosjektKravData) => {
     throw new Error('Ingen gyldig prosjekt valgt. Vennligst velg et prosjekt før du oppretter krav.');
   }
 
-  // Strip auto-generated fields that should only be set by backend
-  const { kravUID, id, createdAt, updatedAt, createdBy, updatedBy, ...cleanData } = prosjektKravData;
+  // Use common data cleaning utility to strip frontend-only fields
+  const cleanData = cleanEntityData(prosjektKravData);
+
+  // Also strip auto-generated fields that should only be set by backend
+  const { kravUID, id, createdAt, updatedAt, createdBy, updatedBy, ...finalData } = cleanData;
 
   // Include projectId in the data
   const dataWithProjectId = {
-    ...cleanData,
+    ...finalData,
     projectId: Number(projectId)
   };
 
   return API.post("prosjekt-krav", dataWithProjectId);
 };
 
-export const updateProsjektKrav = (id, prosjektKravData) => API.put(`prosjekt-krav/${id}`, prosjektKravData);
+export const updateProsjektKrav = (id, prosjektKravData) => {
+  // Use common data cleaning utility to strip frontend-only fields
+  const cleanData = cleanEntityData(prosjektKravData);
+
+  // Also strip auto-generated fields that should only be set by backend
+  const { kravUID, createdAt, updatedAt, createdBy, updatedBy, ...finalData } = cleanData;
+
+  return API.put(`prosjekt-krav/${id}`, finalData);
+};
 
 export const updateProsjektKravMerknad = (prosjektKravId, merknader) => API.patch(`prosjekt-krav/${prosjektKravId}/merknad`, { merknader });
 

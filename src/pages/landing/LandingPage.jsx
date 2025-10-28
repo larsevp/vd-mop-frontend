@@ -11,6 +11,7 @@ import { RecentProjectList } from "@/components/parts/LandingPage/RecentProjectL
 import HurtigtilgangLandingPage from "@/components/parts/LandingPage/HurtigtilgangLandingPage";
 import { OnboardingModal } from "@/components/parts/LandingPage/OnboardingModal";
 import CreateProjectModal from "@/components/ui/projects/CreateProjectModal";
+import { Plus } from "lucide-react";
 
 export default function LandingPage() {
   const { user } = useUserStore();
@@ -84,13 +85,18 @@ export default function LandingPage() {
           <HurtigtilgangLandingPage />
 
           {/* New project card */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6 hover:border-gray-300 hover:shadow-sm transition-all">
-            <h3 className="text-base font-medium text-gray-900 mb-2">Nytt prosjekt</h3>
+          <div className="bg-white border-2 border-gray-200 rounded-lg p-6 hover:border-sky-300 hover:shadow-md transition-all h-full">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="inline-flex p-2.5 rounded-lg bg-green-100 text-green-600">
+                <Plus size={20} />
+              </div>
+              <h3 className="text-base font-medium text-gray-900">Nytt prosjekt</h3>
+            </div>
             <p className="text-gray-600 text-sm leading-relaxed mb-6">
               Lag et nytt prosjekt og fyll det med tiltak
             </p>
             <button
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg transition-colors text-sm font-normal"
+              className="w-full bg-sky-600 hover:bg-sky-700 text-white px-4 py-2.5 rounded-lg transition-colors text-sm font-normal shadow-sm"
               onClick={() => setShowCreateModal(true)}
             >
               Opprett prosjekt
@@ -104,7 +110,9 @@ export default function LandingPage() {
 
       {/* Project table */}
       <section className="bg-white border-t border-gray-200">
-        <ProjectLandingTable projects={projects} />
+        <div className="max-w-6xl mx-auto px-6 py-0 sm:px-8">
+          <ProjectLandingTable projects={projects} />
+        </div>
       </section>
 
       {/* Create Project Modal */}

@@ -66,14 +66,16 @@ const ProsjektKravTiltakCombinedWorkspace = () => {
   // Create workspace-specific UI hook (follows standard pattern like other workspaces)
   const { useWorkspaceUI } = createWorkspaceUIHook(useProsjektKravTiltakCombinedUIStore);
 
-  // Reset UI state when navigating away from workspace
+  // Reset selection mode on mount
   useEffect(() => {
+    // Force reset to single mode and clear any selected entities
+    ui.setSelectionMode('single');
+    ui.clearSelection();
+
+    // Cleanup on unmount
     return () => {
-      // Clear selection and editing state when component unmounts
+      ui.setSelectionMode('single');
       ui.clearSelection();
-      if (ui.selectionMode === 'multi') {
-        ui.setSelectionMode('single');
-      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty deps - only run on mount/unmount

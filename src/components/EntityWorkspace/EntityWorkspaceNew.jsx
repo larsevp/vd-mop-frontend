@@ -680,7 +680,7 @@ const EntityWorkspaceNew = ({
 
   // Main render - reuse existing EntitySplitView structure
   return (
-    <div className="bg-neutral-50 min-h-screen">
+    <div className="bg-white min-h-screen">
       <div className="max-w-none w-full" style={{ maxWidth: "none" }}>
         {/* Header with search */}
         <div className="bg-white border-b border-neutral-200 px-6 py-4">
@@ -777,30 +777,77 @@ const EntityWorkspaceNew = ({
         {/* Main content - conditional rendering based on viewMode */}
         <div className="flex-1" style={{ height: "calc(100vh - 120px)" }}>
           {ui.viewMode === "cards" ? (
-            /* Cards Mode - Full width grid */
-            <div ref={cardsContainerRef} className="h-full bg-neutral-50 pt-4">
-              <EntityListPane
-                items={entities}
-                entityType={entityType}
-                selectedEntity={ui.selectedEntity}
-                onEntitySelect={(entity, action) => {
-                  handleEntitySelect(entity, action);
-                  // Single click just selects - don't auto-switch to split view
-                }}
-                onEntityDoubleClick={(entity) => {
-                  handleEntitySelect(entity);
-                  // Double-click switches to split view for details
-                  ui.setViewMode("split");
-                }}
-                isLoading={isLoading}
-                adapter={dto}
-                EntityListCard={renderEntityCard}
-                EntityListGroupHeader={renderGroupHeader}
-                EntityListHeading={renderListHeading}
-                viewOptions={cardsViewOptions}
-                onSave={handleSave} // Pass onSave for card editing
-                onBulkDelete={handleBulkDelete} // Pass bulk delete handler
-              />
+            /* Cards Mode - TOC on left + scrollable article list on right */
+            <div className="h-full flex bg-white">
+              {/* Left: Compact TOC using same EntityListPane */}
+              <div className="w-64 border-r border-gray-200 flex-shrink-0 sticky top-0 h-screen flex flex-col bg-white">
+                {/* TOC Header */}
+                <div className="px-3 border-b border-gray-200 bg-gray-50 flex-shrink-0 flex items-center h-[60px]">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-600">
+                    Innhold
+                  </h3>
+                </div>
+                {/* TOC List */}
+                <div className="flex-1 overflow-y-auto">
+                  <EntityListPane
+                    items={entities}
+                    entityType={entityType}
+                    selectedEntity={ui.selectedEntity}
+                    onEntitySelect={(entity) => {
+                      handleEntitySelect(entity);
+                      // Scroll to entity after selection
+                      setTimeout(() => {
+                        const element = document.getElementById(`entity-card-${entity.id}`);
+                        element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }, 100);
+                    }}
+                    isLoading={isLoading}
+                    adapter={dto}
+                    EntityListCard={renderEntityCard}
+                    EntityListGroupHeader={renderGroupHeader}
+                    EntityListHeading={null} // No heading in TOC
+                    viewOptions={{
+                      ...cardsViewOptions,
+                      viewMode: 'list',
+                      compactMode: true, // Extra compact for TOC
+                      isTOCMode: true, // Flag for compact TOC styling
+                      hideDescriptionSnippet: true, // No descriptions in TOC
+                      showHierarchy: false, // No hierarchy indentation
+                      showMerknad: false,
+                      showStatus: false,
+                      showVurdering: false,
+                      showPrioritet: false,
+                      showRelations: false,
+                      showFavorites: false,
+                    }}
+                  />
+                </div>
+              </div>
+              {/* Right: Full article cards */}
+              <div ref={cardsContainerRef} className="flex-1 overflow-y-auto">
+                <EntityListPane
+                  items={entities}
+                  entityType={entityType}
+                  selectedEntity={ui.selectedEntity}
+                  onEntitySelect={(entity, action) => {
+                    handleEntitySelect(entity, action);
+                    // Single click just selects - don't auto-switch to split view
+                  }}
+                  onEntityDoubleClick={(entity) => {
+                    handleEntitySelect(entity);
+                    // Double-click switches to split view for details
+                    ui.setViewMode("split");
+                  }}
+                  isLoading={isLoading}
+                  adapter={dto}
+                  EntityListCard={renderEntityCard}
+                  EntityListGroupHeader={renderGroupHeader}
+                  EntityListHeading={renderListHeading}
+                  viewOptions={cardsViewOptions}
+                  onSave={handleSave} // Pass onSave for card editing
+                  onBulkDelete={handleBulkDelete} // Pass bulk delete handler
+                />
+              </div>
             </div>
           ) : (
             /* Split Mode - EntitySplitView */

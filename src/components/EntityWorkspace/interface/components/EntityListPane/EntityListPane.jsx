@@ -197,6 +197,7 @@ const EntityListPane = ({
           // Multi-select support - pass entities and bulk delete handler
           entities: allItems,
           onBulkDelete: onBulkDelete, // Will be undefined if not provided
+          viewOptions: externalViewOptions, // Pass viewOptions for viewMode detection
         };
         //console.log('EntityListPane: Passing props to EntityListHeading:', headingProps);
         //console.log('EntityListPane: hasGroupedData =', hasGroupedData);
@@ -241,6 +242,7 @@ const EntityListPane = ({
                         onToggle: () => toggleGroupCollapse(groupKey),
                         itemCount: groupItems.length,
                         viewMode: isCardsMode ? 'cards' : 'split',
+                        viewOptions: externalViewOptions, // Pass viewOptions for TOC mode detection
                       })}
 
                     {/* Group items */}
