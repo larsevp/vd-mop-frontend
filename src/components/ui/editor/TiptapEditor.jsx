@@ -44,9 +44,15 @@ export const TiptapEditor = ({
     uploadUrl,
   });
 
-  // Handle link addition - open modal
+  // Handle link addition - open modal or exit link mode if button is active
   const handleAddLink = useCallback(() => {
     if (!editor) return;
+
+    // If cursor is in a link (button is blue), just insert a space to exit link mode
+    if (editor.isActive('link')) {
+      editor.chain().focus().insertContent(' ').run();
+      return;
+    }
 
     // Check if there's selected text
     const { from, to } = editor.state.selection;
@@ -71,7 +77,10 @@ export const TiptapEditor = ({
 
     // If there was selected text, replace it with the link
     if (selectedText) {
-      editor.chain().focus().extendMarkRange("link").setLink({ href: fullUrl }).unsetLink().insertContent(' ').run();
+      // Simply set the link on the selected text
+      editor.chain().focus().setLink({ href: fullUrl }).run();
+      // Then move cursor after the link and insert a space
+      editor.chain().focus().setTextSelection(to).insertContent(' ').run();
     } else {
       // Insert new text with link, then add a space after it WITHOUT the link mark
       editor.chain()

@@ -71,7 +71,9 @@ export const useTiptapEditor = ({
       ...(basic
         ? []
         : [
-            Link.configure({
+            Link.extend({
+              inclusive: false,
+            }).configure({
               openOnClick: false,
               validate: (href) => /^https?:\/\//.test(href),
               HTMLAttributes: {
