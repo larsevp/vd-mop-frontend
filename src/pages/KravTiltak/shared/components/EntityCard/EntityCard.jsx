@@ -712,13 +712,13 @@ const EntityCard = ({
                       return fieldConfig?.label || 'Type';
                     })()}</span>
                     <div className="flex items-center gap-1.5">
-                      {entity.obligatorisk && (
+                      {(formData.obligatorisk ?? entity.obligatorisk) && (
                         <div className="flex-shrink-0 text-sky-600">
                           {getIcon("Check", 14)}
                         </div>
                       )}
                       <span className="text-slate-900 text-sm font-medium">
-                        {entity.obligatorisk ? "Ja" : "Nei"}
+                        {(formData.obligatorisk ?? entity.obligatorisk) ? "Ja" : "Nei"}
                       </span>
                     </div>
                   </div>

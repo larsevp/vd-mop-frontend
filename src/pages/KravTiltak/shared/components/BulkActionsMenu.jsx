@@ -51,18 +51,18 @@ const BulkActionsMenu = ({
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 flex items-center gap-1.5"
-          disabled={disabled}
-        >
-          <MoreHorizontal size={14} />
-          Handlinger
-          <ChevronDown size={14} className={`transition-transform ${isOpen ? "rotate-180" : ""}`} />
-        </Button>
-      </PopoverTrigger>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 flex items-center gap-1.5"
+            disabled={disabled}
+          >
+            <MoreHorizontal size={14} />
+            Handlinger
+            <ChevronDown size={14} className={`transition-transform ${isOpen ? "rotate-180" : ""}`} />
+          </Button>
+        </PopoverTrigger>
       <PopoverContent
         align="end"
         className="w-56 p-0"

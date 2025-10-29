@@ -45,9 +45,9 @@ const RowListHeading = ({
   };
 
   return (
-    <div className="flex-shrink-0 border-b border-gray-200 bg-white h-[60px]">
+    <div className="flex-shrink-0 border-b border-gray-200 bg-white">
       {/* Main toolbar - always visible */}
-      <div className="flex items-center justify-between px-3 h-full">
+      <div className="flex items-center justify-between px-3 h-[60px]">
         <div className="flex items-center gap-2">
           <div className="text-xs font-medium text-gray-900">
             {itemCount} {itemCount === 1 ? 'element' : 'elementer'}
