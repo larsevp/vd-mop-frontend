@@ -32,6 +32,7 @@ export const getVisibleFields = (allFields, fieldOverrides, isEditing, workspace
 
       return {
         ...field,
+        ...detailOverrides, // Apply field overrides (like hideInViewIfEmpty)
         detailSection,
         detailOrder,
         detailRow,

@@ -5,6 +5,14 @@ import { InfoIcon } from "@/components/ui/InfoIcon.jsx";
 import InheritanceIndicator from "./InheritanceIndicator.jsx";
 
 const FieldRenderer = ({ field, value, onChange, error, form, entity, modelName, isEditing, inheritanceInfo }) => {
+  // Check if this field should be hidden in view mode when empty
+  const shouldHideInView = !isEditing && field.hideInViewIfEmpty && (!value || value === '' || (Array.isArray(value) && value.length === 0));
+
+  // Early return if field should be hidden
+  if (shouldHideInView) {
+    return null;
+  }
+
   const Component = FieldResolver.getFieldComponent(field, modelName);
   const componentHandlesOwnLabel = modelName && FieldResolver.getModelSpecificFields(modelName).fieldNames?.[field.name];
 
