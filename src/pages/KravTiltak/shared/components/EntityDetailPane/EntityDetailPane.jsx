@@ -54,11 +54,18 @@ const EntityDetailPane = ({
     return (onDelete && typeof onDelete === 'function') || modelConfig?.deleteFn;
   }, [onDelete, modelConfig?.deleteFn]);
 
-  // Detect if this is a linked entity creation (created via "Lag tilknyttet tiltak/prosjekttiltak")
-  const isLinkedCreation = useMemo(() =>
-    entity?.__sourceKrav && entity?.__isNew,
-    [entity?.__sourceKrav, entity?.__isNew]
-  );
+  // Detect if this is a linked entity creation
+  // - created via "Lag tilknyttet tiltak/prosjekttiltak" (has __sourceKrav)
+  // - created via "Lag underkrav/underprosjektkrav" (has parentId and is new)
+  const isLinkedCreation = useMemo(() => {
+    if (entity?.__sourceKrav && entity?.__isNew) {
+      return true; // Linked tiltak creation
+    }
+    if (entity?.parentId && entity?.__isNew) {
+      return true; // Child krav creation
+    }
+    return false;
+  }, [entity?.__sourceKrav, entity?.parentId, entity?.__isNew]);
 
   // Choose appropriate config: use detailFormLinked for linked creation, otherwise use standard detailForm
   const detailFormConfig = useMemo(() => {
@@ -485,6 +492,31 @@ const EntityDetailPane = ({
     onCreateNew(targetEntityType, initialData);
   }, [onCreateNew, entity, entityType]);
 
+  // Handle creating child krav from parent krav
+  const handleCreateChildKrav = useCallback(() => {
+    if (!onCreateNew || !entity) {
+      return;
+    }
+
+    // Get entity type for badge (from entity or fallback to entityType prop)
+    const currentEntityType = entity?.entityType || entity?.__entityType || entityType;
+    const entityTypeLower = currentEntityType.toLowerCase();
+
+    // Only support creating child krav from krav or prosjektkrav
+    if (entityTypeLower !== 'krav' && entityTypeLower !== 'prosjektkrav') {
+      return;
+    }
+
+    const initialData = {
+      tittel: '', // Empty title for user to fill in
+      parentId: entity.id, // Set parent relationship
+      // Copy project context if this is a prosjektkrav
+      ...(entityTypeLower === 'prosjektkrav' && entity.projectId ? { projectId: entity.projectId } : {})
+    };
+
+    onCreateNew(currentEntityType, initialData);
+  }, [onCreateNew, entity, entityType]);
+
   // IMPORTANT: Early return AFTER all hooks to avoid hook consistency errors
   if (!entity) {
     return (
@@ -584,6 +616,19 @@ const EntityDetailPane = ({
               </>
             ) : (
               <>
+                {/* Show "Lag tilknyttet krav" button for krav/prosjektkrav (but not for child krav with parentId) */}
+                {onCreateNew &&
+                 (currentEntityType.toLowerCase() === 'krav' || currentEntityType.toLowerCase() === 'prosjektkrav') &&
+                 !isNewEntity &&
+                 !entity?.parentId && ( // Only root krav can have children, not child krav themselves
+                  <button
+                    onClick={handleCreateChildKrav}
+                    className="inline-flex items-center px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    {currentEntityType.toLowerCase() === 'krav' ? 'Lag underkrav' : 'Lag underprosjektkrav'}
+                  </button>
+                )}
                 {/* Show "Lag tilknyttet tiltak" button for krav/prosjektkrav ONLY in combined workspace */}
                 {onCreateNew &&
                  (currentEntityType.toLowerCase() === 'krav' || currentEntityType.toLowerCase() === 'prosjektkrav') &&
@@ -591,7 +636,7 @@ const EntityDetailPane = ({
                  entityType.toLowerCase().includes('combined') && (
                   <button
                     onClick={handleCreateConnectedTiltak}
-                    className="inline-flex items-center px-4 py-2.5 border border-slate-300 text-sm font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 hover:border-slate-400 transition-all"
+                    className="inline-flex items-center px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     {currentEntityType.toLowerCase() === 'krav' ? 'Lag tilknyttet tiltak' : 'Lag tilknyttet prosjekttiltak'}

@@ -40,6 +40,77 @@ const newKravWorkspaceConfig = {
       merknadField: "merknader", // Note field
       statusFields: ["vurderingId", "statusId", "prioritet", "obligatorisk"], // Status metadata
     },
+
+    // Configuration for "Lag underkrav" creation flow (child krav with parentId)
+    detailFormLinked: {
+      sections: {
+        info: {
+          title: "Grunnleggende informasjon",
+          defaultExpanded: true,
+          layout: [
+            { field: "tittel" }, // 1. Title (full-width)
+            { field: "beskrivelse" }, // 2. Description (full-width)
+          ],
+        },
+        merinfo: {
+          title: "Tilleggsinformasjon",
+          defaultExpanded: false,
+          layout: [
+            { field: "informasjon" }, // 1. Extended description (full-width)
+            { field: "merknader" }, // 2. Notes (full-width)
+          ],
+        },
+        kravinformasjon: {
+          title: "Kravinformasjon",
+          defaultExpanded: true,
+          layout: [
+            { row: ["kravreferanse", "kravreferansetypeId"] },
+            { row: ["lover", "kravpakker", "obligatorisk"] },
+          ],
+        },
+        references: {
+          title: "Tilknytning",
+          defaultExpanded: true,
+          layout: [
+            { field: "parentId" }, // Show parent krav reference
+          ],
+        },
+        admin: {
+          title: "Administrative detaljer",
+          defaultExpanded: false,
+          layout: [
+            { field: "enhetId" },
+          ],
+        },
+      },
+      workspaceHiddenCreate: [
+        "kravUID",
+        "updatedBy",
+        "createdBy",
+        "versjon",
+        "kravStatus",
+        "givenOrder",
+        "beskrivelseSnippet",
+        "informasjonSnippet",
+        "vurderingId",
+        "statusId",
+        "prioritet",
+        "emneId", // Child inherits emneId from parent
+      ],
+      workspaceHiddenIndex: [
+        "versjon",
+        "updatedBy",
+        "createdBy",
+        "kravStatus",
+        "givenOrder",
+        "kravUID",
+        "beskrivelseSnippet",
+        "informasjonSnippet",
+        "vurderingId",
+        "statusId",
+        "prioritet",
+      ],
+    },
   },
 
   // View mode behavior settings
@@ -92,7 +163,7 @@ const newKravWorkspaceConfig = {
       layout: [
         { field: "tittel" }, // 1. Title (full-width)
         { field: "beskrivelse" }, // 2. Description (full-width)
-        { field: "informasjon" }, // 2. Information (full-width)
+        { field: "informasjon" }, // 3. Information (full-width)
       ],
     },
     kravinformasjon: {

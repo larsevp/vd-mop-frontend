@@ -28,6 +28,77 @@ const newProsjektKravWorkspaceConfig = {
       showObligatorisk: false,
       showRelations: true,
     },
+
+    // Configuration for "Lag underprosjektkrav" creation flow (child krav with parentId)
+    detailFormLinked: {
+      sections: {
+        info: {
+          title: "Grunnleggende informasjon",
+          defaultExpanded: true,
+          layout: [
+            { field: "beskrivelse" }, // 1. Description (full-width)
+          ],
+        },
+        merinfo: {
+          title: "Tilleggsinformasjon",
+          defaultExpanded: false,
+          layout: [
+            { field: "informasjon" }, // 1. Extended description (full-width)
+            { field: "merknader" }, // 2. Notes (full-width)
+          ],
+        },
+        kravinformasjon: {
+          title: "Kravinformasjon",
+          defaultExpanded: true,
+          layout: [
+            {
+              row: [
+                "kravreferanse",
+                { name: "kravreferansetypeId", default: 1 },
+              ],
+            },
+          ],
+        },
+        references: {
+          title: "Tilknytning",
+          defaultExpanded: true,
+          layout: [
+            { field: "parentId" }, // Show parent prosjektkrav reference
+          ],
+        },
+      },
+      workspaceHiddenCreate: [
+        "kravUID",
+        "updatedBy",
+        "createdBy",
+        "versjon",
+        "kravStatus",
+        "givenOrder",
+        "beskrivelseSnippet",
+        "informasjonSnippet",
+        "projectId",
+        "enhetId",
+        "obligatorisk",
+        "vurderingId",
+        "statusId",
+        "prioritet",
+        "emneId", // Child inherits emneId from parent
+      ],
+      workspaceHiddenIndex: [
+        "versjon",
+        "updatedBy",
+        "createdBy",
+        "kravStatus",
+        "givenOrder",
+        "kravUID",
+        "beskrivelseSnippet",
+        "informasjonSnippet",
+        "projectId",
+        "enhetId",
+        "obligatorisk",
+        "vurderingId",
+      ],
+    },
   },
 
   // Hidden fields in different contexts
