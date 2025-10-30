@@ -22,6 +22,13 @@ const workspaceConfigData = {
     // Configuration for "Lag tilknyttet prosjekttiltak" creation flow
     detailFormLinked: {
       sections: {
+        beskrivelse: {
+          title: "Beskrivelse",
+          defaultExpanded: false, // Collapsed by default in edit mode
+          layout: [
+            { field: "beskrivelse" }, // Description at the top but collapsed
+          ],
+        },
         info: {
           title: "Grunnleggende informasjon",
           defaultExpanded: true,
@@ -51,13 +58,6 @@ const workspaceConfigData = {
           defaultExpanded: true,
           layout: [
             { field: "prosjektKrav" }, // Show which prosjektkrav this is connected to
-          ],
-        },
-        admin: {
-          title: "Administrative detaljer",
-          defaultExpanded: false,
-          layout: [
-            { field: "beskrivelse" }, // 1. Description (full-width) - moved from info section
           ],
         },
       },
@@ -190,7 +190,11 @@ const workspaceConfigData = {
     },
   },
 
-  fieldOverrides: {},
+  fieldOverrides: {
+    beskrivelse: {
+      hideInViewIfEmpty: true, // Only show beskrivelse in view mode if it has content
+    },
+  },
 };
 
 export const workspaceConfig = transformWorkspaceConfig(workspaceConfigData);
