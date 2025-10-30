@@ -11,6 +11,7 @@ import { Trash2, Copy } from "lucide-react";
 import { CombinedCopyModal } from "../../shared/components/CopyToProjectModal";
 import { massKopyProsjektKravToProject } from "@/api/endpoints/models/prosjektKrav";
 import { massKopyProsjektTiltakToProject } from "@/api/endpoints/models/prosjektTiltak";
+import { useProjectStore } from "@/stores/userStore";
 
 // Import individual renderers
 import { renderEntityCard as ProsjektKravCardRenderer } from "../../prosjektkrav/renderer/ProsjektKravRenderer";
@@ -45,6 +46,7 @@ import { prosjektTiltak as prosjektTiltakConfig } from "@/modelConfigs/models/pr
 const ProsjektKravTiltakCombinedWorkspace = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { currentProject } = useProjectStore();
   const [showCopyModal, setShowCopyModal] = useState(false);
 
   // Create combined adapter for project entities (memoized - expensive operation)
