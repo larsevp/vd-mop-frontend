@@ -130,13 +130,19 @@ const workspaceConfigData = {
   ],
 
   sections: {
+    beskrivelse: {
+      title: "Beskrivelse",
+      defaultExpanded: false, // Collapsed by default in edit mode
+      layout: [
+        { field: "beskrivelse", required: true }, // Description - required for non-linked creation
+      ],
+    },
     info: {
       title: "Grunnleggende informasjon",
       defaultExpanded: true,
       layout: [
         { field: "navn" }, // 1. Name (full-width)
-        { field: "beskrivelse", required: true }, // 2. Description (full-width) - required for non-linked creation
-        { field: "implementasjon" }, // 3. Implementation (full-width)
+        { field: "implementasjon" }, // 2. Implementation (full-width)
       ],
     },
 
