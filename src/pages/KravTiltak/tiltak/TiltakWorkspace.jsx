@@ -254,8 +254,9 @@ const TiltakWorkspace = () => {
           setEntitiesToCopy([]);
         }}
         selectedEntities={new Set(entitiesToCopy)}
-        entityType="prosjekttiltak"
+        entityType="tiltak"
         copyFunction={copyFunction}
+        isGenerelleEntities={true}
         onCopyComplete={() => {
           setCopyModalOpen(false);
           setEntitiesToCopy([]);

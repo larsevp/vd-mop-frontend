@@ -22,12 +22,16 @@ export const CopyToProjectModal = ({
   open,
   onClose,
   selectedEntities = [],
-  entityType, // 'prosjektkrav' | 'prosjekttiltak'
+  entityType, // 'prosjektkrav' | 'prosjekttiltak' | 'krav' | 'tiltak'
   onCopyComplete,
-  copyFunction // API function to call for copying
+  copyFunction, // API function to call for copying
+  isGenerelleEntities = false, // Set to true when copying generelle Krav/Tiltak (no source project context)
 }) => {
   const queryClient = useQueryClient();
   const { currentProject } = useProjectStore();
+
+  // For generelle entities, don't use any source project (allow copying to any project including current)
+  const effectiveSourceProjectId = isGenerelleEntities ? null : currentProject?.id;
 
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -92,7 +96,7 @@ export const CopyToProjectModal = ({
             entityType === 'combined-prosjektkrav-prosjekttiltak';
 
           const isRelevantProject =
-            projectId === currentProject.id ||
+            projectId === effectiveSourceProjectId ||
             projectId === project.id;
 
           return isRelevantEntityType && isRelevantProject;
@@ -113,7 +117,7 @@ export const CopyToProjectModal = ({
             entityType === 'combined-prosjektkrav-prosjekttiltak';
 
           const isRelevantProject =
-            projectId === currentProject.id ||
+            projectId === effectiveSourceProjectId ||
             projectId === project.id;
 
           return isRelevantEntityType && isRelevantProject && query.state.data !== undefined;
@@ -216,7 +220,7 @@ export const CopyToProjectModal = ({
           {/* Step 1: Project Selection */}
           {step === 1 && (
             <ProjectSelector
-              currentProjectId={currentProject?.id}
+              currentProjectId={effectiveSourceProjectId}
               onSelect={handleProjectSelect}
               onCancel={handleClose}
             />

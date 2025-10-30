@@ -149,6 +149,7 @@ const KravWorkspace = () => {
         selectedEntities={ui.selectedEntities}
         entityType="krav"
         copyFunction={handleCopyKravToProject}
+        isGenerelleEntities={true}
       />
     </>
   );

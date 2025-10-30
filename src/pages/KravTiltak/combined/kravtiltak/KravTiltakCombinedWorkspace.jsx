@@ -170,6 +170,7 @@ const KravTiltakCombinedWorkspace = () => {
           ui.clearSelection();
         }}
         selectedEntities={ui.selectedEntitiesMetadata}
+        isGenerelleEntities={true} // Generelle Krav/Tiltak - allow copying to any project
         copyFunctions={{
           krav: handleCopyKravToProject,
           tiltak: handleCopyTiltakToProject,

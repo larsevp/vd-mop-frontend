@@ -23,14 +23,17 @@ export const CombinedCopyModal = ({
   selectedEntities = new Map(), // Map with metadata { id, entityType, ... }
   copyFunctions, // { krav/prosjektKrav: fn, tiltak/prosjektTiltak: fn }
   onCopyComplete,
-  sourceProjectId = null, // Optional: For project-specific entities, pass the source project ID
+  sourceProjectId = undefined, // Optional: For project-specific entities, pass the source project ID
+  isGenerelleEntities = false, // Set to true when copying generelle Krav/Tiltak (no source project context)
 }) => {
   const queryClient = useQueryClient();
   const { currentProject } = useProjectStore();
 
-  // Use sourceProjectId prop if provided, otherwise fall back to currentProject from store
-  // For generelle entities, sourceProjectId should be null/undefined
-  const effectiveSourceProjectId = sourceProjectId !== null ? sourceProjectId : currentProject?.id;
+  // For generelle entities, don't use any source project (allow copying to any project including current)
+  // For project-specific entities, use the provided sourceProjectId or fall back to currentProject
+  const effectiveSourceProjectId = isGenerelleEntities
+    ? null
+    : (sourceProjectId !== undefined ? sourceProjectId : currentProject?.id);
 
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
