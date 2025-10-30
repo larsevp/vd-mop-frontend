@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useEffect } from "react";
+import React, { useMemo, useCallback, useEffect, useState } from "react";
 import { EntityWorkspace } from "@/components/EntityWorkspace";
 import { krav as kravConfig } from "@/modelConfigs/models/krav";
 import { createSingleEntityDTO } from "@/components/EntityWorkspace/interface/data";
@@ -8,6 +8,8 @@ import { createWorkspaceUIHook } from "@/components/EntityWorkspace/interface/ho
 import { useKravViewStore, useKravUIStore } from "./store";
 import { RowListHeading } from "../shared";
 import { Trash2, Copy } from "lucide-react";
+import { CopyToProjectModal } from "../shared/components/CopyToProjectModal";
+import { copyKravToProject } from "@/api/endpoints/models/prosjektKrav";
 
 /**
  * Krav Workspace using the generic EntityWorkspace component
@@ -28,6 +30,17 @@ import { Trash2, Copy } from "lucide-react";
  * - File attachments and rich text editing
  */
 const KravWorkspace = () => {
+  // Modal state for copy to project
+  const [showCopyModal, setShowCopyModal] = useState(false);
+
+  // Wrapper function to adapt copyKravToProject signature to match CopyToProjectModal expectations
+  // Modal expects: (entityIds, targetProjectId, sourceProjectId)
+  // API expects: (projectId, kravIds, filters)
+  const handleCopyKravToProject = useCallback((kravIds, targetProjectId, sourceProjectId) => {
+    // sourceProjectId is not needed for Krav → ProsjektKrav (Krav are not project-specific)
+    return copyKravToProject(targetProjectId, kravIds, null);
+  }, []);
+
   // Create Krav adapter (memoized - expensive operation)
   const adapter = useMemo(() => createKravAdapter(kravConfig), []);
 
@@ -76,13 +89,12 @@ const KravWorkspace = () => {
     // Define bulk actions (shown in dropdown menu)
     const bulkActions = [
       {
-        label: 'Kopier',
+        label: 'Kopier til prosjekt',
         icon: Copy,
         onClick: (selectedIds) => {
-          // TODO: Implement copy functionality
-          alert(`Kopier funksjonalitet kommer snart! (${selectedIds.size} valgt)`);
+          setShowCopyModal(true);
         },
-        disabled: false, // Will be enabled when backend is ready
+        disabled: false,
       },
       {
         label: 'Slett',
@@ -112,19 +124,33 @@ const KravWorkspace = () => {
   }, [viewOptions, setViewOptions, ui.selectionMode, ui.selectedEntities, ui.toggleSelectionMode, ui.selectAll, ui.clearSelection]);
 
   return (
-    <EntityWorkspace
-      key={`${dto.entityType || "krav-workspace"}`}
-      dto={dto}
-      renderEntityCard={renderEntityCardMemoized}
-      renderGroupHeader={renderGroupHeader}
-      renderSearchBar={renderSearchBar}
-      renderDetailPane={renderDetailPane}
-      renderActionButtons={renderActionButtons}
-      renderListHeading={renderListHeadingMemoized}
-      useWorkspaceUIHook={useWorkspaceUI}
-      viewOptions={viewOptions}
-      debug={false}
-    />
+    <>
+      <EntityWorkspace
+        key={`${dto.entityType || "krav-workspace"}`}
+        dto={dto}
+        renderEntityCard={renderEntityCardMemoized}
+        renderGroupHeader={renderGroupHeader}
+        renderSearchBar={renderSearchBar}
+        renderDetailPane={renderDetailPane}
+        renderActionButtons={renderActionButtons}
+        renderListHeading={renderListHeadingMemoized}
+        useWorkspaceUIHook={useWorkspaceUI}
+        viewOptions={viewOptions}
+        debug={false}
+      />
+
+      {/* Copy to Project Modal */}
+      <CopyToProjectModal
+        open={showCopyModal}
+        onClose={() => {
+          setShowCopyModal(false);
+          ui.clearSelection();
+        }}
+        selectedEntities={ui.selectedEntities}
+        entityType="krav"
+        copyFunction={handleCopyKravToProject}
+      />
+    </>
   );
 };
 
