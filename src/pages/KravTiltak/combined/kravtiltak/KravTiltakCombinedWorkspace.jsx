@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useEffect } from "react";
+import React, { useMemo, useCallback, useEffect, useState } from "react";
 import { EntityWorkspace } from "@/components/EntityWorkspace";
 import { createCombinedEntityDTO } from "@/components/EntityWorkspace/interface/data";
 import { createKravTiltakCombinedAdapter } from "./adapter";
@@ -7,6 +7,9 @@ import { createWorkspaceUIHook } from "@/components/EntityWorkspace/interface/ho
 import { useKravTiltakCombinedViewStore, useKravTiltakCombinedUIStore } from "./store";
 import { RowListHeading } from "../../shared";
 import { Trash2, Copy } from "lucide-react";
+import { CombinedCopyModal } from "../../shared/components/CopyToProjectModal";
+import { copyKravToProject } from "@/api/endpoints/models/prosjektKrav";
+import { copyTiltakToProject } from "@/api/endpoints/models/prosjektTiltak";
 
 /**
  * KravTiltakCombinedWorkspace - Combined workspace for Krav and Tiltak entities
@@ -28,6 +31,21 @@ import { Trash2, Copy } from "lucide-react";
  * - File attachments and rich text editing
  */
 const KravTiltakCombinedWorkspace = () => {
+  const [showCopyModal, setShowCopyModal] = useState(false);
+
+  // Wrapper functions to adapt API signatures to match CombinedCopyModal expectations
+  // Modal expects: (entityIds, targetProjectId, sourceProjectId)
+  // But Krav/Tiltak → Prosjekt APIs expect: (projectId, entityIds, filters)
+  const handleCopyKravToProject = useCallback((kravIds, targetProjectId, sourceProjectId) => {
+    // sourceProjectId is not needed for Krav → ProsjektKrav (Krav are not project-specific)
+    return copyKravToProject(targetProjectId, kravIds, null);
+  }, []);
+
+  const handleCopyTiltakToProject = useCallback((tiltakIds, targetProjectId, sourceProjectId) => {
+    // sourceProjectId is not needed for Tiltak → ProsjektTiltak (Tiltak are not project-specific)
+    return copyTiltakToProject(targetProjectId, tiltakIds, null);
+  }, []);
+
   // Create combined adapter
   const adapter = useMemo(() => createKravTiltakCombinedAdapter({ debug: true }), []);
 
@@ -93,11 +111,10 @@ const KravTiltakCombinedWorkspace = () => {
     // Define bulk actions (shown in dropdown menu)
     const bulkActions = [
       {
-        label: 'Kopier',
+        label: 'Kopier til prosjekt',
         icon: Copy,
         onClick: (selectedIds) => {
-          // TODO: Implement copy functionality
-          alert(`Kopier funksjonalitet kommer snart! (${selectedIds.size} valgt)`);
+          setShowCopyModal(true);
         },
         disabled: false,
       },
@@ -130,19 +147,35 @@ const KravTiltakCombinedWorkspace = () => {
   }, [viewOptions, setViewOptions, ui.selectionMode, ui.selectedEntities, ui.toggleSelectionMode, ui.selectAll, ui.clearSelection, dto]);
 
   return (
-    <EntityWorkspace
-      key="krav-tiltak-combined-workspace-fixed"
-      dto={dto}
-      renderEntityCard={renderEntityCardMemoized}
-      renderGroupHeader={renderGroupHeader}
-      renderDetailPane={renderDetailPane}
-      renderSearchBar={renderSearchBar}
-      renderActionButtons={renderActionButtons}
-      renderListHeading={renderListHeadingMemoized}
-      useWorkspaceUIHook={useWorkspaceUI}
-      viewOptions={viewOptions}
-      debug={false}
-    />
+    <>
+      <EntityWorkspace
+        key="krav-tiltak-combined-workspace-fixed"
+        dto={dto}
+        renderEntityCard={renderEntityCardMemoized}
+        renderGroupHeader={renderGroupHeader}
+        renderDetailPane={renderDetailPane}
+        renderSearchBar={renderSearchBar}
+        renderActionButtons={renderActionButtons}
+        renderListHeading={renderListHeadingMemoized}
+        useWorkspaceUIHook={useWorkspaceUI}
+        viewOptions={viewOptions}
+        debug={false}
+      />
+
+      {/* Combined Copy to Project Modal */}
+      <CombinedCopyModal
+        open={showCopyModal}
+        onClose={() => {
+          setShowCopyModal(false);
+          ui.clearSelection();
+        }}
+        selectedEntities={ui.selectedEntitiesMetadata}
+        copyFunctions={{
+          krav: handleCopyKravToProject,
+          tiltak: handleCopyTiltakToProject,
+        }}
+      />
+    </>
   );
 };
 

@@ -9,7 +9,7 @@ import { CopyProgress } from './CopyProgress';
 import { Building2, CheckCircle2 } from 'lucide-react';
 
 /**
- * CombinedCopyModal - Multi-step wizard for copying mixed ProsjektKrav and ProsjektTiltak entities
+ * CombinedCopyModal - Multi-step wizard for copying mixed Krav/ProsjektKrav and Tiltak/ProsjektTiltak entities
  *
  * Steps:
  * 1. Select target project
@@ -21,11 +21,16 @@ export const CombinedCopyModal = ({
   open,
   onClose,
   selectedEntities = new Map(), // Map with metadata { id, entityType, ... }
-  copyFunctions, // { prosjektKrav: fn, prosjektTiltak: fn }
+  copyFunctions, // { krav/prosjektKrav: fn, tiltak/prosjektTiltak: fn }
   onCopyComplete,
+  sourceProjectId = null, // Optional: For project-specific entities, pass the source project ID
 }) => {
   const queryClient = useQueryClient();
   const { currentProject } = useProjectStore();
+
+  // Use sourceProjectId prop if provided, otherwise fall back to currentProject from store
+  // For generelle entities, sourceProjectId should be null/undefined
+  const effectiveSourceProjectId = sourceProjectId !== null ? sourceProjectId : currentProject?.id;
 
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -55,11 +60,12 @@ export const CombinedCopyModal = ({
       }
 
       // Check for both camelCase and lowercase variants
+      // Support both generelle (krav/tiltak) and project-specific (prosjektKrav/prosjektTiltak)
       const entityType = metadata.entityType?.toLowerCase();
 
-      if (entityType === 'prosjektkrav') {
+      if (entityType === 'prosjektkrav' || entityType === 'krav') {
         kravIds.push(entityId);
-      } else if (entityType === 'prosjekttiltak') {
+      } else if (entityType === 'prosjekttiltak' || entityType === 'tiltak') {
         tiltakIds.push(entityId);
       } else {
         console.warn('CombinedCopyModal: Unknown entity type:', metadata.entityType);
@@ -90,28 +96,32 @@ export const CombinedCopyModal = ({
         relatedTiltakCopied: 0,
       };
 
-      // IMPORTANT: Copy ProsjektTiltak FIRST, then ProsjektKrav
+      // IMPORTANT: Copy Tiltak/ProsjektTiltak FIRST, then Krav/ProsjektKrav
       // This ensures that when we copy Krav's relationships, the connected Tiltak already exists in the target project
 
-      // Copy ProsjektTiltak if any
-      if (tiltakIds.length > 0 && copyFunctions.prosjektTiltak) {
+      // Copy Tiltak/ProsjektTiltak if any
+      // Support both "tiltak" and "prosjektTiltak" keys for flexibility
+      const tiltakCopyFn = copyFunctions.tiltak || copyFunctions.prosjektTiltak;
+      if (tiltakIds.length > 0 && tiltakCopyFn) {
         setCopyProgress(30);
-        const tiltakResponse = await copyFunctions.prosjektTiltak(
+        const tiltakResponse = await tiltakCopyFn(
           tiltakIds,
           project.id,
-          currentProject.id
+          effectiveSourceProjectId // Null for generelle entities, source project ID for project-specific
         );
         const tiltakData = tiltakResponse.data || tiltakResponse;
         results.tiltakCopied = tiltakData.length || 0;
       }
 
-      // Copy ProsjektKrav if any
-      if (kravIds.length > 0 && copyFunctions.prosjektKrav) {
+      // Copy Krav/ProsjektKrav if any
+      // Support both "krav" and "prosjektKrav" keys for flexibility
+      const kravCopyFn = copyFunctions.krav || copyFunctions.prosjektKrav;
+      if (kravIds.length > 0 && kravCopyFn) {
         setCopyProgress(60);
-        const kravResponse = await copyFunctions.prosjektKrav(
+        const kravResponse = await kravCopyFn(
           kravIds,
           project.id,
-          currentProject.id
+          effectiveSourceProjectId // Null for generelle entities, source project ID for project-specific
         );
         const kravData = kravResponse.data || kravResponse;
         results.kravCopied = kravData.kravCount || kravData.krav?.length || 0;
@@ -138,7 +148,7 @@ export const CombinedCopyModal = ({
             entityType === 'combined-prosjektkrav-prosjekttiltak';
 
           const isRelevantProject =
-            projectId === currentProject.id ||
+            projectId === effectiveSourceProjectId ||
             projectId === project.id;
 
           return isRelevantEntityType && isRelevantProject;
@@ -255,7 +265,7 @@ export const CombinedCopyModal = ({
           {/* Step 1: Project Selection */}
           {step === 1 && (
             <ProjectSelector
-              currentProjectId={currentProject?.id}
+              currentProjectId={effectiveSourceProjectId} // Undefined for generelle entities, which allows selecting any project
               onSelect={handleProjectSelect}
               onCancel={handleClose}
             />

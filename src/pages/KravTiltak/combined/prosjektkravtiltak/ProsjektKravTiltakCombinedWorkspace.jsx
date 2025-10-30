@@ -226,6 +226,7 @@ const ProsjektKravTiltakCombinedWorkspace = () => {
           ui.clearSelection();
         }}
         selectedEntities={ui.selectedEntitiesMetadata}
+        sourceProjectId={currentProject?.id} // Pass source project for project-specific entities
         copyFunctions={{
           prosjektKrav: massKopyProsjektKravToProject,
           prosjektTiltak: massKopyProsjektTiltakToProject,
