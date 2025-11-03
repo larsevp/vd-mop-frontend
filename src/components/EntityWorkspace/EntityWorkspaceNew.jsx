@@ -780,7 +780,7 @@ const EntityWorkspaceNew = ({
             /* Cards Mode - TOC on left + scrollable article list on right */
             <div className="h-full flex bg-white">
               {/* Left: Compact TOC using same EntityListPane */}
-              <div className="w-64 border-r border-gray-200 flex-shrink-0 sticky top-0 h-screen flex flex-col bg-white">
+              <div id="article-toc-sidebar" className="w-64 border-r border-gray-200 flex-shrink-0 sticky top-0 h-screen flex flex-col bg-white">
                 {/* TOC Header */}
                 <div className="px-3 border-b border-gray-200 bg-gray-50 flex-shrink-0 flex items-center h-[60px]">
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-600">
@@ -824,7 +824,7 @@ const EntityWorkspaceNew = ({
                 </div>
               </div>
               {/* Right: Full article cards */}
-              <div ref={cardsContainerRef} className="flex-1 overflow-y-auto">
+              <div id="article-view-container" ref={cardsContainerRef} className="flex-1 overflow-y-auto">
                 <EntityListPane
                   items={entities}
                   entityType={entityType}

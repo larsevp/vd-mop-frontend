@@ -131,23 +131,31 @@ export function transformWorkspaceConfig(newConfig) {
     return newConfig;
   }
 
-  const transformed = {
-    workspace: {
-      ...newConfig.workspace,
-      detailForm: {
-        // Preserve view options
-        hideEmptyFieldsInView: newConfig.hideEmptyFieldsInView || false,
-        collapseEmptySectionsInView: newConfig.collapseEmptySectionsInView || false,
+  // Build the transformed workspace object
+  const transformedWorkspace = {
+    ...newConfig.workspace,
+    detailForm: {
+      // Preserve view options
+      hideEmptyFieldsInView: newConfig.hideEmptyFieldsInView || false,
+      collapseEmptySectionsInView: newConfig.collapseEmptySectionsInView || false,
 
-        // Transform main sections
-        ...transformSections(
-          newConfig.sections,
-          newConfig.workspaceHiddenIndex || [],
-          newConfig.workspaceHiddenEdit || [],
-          newConfig.workspaceHiddenCreate || []
-        ),
-      },
+      // Transform main sections
+      ...transformSections(
+        newConfig.sections,
+        newConfig.workspaceHiddenIndex || [],
+        newConfig.workspaceHiddenEdit || [],
+        newConfig.workspaceHiddenCreate || []
+      ),
     },
+  };
+
+  // Explicitly preserve articleView if it exists in the original config
+  if (newConfig.workspace?.articleView) {
+    transformedWorkspace.articleView = newConfig.workspace.articleView;
+  }
+
+  const transformed = {
+    workspace: transformedWorkspace,
   };
 
   // Transform detailFormLinked if it exists (for linked entity creation)

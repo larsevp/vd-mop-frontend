@@ -1,13 +1,14 @@
 import React from 'react';
 import { EntityCard } from '../../../shared';
 import { getEntityTypeConfig } from '../../../shared/utils/entityTypeBadges';
+import { prosjektTiltak as prosjektTiltakConfig } from "@/modelConfigs/models/prosjektTiltak";
 
 /**
  * ProsjektTiltakCard - Entity-specific card for ProsjektTiltak using shared EntityCard
  */
 const ProsjektTiltakCard = (props) => {
   const entityConfig = getEntityTypeConfig('prosjekttiltak');
-  
+
   const config = {
     uidField: 'tiltakUID',
     badgeText: 'Tiltak', // Keep as "Tiltak" as requested by user
@@ -27,7 +28,7 @@ const ProsjektTiltakCard = (props) => {
     ]
   };
 
-  return <EntityCard {...props} config={config} />;
+  return <EntityCard {...props} config={config} modelConfig={prosjektTiltakConfig} />;
 };
 
 export default ProsjektTiltakCard;

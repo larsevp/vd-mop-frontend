@@ -197,12 +197,11 @@ const EntityListPane = ({
           // Multi-select support - pass entities and bulk delete handler
           entities: allItems,
           onBulkDelete: onBulkDelete, // Will be undefined if not provided
-          viewOptions: externalViewOptions, // Pass viewOptions for viewMode detection
+          viewOptions: {
+            ...externalViewOptions,
+            viewMode: externalViewOptions.viewMode || 'split', // Explicitly ensure viewMode is set
+          },
         };
-        //console.log('EntityListPane: Passing props to EntityListHeading:', headingProps);
-        //console.log('EntityListPane: hasGroupedData =', hasGroupedData);
-        //console.log('EntityListPane: groupedItems.length =', groupedItems.length);
-        //console.log('EntityListPane: allGroupsCollapsed =', allGroupsCollapsed);
         return EntityListHeading(headingProps);
       })()}
 

@@ -330,7 +330,19 @@ export function KravpakkerCheckboxGroup({
           const key = query.queryKey;
           return key[0] === "kravpakker" ||
                  (key[0] === "multiselect" && typeof key[1] === "string" && key[1].includes("Kravpakker"));
-        }
+        },
+        refetchType: "active",
+      });
+
+      // Wait for all active queries to refetch before closing modal
+      // This ensures the GenericMultiSelect component refetches and displays the new kravpakke
+      await queryClient.refetchQueries({
+        predicate: (query) => {
+          const key = query.queryKey;
+          return key[0] === "kravpakker" ||
+                 (key[0] === "multiselect" && typeof key[1] === "string" && key[1].includes("Kravpakker"));
+        },
+        type: "active",
       });
 
       // Don't auto-select - let user decide if they want to select it (industry standard for multiselect)

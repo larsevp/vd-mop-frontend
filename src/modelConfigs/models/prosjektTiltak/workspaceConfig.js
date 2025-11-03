@@ -19,6 +19,13 @@ const workspaceConfigData = {
       showRelations: true,
     },
 
+    // Article view configuration - which fields to show in cards/article mode
+    articleView: {
+      mainContentFields: ['beskrivelse', 'implementasjon', 'tilbakemelding'],
+      merknadField: 'merknad',
+      statusFields: ['vurderingId', 'statusId', 'prioritet', 'obligatorisk'],
+    },
+
     // Configuration for "Lag tilknyttet prosjekttiltak" creation flow
     detailFormLinked: {
       sections: {
@@ -203,4 +210,9 @@ const workspaceConfigData = {
   },
 };
 
-export const workspaceConfig = transformWorkspaceConfig(workspaceConfigData);
+const transformedConfig = transformWorkspaceConfig(workspaceConfigData);
+
+// Export wrapped in workspaceConfig key so spreading works correctly in index.js
+export const workspaceConfig = {
+  workspaceConfig: transformedConfig
+};

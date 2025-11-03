@@ -324,13 +324,24 @@ export function LovCheckboxGroup({
       const createdLov = result?.data || result;
       const newLovId = createdLov?.id;
 
-      // Invalidate all lover queries (including GenericMultiSelect's dynamic query key)
+      // Invalidate and refetch all lover queries (including GenericMultiSelect's dynamic query key)
       await queryClient.invalidateQueries({
         predicate: (query) => {
           const key = query.queryKey;
           return key[0] === "lover" ||
                  (key[0] === "multiselect" && typeof key[1] === "string" && key[1].includes("Lover"));
-        }
+        },
+        refetchType: "active", // Only refetch active queries (ones that are currently mounted)
+      });
+
+      // Wait for all active queries to refetch
+      await queryClient.refetchQueries({
+        predicate: (query) => {
+          const key = query.queryKey;
+          return key[0] === "lover" ||
+                 (key[0] === "multiselect" && typeof key[1] === "string" && key[1].includes("Lover"));
+        },
+        type: "active",
       });
 
       // Don't auto-select - let user decide if they want to select it (industry standard for multiselect)

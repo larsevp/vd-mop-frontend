@@ -1,0 +1,34 @@
+/**
+ * Print Styles for Article View
+ * Used with react-to-print library
+ *
+ * NOTE: CSS page-break-inside: avoid is unreliable in Chrome/browsers
+ * For production-grade page break control, use server-side PDF generation
+ */
+
+@media print {
+  /* Clean up body and page for print */
+  body {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide buttons and UI elements that shouldn't print */
+  button,
+  .print-hide {
+    display: none !important;
+  }
+
+  /* Remove shadows and effects */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Page setup */
+  @page {
+    margin: 15mm;
+    size: A4;
+  }
+}

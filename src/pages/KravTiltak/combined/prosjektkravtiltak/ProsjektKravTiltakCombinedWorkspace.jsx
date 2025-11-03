@@ -185,7 +185,8 @@ const ProsjektKravTiltakCombinedWorkspace = () => {
     return (
       <RowListHeading
         {...props}
-        viewOptions={viewOptions}
+        // NOTE: Don't override props.viewOptions - it contains viewMode from EntityListPane
+        // Just provide the change handler and available options
         onViewOptionsChange={setViewOptions}
         availableViewOptions={renderer.getAvailableViewOptions()}
         // Multi-select props

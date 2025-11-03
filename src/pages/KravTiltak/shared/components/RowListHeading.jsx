@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { ChevronDown, Settings, Maximize2, Minimize2, CheckSquare, ListChecks } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { ChevronDown, Settings, Maximize2, Minimize2, CheckSquare, ListChecks, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/primitives/button';
 import BulkActionsMenu from './BulkActionsMenu';
+import { useReactToPrint } from 'react-to-print';
 
 /**
  * RowListHeading - Shared component for KravTiltak entity list headers
@@ -34,8 +35,29 @@ const RowListHeading = ({
   children
 }) => {
   // Extract viewMode from viewOptions to hide multiselect in cards mode
-  const viewMode = viewOptions.viewMode || 'split';
+  const viewMode = viewOptions?.viewMode || 'split';
   const [showViewOptions, setShowViewOptions] = useState(false);
+
+  // Create a ref that will hold the article-view-container element
+  const contentRef = useRef(null);
+
+  // Setup print handler for article view
+  const handlePrint = useReactToPrint({
+    contentRef,
+    documentTitle: 'Artikkelvisning',
+  });
+
+  // Get the element by ID and assign to ref when printing
+  const onPrintClick = () => {
+    // Get the article-view-container element
+    const element = document.getElementById('article-view-container');
+    if (element) {
+      contentRef.current = element;
+      handlePrint();
+    } else {
+      console.error('Could not find article-view-container element');
+    }
+  };
 
   const handleViewOptionToggle = (key) => {
     onViewOptionsChange({
@@ -45,7 +67,7 @@ const RowListHeading = ({
   };
 
   return (
-    <div className="flex-shrink-0 border-b border-gray-200 bg-white">
+    <div className="flex-shrink-0 border-b border-gray-200 bg-white print-hide">
       {/* Main toolbar - always visible */}
       <div className="flex items-center justify-between px-3 h-[60px]">
         <div className="flex items-center gap-2">
@@ -74,6 +96,20 @@ const RowListHeading = ({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Print button - show only in cards/article mode */}
+          {viewMode === 'cards' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onPrintClick}
+              className="h-8 flex items-center gap-1.5"
+              title="Skriv ut artikkelvisning"
+            >
+              <Printer size={14} />
+              Skriv ut
+            </Button>
+          )}
+
           {/* Multi-select toggle button - hide in cards/article mode */}
           {viewMode !== 'cards' && (
             <Button

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Eye, Edit, Trash2, Copy } from 'lucide-react';
+import { Eye, Edit, Trash2, Copy, FileCheck, Wrench, ArrowRight } from 'lucide-react';
 import { DisplayValueResolver } from "@/components/tableComponents/displayValues/DisplayValueResolver.jsx";
 
 // Import helpers
@@ -386,26 +386,138 @@ const EntityCard = ({
         <article className={`space-y-3 transition-all duration-200 ${isSelected ? (editMode ? 'border-2 border-slate-300 p-6 rounded-xl -mx-8 -my-4' : 'bg-slate-50 p-6 rounded-xl -mx-8 -my-4') : ''}`}>
           {/* Article Header */}
           <header className="space-y-2">
-            {/* References (parent, special) - hide in TOC mode */}
-            {!viewOptions.isTOCMode && (getSpecialReference(entity) || getParentReference(entity)) && (
-              <div className="flex items-center gap-3 text-xs text-slate-500">
-                {getSpecialReference(entity)}
-                {getParentReference(entity)}
+            {/* Title with Icon (One Line) */}
+            <div className="flex items-center justify-between gap-4">
+              {/* Left: Icon + UID + Title */}
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                {/* Entity Type Icon with tree lines for children */}
+                {(() => {
+                  // Determine if this is a krav or tiltak entity
+                  const isKrav = entity.entityType?.toLowerCase().includes('krav');
+                  const isTiltak = entity.entityType?.toLowerCase().includes('tiltak');
+                  // Hierarchical child (has parentId)
+                  const isHierarchicalChild = entity.parentId;
+                  // Related item (tiltak connected to krav)
+                  const isRelated = entity._relatedToKrav;
+                  const isChild = isHierarchicalChild || isRelated;
+
+                  const IconComponent = isKrav ? FileCheck : Wrench;
+                  // Mute child icons to 50% opacity, larger icons for parents
+                  const iconSize = isChild ? 'w-4 h-4' : 'w-5 h-5';
+                  const iconColor = isChild
+                    ? (isKrav ? 'text-emerald-600 opacity-50' : 'text-sky-600 opacity-50')
+                    : (isKrav ? 'text-emerald-600' : 'text-sky-600');
+
+                  return (
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {isChild && (
+                        <span className="text-slate-300 text-base font-light select-none">├─</span>
+                      )}
+                      <IconComponent className={`${iconSize} ${iconColor}`} />
+                    </div>
+                  );
+                })()}
+
+                {/* UID + Title combined */}
+                {(() => {
+                  // Check if this is a child item (has parent OR is related tiltak)
+                  const isHierarchicalChild = entity.parentId;
+                  const isRelated = entity._relatedToKrav;
+                  const isChild = isHierarchicalChild || isRelated;
+                  const isKrav = entity.entityType?.toLowerCase().includes('krav');
+                  const childLabel = isKrav ? 'Underkrav' : (isRelated ? 'Tilknyttet tiltak' : 'Undertiltak');
+
+                  // Different font sizes and colors for parent vs child
+                  // Both underkrav and tilknyttet tiltak are treated the same (muted)
+                  const fontSize = isChild ? 'text-base' : 'text-xl';
+                  const textColor = isChild ? 'text-slate-600' : 'text-slate-900';
+
+                  if (editMode && onFieldSave && !editingDisabled) {
+                    // In edit mode
+                    if (isChild) {
+                      // For child items, show static label (not editable)
+                      return (
+                        <h2 className={`${fontSize} font-light ${textColor} leading-snug truncate flex-1 min-w-0`}>
+                          {uid && <span className="font-mono text-xs mr-2 text-slate-500">{uid}</span>}
+                          {childLabel}
+                        </h2>
+                      );
+                    }
+
+                    // For parent items, show editable field
+                    return (
+                      <div onClick={(e) => e.stopPropagation()} className="flex-1 min-w-0">
+                        {(() => {
+                          // Find the title field (tittel, navn, name, or title)
+                          const titleFieldName = entity.tittel !== undefined ? 'tittel' :
+                                                entity.navn !== undefined ? 'navn' :
+                                                entity.name !== undefined ? 'name' : 'title';
+                          const titleFieldConfig = allFields.find(f => f.name === titleFieldName);
+
+                          if (titleFieldConfig) {
+                            const FieldComponent = FieldResolver.getFieldComponent(titleFieldConfig, entity.entityType);
+                            return (
+                              <FieldComponent
+                                field={titleFieldConfig}
+                                value={formData[titleFieldName] ?? entity[titleFieldName] ?? ""}
+                                onChange={(eventOrValue) => {
+                                  handleFieldChange(eventOrValue);
+
+                                  let actualValue;
+                                  if (typeof eventOrValue === "object" && eventOrValue?.target) {
+                                    actualValue = eventOrValue.target.value;
+                                  } else {
+                                    actualValue = eventOrValue;
+                                  }
+
+                                  debouncedSave(titleFieldName, actualValue, entity);
+                                }}
+                                onBlur={(eventOrValue) => {
+                                  let actualValue;
+                                  if (typeof eventOrValue === "object" && eventOrValue?.target) {
+                                    actualValue = eventOrValue.target.value;
+                                  } else {
+                                    actualValue = formData[titleFieldName] ?? entity[titleFieldName] ?? "";
+                                  }
+                                  immediateSave(titleFieldName, actualValue, entity);
+                                }}
+                                className={fontSize + " font-light"}
+                                error={null}
+                              />
+                            );
+                          }
+                          return (
+                            <h2 className={`${fontSize} font-light text-slate-900 leading-snug truncate`}>
+                              {uid && <span className="font-mono mr-2">{uid}</span>}
+                              {title}
+                            </h2>
+                          );
+                        })()}
+                      </div>
+                    );
+                  }
+
+                  // View mode - show label for children, full title for parents
+                  return (
+                    <h2 className={`${fontSize} font-light ${textColor} leading-snug truncate flex-1 min-w-0`}>
+                      {uid && <span className="font-mono text-xs mr-2 text-slate-500">{uid}</span>}
+                      {isChild ? childLabel : title}
+                    </h2>
+                  );
+                })()}
               </div>
-            )}
 
-            {/* Badge */}
-            <div className="flex items-center justify-between">
-              <EntityBadge
-                uid={uid}
-                badgeColor={config.badgeColor}
-                badgeText={config.badgeText}
-                size="md"
-              />
+              {/* Center-Right: References (parent, special) - inline */}
+              {!viewOptions.isTOCMode && (getSpecialReference(entity) || getParentReference(entity)) && (
+                <div className="flex items-center gap-3 text-xs text-slate-500 flex-shrink-0">
+                  {getSpecialReference(entity)}
+                  {getParentReference(entity)}
+                </div>
+              )}
 
-              {/* Action buttons - only when selected */}
+              {/* Right: Action buttons - only when selected */}
               {isSelected && (
-                <div className="flex gap-2 ml-4">
+                <div className="flex gap-2 ml-4 flex-shrink-0">
                   {/* Read-only mode: Show copy button */}
                   {(!onFieldSave || editingDisabled) && onCopyToProject && (
                     <button
@@ -467,57 +579,6 @@ const EntityCard = ({
                 </div>
               )}
             </div>
-
-            {/* Title */}
-            {editMode && onFieldSave && !editingDisabled ? (
-              <div onClick={(e) => e.stopPropagation()}>
-                {(() => {
-                  // Find the title field (tittel, navn, name, or title)
-                  const titleFieldName = entity.tittel !== undefined ? 'tittel' :
-                                        entity.navn !== undefined ? 'navn' :
-                                        entity.name !== undefined ? 'name' : 'title';
-                  const titleFieldConfig = allFields.find(f => f.name === titleFieldName);
-
-                  if (titleFieldConfig) {
-                    const FieldComponent = FieldResolver.getFieldComponent(titleFieldConfig, entity.entityType);
-                    return (
-                      <FieldComponent
-                        field={titleFieldConfig}
-                        value={formData[titleFieldName] ?? entity[titleFieldName] ?? ""}
-                        onChange={(eventOrValue) => {
-                          handleFieldChange(eventOrValue);
-
-                          let actualValue;
-                          if (typeof eventOrValue === "object" && eventOrValue?.target) {
-                            actualValue = eventOrValue.target.value;
-                          } else {
-                            actualValue = eventOrValue;
-                          }
-
-                          debouncedSave(titleFieldName, actualValue, entity);
-                        }}
-                        onBlur={(eventOrValue) => {
-                          let actualValue;
-                          if (typeof eventOrValue === "object" && eventOrValue?.target) {
-                            actualValue = eventOrValue.target.value;
-                          } else {
-                            actualValue = formData[titleFieldName] ?? entity[titleFieldName] ?? "";
-                          }
-                          immediateSave(titleFieldName, actualValue, entity);
-                        }}
-                        className="text-xl font-light"
-                        error={null}
-                      />
-                    );
-                  }
-                  return <h2 className="text-xl font-light text-slate-900 leading-snug">{title}</h2>;
-                })()}
-              </div>
-            ) : (
-              <h2 className="text-xl font-light text-slate-900 leading-snug">
-                {title}
-              </h2>
-            )}
           </header>
 
           {/* Article Body - Dynamic main content fields from config */}
@@ -727,94 +788,32 @@ const EntityCard = ({
               </div>
             )}
 
-            {/* Relations & Metadata - Only show if there are any relations */}
+            {/* Metadata - Only show files and favoritter (relations shown in hierarchy) */}
             {viewOptions.showRelations && (() => {
-              const hasChildren = entity.children?.length > 0;
               const hasFiles = entity.files?.length > 0;
               const hasFavorites = viewOptions.showFavorites && entity.favorittAvBrukere?.length > 0;
 
-              // Check if any config relations have data
-              const hasConfigRelations = config.relations?.some((relation) => {
-                const relatedEntities = entity[relation.field];
-                return Array.isArray(relatedEntities) ? relatedEntities.length > 0 : !!relatedEntities;
-              });
+              const hasAnyMetadata = hasFiles || hasFavorites;
 
-              const hasAnyRelations = hasChildren || hasFiles || hasFavorites || hasConfigRelations;
-
-              if (!hasAnyRelations) return null;
+              if (!hasAnyMetadata) return null;
 
               return (
-                <div className="space-y-2">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-600">Relasjoner</h3>
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-700">
-                    {/* Children with UIDs */}
-                    {hasChildren && (() => {
-                      const childrenUids = entity.children
-                        .map(child => child.kravUID || child.tiltakUID || child.uid || child.id)
-                        .filter(Boolean)
-                        .join(', ');
-
-                      return (
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-semibold uppercase tracking-wider text-slate-600">
-                            {config.childrenLabel || "Underelementer"}:
-                          </span>
-                          <span className="font-mono text-xs">{childrenUids}</span>
-                        </div>
-                      );
-                    })()}
-
-                    {/* Related entities with UIDs */}
-                    {config.relations && config.relations.map((relation) => {
-                      const relatedEntities = entity[relation.field];
-                      const entitiesArray = Array.isArray(relatedEntities)
-                        ? relatedEntities
-                        : (relatedEntities ? [relatedEntities] : []);
-
-                      if (entitiesArray.length === 0) return null;
-
-                      // Get UID field based on relation type
-                      const getUidFromEntity = (ent) => {
-                        if (!ent) return null;
-                        // Try common UID fields
-                        return ent.kravUID || ent.tiltakUID || ent.uid || ent.id;
-                      };
-
-                      // Generate list of UIDs
-                      const uidList = entitiesArray
-                        .map(getUidFromEntity)
-                        .filter(Boolean)
-                        .join(', ');
-
-                      // Capitalize first letter of label
-                      const capitalizedLabel = relation.label.charAt(0).toUpperCase() + relation.label.slice(1);
-
-                      return (
-                        <div key={relation.field} className="flex items-center gap-2">
-                          <span className="text-xs font-semibold uppercase tracking-wider text-slate-600">
-                            {capitalizedLabel}:
-                          </span>
-                          <span className="font-mono text-xs">{uidList || `${entitiesArray.length} item(s)`}</span>
-                        </div>
-                      );
-                    })}
-
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm text-slate-700">
                     {/* File attachments */}
                     {hasFiles && (
-                      <div className="flex items-center gap-2">
+                      <>
                         <span className="text-xs font-semibold uppercase tracking-wider text-slate-600">Vedlegg:</span>
                         <span className="text-xs">{entity.files.length}</span>
-                      </div>
+                      </>
                     )}
 
                     {/* Favoritter */}
                     {hasFavorites && (
-                      <div className="flex items-center gap-2">
+                      <>
                         <span className="text-xs font-semibold uppercase tracking-wider text-slate-600">Favoritter:</span>
                         <span className="text-xs">{entity.favorittAvBrukere.length}</span>
-                      </div>
+                      </>
                     )}
-                  </div>
                 </div>
               );
             })()}
