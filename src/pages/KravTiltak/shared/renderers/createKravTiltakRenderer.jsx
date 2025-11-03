@@ -90,6 +90,8 @@ export const createKravTiltakRenderer = (config) => {
         }
       };
 
+      // Note: CardComponent wraps EntityCard which gets modelConfig internally via getModelConfig()
+      // Don't pass modelConfig as prop - it's not used and may cause issues
       return (
         <CardComponent
           key={key}

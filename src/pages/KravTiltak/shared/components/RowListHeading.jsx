@@ -1,8 +1,9 @@
-import React, { useState, useRef } from 'react';
-import { ChevronDown, Settings, Maximize2, Minimize2, CheckSquare, ListChecks, Printer } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronDown, Settings, Maximize2, Minimize2, CheckSquare, ListChecks, FileDown } from 'lucide-react';
 import { Button } from '@/components/ui/primitives/button';
 import BulkActionsMenu from './BulkActionsMenu';
-import { useReactToPrint } from 'react-to-print';
+import { API } from '@/api';
+import { useProjectStore } from '@/stores/userStore';
 
 /**
  * RowListHeading - Shared component for KravTiltak entity list headers
@@ -37,25 +38,59 @@ const RowListHeading = ({
   // Extract viewMode from viewOptions to hide multiselect in cards mode
   const viewMode = viewOptions?.viewMode || 'split';
   const [showViewOptions, setShowViewOptions] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const { currentProject } = useProjectStore();
 
-  // Create a ref that will hold the article-view-container element
-  const contentRef = useRef(null);
+  // Handle PDF export via backend
+  const handlePDFExport = async () => {
+    if (!currentProject?.id) {
+      alert("Ingen prosjekt valgt");
+      return;
+    }
 
-  // Setup print handler for article view
-  const handlePrint = useReactToPrint({
-    contentRef,
-    documentTitle: 'Artikkelvisning',
-  });
+    setIsExporting(true);
 
-  // Get the element by ID and assign to ref when printing
-  const onPrintClick = () => {
-    // Get the article-view-container element
-    const element = document.getElementById('article-view-container');
-    if (element) {
-      contentRef.current = element;
-      handlePrint();
-    } else {
-      console.error('Could not find article-view-container element');
+    try {
+      // Call backend PDF generation endpoint
+      const response = await API.post('/export/pdf/project-entities', {
+        projectId: currentProject.id,
+        filters: {},
+        options: {
+          includeKrav: true,
+          includeTiltak: true
+        }
+      }, {
+        responseType: 'blob',
+        timeout: 60000
+      });
+
+      // Create download
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+
+      // Generate filename
+      const timestamp = new Date().toISOString().split('T')[0];
+      const projectName = currentProject.navn || currentProject.name || currentProject.id;
+      link.download = `Artikkelvisning_${projectName}_${timestamp}.pdf`;
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+
+    } catch (error) {
+      console.error('PDF export failed:', error);
+      let errorMessage = "Ukjent feil oppstod";
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      alert(`PDF eksport feilet: ${errorMessage}`);
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -96,17 +131,18 @@ const RowListHeading = ({
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Print button - show only in cards/article mode */}
+          {/* PDF export button - show only in cards/article mode */}
           {viewMode === 'cards' && (
             <Button
               variant="outline"
               size="sm"
-              onClick={onPrintClick}
+              onClick={handlePDFExport}
+              disabled={isExporting}
               className="h-8 flex items-center gap-1.5"
-              title="Skriv ut artikkelvisning"
+              title="Last ned artikkelvisning som PDF"
             >
-              <Printer size={14} />
-              Skriv ut
+              <FileDown size={14} />
+              {isExporting ? 'Genererer...' : 'Last ned PDF'}
             </Button>
           )}
 

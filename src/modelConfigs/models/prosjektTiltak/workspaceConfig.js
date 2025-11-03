@@ -210,9 +210,5 @@ const workspaceConfigData = {
   },
 };
 
-const transformedConfig = transformWorkspaceConfig(workspaceConfigData);
-
-// Export wrapped in workspaceConfig key so spreading works correctly in index.js
-export const workspaceConfig = {
-  workspaceConfig: transformedConfig
-};
+// Transform to legacy format for backward compatibility
+export const workspaceConfig = transformWorkspaceConfig(workspaceConfigData);

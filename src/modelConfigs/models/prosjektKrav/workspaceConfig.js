@@ -29,6 +29,13 @@ const newProsjektKravWorkspaceConfig = {
       showRelations: true,
     },
 
+    // Article view configuration - which fields to show in cards/article mode
+    articleView: {
+      mainContentFields: ['beskrivelse', 'informasjon'],
+      merknadField: 'merknader',
+      statusFields: ['vurderingId', 'statusId', 'prioritet', 'obligatorisk'],
+    },
+
     // Configuration for "Lag underprosjektkrav" creation flow (child krav with parentId)
     detailFormLinked: {
       sections: {

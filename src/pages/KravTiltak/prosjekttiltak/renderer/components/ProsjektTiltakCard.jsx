@@ -1,7 +1,6 @@
 import React from 'react';
 import { EntityCard } from '../../../shared';
 import { getEntityTypeConfig } from '../../../shared/utils/entityTypeBadges';
-import { prosjektTiltak as prosjektTiltakConfig } from "@/modelConfigs/models/prosjektTiltak";
 
 /**
  * ProsjektTiltakCard - Entity-specific card for ProsjektTiltak using shared EntityCard
@@ -28,7 +27,7 @@ const ProsjektTiltakCard = (props) => {
     ]
   };
 
-  return <EntityCard {...props} config={config} modelConfig={prosjektTiltakConfig} />;
+  return <EntityCard {...props} config={config} />;
 };
 
 export default ProsjektTiltakCard;
