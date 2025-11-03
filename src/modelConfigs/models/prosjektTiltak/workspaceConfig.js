@@ -21,9 +21,9 @@ const workspaceConfigData = {
 
     // Article view configuration - which fields to show in cards/article mode
     articleView: {
-      mainContentFields: ['beskrivelse', 'implementasjon', 'tilbakemelding'],
-      merknadField: 'merknad',
-      statusFields: ['vurderingId', 'statusId', 'prioritet', 'obligatorisk'],
+      mainContentFields: ["beskrivelse", "implementasjon", "tilbakemelding"],
+      merknadField: "merknad",
+      statusFields: ["vurderingId", "statusId", "prioritet", "obligatorisk"],
     },
 
     // Configuration for "Lag tilknyttet prosjekttiltak" creation flow
@@ -173,7 +173,7 @@ const workspaceConfigData = {
       title: "Referanser",
       defaultExpanded: false,
       layout: [
-        { row: ["prosjektKrav", "parentId"] }, // 1. Project Req, Parent ProsjektTiltak (side-by-side)
+        { row: ["prosjektKrav"] }, // 1. Project Req, Parent ProsjektTiltak (side-by-side)
         { row: ["generalTiltakId"] }, // 2. General Tiltak reference
       ],
     },
