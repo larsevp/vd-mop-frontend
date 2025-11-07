@@ -38,6 +38,7 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
     bold: false,
     italic: false,
     underline: false,
+    strike: false,
     highlight: false,
   });
 
@@ -54,6 +55,7 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
         bold: editor.isActive("bold"),
         italic: editor.isActive("italic"),
         underline: editor.isActive("underline"),
+        strike: editor.isActive("strike"),
         highlight: editor.isActive("highlight"),
       });
 
@@ -146,6 +148,9 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
           case "underline":
             chain.toggleUnderline().run();
             break;
+          case "strike":
+            chain.toggleStrike().run();
+            break;
           case "highlight":
             chain.toggleHighlight().run();
             break;
@@ -168,6 +173,9 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
           break;
         case "underline":
           editor.chain().focus().toggleUnderline().run();
+          break;
+        case "strike":
+          editor.chain().focus().toggleStrike().run();
           break;
         case "highlight":
           editor.chain().focus().toggleHighlight().run();
@@ -525,6 +533,15 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
         </ToolbarButton>
         <ToolbarButton
           onClick={() => {
+            editor.chain().focus().toggleStrike().run();
+          }}
+          active={activeMarks.strike}
+          title="Strikethrough (Ctrl+Shift+X)"
+        >
+          <s>S</s>
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => {
             editor.chain().focus().toggleHighlight().run();
           }}
           active={activeMarks.highlight}
@@ -552,6 +569,7 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
               !editor.isActive("bold") &&
               !editor.isActive("italic") &&
               !editor.isActive("underline") &&
+              !editor.isActive("strike") &&
               !editor.isActive("highlight")
             }
             title="Normal Text (removes all formatting)"
