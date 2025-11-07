@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useEffect, useState } from "react";
+import React, { useMemo, useCallback, useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { EntityWorkspace } from "@/components/EntityWorkspace";
 import { createCombinedEntityDTO } from "@/components/EntityWorkspace/interface/data";

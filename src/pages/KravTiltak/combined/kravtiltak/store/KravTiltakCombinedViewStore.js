@@ -16,7 +16,7 @@ const getDefaultViewOptions = () => ({
   showStatus: true,
   showVurdering: true,
   showPrioritet: true,
-  showObligatorisk: true,
+  showObligatorisk: false, // Hidden in article view
   showRelations: true,
   compactMode: false,
   sortBy: 'id',
@@ -69,7 +69,7 @@ export const useKravTiltakCombinedViewStore = create(
     }),
     {
       name: 'krav-tiltak-combined-view-options',
-      version: 1
+      version: 2 // Bumped to reset showObligatorisk to false
     }
   )
 );

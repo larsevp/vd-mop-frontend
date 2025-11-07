@@ -1,15 +1,36 @@
 /**
- * EntityWorkspaceNew - Minimal implementation us  const entities = result?.items || [];
-  const entityType = dto?.entityType || dto?.getPrimaryEntityType?.() || "entities"; components  const handleSearch = useCallback(() => {
-    ui.executeSearch(); // Update activeSearchQuery from searchInput
-    // TanStack Query will automatically refetch when activeSearchQuery changes
-  }, [ui.executeSearch]);nst handleSearch = useCallback(() => {
-    ui.executeSearch(); // Update activeSearchQuery from searchInput
-    // TanStack Query will automatically refetch when activeSearchQuery changes
-  }, [ui.executeSearch]);k Query
+ * EntityWorkspaceNew - Generic workspace interface for entity management
  *
- * This component reuses existing EntitySplitView, SearchBar, and EntityListPane
- * but replaces complex state management with TanStack Query + simple Zustand UI state.
+ * VIEW MODE NOMENCLATURE:
+ * =======================
+ *
+ * 1. ARTICLE VIEW (viewMode: "cards")
+ *    ├─ TOC (Table of Contents) - Left sidebar (w-64)
+ *    │  └─ Compact entity list for navigation (isTOCMode: true)
+ *    │     - Minimal styling: small fonts, no badges/icons/arrows
+ *    │     - Click to navigate and scroll to entity in main view
+ *    └─ Main Article View - Right content area (flex-1)
+ *       └─ Full entity cards displayed inline
+ *          - All fields visible, rich content, expandable sections
+ *          - Scrollable vertical list
+ *          - Used for reading/viewing entities in detail
+ *
+ * 2. SPLIT VIEW (viewMode: "split")
+ *    ├─ Card List - Left pane (resizable, collapsible)
+ *    │  └─ Compact entity cards for selection
+ *    │     - Summary information only
+ *    │     - Click to select and edit in detail pane
+ *    └─ Detail Pane - Right pane (flex-1)
+ *       └─ Editable form for selected entity
+ *          - Full CRUD operations (create, update, delete)
+ *          - Sectioned form layout
+ *          - Used for editing/managing entities
+ *
+ * ARCHITECTURE:
+ * - This component orchestrates both view modes
+ * - Uses TanStack Query for data fetching
+ * - Uses Zustand for UI state (search, filters, selection)
+ * - Render props pattern for domain-specific rendering
  */
 
 import React, { useCallback, useEffect, useRef, useMemo } from "react";
@@ -777,9 +798,16 @@ const EntityWorkspaceNew = ({
         {/* Main content - conditional rendering based on viewMode */}
         <div className="flex-1" style={{ height: "calc(100vh - 120px)" }}>
           {ui.viewMode === "cards" ? (
-            /* Cards Mode - TOC on left + scrollable article list on right */
+            /* ═══════════════════════════════════════════════════════════
+             * ARTICLE VIEW MODE
+             * ═══════════════════════════════════════════════════════════
+             * Layout: TOC (left) + Main Article View (right)
+             * Purpose: Reading and viewing entities in full detail
+             * ═══════════════════════════════════════════════════════════ */
             <div className="h-full flex bg-white">
-              {/* Left: Compact TOC using same EntityListPane */}
+              {/* ─────────────────────────────────────────────────────────
+               * TOC (Table of Contents) - Left Sidebar
+               * ───────────────────────────────────────────────────────── */}
               <div id="article-toc-sidebar" className="w-64 border-r border-gray-200 flex-shrink-0 sticky top-0 h-screen flex flex-col bg-white">
                 {/* TOC Header */}
                 <div className="px-3 border-b border-gray-200 bg-gray-50 flex-shrink-0 flex items-center h-[60px]">
@@ -823,7 +851,9 @@ const EntityWorkspaceNew = ({
                   />
                 </div>
               </div>
-              {/* Right: Full article cards */}
+              {/* ─────────────────────────────────────────────────────────
+               * Main Article View - Right Content Area
+               * ───────────────────────────────────────────────────────── */}
               <div id="article-view-container" ref={cardsContainerRef} className="flex-1 overflow-y-auto">
                 <EntityListPane
                   items={entities}
@@ -850,7 +880,12 @@ const EntityWorkspaceNew = ({
               </div>
             </div>
           ) : (
-            /* Split Mode - EntitySplitView */
+            /* ═══════════════════════════════════════════════════════════
+             * SPLIT VIEW MODE
+             * ═══════════════════════════════════════════════════════════
+             * Layout: Card List (left) + Detail Pane (right)
+             * Purpose: Editing and managing entities with CRUD operations
+             * ═══════════════════════════════════════════════════════════ */
             <EntitySplitView
               entities={entities}
               entityType={entityType}

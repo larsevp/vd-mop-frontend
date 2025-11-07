@@ -15,11 +15,12 @@ const workspaceConfigData = {
       showStatus: true,
       showVurdering: true,
       showPrioritet: true,
-      showObligatorisk: false,
+      showObligatorisk: false, // Hidden in article view
       showRelations: true,
     },
 
     // Article view configuration - which fields to show in cards/article mode
+    // Shows rich text fields in article body: beskrivelse, implementasjon (contains "Eplekake" for PT5), tilbakemelding
     articleView: {
       mainContentFields: ["beskrivelse", "implementasjon", "tilbakemelding"],
       merknadField: "merknad",

@@ -1,4 +1,5 @@
-import React, { useMemo, useCallback, useEffect, useState } from "react";
+import React, { useMemo, useCallback, useEffect, useState, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { EntityWorkspace } from "@/components/EntityWorkspace";
 import { createCombinedEntityDTO } from "@/components/EntityWorkspace/interface/data";
 import { createKravTiltakCombinedAdapter } from "./adapter";
@@ -31,7 +32,9 @@ import { copyTiltakToProject } from "@/api/endpoints/models/prosjektTiltak";
  * - File attachments and rich text editing
  */
 const KravTiltakCombinedWorkspace = () => {
+  const location = useLocation();
   const [showCopyModal, setShowCopyModal] = useState(false);
+  const isInitialMount = useRef(true);
 
   // Wrapper functions to adapt API signatures to match CombinedCopyModal expectations
   // Modal expects: (entityIds, targetProjectId, sourceProjectId)
@@ -64,11 +67,28 @@ const KravTiltakCombinedWorkspace = () => {
   // Create workspace-specific UI hook
   const { useWorkspaceUI } = useMemo(() => createWorkspaceUIHook(useKravTiltakCombinedUIStore), []);
 
-  // Reset selection mode on mount
+  // Reset selection mode and view mode on mount
   useEffect(() => {
     // Force reset to single mode and clear any selected entities
     ui.setSelectionMode('single');
     ui.clearSelection();
+
+    // On initial mount (fresh navigation from another page), default to split view
+    // On refresh (isInitialMount will be false due to React Strict Mode double-mount or actual refresh), keep saved view
+    if (isInitialMount.current) {
+      // Check if this is a navigation from a different page (not a refresh)
+      // We detect refresh by checking if performance.navigation.type === 1 (reload)
+      const isPageRefresh = performance.navigation?.type === 1 ||
+                            performance.getEntriesByType?.('navigation')?.[0]?.type === 'reload';
+
+      if (!isPageRefresh) {
+        // Fresh navigation - set to split view
+        ui.setViewMode('split');
+      }
+      // If it's a refresh, localStorage will be used automatically (no need to set)
+
+      isInitialMount.current = false;
+    }
 
     // Cleanup on unmount
     return () => {

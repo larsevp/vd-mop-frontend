@@ -3,13 +3,35 @@ import { GripVertical, ChevronLeft, ChevronRight } from "lucide-react";
 import FlexScrollableContainer from "./FlexScrollableContainer";
 
 /**
- * Modern EntitySplitView with draggable resizer (copied from main branch design)
- * Left pane: Entity list with search/filters
- * Right pane: Entity detail view
+ * EntitySplitView - Split view mode layout component
+ *
+ * NOMENCLATURE: SPLIT VIEW MODE
+ * ==============================
+ *
+ * Layout Structure:
+ * ├─ Card List (Left Pane) - Resizable, collapsible
+ * │  └─ Entity cards for browsing and selection
+ * │     - Compact summary view
+ * │     - Click to select entity for editing
+ * │     - Default width: 420px (user-adjustable, persisted)
+ * │     - Can collapse to 0px to maximize detail pane
+ * │
+ * ├─ Resizer Bar (12px)
+ * │  └─ Draggable handle with collapse/expand button
+ * │     - Hover to show collapse button
+ * │     - Drag to resize panes
+ * │
+ * └─ Detail Pane (Right Pane) - Flexible width
+ *    └─ Full entity form for editing
+ *       - Create, read, update, delete operations
+ *       - Sectioned form layout
+ *       - Scrollable content area
+ *
  * Features:
- * - Draggable resizer bar
- * - Collapsible panels
- * - Persistent width/collapsed state
+ * - Draggable resizer bar (12px wide)
+ * - Collapsible left panel with button
+ * - Persistent width/collapsed state (localStorage)
+ * - Scandinavian minimal design
  */
 const EntitySplitView = ({
   entities = [],

@@ -18,7 +18,7 @@ export const useProsjektKravTiltakCombinedViewStore = create(
         showStatus: true,
         showVurdering: true,
         showPrioritet: true,
-        showObligatorisk: true,
+        showObligatorisk: false, // Hidden in article view
         showProjectRelations: true,
         compactMode: false,
         sortBy: 'id',
@@ -45,7 +45,7 @@ export const useProsjektKravTiltakCombinedViewStore = create(
             showStatus: true,
             showVurdering: true,
             showPrioritet: true,
-            showObligatorisk: true,
+            showObligatorisk: false, // Hidden in article view
             showProjectRelations: true,
             compactMode: false,
             sortBy: 'id',
@@ -81,7 +81,7 @@ export const useProsjektKravTiltakCombinedViewStore = create(
     }),
     {
       name: 'prosjekt-krav-tiltak-combined-view-options',
-      version: 1
+      version: 2 // Bumped to reset showObligatorisk to false
     }
   )
 );

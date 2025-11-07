@@ -22,13 +22,13 @@ const newTiltakWorkspaceConfig = {
       showStatus: false,
       showVurdering: false,
       showPrioritet: false,
-      showObligatorisk: false,
+      showObligatorisk: false, // Hidden in article view
       showRelations: true,
     },
 
     // Article View Configuration (Cards Mode)
     articleView: {
-      mainContentFields: ["beskrivelse", "implementasjon", "informasjon"], // Rich text fields shown in article body
+      mainContentFields: ["beskrivelse", "implementasjon", "tilbakemelding"], // Rich text fields shown in article body
       merknadField: "merknad", // Note field (tiltak uses 'merknad', not 'merknader')
       statusFields: ["vurderingId", "statusId", "prioritet", "obligatorisk"], // Status metadata
     },

@@ -1,5 +1,41 @@
+/**
+ * EntityDetailPane - Detail pane component for Split View mode
+ *
+ * NOMENCLATURE: Split View - Detail Pane (Right Pane)
+ * ====================================================
+ *
+ * This component is the right pane in SPLIT VIEW MODE.
+ *
+ * Layout:
+ * ├─ Header Section
+ * │  ├─ Entity badge and title
+ * │  ├─ Edit/Save/Cancel/Delete buttons
+ * │  └─ Validation error summary
+ * │
+ * └─ Content Sections (scrollable)
+ *    ├─ Section 1 (e.g., "grunnlag") - collapsible
+ *    ├─ Section 2 (e.g., "beskrivelse") - collapsible
+ *    ├─ Section 3 (e.g., "implementasjon") - collapsible
+ *    └─ ...more sections
+ *
+ * Features:
+ * - View mode: Display fields as read-only content
+ * - Edit mode: Display fields as editable form inputs
+ * - Collapsible sections with expand/collapse controls
+ * - Form validation with error handling
+ * - Emne inheritance logic for child entities
+ * - Special handling for child tiltak (collapsible single-field sections)
+ * - CRUD operations (create, update, delete)
+ * - Auto-scroll on entity change
+ *
+ * Domain-Specific (KravTiltak):
+ * - This is a domain-specific renderer passed to EntityWorkspace
+ * - Uses modelConfigs for field definitions
+ * - Integrates with FieldRenderer for field-level rendering
+ */
+
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { Edit, X, Save, RotateCcw, Trash2, Plus } from "lucide-react";
+import { Edit, X, Save, RotateCcw, Trash2, Plus, ChevronDown } from "lucide-react";
 import { useQueryClient } from '@tanstack/react-query';
 import { ValidationErrorSummary, FieldRenderer, FieldSection } from "./components";
 import { getEntityTypeConfig } from "../../utils/entityTypeBadges";
@@ -36,7 +72,9 @@ const EntityDetailPane = ({
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expandedSections, setExpandedSections] = useState(new Set());
+  const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
   const detailViewRef = useRef(null);
+  const createMenuRef = useRef(null);
   const lastInitializedEntityId = useRef(null); // Track which entity we initialized sections for
   
   // Query client for cache invalidation
@@ -212,6 +250,11 @@ const EntityDetailPane = ({
   // Initialize expanded sections based on config and data
   // Only run when entity changes or edit mode changes, NOT on every formData change
   useEffect(() => {
+    // Early return if no entity
+    if (!entity) {
+      return;
+    }
+
     const currentEntityId = `${entity?.id}`;
     const previousEntityId = lastInitializedEntityId.current?.split('-')[0];
     const entityChanged = currentEntityId !== previousEntityId;
@@ -230,13 +273,14 @@ const EntityDetailPane = ({
     }
 
     // Entity changed - initialize based on mode
+    let expandedSet;
+
     if (isEditing) {
       // In edit mode: Use default expansion from config
-      const initialExpanded = initializeExpandedSections(sections);
-      setExpandedSections(initialExpanded);
+      expandedSet = initializeExpandedSections(sections);
     } else {
       // In view mode: Smart expansion based on content and config
-      const expandedSet = new Set();
+      expandedSet = new Set();
 
       Object.keys(sections).forEach(sectionName => {
         const section = sections[sectionName];
@@ -269,9 +313,50 @@ const EntityDetailPane = ({
           expandedSet.add(sectionName);
         }
       });
-
-      setExpandedSections(expandedSet);
     }
+
+    // Apply special handling for child tiltak beskrivelse (applies to BOTH edit and view mode)
+    const isChildTiltak = entity && (entity.parentId || entity._relatedToKrav) &&
+                          entity.entityType?.toLowerCase().includes('tiltak');
+
+    if (isChildTiltak) {
+      // Check 'beskrivelse' and 'info' sections
+      ['beskrivelse', 'info'].forEach(sectionName => {
+        if (!sections[sectionName]) return;
+
+        const sectionFields = getFieldsBySection(visibleFields)[sectionName] || [];
+        const hasFilledFields = sectionFields.some(field => {
+          // Check entity data directly (formData might not be initialized yet)
+          const value = entity[field.name];
+          const isEmpty = value === null || value === undefined || value === '' ||
+                         (Array.isArray(value) && value.length === 0) ||
+                         (typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 0);
+          return !isEmpty;
+        });
+
+        // Debug logging for PT5
+        if (entity.tiltakUID === 'PT5' || entity.id === 5) {
+          console.log('LOGBACKEND PT5 section expansion (post-process):', {
+            sectionName,
+            hasFilledFields,
+            sectionFields: sectionFields.map(f => ({
+              name: f.name,
+              entityValue: typeof entity[f.name] === 'string' ? entity[f.name].substring(0, 50) : entity[f.name]
+            })),
+            willExpand: hasFilledFields
+          });
+        }
+
+        // Only expand if it has content, otherwise remove from expanded set
+        if (hasFilledFields) {
+          expandedSet.add(sectionName);
+        } else {
+          expandedSet.delete(sectionName);
+        }
+      });
+    }
+
+    setExpandedSections(expandedSet);
   }, [entity?.id, isEditing, collapseEmptySectionsInView]); // Only re-run when entity or edit mode changes
 
   // Auto-expand error sections
@@ -283,6 +368,20 @@ const EntityDetailPane = ({
   useEffect(() => {
     scrollToTop(detailViewRef);
   }, [entity?.id]);
+
+  // Close create menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (createMenuRef.current && !createMenuRef.current.contains(event.target)) {
+        setIsCreateMenuOpen(false);
+      }
+    };
+
+    if (isCreateMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isCreateMenuOpen]);
 
   // Field change handler
   const handleFieldChange = useCallback((fieldNameOrEvent, value) => {
@@ -616,31 +715,57 @@ const EntityDetailPane = ({
               </>
             ) : (
               <>
-                {/* Show "Lag tilknyttet krav" button for krav/prosjektkrav (but not for child krav with parentId) */}
+                {/* Create menu dropdown - show if any create options are available */}
                 {onCreateNew &&
                  (currentEntityType.toLowerCase() === 'krav' || currentEntityType.toLowerCase() === 'prosjektkrav') &&
-                 !isNewEntity &&
-                 !entity?.parentId && ( // Only root krav can have children, not child krav themselves
-                  <button
-                    onClick={handleCreateChildKrav}
-                    className="inline-flex items-center px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    {currentEntityType.toLowerCase() === 'krav' ? 'Lag underkrav' : 'Lag underprosjektkrav'}
-                  </button>
-                )}
-                {/* Show "Lag tilknyttet tiltak" button for krav/prosjektkrav ONLY in combined workspace */}
-                {onCreateNew &&
-                 (currentEntityType.toLowerCase() === 'krav' || currentEntityType.toLowerCase() === 'prosjektkrav') &&
-                 !isNewEntity &&
-                 entityType.toLowerCase().includes('combined') && (
-                  <button
-                    onClick={handleCreateConnectedTiltak}
-                    className="inline-flex items-center px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    {currentEntityType.toLowerCase() === 'krav' ? 'Lag tilknyttet tiltak' : 'Lag tilknyttet prosjekttiltak'}
-                  </button>
+                 !isNewEntity && (
+                  <div className="relative" ref={createMenuRef}>
+                    <button
+                      onClick={() => setIsCreateMenuOpen(!isCreateMenuOpen)}
+                      className="inline-flex items-center px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Ny
+                      <ChevronDown className="w-4 h-4 ml-1" />
+                    </button>
+
+                    {/* Dropdown menu */}
+                    {isCreateMenuOpen && (
+                      <div className="absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                        <div className="py-1" role="menu">
+                          {/* Show child krav option (only for root krav without parentId) */}
+                          {!entity?.parentId && (
+                            <button
+                              onClick={() => {
+                                handleCreateChildKrav();
+                                setIsCreateMenuOpen(false);
+                              }}
+                              className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
+                              role="menuitem"
+                            >
+                              <Plus className="w-4 h-4 mr-2" />
+                              Tilknyttet krav
+                            </button>
+                          )}
+
+                          {/* Show tilknyttet tiltak option (only in combined workspace) */}
+                          {entityType.toLowerCase().includes('combined') && (
+                            <button
+                              onClick={() => {
+                                handleCreateConnectedTiltak();
+                                setIsCreateMenuOpen(false);
+                              }}
+                              className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
+                              role="menuitem"
+                            >
+                              <Plus className="w-4 h-4 mr-2" />
+                              Tilknyttet tiltak
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
                 {canSave && (
                   <button
@@ -849,6 +974,47 @@ const EntityDetailPane = ({
                 })}
               </div>
             );
+
+            // Check if this is a child tiltak with single field in beskrivelse section
+            const isChildTiltak = entity && (entity.parentId || entity._relatedToKrav) &&
+                                  entity.entityType?.toLowerCase().includes('tiltak');
+            const isSingleFieldBeskrivelseSection = isChildTiltak &&
+                                                     sectionName === 'beskrivelse' &&
+                                                     items.length === 1 &&
+                                                     items[0].type === 'field';
+
+            // For child tiltak beskrivelse with single field: render field directly with collapsible label
+            if (isSingleFieldBeskrivelseSection) {
+              const field = items[0].content;
+              const fieldValue = formData[field.name];
+              const isEmpty = fieldValue === null || fieldValue === undefined || fieldValue === '' ||
+                             (Array.isArray(fieldValue) && fieldValue.length === 0) ||
+                             (typeof fieldValue === 'object' && !Array.isArray(fieldValue) && Object.keys(fieldValue).length === 0);
+
+              // Don't render at all if empty and not editing
+              if (!isEditing && isEmpty) {
+                return null;
+              }
+
+              return (
+                <div key={sectionName} className="space-y-6 pl-7">
+                  <FieldRenderer
+                    field={field}
+                    value={formData[field.name] ?? ""}
+                    onChange={handleFieldChange}
+                    error={errors[field.name]}
+                    form={formData}
+                    entity={entity}
+                    modelName={modelName}
+                    isEditing={isEditing}
+                    inheritanceInfo={inheritanceInfo}
+                    isCollapsible={true}
+                    isExpanded={shouldBeExpanded}
+                    onToggle={() => handleToggleSection(sectionName)}
+                  />
+                </div>
+              );
+            }
 
             // Show all sections with their collapsible headers for visual structure
             return (

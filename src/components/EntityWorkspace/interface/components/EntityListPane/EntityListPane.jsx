@@ -6,12 +6,37 @@ import FlexScrollableContainer from "../FlexScrollableContainer";
 /**
  * EntityListPane - Generic list interface using render prop pattern
  *
+ * NOMENCLATURE: Generic List Component
+ * =====================================
+ *
+ * This component is used in BOTH view modes:
+ *
+ * 1. ARTICLE VIEW - TOC (Left Sidebar)
+ *    - viewOptions.isTOCMode = true
+ *    - Compact, minimal styling for navigation
+ *    - No badges, icons, arrows, or metadata
+ *    - Small fonts (text-xs/text-sm)
+ *    - Tight spacing (space-y-0.5)
+ *
+ * 2. ARTICLE VIEW - Main Article View (Right Content)
+ *    - viewOptions.viewMode = "cards"
+ *    - Full card display with all fields
+ *    - Rich content, expandable sections
+ *    - Normal fonts and spacing
+ *
+ * 3. SPLIT VIEW - Card List (Left Pane)
+ *    - viewOptions.viewMode = "split"
+ *    - Compact summary cards
+ *    - Selection-focused UI
+ *    - Click to edit in detail pane
+ *
  * Features:
- * - Domain-controlled card rendering via EntityListCard
- * - Domain-controlled group headers via EntityListGroupHeader
- * - Domain-controlled list heading via EntityListHeading
+ * - Domain-controlled card rendering via EntityListCard (render prop)
+ * - Domain-controlled group headers via EntityListGroupHeader (render prop)
+ * - Domain-controlled list heading via EntityListHeading (render prop)
  * - Group collapse/expand controls
  * - Generic list behavior (keyboard nav, selection, loading states)
+ * - Supports flat and grouped data structures
  *
  * Requires render functions - no fallbacks, clean architecture only.
  */
@@ -246,7 +271,7 @@ const EntityListPane = ({
 
                     {/* Group items */}
                     {!isCollapsed && (
-                      <div className={isCardsMode ? "space-y-2 px-2 pb-2" : ""}>
+                      <div className={isCardsMode ? "space-y-0.5 px-2 pb-2" : ""}>
                         {groupItems.map(
                           (entity, index) => {
                             // Create truly unique key using related krav context when available
@@ -278,7 +303,7 @@ const EntityListPane = ({
             </div>
           ) : (
             // Flat rendering (no emne groups)
-            <div className={isCardsMode ? "space-y-2 p-2" : ""}>
+            <div className={isCardsMode ? "space-y-0.5 p-2" : ""}>
               {allItems.map(
                 (entity, index) => {
                   // For non-grouped view, only select first occurrence of duplicate entities

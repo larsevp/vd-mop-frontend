@@ -72,7 +72,6 @@ export const WordExporter = ({
       document.body.removeChild(link);
       window.URL.revokeObjectURL(downloadUrl);
 
-      alert("Word-dokumentet er lastet ned");
       setIsOpen(false);
 
     } catch (error) {
