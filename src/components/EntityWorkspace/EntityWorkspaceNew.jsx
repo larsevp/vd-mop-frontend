@@ -705,9 +705,9 @@ const EntityWorkspaceNew = ({
       <div className="max-w-none w-full" style={{ maxWidth: "none" }}>
         {/* Header with search - Responsive layout */}
         <div className="bg-white border-b border-neutral-200 px-4 sm:px-6 py-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 xl:grid xl:grid-cols-[auto_1fr_auto]">
             {/* Left section: Navigation, Title, Count */}
-            <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
+            <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0 xl:flex-initial">
               <Button
                 variant="ghost"
                 size="sm"
@@ -789,8 +789,8 @@ const EntityWorkspaceNew = ({
               )}
             </div>
 
-            {/* Search bar - wraps to new line on narrow screens */}
-            <div className="flex-1 min-w-[250px] max-w-md order-3 xl:order-none w-full xl:w-auto">
+            {/* Search bar - centered on wide screens, wraps on narrow */}
+            <div className="flex-1 min-w-[250px] order-3 xl:order-none w-full xl:mx-auto xl:flex xl:justify-center">
               <SearchBarPlaceholder
                 searchInput={ui.searchInput}
                 onSearchInputChange={ui.setSearchInput}
@@ -820,8 +820,8 @@ const EntityWorkspaceNew = ({
               />
             </div>
 
-            {/* Action buttons */}
-            <div className="flex justify-end flex-shrink-0">
+            {/* Action buttons - right aligned */}
+            <div className="flex justify-end flex-shrink-0 xl:justify-end">
               {renderActionButtons ? (
                 renderActionButtons({ handleCreateNew, currentFilters: ui.filters })
               ) : (

@@ -168,7 +168,7 @@ const KravTiltakSearchBar = ({
   // Advanced mode - KravTiltak-specific filtering
 
   return (
-    <div className="relative flex-1 max-w-lg">
+    <div className="relative flex-1 max-w-lg xl:max-w-3xl">
       {/* Search input with integrated filter button */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />

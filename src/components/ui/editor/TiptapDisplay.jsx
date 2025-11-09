@@ -18,8 +18,10 @@ const getDisplayEditorStyles = () => {
     "[&_td]:align-top [&_th]:align-top",
     "[&_strong]:text-foreground [&_strong]:font-semibold",
     "[&_em]:text-foreground",
-    "[&_ul]:list-disc [&_ol]:list-decimal [&_ul]:mt-0 [&_ol]:mt-0",
+    "[&_ul]:list-disc [&_ol]:list-decimal [&_ul]:mt-0 [&_ol]:mt-0 [&_ul]:mb-3 [&_ol]:mb-3",
     "[&_li]:text-foreground [&_li]:mb-1",
+    // Add spacing after lists when followed by other elements
+    "[&_ul+p]:mt-3 [&_ol+p]:mt-3 [&_ul+h1]:mt-4 [&_ol+h1]:mt-4 [&_ul+h2]:mt-3 [&_ol+h2]:mt-3",
     "[&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2"
   );
 };

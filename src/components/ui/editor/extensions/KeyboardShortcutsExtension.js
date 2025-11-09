@@ -22,6 +22,30 @@ export const KeyboardShortcutsExtension = Extension.create({
 
   addKeyboardShortcuts() {
     return {
+      // Enter key handling in lists - exit on empty list item
+      'Enter': () => {
+        if (this.options.disabled) return false;
+
+        const { state } = this.editor;
+        const { selection, doc } = state;
+        const { $from } = selection;
+
+        // Check if we're in a list item
+        const listItem = $from.node($from.depth - 1);
+        if (listItem && listItem.type.name === 'listItem') {
+          // Check if current list item is empty
+          const isEmpty = listItem.textContent.trim() === '';
+
+          if (isEmpty) {
+            // Exit the list by lifting the list item
+            return this.editor.commands.liftListItem('listItem');
+          }
+        }
+
+        // Let default Enter behavior handle non-empty items
+        return false;
+      },
+
       // Escape key handling - focus management
       'Escape': () => {
         if (this.options.disabled) return false;

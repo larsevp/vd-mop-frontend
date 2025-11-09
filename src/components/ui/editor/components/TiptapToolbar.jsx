@@ -1,7 +1,8 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import { TableDropdown } from "./TableDropdown";
-import { ImageIcon, ClipboardPaste } from "lucide-react";
+import { ImageIcon, ClipboardPaste, MoreHorizontal, Strikethrough, Highlighter, Type, Heading1, Heading2, List, Link as LinkIcon, Table } from "lucide-react";
 import { CellSelection, TableMap } from "@tiptap/pm/tables";
 
 const ToolbarButton = React.forwardRef(({ onClick, active, disabled, children, title, className }, ref) => (
@@ -24,7 +25,7 @@ const ToolbarButton = React.forwardRef(({ onClick, active, disabled, children, t
   </button>
 ));
 
-const ToolbarSeparator = () => <div className="w-px h-6 bg-border mx-1" />;
+const ToolbarSeparator = ({ className = "" }) => <div className={`w-px h-6 bg-border mx-1 ${className}`} />;
 
 export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic = false }) => {
   if (!editor) return null;
@@ -32,6 +33,10 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
   // Track whether selection is inside a table to drive conditional UI and force re-render on selection changes
   const [isInTable, setIsInTable] = useState(false);
   const [isImageSelected, setIsImageSelected] = useState(false);
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+  const moreMenuRef = useRef(null);
+  const moreButtonRef = useRef(null);
 
   // Track active formatting states for immediate button feedback
   const [activeMarks, setActiveMarks] = useState({
@@ -71,6 +76,33 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
       editor.off("transaction", updateSelection);
     };
   }, [editor]);
+
+  // Close "More" menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target) &&
+          moreButtonRef.current && !moreButtonRef.current.contains(event.target)) {
+        setIsMoreMenuOpen(false);
+      }
+    };
+
+    if (isMoreMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isMoreMenuOpen]);
+
+  // Calculate menu position when opening
+  const handleMoreButtonClick = () => {
+    if (!isMoreMenuOpen && moreButtonRef.current) {
+      const rect = moreButtonRef.current.getBoundingClientRect();
+      setMenuPosition({
+        top: rect.top - 8, // Position above button with small gap
+        left: rect.left,
+      });
+    }
+    setIsMoreMenuOpen(!isMoreMenuOpen);
+  };
 
   // Helper to check if a mark is active (either in selection or stored marks)
   const isMarkActive = useCallback(
@@ -503,7 +535,7 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
   return (
     <>
       <div className="border-b border-border p-2 flex items-center gap-1 flex-wrap">
-        {/* Text Formatting */}
+        {/* Core Text Formatting - Always visible */}
         <ToolbarButton
           onClick={() => {
             editor.chain().focus().toggleBold().run();
@@ -531,12 +563,15 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
         >
           <u>U</u>
         </ToolbarButton>
+
+        {/* Desktop: Show all buttons (lg and above) */}
         <ToolbarButton
           onClick={() => {
             editor.chain().focus().toggleStrike().run();
           }}
           active={activeMarks.strike}
           title="Strikethrough (Ctrl+Shift+X)"
+          className="hidden lg:inline-flex"
         >
           <s>S</s>
         </ToolbarButton>
@@ -546,22 +581,21 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
           }}
           active={activeMarks.highlight}
           title="Highlight (Ctrl+H)"
+          className="hidden lg:inline-flex"
         >
           <span className="bg-yellow-200 text-yellow-900 px-1 rounded font-semibold">H</span>
         </ToolbarButton>
 
-        <ToolbarSeparator />
+        <ToolbarSeparator className="hidden lg:block" />
 
-        {/* Headings */}
         {!basic && (
           <ToolbarButton
             onClick={() => {
-              // Clear all formatting: marks, headings, and links
               editor
                 .chain()
                 .focus()
-                .clearNodes() // Remove headings, lists, etc.
-                .unsetAllMarks() // Remove bold, italic, underline, highlight, etc.
+                .clearNodes()
+                .unsetAllMarks()
                 .run();
             }}
             active={
@@ -573,7 +607,7 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
               !editor.isActive("highlight")
             }
             title="Normal Text (removes all formatting)"
-            className="hidden sm:inline-flex"
+            className="hidden lg:inline-flex"
           >
             Normal
           </ToolbarButton>
@@ -582,6 +616,7 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
           onClick={() => toggleBlockAcrossCells("heading", { level: 1 })}
           active={editor.isActive("heading", { level: 1 })}
           title="Heading 1"
+          className="hidden lg:inline-flex"
         >
           H1
         </ToolbarButton>
@@ -589,21 +624,29 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
           onClick={() => toggleBlockAcrossCells("heading", { level: 2 })}
           active={editor.isActive("heading", { level: 2 })}
           title="Heading 2"
+          className="hidden lg:inline-flex"
         >
           H2
         </ToolbarButton>
 
-        <ToolbarSeparator />
+        <ToolbarSeparator className="hidden lg:block" />
 
-        {/* Lists */}
-        <ToolbarButton onClick={toggleBulletList} active={editor.isActive("bulletList")} title="Bullet List">
+        <ToolbarButton
+          onClick={toggleBulletList}
+          active={editor.isActive("bulletList")}
+          title="Bullet List"
+          className="hidden lg:inline-flex"
+        >
           • List
         </ToolbarButton>
 
-        <ToolbarSeparator />
+        <ToolbarSeparator className="hidden lg:block" />
 
-        {/* Paste button - preserves Word formatting while handling images and tables */}
-        <ToolbarButton onClick={pastePreserveFormatting} title="Lime inn fra Word/HTML med formatering (håndterer bilder og tabeller)">
+        <ToolbarButton
+          onClick={pastePreserveFormatting}
+          title="Lime inn fra Word/HTML med formatering (håndterer bilder og tabeller)"
+          className="hidden lg:inline-flex"
+        >
           <div className="flex items-center gap-1">
             <ClipboardPaste size={16} />
             Word
@@ -612,11 +655,19 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
 
         {!basic && (
           <>
-            {/* Links & Tables - full mode only */}
-            <ToolbarButton onClick={onAddLink} active={editor.isActive("link")} title="Add Link (Ctrl+K)">
+            <ToolbarButton
+              onClick={onAddLink}
+              active={editor.isActive("link")}
+              title="Add Link (Ctrl+K)"
+              className="hidden lg:inline-flex"
+            >
               Link
             </ToolbarButton>
-            <ToolbarButton onClick={addImage} title="Last opp bilde">
+            <ToolbarButton
+              onClick={addImage}
+              title="Last opp bilde"
+              className="hidden lg:inline-flex"
+            >
               <div className="flex items-center gap-1">
                 <ImageIcon size={16} />
                 Bilde
@@ -624,20 +675,178 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
             </ToolbarButton>
 
             {!isInTable && (
-              <TableDropdown
-                editor={editor}
-                onAddTable={addTable}
-                onDeleteTable={deleteTable}
-                onAddRowBefore={addRowBefore}
-                onAddRowAfter={addRowAfter}
-                onDeleteRow={deleteRow}
-                onAddColumnBefore={addColumnBefore}
-                onAddColumnAfter={addColumnAfter}
-                onDeleteColumn={deleteColumn}
-              />
+              <div className="hidden lg:inline-flex">
+                <TableDropdown
+                  editor={editor}
+                  onAddTable={addTable}
+                  onDeleteTable={deleteTable}
+                  onAddRowBefore={addRowBefore}
+                  onAddRowAfter={addRowAfter}
+                  onDeleteRow={deleteRow}
+                  onAddColumnBefore={addColumnBefore}
+                  onAddColumnAfter={addColumnAfter}
+                  onDeleteColumn={deleteColumn}
+                />
+              </div>
             )}
           </>
         )}
+
+        {/* Mobile/Tablet: "More" menu with all advanced features (below lg = 1024px) */}
+        <div className="lg:hidden">
+          <ToolbarButton
+            ref={moreButtonRef}
+            onClick={handleMoreButtonClick}
+            title="Flere alternativer"
+          >
+            <MoreHorizontal size={16} />
+          </ToolbarButton>
+
+          {isMoreMenuOpen && createPortal(
+            <div
+              ref={moreMenuRef}
+              className="fixed w-56 max-h-80 overflow-y-auto rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-[100]"
+              style={{
+                top: `${menuPosition.top}px`,
+                left: `${menuPosition.left}px`,
+                transform: 'translateY(-100%)',
+              }}
+            >
+              <div className="py-1" role="menu">
+                <button
+                  onClick={() => {
+                    editor.chain().focus().toggleStrike().run();
+                    setIsMoreMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
+                  role="menuitem"
+                >
+                  <Strikethrough size={16} className="mr-2" />
+                  Gjennomstreking
+                </button>
+                <button
+                  onClick={() => {
+                    editor.chain().focus().toggleHighlight().run();
+                    setIsMoreMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
+                  role="menuitem"
+                >
+                  <Highlighter size={16} className="mr-2" />
+                  Uthev
+                </button>
+
+                <div className="border-t border-gray-100 my-1" />
+
+                {!basic && (
+                  <button
+                    onClick={() => {
+                      editor.chain().focus().clearNodes().unsetAllMarks().run();
+                      setIsMoreMenuOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
+                    role="menuitem"
+                  >
+                    <Type size={16} className="mr-2" />
+                    Normal tekst
+                  </button>
+                )}
+
+                <button
+                  onClick={() => {
+                    toggleBlockAcrossCells("heading", { level: 1 });
+                    setIsMoreMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
+                  role="menuitem"
+                >
+                  <Heading1 size={16} className="mr-2" />
+                  Overskrift 1
+                </button>
+                <button
+                  onClick={() => {
+                    toggleBlockAcrossCells("heading", { level: 2 });
+                    setIsMoreMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
+                  role="menuitem"
+                >
+                  <Heading2 size={16} className="mr-2" />
+                  Overskrift 2
+                </button>
+
+                <div className="border-t border-gray-100 my-1" />
+
+                <button
+                  onClick={() => {
+                    toggleBulletList();
+                    setIsMoreMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
+                  role="menuitem"
+                >
+                  <List size={16} className="mr-2" />
+                  Punktliste
+                </button>
+
+                <div className="border-t border-gray-100 my-1" />
+
+                <button
+                  onClick={() => {
+                    pastePreserveFormatting();
+                    setIsMoreMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
+                  role="menuitem"
+                >
+                  <ClipboardPaste size={16} className="mr-2" />
+                  Lim inn fra Word
+                </button>
+
+                {!basic && (
+                  <>
+                    <button
+                      onClick={() => {
+                        onAddLink();
+                        setIsMoreMenuOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
+                      role="menuitem"
+                    >
+                      <LinkIcon size={16} className="mr-2" />
+                      Lenke
+                    </button>
+                    <button
+                      onClick={() => {
+                        addImage();
+                        setIsMoreMenuOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
+                      role="menuitem"
+                    >
+                      <ImageIcon size={16} className="mr-2" />
+                      Bilde
+                    </button>
+                    {!isInTable && (
+                      <button
+                        onClick={() => {
+                          addTable();
+                          setIsMoreMenuOpen(false);
+                        }}
+                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
+                        role="menuitem"
+                      >
+                        <Table size={16} className="mr-2" />
+                        Tabell
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>,
+            document.body
+          )}
+        </div>
       </div>
 
       {/* Horizontal Table Tools row when a table is active */}
