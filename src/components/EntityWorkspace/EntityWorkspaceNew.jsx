@@ -703,24 +703,25 @@ const EntityWorkspaceNew = ({
   return (
     <div className="bg-white min-h-screen">
       <div className="max-w-none w-full" style={{ maxWidth: "none" }}>
-        {/* Header with search */}
-        <div className="bg-white border-b border-neutral-200 px-6 py-4">
-          <div className="flex items-center justify-between gap-6">
-            <div className="flex items-center gap-4">
+        {/* Header with search - Responsive layout */}
+        <div className="bg-white border-b border-neutral-200 px-4 sm:px-6 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            {/* Left section: Navigation, Title, Count */}
+            <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={goBack}
-                className="text-neutral-600 hover:text-neutral-900"
+                className="text-neutral-600 hover:text-neutral-900 flex-shrink-0"
               >
-                <ArrowLeft className="w-4 h-4 mr-1" />
-                Tilbake
+                <ArrowLeft className="w-4 h-4 sm:mr-1" />
+                <span className="hidden sm:inline">Tilbake</span>
               </Button>
-              <h1 className="text-2xl font-semibold text-neutral-900">{dto?.getDisplayConfig?.()?.title || entityType}</h1>
-              <div className="text-sm text-neutral-600">{entities.length} totalt</div>
+              <h1 className="text-lg sm:text-2xl font-semibold text-neutral-900 truncate">{dto?.getDisplayConfig?.()?.title || entityType}</h1>
+              <div className="hidden sm:block text-sm text-neutral-600 flex-shrink-0">{entities.length} totalt</div>
 
-              {/* View Mode Toggle */}
-              <div className="flex items-center border rounded-lg p-1 bg-neutral-50">
+              {/* View Mode Toggle - shown next to title on desktop, separate on mobile */}
+              <div className="hidden md:flex items-center border rounded-lg p-1 bg-neutral-50 flex-shrink-0 ml-2">
                 <Button
                   variant={ui.viewMode === "split" ? "default" : "ghost"}
                   size="sm"
@@ -754,7 +755,42 @@ const EntityWorkspaceNew = ({
               </div>
             </div>
 
-            <div className="flex-1 max-w-md">
+            {/* View Mode Toggle - mobile only */}
+            <div className="md:hidden flex items-center border rounded-lg p-1 bg-neutral-50 flex-shrink-0">
+              <Button
+                variant={ui.viewMode === "split" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => ui.setViewMode("split")}
+                className="h-7 w-7 p-0"
+                title="Split View"
+              >
+                <Columns className="w-3 h-3" />
+              </Button>
+              <Button
+                variant={ui.viewMode === "cards" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => ui.setViewMode("cards")}
+                className="h-7 w-7 p-0"
+                title="Cards View"
+              >
+                <LayoutGrid className="w-3 h-3" />
+              </Button>
+              {/* Flow View Toggle - Optional */}
+              {onFlowToggle && (
+                <Button
+                  variant={flowViewMode === "flow" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={onFlowToggle}
+                  className="h-7 w-7 p-0"
+                  title={flowViewMode === "flow" ? "Exit Flow View" : "Flow View"}
+                >
+                  <Network className="w-3 h-3" />
+                </Button>
+              )}
+            </div>
+
+            {/* Search bar - wraps to new line on narrow screens */}
+            <div className="flex-1 min-w-[250px] max-w-md order-3 xl:order-none w-full xl:w-auto">
               <SearchBarPlaceholder
                 searchInput={ui.searchInput}
                 onSearchInputChange={ui.setSearchInput}
@@ -784,14 +820,17 @@ const EntityWorkspaceNew = ({
               />
             </div>
 
-            {renderActionButtons ? (
-              renderActionButtons({ handleCreateNew, currentFilters: ui.filters })
-            ) : (
-              <Button onClick={handleCreateNew} className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="w-4 h-4 mr-2" />
-                Opprett ny
-              </Button>
-            )}
+            {/* Action buttons */}
+            <div className="flex justify-end flex-shrink-0">
+              {renderActionButtons ? (
+                renderActionButtons({ handleCreateNew, currentFilters: ui.filters })
+              ) : (
+                <Button onClick={handleCreateNew} className="bg-blue-600 hover:bg-blue-700">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Opprett ny
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 

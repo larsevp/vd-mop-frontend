@@ -12,7 +12,7 @@ const ToolbarButton = React.forwardRef(({ onClick, active, disabled, children, t
     disabled={disabled}
     title={title}
     className={cn(
-      "px-3 py-1.5 rounded text-sm font-medium transition-colors border",
+      "px-2 sm:px-3 py-1 sm:py-1.5 rounded text-xs sm:text-sm font-medium transition-colors border",
       "disabled:opacity-50 disabled:cursor-not-allowed",
       active
         ? "bg-primary text-primary-foreground border-primary shadow-sm hover:bg-primary/90"
@@ -573,6 +573,7 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
               !editor.isActive("highlight")
             }
             title="Normal Text (removes all formatting)"
+            className="hidden sm:inline-flex"
           >
             Normal
           </ToolbarButton>

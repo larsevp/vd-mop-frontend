@@ -35,7 +35,7 @@
  */
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { Edit, X, Save, RotateCcw, Trash2, Plus, ChevronDown } from "lucide-react";
+import { Edit, X, Save, RotateCcw, Trash2, Plus, ChevronDown, MoreVertical } from "lucide-react";
 import { useQueryClient } from '@tanstack/react-query';
 import { ValidationErrorSummary, FieldRenderer, FieldSection } from "./components";
 import { getEntityTypeConfig } from "../../utils/entityTypeBadges";
@@ -715,75 +715,92 @@ const EntityDetailPane = ({
               </>
             ) : (
               <>
-                {/* Create menu dropdown - show if any create options are available */}
-                {onCreateNew &&
-                 (currentEntityType.toLowerCase() === 'krav' || currentEntityType.toLowerCase() === 'prosjektkrav') &&
-                 !isNewEntity && (
+                {/* Actions menu - show if not a new entity */}
+                {!isNewEntity && (
                   <div className="relative" ref={createMenuRef}>
                     <button
                       onClick={() => setIsCreateMenuOpen(!isCreateMenuOpen)}
-                      className="inline-flex items-center px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all"
+                      className="inline-flex items-center px-3 py-2.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all"
+                      title="Handlinger"
                     >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Ny
-                      <ChevronDown className="w-4 h-4 ml-1" />
+                      <MoreVertical className="w-4 h-4" />
                     </button>
 
                     {/* Dropdown menu */}
                     {isCreateMenuOpen && (
                       <div className="absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
                         <div className="py-1" role="menu">
-                          {/* Show child krav option (only for root krav without parentId) */}
-                          {!entity?.parentId && (
+                          {/* Edit option */}
+                          {canSave && (
                             <button
                               onClick={() => {
-                                handleCreateChildKrav();
+                                setIsEditing(true);
                                 setIsCreateMenuOpen(false);
                               }}
                               className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
                               role="menuitem"
                             >
-                              <Plus className="w-4 h-4 mr-2" />
-                              Tilknyttet krav
+                              <Edit className="w-4 h-4 mr-2" />
+                              Rediger
                             </button>
                           )}
 
-                          {/* Show tilknyttet tiltak option (only in combined workspace) */}
-                          {entityType.toLowerCase().includes('combined') && (
-                            <button
-                              onClick={() => {
-                                handleCreateConnectedTiltak();
-                                setIsCreateMenuOpen(false);
-                              }}
-                              className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
-                              role="menuitem"
-                            >
-                              <Plus className="w-4 h-4 mr-2" />
-                              Tilknyttet tiltak
-                            </button>
+                          {/* Create options - show if available */}
+                          {onCreateNew && (currentEntityType.toLowerCase() === 'krav' || currentEntityType.toLowerCase() === 'prosjektkrav') && (
+                            <>
+                              {/* Show child krav option (only for root krav without parentId) */}
+                              {!entity?.parentId && (
+                                <button
+                                  onClick={() => {
+                                    handleCreateChildKrav();
+                                    setIsCreateMenuOpen(false);
+                                  }}
+                                  className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
+                                  role="menuitem"
+                                >
+                                  <Plus className="w-4 h-4 mr-2" />
+                                  Tilknyttet krav
+                                </button>
+                              )}
+
+                              {/* Show tilknyttet tiltak option (only in combined workspace) */}
+                              {entityType.toLowerCase().includes('combined') && (
+                                <button
+                                  onClick={() => {
+                                    handleCreateConnectedTiltak();
+                                    setIsCreateMenuOpen(false);
+                                  }}
+                                  className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
+                                  role="menuitem"
+                                >
+                                  <Plus className="w-4 h-4 mr-2" />
+                                  Tilknyttet tiltak
+                                </button>
+                              )}
+                            </>
+                          )}
+
+                          {/* Delete option - with separator */}
+                          {canDelete && (
+                            <>
+                              <div className="border-t border-gray-100 my-1" />
+                              <button
+                                onClick={() => {
+                                  handleDelete();
+                                  setIsCreateMenuOpen(false);
+                                }}
+                                className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center"
+                                role="menuitem"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Slett
+                              </button>
+                            </>
                           )}
                         </div>
                       </div>
                     )}
                   </div>
-                )}
-                {canSave && (
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="inline-flex items-center px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all"
-                  >
-                    <Edit className="w-4 h-4 mr-2" />
-                    Rediger
-                  </button>
-                )}
-                {canDelete && (
-                  <button
-                    onClick={handleDelete}
-                    className="inline-flex items-center px-4 py-2.5 border border-red-200 text-sm font-medium rounded-lg text-red-600 bg-white hover:bg-red-50 hover:border-red-300 transition-all"
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Slett
-                  </button>
                 )}
               </>
             )}

@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { EmneGroupHeader, RowListHeading, EntityDetailPane, KravTiltakSearchBar, KravCreateButton, TiltakCreateButton, ProsjektKravCreateButton, ProsjektTiltakCreateButton } from "../../shared";
 import { WordExporter } from "@/components/export/WordExporter";
+import { Plus, ChevronDown, FileDown } from "lucide-react";
+import { Button } from "@/components/ui/primitives/button";
 
 /**
  * Generic Combined Renderer Factory
@@ -120,6 +122,7 @@ export const createCombinedRenderer = (config) => {
   /**
    * Render action buttons for combined entities
    * Shows separate create buttons that delegate to individual model configs
+   * Responsive: collapses into dropdown menu on narrow screens
    */
   const renderActionButtons = ({ handleCreateNew, currentFilters }) => {
     // Select appropriate button components based on entity types
@@ -133,24 +136,101 @@ export const createCombinedRenderer = (config) => {
     const PrimaryButtonComponent = buttonMap[primaryType.toLowerCase()] || KravCreateButton;
     const SecondaryButtonComponent = buttonMap[secondaryType.toLowerCase()] || TiltakCreateButton;
 
-    return (
-      <div className="flex gap-3">
-        <PrimaryButtonComponent
-          onClick={() => handleCreateNew(primaryType)}
-          label={primaryCreate}
-        />
-        <SecondaryButtonComponent
-          onClick={() => handleCreateNew(secondaryType)}
-          label={secondaryCreate}
-        />
-        <WordExporter
-          currentFilters={currentFilters}
-          variant="outline"
-          size="default"
-          className="ml-2"
-        />
-      </div>
-    );
+    // Responsive action buttons component with dropdown for narrow screens
+    const ResponsiveActionButtons = () => {
+      const [isOpen, setIsOpen] = useState(false);
+      const menuRef = React.useRef(null);
+
+      // Close dropdown when clicking outside
+      React.useEffect(() => {
+        const handleClickOutside = (event) => {
+          if (menuRef.current && !menuRef.current.contains(event.target)) {
+            setIsOpen(false);
+          }
+        };
+
+        if (isOpen) {
+          document.addEventListener('mousedown', handleClickOutside);
+          return () => document.removeEventListener('mousedown', handleClickOutside);
+        }
+      }, [isOpen]);
+
+      return (
+        <>
+          {/* Desktop: Show all buttons (xl screens and above) */}
+          <div className="hidden xl:flex gap-3">
+            <PrimaryButtonComponent
+              onClick={() => handleCreateNew(primaryType)}
+              label={primaryCreate}
+            />
+            <SecondaryButtonComponent
+              onClick={() => handleCreateNew(secondaryType)}
+              label={secondaryCreate}
+            />
+            <WordExporter
+              currentFilters={currentFilters}
+              variant="outline"
+              size="default"
+            />
+          </div>
+
+          {/* Mobile/Tablet: Dropdown menu (below xl) */}
+          <div className="xl:hidden relative" ref={menuRef}>
+            <Button
+              onClick={() => setIsOpen(!isOpen)}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Ny
+              <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+            </Button>
+
+            {isOpen && (
+              <div className="absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                <div className="py-1" role="menu">
+                  <button
+                    onClick={() => {
+                      handleCreateNew(primaryType);
+                      setIsOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-emerald-50 transition-colors flex items-center"
+                    role="menuitem"
+                  >
+                    <Plus className="w-4 h-4 mr-2 text-emerald-600" />
+                    {primaryCreate}
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleCreateNew(secondaryType);
+                      setIsOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-sky-50 transition-colors flex items-center"
+                    role="menuitem"
+                  >
+                    <Plus className="w-4 h-4 mr-2 text-sky-600" />
+                    {secondaryCreate}
+                  </button>
+                  <div className="border-t border-gray-100 my-1" />
+                  {/* Word Export - wrapped in menu item style */}
+                  <div className="px-0">
+                    <WordExporter
+                      currentFilters={currentFilters}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start text-gray-700 hover:bg-gray-50 h-auto py-2.5 px-4 rounded-none font-normal text-sm"
+                      showIcon={true}
+                      buttonText="Eksporter til Word"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </>
+      );
+    };
+
+    return <ResponsiveActionButtons />;
   };
 
   /**

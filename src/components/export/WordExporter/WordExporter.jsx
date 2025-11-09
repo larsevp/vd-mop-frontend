@@ -13,7 +13,9 @@ export const WordExporter = ({
   currentFilters = {},
   className = "",
   variant = "default",
-  size = "default"
+  size = "default",
+  buttonText = null, // Optional text to show instead of just icon
+  showIcon = true // Whether to show the icon
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -119,7 +121,8 @@ export const WordExporter = ({
           disabled={!currentProject?.id}
           title="Eksporter til Word"
         >
-          <FileText className="w-4 h-4" />
+          {showIcon && <FileText className={`w-4 h-4 ${buttonText ? 'mr-2' : ''}`} />}
+          {buttonText && <span>{buttonText}</span>}
         </Button>
       </DialogTrigger>
 
