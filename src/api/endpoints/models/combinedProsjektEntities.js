@@ -33,6 +33,7 @@ export const getPaginatedCombinedProsjektEntities = async (page = 1, pageSize = 
     // Additional filters as separate parameters
     ...(additionalFilters.status && { status: additionalFilters.status }),
     ...(additionalFilters.vurdering && { vurdering: additionalFilters.vurdering }),
+    ...(additionalFilters.onlyProjectCreated && { onlyProjectCreated: 'true' }),
     // Default view options for project entities
     primaryView: "prosjektkrav-first",
     showHierarchy: "true",

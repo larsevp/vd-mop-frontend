@@ -141,10 +141,10 @@ export const getPaginatedProsjektKravAll = (page = 1, pageSize = 10, search = ""
   return API.get(`/prosjekt-krav/paginated?${params}`);
 };
 
-export const getPaginatedProsjektKravGroupedByEmne = (page = 1, pageSize = 10, search = "", sortBy = "", sortOrder = "asc", projectId = null) => {
+export const getPaginatedProsjektKravGroupedByEmne = (page = 1, pageSize = 10, search = "", sortBy = "", sortOrder = "asc", projectId = null, onlyProjectCreated = false) => {
   const config = addProsjektKravFieldExclusion("index");
-  
-  // Build params including projectId
+
+  // Build params including projectId and onlyProjectCreated filter
   const params = new URLSearchParams({
     page: page.toString(),
     pageSize: pageSize.toString(),
@@ -152,6 +152,7 @@ export const getPaginatedProsjektKravGroupedByEmne = (page = 1, pageSize = 10, s
     ...(sortBy && { sortBy }),
     ...(sortOrder && { sortOrder }),
     ...(projectId && { projectId: projectId.toString() }),
+    ...(onlyProjectCreated && { onlyProjectCreated: 'true' }),
   });
 
   // Call the endpoint directly since we're building custom params

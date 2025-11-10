@@ -348,9 +348,9 @@ const EntityCard = ({
     return (
       <div className="flex flex-col gap-1">
         <span className="text-xs font-semibold uppercase tracking-wider text-slate-600">{label}</span>
-        <div className="flex items-center gap-1.5">
-          <div style={{ color: display.color }}>
-            {getIcon(display.icon, 14)}
+        <div className="flex items-center gap-2">
+          <div className={`select-none ${display.iconRotation || ''}`} style={{ color: display.color }}>
+            {getIcon(display.icon, 16)}
           </div>
           <span className="text-slate-900 text-sm font-medium">{display.text}</span>
         </div>

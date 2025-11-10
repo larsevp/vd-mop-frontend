@@ -10,7 +10,8 @@ export interface ComboBoxOption {
   depth?: number;
   hasChildren?: boolean;
   originalLabel?: string;
-  icon?: string;
+  icon?: string | React.ComponentType<any> | React.ReactElement;
+  iconRotation?: string;
   color?: string;
 }
 
@@ -309,6 +310,7 @@ export function ComboBox({
             iconName={item.option.icon}
             text={item.label}
             iconColor={item.option.color}
+            iconRotation={item.option.iconRotation}
             className={cn("flex-1", isActive ? "text-accent-foreground" : "text-foreground")}
           />
         ) : (
@@ -392,6 +394,7 @@ export function ComboBox({
                 text=""
                 iconSize={16}
                 iconColor={selectedOption.color}
+                iconRotation={selectedOption.iconRotation}
                 className="text-foreground"
               />
             </div>

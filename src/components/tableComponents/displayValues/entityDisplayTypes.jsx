@@ -3,6 +3,8 @@
 import React from "react";
 import { IconWithText } from "../../ui/DynamicIcon";
 import { getPriorityLabel } from "../../ui/form/PrioritetSelect";
+import { Triangle } from "lucide-react";
+import { getPriorityLevel } from "@/pages/KravTiltak/shared/config/priorityConfig";
 
 export const ENTITY_DISPLAY_TYPES = {
   // Generic foreign key pattern fallbacks
@@ -133,23 +135,17 @@ export const ENTITY_DISPLAY_TYPES = {
       return context.format === "REACT" ? <span>{displayValue}</span> : displayValue;
     }
 
-    // Use KravTiltak standard priority icons and colors
-    let icon, color, label;
-    if (prioritetValue >= 30) {
-      icon = "AlertTriangle";
-      color = "#dc2626";
-      label = "Høy";
-    } else if (prioritetValue >= 20) {
-      icon = "AlertCircle";
-      color = "#d97706";
-      label = "Middels";
-    } else {
-      icon = "Circle";
-      color = "#059669";
-      label = "Lav";
-    }
+    // Use centralized priority configuration
+    const config = getPriorityLevel(prioritetValue);
 
-    return context.format === "REACT" ? <IconWithText iconName={icon} text={label} iconColor={color} iconSize={14} /> : label;
+    return context.format === "REACT" ? (
+      <span className="inline-flex items-center gap-1.5">
+        <span style={{ color: config.color }} className={config.iconRotation}>
+          <Triangle size={14} />
+        </span>
+        <span className="text-slate-900">{config.label}</span>
+      </span>
+    ) : config.label;
   },
 
   // Fagomrade relationships (generic fallback)

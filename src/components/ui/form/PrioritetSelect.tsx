@@ -1,6 +1,7 @@
 import React from "react";
 import { ComboBox, ComboBoxOption } from "./ComboBox";
-import { IconWithText } from "@/components/ui/DynamicIcon";
+import { Triangle } from "lucide-react";
+import { getPriorityOptions } from "@/pages/KravTiltak/shared/config/priorityConfig";
 
 interface PrioritetSelectProps {
   name?: string;
@@ -15,12 +16,8 @@ interface PrioritetSelectProps {
   emptyLabel?: string;
 }
 
-// Priority mapping: label -> number with icons
-export const PRIORITY_OPTIONS = [
-  { value: 15, label: "Lav", icon: "ChevronDown", color: "#10b981" },
-  { value: 25, label: "Middels", icon: "Minus", color: "#f59e0b" }, // Default value from schema
-  { value: 35, label: "Høy", icon: "ChevronUp", color: "#ef4444" },
-];
+// Priority mapping: Use centralized config
+export const PRIORITY_OPTIONS = getPriorityOptions();
 
 // Helper function to get label from value
 export const getPriorityLabel = (value: number | null | undefined): string => {
@@ -76,7 +73,8 @@ export function PrioritetSelect({
     return PRIORITY_OPTIONS.map((option) => ({
       id: option.value.toString(),
       label: option.label,
-      icon: option.icon,
+      icon: 'Triangle', // Use string name for ComboBox icon overlay
+      iconRotation: option.iconRotation,
       color: option.color,
     }));
   }, []);
@@ -96,14 +94,18 @@ export function PrioritetSelect({
       options={options}
       isLoading={false}
       error={null}
-      renderOption={(option, isSelected, isActive) => (
-        <IconWithText 
-          iconName={option.icon} 
-          text={option.label} 
-          iconSize={16} 
-          iconColor={option.color} 
-        />
-      )}
+      renderOption={(option, isSelected, isActive) => {
+        return (
+          <span className="flex items-center gap-2">
+            <Triangle
+              size={16}
+              className={option.iconRotation}
+              style={{ color: option.color }}
+            />
+            <span>{option.label}</span>
+          </span>
+        );
+      }}
     />
   );
 }

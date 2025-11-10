@@ -6,13 +6,14 @@
  */
 
 import React, { useState, useRef, useEffect } from "react";
-import { Search, Filter, X, Loader2, ArrowUpDown, ChevronDown, AlertTriangle, AlertCircle, Circle } from "lucide-react";
+import { Search, Filter, X, Loader2, ArrowUpDown, ChevronDown, Triangle } from "lucide-react";
 import { Button } from "@/components/ui/primitives/button";
 import { Input } from "@/components/ui/primitives/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/primitives/select";
 import { StatusSelect } from "@/components/ui/form/StatusSelect";
 import { VurderingSelect } from "@/components/ui/form/VurderingSelect";
 import { EmneSelect } from "@/components/ui/form/EmneSelect";
+import { getPriorityIcon as getCentralizedPriorityIcon } from "../config/priorityConfig";
 
 const KravTiltakSearchBar = ({
   // Basic search props
@@ -52,18 +53,13 @@ const KravTiltakSearchBar = ({
   const searchRef = useRef(null);
 
 
-  // Helper function to get priority icon component
+  // Helper function to get priority icon component using centralized config
   const getPriorityIcon = (level) => {
-    switch (level) {
-      case "høy":
-        return <AlertTriangle size={14} className="text-red-600" />;
-      case "middels":
-        return <AlertCircle size={14} className="text-orange-600" />;
-      case "lav":
-        return <Circle size={14} className="text-green-600" />;
-      default:
-        return null;
-    }
+    const config = getCentralizedPriorityIcon(level);
+    if (!config) return null;
+
+    const Icon = config.icon;
+    return <Icon size={14} className={config.rotation} style={{ color: config.color }} />;
   };
 
   // Check if sorting should be disabled for project-specific entities
@@ -80,7 +76,8 @@ const KravTiltakSearchBar = ({
       additionalFilters.emneId ||
       additionalFilters.prioritet ||
       additionalFilters.obligatorisk ||
-      additionalFilters.entityType;
+      additionalFilters.entityType ||
+      additionalFilters.onlyProjectCreated;
   };
 
   // Trigger pulse animation when searching with active filters
@@ -209,7 +206,7 @@ const KravTiltakSearchBar = ({
             onClick={() => setShowFilters(!showFilters)}
             className={`p-1 rounded transition-colors ${
               showFilters || hasActiveFilters() ? "text-blue-600 bg-blue-50" : "text-gray-400 hover:text-gray-600"
-            } ${pulseFilter ? "animate-pulse ring-2 ring-blue-400 ring-opacity-60" : ""}`}
+            }`}
             title="Vis filter"
           >
             <Filter className="w-4 h-4" />
@@ -254,6 +251,28 @@ const KravTiltakSearchBar = ({
                     emptyLabel="Alle emner"
                     availableIds={availableFilters?.emneIds}
                   />
+                </div>
+              )}
+
+              {/* Project-created only filter - only show for ProsjektKrav/ProsjektTiltak */}
+              {(entityType === "prosjektKrav" || entityType === "prosjektTiltak" ||
+                entityType === "combined-prosjektkrav-prosjekttiltak") && (
+                <div className="col-span-full">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={additionalFilters.onlyProjectCreated || false}
+                      onChange={(e) => {
+                        onAdditionalFiltersChange({
+                          ...additionalFilters,
+                          onlyProjectCreated: e.target.checked,
+                        });
+                      }}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Vis kun prosjektspesifikke</span>
+                    <span className="text-xs text-gray-500">(skjul kopiert fra bibliotek)</span>
+                  </label>
                 </div>
               )}
 

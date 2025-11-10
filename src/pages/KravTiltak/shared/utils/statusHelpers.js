@@ -3,6 +3,9 @@
  * Used by ProsjektKrav and ProsjektTiltak entities
  */
 
+import { Triangle } from "lucide-react";
+import { getPriorityLevel } from "../config/priorityConfig";
+
 /**
  * Get status display configuration
  * @param {Object} entity - Entity with status property
@@ -34,13 +37,19 @@ export const getVurderingDisplay = (entity) => {
 /**
  * Get prioritet (priority) display configuration
  * @param {Object} entity - Entity with prioritet property
- * @returns {Object|null} Prioritet display config with text, color, icon
+ * @returns {Object|null} Prioritet display config with text, color, icon, rotation
  */
 export const getPrioritetDisplay = (entity) => {
-  if (!entity.prioritet) return null;
-  const prioritet = entity.prioritet;
-  
-  if (prioritet >= 30) return { text: "Høy", color: "#dc2626", icon: "AlertTriangle" };
-  if (prioritet >= 20) return { text: "Middels", color: "#d97706", icon: "AlertCircle" };
-  return { text: "Lav", color: "#059669", icon: "Circle" };
+  if (!entity || entity.prioritet === null || entity.prioritet === undefined) {
+    return null;
+  }
+
+  const config = getPriorityLevel(entity.prioritet);
+
+  return {
+    text: config.label,
+    color: config.color,
+    icon: config.iconName, // Use iconName from centralized config
+    iconRotation: config.iconRotation,
+  };
 };

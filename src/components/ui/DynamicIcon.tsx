@@ -36,12 +36,12 @@ export function DynamicIcon({ name, className = "", size = 16, color }: IconProp
 
 /**
  * Utility function to render icon with text
- * @param iconName - Lucide icon name
+ * @param iconName - Lucide icon name, React component function, or React element
  * @param text - Text to display next to icon
  * @param className - CSS classes for the container
  * @param iconSize - Size of the icon
  * @param iconColor - Hex color for the icon
- * @param iconColor - Hex color for the icon
+ * @param iconClassName - CSS classes for the icon
  */
 export function IconWithText({
   iconName,
@@ -50,25 +50,57 @@ export function IconWithText({
   iconSize = 16,
   iconClassName = "mr-2",
   iconColor,
+  iconRotation = "",
 }: {
-  iconName?: string;
+  iconName?: string | React.ComponentType<any> | React.ReactElement;
   text: string;
   className?: string;
   iconSize?: number;
   iconClassName?: string;
   iconColor?: string;
+  iconRotation?: string;
 }) {
-  // Check for both undefined/null and empty strings
-  if (!iconName || iconName.trim() === "") {
+  // Handle empty/null/undefined
+  if (!iconName) {
     return <span className={className}>{text}</span>;
   }
 
-  return (
-    <span className={`flex items-center ${className}`}>
-      <DynamicIcon name={iconName} size={iconSize} className={iconClassName} color={iconColor} />
-      {text}
-    </span>
-  );
+  // Combine iconClassName with iconRotation
+  const combinedIconClassName = `${iconClassName} ${iconRotation}`.trim();
+
+  // Handle React component function (like Triangle)
+  if (typeof iconName === 'function') {
+    const IconComponent = iconName;
+    return (
+      <span className={`flex items-center ${className}`}>
+        <IconComponent size={iconSize} className={combinedIconClassName} style={iconColor ? { color: iconColor } : undefined} />
+        {text}
+      </span>
+    );
+  }
+
+  // Handle React element
+  if (React.isValidElement(iconName)) {
+    return (
+      <span className={`flex items-center ${className}`}>
+        {React.cloneElement(iconName, { size: iconSize, className: combinedIconClassName })}
+        {text}
+      </span>
+    );
+  }
+
+  // Handle string icon name
+  if (typeof iconName === 'string' && iconName.trim() !== "") {
+    return (
+      <span className={`flex items-center ${className}`}>
+        <DynamicIcon name={iconName} size={iconSize} className={combinedIconClassName} color={iconColor} />
+        {text}
+      </span>
+    );
+  }
+
+  // Fallback for empty strings
+  return <span className={className}>{text}</span>;
 }
 
 export default DynamicIcon;

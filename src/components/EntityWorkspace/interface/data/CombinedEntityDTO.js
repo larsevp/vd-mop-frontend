@@ -178,16 +178,20 @@ export class CombinedEntityDTO extends EntityDTOInterface {
       const filterBy = filters.filterBy || "all";
       const additionalFilters = filters.additionalFilters || {};
 
-      // Call API function with individual parameters (only search supported by backend for now)
-      const rawResponse = await queryFn(actualPage, actualPageSize, search, sortBy, sortOrder);
+      // Separate backend-only filters from frontend filters
+      const { onlyProjectCreated, ...frontendFilters } = additionalFilters;
+      const backendFilters = { ...additionalFilters }; // Pass all filters to backend
+
+      // Call API function with all parameters including filters
+      const rawResponse = await queryFn(actualPage, actualPageSize, search, sortBy, sortOrder, filterBy, backendFilters);
       const rawData = rawResponse.data || rawResponse;
 
       // Transform the response first
       const transformedData = this.transformResponse(rawData);
 
-      // Apply client-side filtering to the transformed data
-      if (filterBy !== "all" || Object.keys(additionalFilters).length > 0) {
-        transformedData.items = applyEntityFilters(transformedData.items, filterBy, additionalFilters);
+      // Apply client-side filtering ONLY for frontend-supported filters (not onlyProjectCreated)
+      if (filterBy !== "all" || Object.keys(frontendFilters).length > 0) {
+        transformedData.items = applyEntityFilters(transformedData.items, filterBy, frontendFilters);
         transformedData.total = transformedData.items.length;
       }
 

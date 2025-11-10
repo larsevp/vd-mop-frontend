@@ -143,11 +143,12 @@ export const getPaginatedProsjektTiltakGroupedByEmne = (
   search = "",
   sortBy = "",
   sortOrder = "asc",
-  projectId = null
+  projectId = null,
+  onlyProjectCreated = false
 ) => {
   const config = addProsjektTiltakFieldExclusion("index");
 
-  // Build params including projectId
+  // Build params including projectId and onlyProjectCreated filter
   const params = new URLSearchParams({
     page: page.toString(),
     pageSize: pageSize.toString(),
@@ -155,6 +156,7 @@ export const getPaginatedProsjektTiltakGroupedByEmne = (
     ...(sortBy && { sortBy }),
     ...(sortOrder && { sortOrder }),
     ...(projectId && { projectId: projectId.toString() }),
+    ...(onlyProjectCreated && { onlyProjectCreated: 'true' }),
   });
 
   // Call the endpoint directly since we're building custom params
