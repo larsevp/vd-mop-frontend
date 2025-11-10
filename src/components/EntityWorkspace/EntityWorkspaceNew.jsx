@@ -117,6 +117,13 @@ const EntityWorkspaceNew = ({
   const entities = useMemo(() => result?.items || [], [result?.items]);
   const entityType = dto?.entityType || dto?.getPrimaryEntityType?.() || "entities";
 
+  // Calculate total count of all entities across all groups
+  const totalEntityCount = useMemo(() => {
+    return entities.reduce((total, group) => {
+      return total + (group?.items?.length || 0);
+    }, 0);
+  }, [entities]);
+
   // Memoize viewOptions to prevent unnecessary re-renders and effect triggers
   const cardsViewOptions = useMemo(() => ({
     ...viewOptions,
@@ -718,7 +725,7 @@ const EntityWorkspaceNew = ({
                 <span className="hidden sm:inline">Tilbake</span>
               </Button>
               <h1 className="text-lg sm:text-2xl font-semibold text-neutral-900 truncate">{dto?.getDisplayConfig?.()?.title || entityType}</h1>
-              <div className="hidden sm:block text-sm text-neutral-600 flex-shrink-0">{entities.length} totalt</div>
+              <div className="hidden sm:block text-sm text-neutral-600 flex-shrink-0">{totalEntityCount} elementer</div>
 
               {/* View Mode Toggle - shown next to title on desktop, separate on mobile */}
               <div className="hidden md:flex items-center border rounded-lg p-1 bg-neutral-50 flex-shrink-0 ml-2">

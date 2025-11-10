@@ -334,19 +334,6 @@ const EntityDetailPane = ({
           return !isEmpty;
         });
 
-        // Debug logging for PT5
-        if (entity.tiltakUID === 'PT5' || entity.id === 5) {
-          console.log('LOGBACKEND PT5 section expansion (post-process):', {
-            sectionName,
-            hasFilledFields,
-            sectionFields: sectionFields.map(f => ({
-              name: f.name,
-              entityValue: typeof entity[f.name] === 'string' ? entity[f.name].substring(0, 50) : entity[f.name]
-            })),
-            willExpand: hasFilledFields
-          });
-        }
-
         // Only expand if it has content, otherwise remove from expanded set
         if (hasFilledFields) {
           expandedSet.add(sectionName);
