@@ -704,7 +704,7 @@ const EntityWorkspaceNew = ({
     <div className="bg-white min-h-screen">
       <div className="max-w-none w-full" style={{ maxWidth: "none" }}>
         {/* Header with search - Responsive layout */}
-        <div className="bg-white border-b border-neutral-200 px-4 sm:px-6 py-4">
+        <div className="sticky z-50 bg-white border-b border-neutral-200 px-4 sm:px-6 py-4 shadow-sm" style={{ top: "85px" }}>
           <div className="flex flex-wrap items-center justify-between gap-3 xl:grid xl:grid-cols-[auto_1fr_auto]">
             {/* Left section: Navigation, Title, Count */}
             <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0 xl:flex-initial">
