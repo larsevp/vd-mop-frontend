@@ -1,21 +1,27 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import ReactFlow, { 
-  MiniMap, 
-  Controls, 
+import ReactFlow, {
+  MiniMap,
+  Controls,
   Background,
   useNodesState,
   useEdgesState
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Network } from 'lucide-react';
+import { Network, Columns3, Columns2 } from 'lucide-react';
 import { Button } from '@/components/ui/primitives/button';
 
-// Import flow components and utilities
+// Import horizontal flow components and utilities
 import EmneFlowNode from '../components/EmneFlowNode';
 import KravFlowNode from '../components/KravFlowNode';
 import TiltakFlowNode from '../components/TiltakFlowNode';
 import { transformToFlowData, getDefaultFlowSettings } from '../adapter/flowDataTransformer';
+
+// Import vertical flow components and utilities
+import EmneFlowNodeVertical from '../layouts/vertical/components/EmneFlowNode';
+import KravFlowNodeVertical from '../layouts/vertical/components/KravFlowNode';
+import TiltakFlowNodeVertical from '../layouts/vertical/components/TiltakFlowNode';
+import { transformToVerticalFlow } from '../layouts/vertical/verticalTransformer';
 
 // Import data hook and UI state
 import { useEntityData } from '@/components/EntityWorkspace/interface/hooks/useEntityData';
@@ -35,12 +41,24 @@ import { prosjektKrav as prosjektKravConfig } from '@/modelConfigs/models/prosje
 import { prosjektTiltak as prosjektTiltakConfig } from '@/modelConfigs/models/prosjektTiltak';
 
 // Define node types outside component to prevent recreation
-const nodeTypes = {
+const horizontalNodeTypes = {
   emne: EmneFlowNode,
   krav: KravFlowNode,
   prosjektkrav: KravFlowNode,
   tiltak: TiltakFlowNode,
   prosjekttiltak: TiltakFlowNode,
+};
+
+const verticalNodeTypes = {
+  emneNode: EmneFlowNodeVertical,
+  kravNode: KravFlowNodeVertical,
+  tiltakNode: TiltakFlowNodeVertical,
+  // Fallback compatibility for transition period
+  emne: EmneFlowNodeVertical,
+  krav: KravFlowNodeVertical,
+  tiltak: TiltakFlowNodeVertical,
+  prosjektkrav: KravFlowNodeVertical,
+  prosjekttiltak: TiltakFlowNodeVertical,
 };
 
 /**
@@ -67,12 +85,25 @@ const FlowWorkspace = ({
 }) => {
   // UI state management
   const ui = useWorkspaceUI();
-  
+
   const queryClient = useQueryClient();
-  
+
+  // Layout mode state (persisted to localStorage)
+  const [layoutMode, setLayoutMode] = useState(() => {
+    const saved = localStorage.getItem('flowLayoutMode');
+    return saved || 'horizontal'; // 'horizontal' or 'vertical'
+  });
+
   // Modal state for EntityDetailPane
   const [selectedEntity, setSelectedEntity] = useState(null);
   const [showDetailPane, setShowDetailPane] = useState(false);
+
+  // Handle layout toggle
+  const handleLayoutToggle = useCallback(() => {
+    const newMode = layoutMode === 'horizontal' ? 'vertical' : 'horizontal';
+    setLayoutMode(newMode);
+    localStorage.setItem('flowLayoutMode', newMode);
+  }, [layoutMode]);
   
   // Use either provided single entity DTO or create combined DTO
   const dto = useMemo(() => {
@@ -93,8 +124,11 @@ const FlowWorkspace = ({
   });
 
 
-  // Use custom node types if provided, otherwise use defaults
-  const effectiveNodeTypes = customNodeTypes || nodeTypes;
+  // Use custom node types if provided, otherwise use layout-specific defaults
+  // Memoize to prevent recreation on every render
+  const effectiveNodeTypes = useMemo(() => {
+    return customNodeTypes || (layoutMode === 'vertical' ? verticalNodeTypes : horizontalNodeTypes);
+  }, [customNodeTypes, layoutMode]);
 
   // Entity type for search placeholder
   const entityTypes = flowAdapter?.getSupportedEntityTypes?.() || ["entities"];
@@ -105,12 +139,15 @@ const FlowWorkspace = ({
     ui.executeSearch();
   }, [ui.executeSearch]);
 
-  // Transform data to flow format
+  // Transform data to flow format (dispatch to layout-specific transformer)
   const { nodes: initialNodes, edges: initialEdges } = useMemo(() => {
     if (!flowData) {
       return { nodes: [], edges: [] };
     }
-    
+
+    // Select transformer based on layout mode
+    const transformer = layoutMode === 'vertical' ? transformToVerticalFlow : transformToFlowData;
+
     // Handle single entity DTO case with custom transformation
     if (singleEntityDTO && transformData) {
       const transformedData = transformData(flowData);
@@ -144,9 +181,9 @@ const FlowWorkspace = ({
           }
         };
       }
-      return transformToFlowData(flowAdapterData, { dto }, viewOptions);
+      return transformer(flowAdapterData, { dto }, viewOptions);
     }
-    
+
     // Default: Convert CombinedEntityDTO format to FlowAdapter format
     let flowAdapterData;
     if (flowData.isGrouped && flowData.items) {
@@ -178,9 +215,9 @@ const FlowWorkspace = ({
         }
       };
     }
-    
-    return transformToFlowData(flowAdapterData, { dto }, viewOptions);
-  }, [flowData, viewOptions, dto, singleEntityDTO, transformData]);
+
+    return transformer(flowAdapterData, { dto }, viewOptions);
+  }, [flowData, viewOptions, dto, singleEntityDTO, transformData, layoutMode]);
 
   // React Flow state
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -391,7 +428,17 @@ const FlowWorkspace = ({
               })}
             </div>
           )}
-          
+
+          {/* Layout toggle button */}
+          <Button
+            variant="ghost"
+            onClick={handleLayoutToggle}
+            className="h-8 w-8 p-0"
+            title={layoutMode === 'horizontal' ? 'Switch to vertical layout' : 'Switch to horizontal layout'}
+          >
+            {layoutMode === 'horizontal' ? <Columns2 className="w-4 h-4" /> : <Columns3 className="w-4 h-4" />}
+          </Button>
+
           {/* Back to regular view button */}
           {onFlowToggle && (
             <Button
@@ -415,7 +462,7 @@ const FlowWorkspace = ({
         }}
       >
         <ReactFlow
-          key={`flow-${nodes.length}-${edges.length}`}
+          key={`flow-${layoutMode}-${nodes.length}-${edges.length}`}
           nodes={nodes}
           edges={edges}
           onNodesChange={onNodesChange}
@@ -424,8 +471,8 @@ const FlowWorkspace = ({
           onNodeDoubleClick={onNodeDoubleClick}
           nodeTypes={effectiveNodeTypes}
           fitView={true}
-          fitViewOptions={{ padding: 0.3 }}
-          defaultViewport={{ x: 0, y: 0, zoom: 0.5 }}
+          fitViewOptions={{ padding: layoutMode === 'vertical' ? 0.2 : 0.3 }}
+          defaultViewport={{ x: 0, y: 0, zoom: layoutMode === 'vertical' ? 0.4 : 0.5 }}
           minZoom={0.1}
           maxZoom={2}
           nodesDraggable={true}
@@ -482,18 +529,31 @@ const FlowWorkspace = ({
                 <span className="text-sm text-gray-700">Tiltak</span>
               </div>
             </div>
-            
-            {/* Flow direction indicator */}
+
+            {/* Flow direction indicator - dynamic based on layout */}
             <div className="mt-4 pt-3 border-t border-gray-200">
               <div className="text-sm text-gray-600">
-                <div className="flex items-center gap-1">
-                  <span>Flow:</span>
-                  <span className="text-purple-600">Emne</span>
-                  <span>→</span>
-                  <span className="text-blue-600">Krav</span>
-                  <span>→</span>
-                  <span className="text-green-600">Tiltak</span>
-                </div>
+                {layoutMode === 'horizontal' ? (
+                  <div className="flex items-center gap-1">
+                    <span>Flow:</span>
+                    <span className="text-purple-600">Emne</span>
+                    <span>→</span>
+                    <span className="text-blue-600">Krav</span>
+                    <span>→</span>
+                    <span className="text-green-600">Tiltak</span>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <div className="text-xs font-medium text-gray-700">Columnar Layout</div>
+                    <div className="flex flex-col items-center gap-0.5">
+                      <span className="text-purple-600">Emne</span>
+                      <span>↓</span>
+                      <span className="text-blue-600">Krav</span>
+                      <span>↓</span>
+                      <span className="text-green-600">Tiltak</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
