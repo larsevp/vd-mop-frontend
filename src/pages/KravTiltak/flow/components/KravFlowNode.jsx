@@ -12,8 +12,8 @@ const KravFlowNode = ({ data, selected }) => {
 
   return (
     <>
-      {hasIncoming && <Handle type="target" position={Position.Left} style={{ background: "#3b82f6" }} />}
-      {hasOutgoing && <Handle type="source" position={Position.Right} style={{ background: "#6b7280" }} />}
+      {hasIncoming && <Handle type="target" position={Position.Left} id="krav-target" style={{ background: "#3b82f6" }} />}
+      {hasOutgoing && <Handle type="source" position={Position.Right} id="krav-source" style={{ background: "#6b7280" }} />}
 
       {/* Flow node wrapper */}
       <div className="bg-white border-2 border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow w-80 max-w-80">

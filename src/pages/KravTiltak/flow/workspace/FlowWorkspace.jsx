@@ -97,13 +97,6 @@ const FlowWorkspace = ({
   // Modal state for EntityDetailPane
   const [selectedEntity, setSelectedEntity] = useState(null);
   const [showDetailPane, setShowDetailPane] = useState(false);
-
-  // Handle layout toggle
-  const handleLayoutToggle = useCallback(() => {
-    const newMode = layoutMode === 'horizontal' ? 'vertical' : 'horizontal';
-    setLayoutMode(newMode);
-    localStorage.setItem('flowLayoutMode', newMode);
-  }, [layoutMode]);
   
   // Use either provided single entity DTO or create combined DTO
   const dto = useMemo(() => {
@@ -223,16 +216,35 @@ const FlowWorkspace = ({
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
+  // Handle layout mode change - clear nodes/edges first to prevent mismatched types
+  const handleLayoutModeChange = useCallback((mode) => {
+    if (mode === layoutMode) return;
+
+    // Clear nodes and edges first to prevent React Flow errors during transition
+    setNodes([]);
+    setEdges([]);
+
+    // Then change the layout mode
+    setLayoutMode(mode);
+    localStorage.setItem('flowLayoutMode', mode);
+  }, [layoutMode, setNodes, setEdges]);
+
   // Update React Flow state when initial data changes
   React.useEffect(() => {
-    setNodes(initialNodes);
-    setEdges(initialEdges);
+    // Small delay to ensure node types are updated before setting new nodes/edges
+    const timeoutId = setTimeout(() => {
+      setNodes(initialNodes);
+      setEdges(initialEdges);
+    }, 10);
+
+    return () => clearTimeout(timeoutId);
   }, [initialNodes, initialEdges, setNodes, setEdges]);
 
   // Handle node double-clicks to open EntityDetailPane
   const onNodeDoubleClick = useCallback((event, node) => {
     // Only handle double-clicks on entity nodes (not emne nodes)
-    if (node.type === 'prosjektkrav' || node.type === 'prosjekttiltak') {
+    const entityNodeTypes = ['prosjektkrav', 'prosjekttiltak', 'krav', 'tiltak', 'kravNode', 'tiltakNode'];
+    if (entityNodeTypes.includes(node.type)) {
       const entity = node.data?.entity;
       if (entity) {
         setSelectedEntity(entity);
@@ -429,27 +441,39 @@ const FlowWorkspace = ({
             </div>
           )}
 
-          {/* Layout toggle button */}
-          <Button
-            variant="ghost"
-            onClick={handleLayoutToggle}
-            className="h-8 w-8 p-0"
-            title={layoutMode === 'horizontal' ? 'Switch to vertical layout' : 'Switch to horizontal layout'}
-          >
-            {layoutMode === 'horizontal' ? <Columns2 className="w-4 h-4" /> : <Columns3 className="w-4 h-4" />}
-          </Button>
-
-          {/* Back to regular view button */}
-          {onFlowToggle && (
+          {/* Layout Mode Toggle - matching EntityWorkspace pattern */}
+          <div className="flex items-center border rounded-lg p-1 bg-neutral-50 flex-shrink-0">
             <Button
-              variant="ghost"
-              onClick={onFlowToggle}
+              variant={layoutMode === 'horizontal' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => handleLayoutModeChange('horizontal')}
               className="h-8 w-8 p-0"
-              title="Back to regular view"
+              title="Horizontal Layout"
             >
-              <Network className="w-4 h-4" />
+              <Columns3 className="w-4 h-4" />
             </Button>
-          )}
+            <Button
+              variant={layoutMode === 'vertical' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => handleLayoutModeChange('vertical')}
+              className="h-8 w-8 p-0"
+              title="Vertical Layout"
+            >
+              <Columns2 className="w-4 h-4" />
+            </Button>
+            {/* Back to regular view button */}
+            {onFlowToggle && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onFlowToggle}
+                className="h-8 w-8 p-0"
+                title="Back to regular view"
+              >
+                <Network className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
         </div>
       </div>
       

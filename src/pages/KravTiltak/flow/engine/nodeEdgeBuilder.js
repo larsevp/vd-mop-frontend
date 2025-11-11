@@ -138,6 +138,7 @@ export function createEdges(globalRelationships, positions, allKravEntities, all
 
       if (!allParentedEntities.has(entityKey)) {
         const emneKey = `emne-${entity._sourceEmne.id}`;
+        const targetHandle = entity.entityType?.toLowerCase().includes("krav") ? "krav-target" : "tiltak-target";
 
         if (positions.has(emneKey) && positions.has(entityKey)) {
           edges.push({
@@ -147,6 +148,8 @@ export function createEdges(globalRelationships, positions, allKravEntities, all
             type: "default",
             style: { stroke: "#6b7280", strokeWidth: 2 },
             animated: false,
+            sourceHandle: "emne-source",
+            targetHandle: targetHandle,
           });
         }
       }
@@ -160,23 +163,29 @@ export function createEdges(globalRelationships, positions, allKravEntities, all
       source: `krav-${parent.id}`,
       target: `krav-${child.id}`,
       type: "hierarchy",
+      sourceHandle: "krav-source",
+      targetHandle: "krav-target",
     })),
     // Parent-child tiltak relationships
     ...globalRelationships.tiltakToTiltak.map(({ parent, child }) => ({
       source: `tiltak-${parent.id}`,
       target: `tiltak-${child.id}`,
       type: "hierarchy",
+      sourceHandle: "tiltak-source",
+      targetHandle: "tiltak-target",
     })),
     // Business relationships (krav → tiltak)
     ...globalRelationships.tiltakToKrav.map(({ krav, tiltak }) => ({
       source: `krav-${krav.id}`,
       target: `tiltak-${tiltak.id}`,
       type: "business",
+      sourceHandle: "krav-source",
+      targetHandle: "tiltak-target",
     })),
   ];
 
   // Create edges with unified styling
-  allRelationships.forEach(({ source, target, type }) => {
+  allRelationships.forEach(({ source, target, type, sourceHandle, targetHandle }) => {
     if (positions.has(source) && positions.has(target)) {
       edges.push({
         id: `${source}-${target}`,
@@ -185,6 +194,8 @@ export function createEdges(globalRelationships, positions, allKravEntities, all
         type: "default",
         style: { stroke: "#6b7280", strokeWidth: 2 },
         animated: false,
+        sourceHandle,
+        targetHandle,
       });
     }
   });

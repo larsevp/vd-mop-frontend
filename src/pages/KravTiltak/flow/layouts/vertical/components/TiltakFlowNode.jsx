@@ -10,8 +10,8 @@ const TiltakFlowNode = ({ data, selected }) => {
 
   return (
     <>
-      {hasIncoming && <Handle type="target" position={Position.Left} style={{ background: "#10b981", top: '50%' }} />}
-      {hasOutgoing && <Handle type="source" position={Position.Left} style={{ background: "#10b981", top: '50%' }} />}
+      {hasIncoming && <Handle type="target" position={Position.Left} id="tiltak-target" style={{ background: "#10b981", top: '50%' }} />}
+      {hasOutgoing && <Handle type="source" position={Position.Left} id="tiltak-source" style={{ background: "#10b981", top: '50%' }} />}
 
       {/* Flow node wrapper */}
       <div className="bg-white border-2 border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow w-80 max-w-80">

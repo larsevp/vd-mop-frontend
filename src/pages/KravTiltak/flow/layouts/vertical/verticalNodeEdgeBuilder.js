@@ -126,8 +126,8 @@ export function createVerticalEdges(globalRelationships, columnarPositions, allK
         width: 12,
         height: 12,
       },
-      sourceHandle: null,
-      targetHandle: null,
+      sourceHandle: "krav-source",
+      targetHandle: "krav-target",
     });
   });
 
@@ -146,8 +146,8 @@ export function createVerticalEdges(globalRelationships, columnarPositions, allK
         width: 12,
         height: 12,
       },
-      sourceHandle: null,
-      targetHandle: null,
+      sourceHandle: "tiltak-source",
+      targetHandle: "tiltak-target",
     });
   });
 
@@ -166,8 +166,8 @@ export function createVerticalEdges(globalRelationships, columnarPositions, allK
         width: 12,
         height: 12,
       },
-      sourceHandle: null,
-      targetHandle: null,
+      sourceHandle: "krav-source",
+      targetHandle: "tiltak-target",
     });
   });
 
