@@ -271,7 +271,19 @@ export class KravTiltakCombinedAdapter {
       }
 
       const comparison = aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-      return sortOrder === "desc" ? -comparison : comparison;
+      const primarySort = sortOrder === "desc" ? -comparison : comparison;
+
+      // If primary sort values are equal, apply fallback chain: sortIt -> id
+      if (primarySort === 0) {
+        // Fallback to sortIt if not already sorting by it
+        if (sortBy !== "sortIt" && a.sortIt != null && b.sortIt != null && a.sortIt !== b.sortIt) {
+          return a.sortIt - b.sortIt;
+        }
+        // Final fallback to id
+        return (a.id || 0) - (b.id || 0);
+      }
+
+      return primarySort;
     });
   }
 
