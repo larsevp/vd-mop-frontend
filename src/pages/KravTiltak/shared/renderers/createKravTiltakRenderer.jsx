@@ -166,8 +166,8 @@ export const createKravTiltakRenderer = (config) => {
         showStatus: "Status",
         showPrioritet: "Prioritet",
         showObligatorisk: "Obligatorisk/Valgfri",
-        showRelations: "Tilknyttede relasjoner",
         showFavorites: "Favoritter", // Tiltak-specific, but included in common set
+        showUID: "Vis ID",
       };
 
       // Only return options that are not explicitly disabled in modelConfig
@@ -195,7 +195,7 @@ export const createKravTiltakRenderer = (config) => {
           showStatus: false,
           showPrioritet: true,
           showObligatorisk: true,
-          showRelations: true,
+          showUID: false,
         }
       );
     },

@@ -46,8 +46,8 @@ const config = {
     showStatus: "Status",
     showPrioritet: "Prioritet",
     showObligatorisk: "Obligatorisk/Valgfri",
-    showRelations: "Tilknyttede relasjoner",
     showEntityType: "Vis enhetstype",
+    showUID: "Vis ID",
   },
 };
 

@@ -18,7 +18,7 @@ export const useKravViewStore = create(
         showVurdering: true,
         showPrioritet: true,
         showObligatorisk: false,
-        showRelations: true,
+        showUID: false,
       },
 
       // Actions
@@ -40,7 +40,7 @@ export const useKravViewStore = create(
             showVurdering: true,
             showPrioritet: true,
             showObligatorisk: false,
-            showRelations: true,
+            showUID: false,
           }
         });
       },
@@ -57,7 +57,7 @@ export const useKravViewStore = create(
     }),
     {
       name: 'krav-view-store',
-      version: 1,
+      version: 3, // Bumped to add showUID: false default
     }
   )
 );

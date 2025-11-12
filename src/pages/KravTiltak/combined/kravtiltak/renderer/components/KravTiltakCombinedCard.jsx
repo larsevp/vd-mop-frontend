@@ -20,14 +20,14 @@ const KravTiltakCombinedCard = (props) => {
       config = {
         uidField: 'kravUID',
         badgeText: 'Krav',
-        badgeColor: 'bg-emerald-100 text-emerald-800 border border-emerald-200',
+        badgeColor: 'bg-slate-100 text-slate-800 border border-slate-200',
         childrenLabel: 'underkrav',
         relations: [
           {
             field: 'tiltak',
             label: 'tiltak',
             prefix: '→',
-            color: 'text-sky-600'
+            color: 'text-slate-600'
           }
         ]
       };
@@ -37,14 +37,14 @@ const KravTiltakCombinedCard = (props) => {
       config = {
         uidField: 'tiltakUID',
         badgeText: 'Tiltak',
-        badgeColor: 'bg-sky-100 text-sky-800 border border-sky-200',
+        badgeColor: 'bg-slate-100 text-slate-800 border border-slate-200',
         childrenLabel: 'undertiltak',
         relations: [
           {
             field: 'krav',
             label: 'krav',
             prefix: '←',
-            color: 'text-emerald-600'
+            color: 'text-slate-600'
           }
         ]
       };

@@ -13,8 +13,8 @@ import { truncateText } from './textHelpers';
 export const getGeneralTiltakReference = (entity) => {
   if (entity.generalTiltak) {
     return (
-      <span className="text-xs text-purple-600 flex items-center">
-        <span className="text-purple-500">↑</span>
+      <span className="text-xs text-slate-600 flex items-center">
+        <span className="text-slate-500">↑</span>
         {truncateText(entity.generalTiltak.tittel || entity.generalTiltak.navn, 25)}
       </span>
     );
@@ -50,8 +50,8 @@ export const getParentReference = (entity) => {
       const displayText = parentUID ? `${parentUID}: ${parentTitle}` : parentTitle;
       
       return (
-        <span className="text-xs text-blue-600 flex items-center">
-          <span className="text-blue-500">↑</span>
+        <span className="text-xs text-slate-600 flex items-center">
+          <span className="text-slate-500">↑</span>
           {truncateText(displayText, 35)}
         </span>
       );
@@ -68,8 +68,8 @@ export const getParentReference = (entity) => {
       const displayText = kravUID ? `${kravUID}: ${kravTitle}` : kravTitle;
       
       return (
-        <span className="text-xs text-green-600 flex items-center">
-          <span className="text-green-500">→</span>
+        <span className="text-xs text-slate-600 flex items-center">
+          <span className="text-slate-500">→</span>
           {truncateText(displayText, 35)}
         </span>
       );

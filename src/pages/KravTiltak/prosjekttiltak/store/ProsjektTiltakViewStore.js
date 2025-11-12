@@ -19,7 +19,7 @@ export const useProsjektTiltakViewStore = create(
         showVurdering: true,
         showPrioritet: true,
         showObligatorisk: false,
-        showRelations: true,
+        showUID: false,
       },
 
 
@@ -43,7 +43,7 @@ export const useProsjektTiltakViewStore = create(
             showVurdering: true,
             showPrioritet: true,
             showObligatorisk: false,
-            showRelations: true,
+            showUID: false,
           }
         });
       },
@@ -60,7 +60,7 @@ export const useProsjektTiltakViewStore = create(
     }),
     {
       name: 'prosjekttiltak-view-store',
-      version: 2, // Increment version due to schema change
+      version: 4, // Bumped to add showUID: false default
     }
   )
 );

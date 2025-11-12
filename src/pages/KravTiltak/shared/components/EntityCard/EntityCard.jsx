@@ -6,11 +6,12 @@ import { DisplayValueResolver } from "@/components/tableComponents/displayValues
 import { truncateText, getEntityTitle, formatCardText } from './helpers/textHelpers';
 import { getIcon } from './helpers/iconHelpers.jsx';
 import { getStatusDisplay, getVurderingDisplay, getPrioritetDisplay } from '../../utils/statusHelpers';
-import { getSpecialReference, getParentReference } from './helpers/referenceHelpers.jsx';
 
 // Import components
 import StatusIndicator from '../StatusIndicator';
-import EntityBadge from '../EntityBadge/EntityBadge';
+import EntityTypeBadge from '../EntityTypeBadge';
+import EntityReference from '../EntityReference';
+import StatusIconsRow from '../StatusIconsRow';
 import { FieldResolver } from "@/components/tableComponents/fieldTypes/fieldResolver";
 import { getModelConfig } from '@/modelConfigs';
 import { useEntityForm } from '../EntityDetailPane/helpers';
@@ -163,7 +164,12 @@ const EntityCard = ({
       return null;
     } else {
       // Use snippet for compact split view - plain text
-      return entity.beskrivelseSnippet || entity.descriptionSnippet || '';
+      // Fallback chain: beskrivelse → informasjon → implementasjon snippets
+      return entity.beskrivelseSnippet ||
+             entity.descriptionSnippet ||
+             entity.informasjonSnippet ||
+             entity.implementasjonSnippet ||
+             '';
     }
   };
 
@@ -369,7 +375,7 @@ const EntityCard = ({
           ? `max-w-5xl mx-auto py-4 px-8 transition-all duration-200 ${isSelected ? '' : 'hover:bg-slate-50/20'}`
           : `block w-full mb-1 ${viewOptions.isTOCMode ? 'px-2 py-1' : 'px-4 py-3'} rounded-md transition-colors duration-150 ${
               isSelected
-                ? `bg-slate-50 ${viewOptions.isTOCMode ? '' : 'border-l-2 border-l-slate-400'}`
+                ? `bg-slate-100`
                 : (selectionMode === 'multi' && isItemSelected)
                   ? `bg-primary/5 ${viewOptions.isTOCMode ? '' : 'border-l-2 border-l-primary'}`
                   : `hover:bg-slate-50/60 ${viewOptions.isTOCMode ? '' : 'border-l-2 border-l-transparent'}`
@@ -383,7 +389,7 @@ const EntityCard = ({
       <div className={isExpandedCards ? '' : (shouldIndent && !viewOptions.isTOCMode ? 'ml-8' : '')}>
         {isExpandedCards ? (
           /* 📰 ARTICLE MODE - Clean editorial layout */
-        <article className={`space-y-3 transition-all duration-200 ${isSelected ? (editMode ? 'border-2 border-slate-300 p-6 rounded-xl -mx-8 -my-4' : 'bg-slate-50 p-6 rounded-xl -mx-8 -my-4') : ''}`}>
+        <article className={`space-y-3 transition-all duration-200 ${isSelected ? (editMode ? 'border-2 border-slate-300 p-6 rounded-xl -mx-8 -my-4' : 'bg-slate-100 p-6 rounded-xl -mx-8 -my-4') : ''}`}>
           {/* Article Header */}
           <header className="space-y-2">
             {/* Title with Icon (One Line) */}
@@ -392,30 +398,23 @@ const EntityCard = ({
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 {/* Entity Type Letter Badge with tree lines for children - hide in TOC mode */}
                 {!viewOptions.isTOCMode && (() => {
-                  // Determine if this is a krav or tiltak entity
-                  const isKrav = entity.entityType?.toLowerCase().includes('krav');
-                  const isTiltak = entity.entityType?.toLowerCase().includes('tiltak');
                   // Hierarchical child (has parentId)
                   const isHierarchicalChild = entity.parentId;
                   // Related item (tiltak connected to krav)
                   const isRelated = entity._relatedToKrav;
                   const isChild = isHierarchicalChild || isRelated;
 
-                  const letter = isKrav ? 'K' : 'T';
-                  // Mute child badges to 50% opacity, larger badges for parents
-                  const badgeSize = isChild ? 'w-5 h-5 text-xs' : 'w-6 h-6 text-sm';
-                  const badgeColor = isChild
-                    ? (isKrav ? 'text-emerald-600 border-emerald-600 opacity-50' : 'text-sky-600 border-sky-600 opacity-50')
-                    : (isKrav ? 'text-emerald-600 border-emerald-600' : 'text-sky-600 border-sky-600');
-
                   return (
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {isChild && (
                         <span className="text-slate-300 text-base font-light select-none">├─</span>
                       )}
-                      <div className={`${badgeSize} ${badgeColor} rounded-full border flex items-center justify-center font-semibold`}>
-                        {letter}
-                      </div>
+                      <EntityTypeBadge
+                        entityType={entity.entityType}
+                        isChild={isChild}
+                        size="default"
+                        colored={true}
+                      />
                     </div>
                   );
                 })()}
@@ -798,8 +797,8 @@ const EntityCard = ({
               </div>
             )}
 
-            {/* Metadata - Only show files and favoritter (relations shown in hierarchy) */}
-            {viewOptions.showRelations && (() => {
+            {/* Metadata - Only show files and favoritter when hierarchy is enabled */}
+            {viewOptions.showHierarchy && (() => {
               const hasFiles = entity.files?.length > 0;
               const hasFavorites = viewOptions.showFavorites && entity.favorittAvBrukere?.length > 0;
 
@@ -833,29 +832,15 @@ const EntityCard = ({
       ) : (
         /* 📋 SPLIT MODE - Compact table-like layout */
         <>
-          {/* Line 1: Special and parent references with status indicators - hide completely in TOC mode */}
-          {!viewOptions.isTOCMode && (
-            <div className="flex items-center justify-between gap-2 mb-1 min-w-0">
-              {/* Left side: References */}
-              <div className="flex items-center gap-2 flex-shrink-0 min-w-0 overflow-hidden">
-                {/* Special reference (e.g., generalTiltak) */}
-                {getSpecialReference(entity)}
-
-                {/* Parent reference for child elements */}
-                {getParentReference(entity)}
-              </div>
-
-              {/* Right side: Status indicators */}
-              <div className="flex items-center gap-1 flex-shrink-0 min-w-0">
-                {viewOptions.showVurdering && <StatusIndicator display={getVurderingDisplay(entity)} iconOnly />}
-                {viewOptions.showStatus && <StatusIndicator display={getStatusDisplay(entity)} iconOnly />}
-                {viewOptions.showPrioritet && <StatusIndicator display={getPrioritetDisplay(entity)} iconOnly />}
-              </div>
+          {/* Line 1: Parent references - hide in TOC mode or when hierarchy disabled */}
+          {!viewOptions.isTOCMode && viewOptions.showHierarchy && (
+            <div className="flex items-center gap-2 mb-1 min-w-0">
+              <EntityReference entity={entity} />
             </div>
           )}
 
-          {/* Line 2: Combined UID/Type Badge, Title, and action buttons */}
-          <div className="mb-1 flex items-center justify-between">
+          {/* Line 2: Type Badge, UID, Title | Status Icons (right) */}
+          <div className="mb-1 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0 flex-1">
               {/* Multi-select checkbox (only in multi-select mode) */}
               {selectionMode === 'multi' && (
@@ -875,19 +860,25 @@ const EntityCard = ({
               )}
 
               {!viewOptions.isTOCMode && (
-                <EntityBadge
-                  uid={uid}
-                  badgeColor={config.badgeColor}
-                  badgeText={config.badgeText}
-                  size="sm"
-                />
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {/* Entity type letter badge with colors */}
+                  <EntityTypeBadge entityType={entity.entityType} size="small" colored={true} />
+                </div>
               )}
 
-              <span className={`text-slate-900 ${shouldUseCompactMode || viewOptions.isTOCMode ? 'text-sm font-normal' : 'text-lg font-light'}`}>
+              <span className={`text-slate-900 ${shouldUseCompactMode || viewOptions.isTOCMode ? 'text-sm font-normal' : 'text-lg font-light'} truncate`}>
                 {viewOptions.isTOCMode && uid && <span className="font-mono text-xs mr-2 text-slate-500">{uid}</span>}
                 {title}
               </span>
             </div>
+
+            {/* Right side: Status icons + UID (if enabled) */}
+            {!viewOptions.isTOCMode && (
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <StatusIconsRow entity={entity} viewOptions={viewOptions} />
+                {viewOptions.showUID && uid && <span className="font-mono text-xs text-slate-500">{uid}</span>}
+              </div>
+            )}
           </div>
 
           {/* Line 3: Description preview (full width, readable) */}
@@ -955,39 +946,19 @@ const EntityCard = ({
             )
           )}
 
-          {/* Footer: Meta info and relations - hide in TOC mode */}
-          {!viewOptions.isTOCMode && (
+          {/* Footer: Meta info - hide in TOC mode */}
+          {!viewOptions.isTOCMode && viewOptions.showHierarchy && (
             <div className="flex justify-between items-center text-xs text-slate-500">
               <div className="flex items-center gap-3">
-                {/* Child count */}
-                {viewOptions.showRelations && entity.children?.length > 0 && (
-                  <span className="text-emerald-600 font-medium">
-                    {entity.children.length} {config.childrenLabel || "underelementer"}
-                  </span>
-                )}
-
-                {/* Related entities */}
-                {config.relations && config.relations.map((relation) => {
-                  const count = Array.isArray(entity[relation.field]) ? entity[relation.field].length : (entity[relation.field] ? 1 : 0);
-                  if (count > 0) {
-                    return (
-                      <span key={relation.field} className={`font-medium ${relation.color}`}>
-                        {relation.prefix} {count} {relation.label}
-                      </span>
-                    );
-                  }
-                  return null;
-                })}
-
                 {/* Favoritter - if shown */}
                 {viewOptions.showFavorites && entity.favorittAvBrukere?.length > 0 && (
-                  <span className="text-yellow-600 font-medium">
+                  <span className="text-slate-600 font-medium">
                     ★ {entity.favorittAvBrukere.length} favoritter
                   </span>
                 )}
 
                 {/* File attachments */}
-                {viewOptions.showRelations && entity.files?.length > 0 && (
+                {entity.files?.length > 0 && (
                   <span>{entity.files.length} vedlegg</span>
                 )}
               </div>

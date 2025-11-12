@@ -1,7 +1,6 @@
 import React from 'react';
 import { ChevronDown, ChevronRight, FileText } from 'lucide-react';
 import { DynamicIcon } from '@/components/ui/DynamicIcon';
-import { generateTypeCountBadges } from '../utils/entityTypeBadges';
 import { InfoIcon } from '@/components/ui/InfoIcon';
 
 /**
@@ -21,10 +20,6 @@ const EmneGroupHeader = ({
   viewOptions = {} // Accept viewOptions for TOC mode detection
 }) => {
   const emne = groupData?.group?.emne || groupData?.emne;
-
-  // For combined views, extract type counts
-  const typeCounts = groupData?._typeCounts;
-  const isCombinedView = entityType?.includes('combined');
   const isCardsMode = viewMode === 'cards';
   const isTOCMode = viewOptions?.isTOCMode; // Compact mode for table of contents
 
@@ -122,17 +117,6 @@ const EmneGroupHeader = ({
             {/* Right line */}
             <div className="flex-1 h-px bg-slate-200" />
           </div>
-
-          {/* Type counts for combined views */}
-          {isCombinedView && typeCounts && (
-            <div className="flex items-center justify-center gap-2 mt-3">
-              {generateTypeCountBadges(typeCounts).map((badge, index) => (
-                <span key={index} className={badge.classes}>
-                  {badge.count} {badge.label}
-                </span>
-              ))}
-            </div>
-          )}
         </div>
       ) : (
         /* 📋 SPLIT MODE - Compact list header */
@@ -168,16 +152,6 @@ const EmneGroupHeader = ({
                   </h3>
                   {emne && <InfoIcon info={emne.beskrivelse || "Ingen beskrivelse"} variant="gray" />}
                 </div>
-                {/* Combined view: Show colored type breakdown */}
-                {isCombinedView && typeCounts && (
-                  <div className="flex items-center gap-2 mt-1">
-                    {generateTypeCountBadges(typeCounts).map((badge, index) => (
-                      <span key={index} className={badge.classes}>
-                        {badge.count} {badge.label}
-                      </span>
-                    ))}
-                  </div>
-                )}
               </div>
               <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
                 {itemCount} oppføringer

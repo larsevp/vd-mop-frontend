@@ -129,8 +129,8 @@ const ProsjektKravTiltakCombinedWorkspace = () => {
       showVurdering: "Vis vurdering",
       showPrioritet: "Vis prioritet",
       showObligatorisk: "Vis obligatorisk",
-      showRelations: "Vis relasjoner",
       showEntityType: "Vis enhetstype",
+      showUID: "Vis ID",
     },
   }), []);
 

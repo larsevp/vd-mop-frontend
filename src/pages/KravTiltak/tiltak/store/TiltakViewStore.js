@@ -18,8 +18,8 @@ export const useTiltakViewStore = create(
         showVurdering: true,
         showPrioritet: true,
         showObligatorisk: false,
-        showRelations: true,
         showFavorites: true,
+        showUID: false,
       },
 
       // Actions
@@ -41,8 +41,8 @@ export const useTiltakViewStore = create(
             showVurdering: true,
             showPrioritet: true,
             showObligatorisk: false,
-            showRelations: true,
             showFavorites: true,
+            showUID: false,
           }
         });
       },
@@ -59,7 +59,7 @@ export const useTiltakViewStore = create(
     }),
     {
       name: 'tiltak-view-store',
-      version: 1,
+      version: 3, // Bumped to add showUID: false default
     }
   )
 );

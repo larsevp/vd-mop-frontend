@@ -300,12 +300,12 @@ export const createCombinedRenderer = (config) => {
     return viewOptions || {
       showHierarchy: "Vis hierarki",
       showMerknad: "Vis merknader",
-      showStatus: "Vis status", 
+      showStatus: "Vis status",
       showVurdering: "Vis vurdering",
       showPrioritet: "Vis prioritet",
       showObligatorisk: "Vis obligatorisk",
-      showRelations: "Vis relasjoner",
       showEntityType: "Vis enhetstype",
+      showUID: "Vis ID",
     };
   };
 
