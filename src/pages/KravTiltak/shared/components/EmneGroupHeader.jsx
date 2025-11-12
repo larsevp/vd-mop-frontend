@@ -2,6 +2,7 @@ import React from 'react';
 import { ChevronDown, ChevronRight, FileText } from 'lucide-react';
 import { DynamicIcon } from '@/components/ui/DynamicIcon';
 import { generateTypeCountBadges } from '../utils/entityTypeBadges';
+import { InfoIcon } from '@/components/ui/InfoIcon';
 
 /**
  * EmneGroupHeader - Shared component for emne group headers
@@ -61,9 +62,12 @@ const EmneGroupHeader = ({
             </div>
 
             {/* Emne Title */}
-            <h3 className="text-xs font-light text-slate-900 uppercase tracking-wider">
-              {emne?.tittel || "Uten emne"}
-            </h3>
+            <div className="flex items-center gap-1.5">
+              <h3 className="text-xs font-light text-slate-900 uppercase tracking-wider">
+                {emne?.tittel || "Uten emne"}
+              </h3>
+              {emne && <InfoIcon info={emne.beskrivelse || "Ingen beskrivelse"} variant="gray" />}
+            </div>
           </div>
 
           {/* Right line */}
@@ -109,9 +113,12 @@ const EmneGroupHeader = ({
               </div>
 
               {/* Emne Title */}
-              <h3 className="text-base font-light text-slate-900 uppercase tracking-wider">
-                {emne?.tittel || "Uten emne"}
-              </h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-light text-slate-900 uppercase tracking-wider">
+                  {emne?.tittel || "Uten emne"}
+                </h3>
+                {emne && <InfoIcon info={emne.beskrivelse || "Ingen beskrivelse"} variant="gray" />}
+              </div>
             </div>
 
             {/* Right line */}
@@ -157,9 +164,12 @@ const EmneGroupHeader = ({
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between">
               <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-medium text-gray-900 truncate">
-                  {emne?.tittel || "Uten emne"}
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-medium text-gray-900 truncate">
+                    {emne?.tittel || "Uten emne"}
+                  </h3>
+                  {emne && <InfoIcon info={emne.beskrivelse || "Ingen beskrivelse"} variant="gray" />}
+                </div>
                 {/* Combined view: Show colored type breakdown */}
                 {isCombinedView && typeCounts && (
                   <div className="flex items-center gap-2 mt-1">

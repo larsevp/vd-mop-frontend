@@ -636,10 +636,14 @@ const EntityDetailPane = ({
 
   return (
     <div className="flex flex-col min-h-full bg-white">
-      {/* Header - Scandinavian Clean Design */}
-      <div className={`sticky top-0 border-b px-8 py-6 z-20 transition-all duration-200 ${isEditing ? "bg-slate-50 border-slate-200" : "bg-white border-gray-200"}`}>
-        <div className="flex items-center justify-between gap-6">
-          <div className="flex-1 min-w-0 flex items-center gap-3">
+      {/* Header - Scandinavian Clean Design - Always sticky with opaque background */}
+      <div
+        className={`sticky top-0 border-b px-4 sm:px-8 py-4 sm:py-6 z-20 transition-all duration-200 ${isEditing ? "bg-slate-50 border-slate-200" : "bg-white border-gray-200"}`}
+        style={{ position: 'sticky', top: 0 }}
+      >
+        <div className="flex items-center justify-between gap-3 sm:gap-6">
+          {/* Left: Badge + Emne + Title */}
+          <div className="flex-1 min-w-0 flex items-center gap-2 sm:gap-3">
             {!isNewEntity && (
               <EntityBadge
                 uid={entityUID}
@@ -649,18 +653,18 @@ const EntityDetailPane = ({
               />
             )}
             {emneTitle && (
-              <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200 flex-shrink-0">
+              <span className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200 flex-shrink-0">
                 {emneTitle}
               </span>
             )}
-            
+
             {isEditing ? (
               <div className="flex-1 min-w-0">
                 <input
                   type="text"
                   value={formData.tittel || ""}
                   onChange={(e) => handleFieldChange("tittel", e.target.value)}
-                  className={`text-2xl font-light leading-tight w-full border rounded-lg px-4 py-2.5 focus:ring-2 focus:border-transparent transition-all ${
+                  className={`text-lg sm:text-2xl font-light leading-tight w-full border rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 focus:ring-2 focus:border-transparent transition-all ${
                     errors.tittel
                       ? 'border-red-300 text-red-900 focus:ring-red-400 bg-red-50'
                       : 'text-gray-900 border-gray-300 focus:ring-slate-400 focus:border-slate-400 bg-white'
@@ -672,134 +676,147 @@ const EntityDetailPane = ({
                 )}
               </div>
             ) : (
-              <h2 className="text-2xl font-light text-gray-900 truncate flex-1 min-w-0">
+              <h2 className="text-lg sm:text-2xl font-light text-gray-900 truncate flex-1 min-w-0">
                 {entityTitle}
               </h2>
             )}
           </div>
-          
-          <div className="flex items-center gap-3 ml-6">
+
+          {/* Right: Action Buttons */}
+          <div className="flex items-center gap-2 sm:gap-3">
             {isEditing ? (
               <>
-                {/* Desktop: Individual save/cancel buttons */}
-                <div className="hidden sm:flex items-center gap-3">
-                  <button
-                    onClick={handleSave}
-                    disabled={isSubmitting}
-                    tabIndex={-1}
-                    className="inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow"
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    {isSubmitting ? 'Lagrer...' : 'Lagre'}
-                  </button>
-                  <button
-                    onClick={handleCancel}
-                    disabled={isSubmitting}
-                    tabIndex={-1}
-                    className="inline-flex items-center px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-all"
-                  >
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Avbryt
-                  </button>
-                </div>
+                {/* Desktop: Individual buttons */}
+                <button
+                  onClick={handleSave}
+                  disabled={isSubmitting}
+                  tabIndex={-1}
+                  className="hidden lg:inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  {isSubmitting ? 'Lagrer...' : 'Lagre'}
+                </button>
+                <button
+                  onClick={handleCancel}
+                  disabled={isSubmitting}
+                  tabIndex={-1}
+                  className="hidden lg:inline-flex items-center px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-all"
+                >
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Avbryt
+                </button>
 
-                {/* Mobile: Combined button */}
-                <div className="sm:hidden flex items-center gap-2">
+                {/* Mobile/Tablet: Menu */}
+                <div className="lg:hidden relative" ref={createMenuRef}>
                   <button
-                    onClick={handleSave}
+                    onClick={() => setIsCreateMenuOpen(!isCreateMenuOpen)}
                     disabled={isSubmitting}
-                    tabIndex={-1}
-                    className="inline-flex items-center px-3 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    className="inline-flex items-center px-3 py-2.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all"
+                    title="Handlinger"
                   >
-                    <Save className="w-4 h-4" />
+                    <MoreVertical className="w-4 h-4" />
                   </button>
-                  <button
-                    onClick={handleCancel}
-                    disabled={isSubmitting}
-                    tabIndex={-1}
-                    className="inline-flex items-center px-3 py-2.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-all"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                  </button>
+
+                  {isCreateMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                      <div className="py-1" role="menu">
+                        <button
+                          onClick={() => {
+                            handleSave();
+                            setIsCreateMenuOpen(false);
+                          }}
+                          disabled={isSubmitting}
+                          className="w-full text-left px-4 py-2.5 text-sm text-emerald-700 hover:bg-emerald-50 transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                          role="menuitem"
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          {isSubmitting ? 'Lagrer...' : 'Lagre'}
+                        </button>
+                        <button
+                          onClick={() => {
+                            handleCancel();
+                            setIsCreateMenuOpen(false);
+                          }}
+                          disabled={isSubmitting}
+                          className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                          role="menuitem"
+                        >
+                          <RotateCcw className="w-4 h-4 mr-2" />
+                          Avbryt
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </>
             ) : (
               <>
-                {/* Desktop: Individual buttons (lg screens and above) */}
-                <div className="hidden lg:flex items-center gap-3">
-                  {/* Create menu dropdown - show if any create options are available */}
-                  {onCreateNew &&
-                   (currentEntityType.toLowerCase() === 'krav' || currentEntityType.toLowerCase() === 'prosjektkrav') &&
-                   !isNewEntity && (
-                    <div className="relative" ref={createMenuRef}>
-                      <button
-                        onClick={() => setIsCreateMenuOpen(!isCreateMenuOpen)}
-                        className="inline-flex items-center px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all"
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Ny
-                        <ChevronDown className="w-4 h-4 ml-1" />
-                      </button>
-
-                      {/* Dropdown menu */}
-                      {isCreateMenuOpen && (
-                        <div className="absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
-                          <div className="py-1" role="menu">
-                            {/* Show child krav option (only for root krav without parentId) */}
-                            {!entity?.parentId && (
-                              <button
-                                onClick={() => {
-                                  handleCreateChildKrav();
-                                  setIsCreateMenuOpen(false);
-                                }}
-                                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
-                                role="menuitem"
-                              >
-                                <Plus className="w-4 h-4 mr-2" />
-                                Tilknyttet krav
-                              </button>
-                            )}
-
-                            {/* Show tilknyttet tiltak option (only in combined workspace) */}
-                            {entityType.toLowerCase().includes('combined') && (
-                              <button
-                                onClick={() => {
-                                  handleCreateConnectedTiltak();
-                                  setIsCreateMenuOpen(false);
-                                }}
-                                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
-                                role="menuitem"
-                              >
-                                <Plus className="w-4 h-4 mr-2" />
-                                Tilknyttet tiltak
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {canSave && (
+                {/* Desktop: Individual buttons */}
+                {onCreateNew && (currentEntityType.toLowerCase() === 'krav' || currentEntityType.toLowerCase() === 'prosjektkrav') && !isNewEntity && (
+                  <div className="hidden lg:block relative" ref={createMenuRef}>
                     <button
-                      onClick={() => setIsEditing(true)}
+                      onClick={() => setIsCreateMenuOpen(!isCreateMenuOpen)}
                       className="inline-flex items-center px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all"
                     >
-                      <Edit className="w-4 h-4 mr-2" />
-                      Rediger
+                      <Plus className="w-4 h-4 mr-2" />
+                      Ny
+                      <ChevronDown className="w-4 h-4 ml-1" />
                     </button>
-                  )}
-                  {canDelete && (
-                    <button
-                      onClick={handleDelete}
-                      className="inline-flex items-center px-4 py-2.5 border border-red-200 text-sm font-medium rounded-lg text-red-600 bg-white hover:bg-red-50 hover:border-red-300 transition-all"
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Slett
-                    </button>
-                  )}
-                </div>
 
-                {/* Mobile/Tablet: Actions menu (below lg) */}
+                    {isCreateMenuOpen && (
+                      <div className="absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                        <div className="py-1" role="menu">
+                          {!entity?.parentId && (
+                            <button
+                              onClick={() => {
+                                handleCreateChildKrav();
+                                setIsCreateMenuOpen(false);
+                              }}
+                              className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
+                              role="menuitem"
+                            >
+                              <Plus className="w-4 h-4 mr-2" />
+                              Tilknyttet krav
+                            </button>
+                          )}
+                          {entityType.toLowerCase().includes('combined') && (
+                            <button
+                              onClick={() => {
+                                handleCreateConnectedTiltak();
+                                setIsCreateMenuOpen(false);
+                              }}
+                              className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
+                              role="menuitem"
+                            >
+                              <Plus className="w-4 h-4 mr-2" />
+                              Tilknyttet tiltak
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {canSave && (
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="hidden lg:inline-flex items-center px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all"
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Rediger
+                  </button>
+                )}
+                {canDelete && (
+                  <button
+                    onClick={handleDelete}
+                    className="hidden lg:inline-flex items-center px-4 py-2.5 border border-red-200 text-sm font-medium rounded-lg text-red-600 bg-white hover:bg-red-50 hover:border-red-300 transition-all"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Slett
+                  </button>
+                )}
+
+                {/* Mobile/Tablet: Menu */}
                 {!isNewEntity && (
                   <div className="lg:hidden relative" ref={createMenuRef}>
                     <button
@@ -810,11 +827,9 @@ const EntityDetailPane = ({
                       <MoreVertical className="w-4 h-4" />
                     </button>
 
-                    {/* Dropdown menu */}
                     {isCreateMenuOpen && (
-                      <div className="absolute right-0 mt-2 w-56 max-h-80 overflow-y-auto rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-[100]">
+                      <div className="absolute right-0 mt-2 w-56 max-h-80 overflow-y-auto rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
                         <div className="py-1" role="menu">
-                          {/* Edit option */}
                           {canSave && (
                             <button
                               onClick={() => {
@@ -828,11 +843,8 @@ const EntityDetailPane = ({
                               Rediger
                             </button>
                           )}
-
-                          {/* Create options - show if available */}
                           {onCreateNew && (currentEntityType.toLowerCase() === 'krav' || currentEntityType.toLowerCase() === 'prosjektkrav') && (
                             <>
-                              {/* Show child krav option (only for root krav without parentId) */}
                               {!entity?.parentId && (
                                 <button
                                   onClick={() => {
@@ -846,8 +858,6 @@ const EntityDetailPane = ({
                                   Tilknyttet krav
                                 </button>
                               )}
-
-                              {/* Show tilknyttet tiltak option (only in combined workspace) */}
                               {entityType.toLowerCase().includes('combined') && (
                                 <button
                                   onClick={() => {
@@ -863,8 +873,6 @@ const EntityDetailPane = ({
                               )}
                             </>
                           )}
-
-                          {/* Delete option - with separator */}
                           {canDelete && (
                             <>
                               <div className="border-t border-gray-100 my-1" />
@@ -888,30 +896,20 @@ const EntityDetailPane = ({
                 )}
               </>
             )}
-
-            {onClose && (
-              <button
-                onClick={onClose}
-                tabIndex={-1}
-                className="inline-flex items-center px-2.5 py-2.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-600 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
           </div>
         </div>
-        
-        {isEditing && (
-          <div className="mt-4 text-xs text-slate-600 font-normal">Redigeringsmodus - trykk Enter for å lagre eller Esc for å avbryte</div>
-        )}
 
+        {/* Keyboard hints */}
+        {isEditing && (
+          <div className="hidden lg:block mt-4 text-xs text-slate-600 font-normal">Redigeringsmodus - trykk Enter for å lagre eller Esc for å avbryte</div>
+        )}
         {!isEditing && (
-          <div className="mt-4 text-xs text-gray-500 font-normal">Trykk E for å redigere</div>
+          <div className="hidden lg:block mt-4 text-xs text-gray-500 font-normal">Trykk E for å redigere</div>
         )}
       </div>
 
       {/* Content - Increased spacing for Nordic minimalism */}
-      <div ref={detailViewRef} className="flex-1 min-h-0 px-8 py-8">
+      <div ref={detailViewRef} className="flex-1 min-h-0 px-4 sm:px-8 py-6 sm:py-8">
         <ValidationErrorSummary errors={errors} fields={allFields} />
 
         {/* Source Krav Context Box - Clean Scandinavian card */}

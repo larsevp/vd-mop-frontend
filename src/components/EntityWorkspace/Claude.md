@@ -36,13 +36,19 @@ EntityWorkspace supports two distinct view modes:
   - Sectioned form layout
   - Scrollable content area
 
+## Naming Conventions
+
+**Views:** Article View | Split View
+**Panes:** TOC | Main Article View | Card List | Detail Pane
+**Cards:** Card View (summary in list) | Detail View (full form for editing)
+
 ## Key Components
 
 - **EntityWorkspaceNew.jsx** - Main orchestrator for both view modes
 - **EntitySplitView.jsx** - Split view layout with resizable panes
 - **EntityListPane.jsx** - Generic list component (used in both modes)
-- **EntityDetailPane.jsx** - Detail pane for split view (domain-specific)
-- **EntityCard.jsx** - Entity card renderer (domain-specific)
+- **EntityDetailPane.jsx** - Detail pane for split view (domain-specific at pages/KravTiltak/shared/components/)
+- **EntityCard.jsx** - Entity card renderer (domain-specific at pages/KravTiltak/shared/components/)
 
 ## Architecture Notes
 - This is an interface - it uses DTOs, current implementation is from pages/KravTiltak
