@@ -634,12 +634,27 @@ const EntityDetailPane = ({
   const entityConfig = getEntityTypeConfig(currentEntityType);
 
 
+  // Ref for measuring header height
+  const headerRef = React.useRef(null);
+  const [headerHeight, setHeaderHeight] = React.useState(0);
+
+  // Measure header height on mount and when it changes
+  React.useEffect(() => {
+    if (headerRef.current) {
+      const height = headerRef.current.offsetHeight;
+      if (height !== headerHeight) {
+        setHeaderHeight(height);
+      }
+    }
+  }, [isEditing, errors, headerHeight]); // Re-measure when editing state or errors change
+
   return (
-    <div className="flex flex-col min-h-full bg-white">
-      {/* Header - Scandinavian Clean Design - Always sticky with opaque background */}
+    <div className="relative h-full bg-white">
+      {/* Header - Scandinavian Clean Design - Absolutely positioned with 2px offset */}
       <div
-        className={`sticky top-0 border-b px-4 sm:px-8 py-4 sm:py-6 z-20 transition-all duration-200 ${isEditing ? "bg-slate-50 border-slate-200" : "bg-white border-gray-200"}`}
-        style={{ position: 'sticky', top: 0 }}
+        ref={headerRef}
+        className={`absolute left-0 right-0 z-20 border-b px-4 sm:px-8 py-4 sm:py-6 transition-all duration-200 ${isEditing ? "bg-slate-50 border-slate-200" : "bg-white border-gray-200"}`}
+        style={{ top: '2px' }}
       >
         <div className="flex items-center justify-between gap-3 sm:gap-6">
           {/* Left: Badge + Emne + Title */}
@@ -908,8 +923,12 @@ const EntityDetailPane = ({
         )}
       </div>
 
-      {/* Content - Increased spacing for Nordic minimalism */}
-      <div ref={detailViewRef} className="flex-1 min-h-0 px-4 sm:px-8 py-6 sm:py-8">
+      {/* Content - Increased spacing for Nordic minimalism - Absolutely positioned below header */}
+      <div
+        ref={detailViewRef}
+        className="absolute left-0 right-0 bottom-0 overflow-y-scroll px-4 sm:px-8 py-6 sm:py-8"
+        style={{ top: `${headerHeight + 2}px`, overscrollBehavior: 'contain' }}
+      >
         <ValidationErrorSummary errors={errors} fields={allFields} />
 
         {/* Source Krav Context Box - Clean Scandinavian card */}

@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { Loader2, FileText, Minimize2, Maximize2 } from "lucide-react";
-import FlexScrollableContainer from "../FlexScrollableContainer";
 
 /**
  * EntityListPane - Generic list interface using render prop pattern
@@ -82,13 +81,12 @@ const EntityListPane = ({
   // Get selected entity ID (use normalized renderId from adapter)
   const selectedEntityId = selectedEntity?.renderId;
 
-
   // Reset scroll position on navigation (multiple triggers for reliability)
   // Only trigger on actual navigation changes, not on re-renders
   // Skip in multi-select mode to prevent disrupting user's selection workflow
   useEffect(() => {
     // Don't reset scroll in multi-select mode - user is building a selection set
-    if (externalViewOptions.selectionMode === 'multi') {
+    if (externalViewOptions.selectionMode === "multi") {
       return;
     }
 
@@ -113,22 +111,21 @@ const EntityListPane = ({
       // Add a small delay to ensure DOM has updated
       const timeoutId = setTimeout(() => {
         // Don't scroll in multi-select mode - users are building a selection set, not navigating
-        if (externalViewOptions.selectionMode === 'multi') {
+        if (externalViewOptions.selectionMode === "multi") {
           return;
         }
 
         // Don't scroll if user is actively interacting with form elements (prevents disruption during inline editing)
         const activeElement = document.activeElement;
         const isInteractingWithForm =
-          activeElement && (
-            activeElement.tagName === 'INPUT' ||
-            activeElement.tagName === 'SELECT' ||
-            activeElement.tagName === 'TEXTAREA' ||
+          activeElement &&
+          (activeElement.tagName === "INPUT" ||
+            activeElement.tagName === "SELECT" ||
+            activeElement.tagName === "TEXTAREA" ||
             activeElement.closest('[role="combobox"]') ||
             activeElement.closest('[role="listbox"]') ||
-            activeElement.closest('[data-radix-select-trigger]') ||
-            activeElement.closest('[data-radix-select-content]')
-          );
+            activeElement.closest("[data-radix-select-trigger]") ||
+            activeElement.closest("[data-radix-select-content]"));
 
         if (isInteractingWithForm) {
           return;
@@ -182,7 +179,7 @@ const EntityListPane = ({
   const collapseAll = () => {
     const allGroupKeys = groupedItems.map((group, groupIndex) => {
       // Use same key generation logic as in the rendering
-      const itemIds = (group.items || []).map(item => item.id || item.renderId).join('-');
+      const itemIds = (group.items || []).map((item) => item.id || item.renderId).join("-");
       return `${entityType}-group-${group.group?.emne?.id || "no-emne"}-${groupIndex}-${itemIds.substring(0, 20)}`;
     });
     setCollapsedGroups(new Set(allGroupKeys));
@@ -197,7 +194,7 @@ const EntityListPane = ({
     groupedItems.length > 0 &&
     groupedItems.every((group, groupIndex) => {
       // Use same key generation logic as in collapseAll and rendering
-      const itemIds = (group.items || []).map(item => item.id || item.renderId).join('-');
+      const itemIds = (group.items || []).map((item) => item.id || item.renderId).join("-");
       const groupKey = `${entityType}-group-${group.group?.emne?.id || "no-emne"}-${groupIndex}-${itemIds.substring(0, 20)}`;
       return collapsedGroups.has(groupKey);
     });
@@ -210,28 +207,222 @@ const EntityListPane = ({
     onEntityDoubleClick?.(entity);
   };
 
-  return (
-    <div className="h-full flex flex-col bg-white">
-      {/* Header - Domain-controlled via EntityListHeading */}
-      {EntityListHeading && (() => {
-        const headingProps = {
-          itemCount: allItems.length,
-          hasGroups: hasGroupedData && groupedItems.length > 0,
-          allGroupsExpanded: !allGroupsCollapsed,
-          onToggleAllGroups: allGroupsCollapsed ? expandAll : collapseAll,
-          // Multi-select support - pass entities and bulk delete handler
-          entities: allItems,
-          onBulkDelete: onBulkDelete, // Will be undefined if not provided
-          viewOptions: {
-            ...externalViewOptions,
-            viewMode: externalViewOptions.viewMode || 'split', // Explicitly ensure viewMode is set
-          },
-        };
-        return EntityListHeading(headingProps);
-      })()}
+  const isTOCMode = externalViewOptions.isTOCMode === true;
 
-      {/* Entity List */}
-      <FlexScrollableContainer ref={listContainerRef} className="flex-1" dependencies={[allItems.length, collapsedGroups]} fadeColor="from-white">
+  // Ref for measuring header height
+  const headerRef = React.useRef(null);
+  const [headerHeight, setHeaderHeight] = React.useState(EntityListHeading ? 60 : 0); // Default 60px if heading exists, 0 otherwise
+
+  // Scroll fade indicator state
+  const [hasOverflow, setHasOverflow] = React.useState(false);
+  const [isScrolledToBottom, setIsScrolledToBottom] = React.useState(false);
+
+  // Measure header height on mount and when it changes
+  React.useEffect(() => {
+    if (!EntityListHeading) {
+      setHeaderHeight(0);
+      return;
+    }
+    if (headerRef.current) {
+      const height = headerRef.current.offsetHeight;
+      if (height !== headerHeight) {
+        setHeaderHeight(height);
+      }
+    }
+  }, [EntityListHeading, allItems.length, headerHeight]); // Re-measure when heading or items change
+
+  // Check overflow and scroll position
+  React.useEffect(() => {
+    const checkOverflow = () => {
+      if (listContainerRef.current) {
+        const { scrollHeight, clientHeight } = listContainerRef.current;
+        setHasOverflow(scrollHeight > clientHeight);
+      }
+    };
+
+    const handleScroll = () => {
+      if (listContainerRef.current) {
+        const { scrollTop, scrollHeight, clientHeight } = listContainerRef.current;
+        setIsScrolledToBottom(scrollTop + clientHeight >= scrollHeight - 1);
+      }
+    };
+
+    checkOverflow();
+
+    const scrollContainer = listContainerRef.current;
+    if (scrollContainer) {
+      scrollContainer.addEventListener("scroll", handleScroll);
+    }
+
+    window.addEventListener("resize", checkOverflow);
+
+    return () => {
+      window.removeEventListener("resize", checkOverflow);
+      if (scrollContainer) {
+        scrollContainer.removeEventListener("scroll", handleScroll);
+      }
+    };
+  }, [allItems.length, collapsedGroups]);
+
+  // Conditional rendering for TOC mode (sticky header) vs. default mode (absolute header)
+  if (isTOCMode) {
+    return (
+      <div
+        ref={listContainerRef}
+        className="relative h-full w-full overflow-y-auto bg-white shadow-none"
+        style={{ overscrollBehavior: "contain" }}
+      >
+        {/* Sticky Header for TOC Mode */}
+        {EntityListHeading && (
+          <div ref={headerRef} className="sticky top-0 z-40 bg-white">
+            {(() => {
+              const headingProps = {
+                itemCount: allItems.length,
+                hasGroups: hasGroupedData && groupedItems.length > 0,
+                allGroupsExpanded: !allGroupsCollapsed,
+                onToggleAllGroups: allGroupsCollapsed ? expandAll : collapseAll,
+                entities: allItems,
+                onBulkDelete: onBulkDelete,
+                viewOptions: {
+                  ...externalViewOptions,
+                  viewMode: externalViewOptions.viewMode || "split",
+                },
+              };
+              return EntityListHeading(headingProps);
+            })()}
+          </div>
+        )}
+
+        {/* Content Area */}
+        <div className="pl-3">
+          {isLoading && allItems.length === 0 ? (
+            <div className="flex items-center justify-center h-32 text-gray-500">
+              <div className="text-center">
+                <Loader2 className="w-8 h-8 mx-auto mb-2 text-gray-300 animate-spin" />
+                <p className="text-sm">Laster...</p>
+              </div>
+            </div>
+          ) : allItems.length === 0 ? (
+            <div className="flex items-center justify-center h-32 text-gray-500">
+              <div className="text-center">
+                <FileText className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                <p className="text-sm">Ingen elementer</p>
+              </div>
+            </div>
+          ) : hasGroupedData ? (
+            // Grouped rendering
+            <div>
+              {groupedItems.map((groupData, groupIndex) => {
+                const itemIds = (groupData.items || []).map((item) => item.id || item.renderId).join("-");
+                const groupKey = `${entityType}-group-${groupData.group.emne?.id || "no-emne"}-${groupIndex}-${itemIds.substring(0, 20)}`;
+                const isCollapsed = collapsedGroups.has(groupKey);
+                const groupItems = groupData.items;
+
+                return (
+                  <div key={groupKey}>
+                    {EntityListGroupHeader &&
+                      EntityListGroupHeader(groupData, {
+                        isCollapsed,
+                        onToggle: () => toggleGroupCollapse(groupKey),
+                        itemCount: groupItems.length,
+                        viewMode: isCardsMode ? "cards" : "split",
+                        viewOptions: externalViewOptions,
+                      })}
+                    {!isCollapsed && (
+                      <div className={isCardsMode ? "space-y-0.5 pr-2 pb-2" : ""}>
+                        {groupItems.map((entity, index) => {
+                          const relatedKravId = entity._relatedToKrav || entity.parentId || "";
+                          const uniqueKey = relatedKravId
+                            ? `${groupKey}-${entity.renderId}-related-${relatedKravId}`
+                            : `${groupKey}-${entity.renderId}`;
+                          return (
+                            EntityListCard &&
+                            EntityListCard(entity, {
+                              key: uniqueKey,
+                              "data-entity-id": entity.renderId,
+                              isSelected: entity.renderId === selectedEntityId || `${groupKey}-${entity.renderId}` === selectedEntityId,
+                              editMode:
+                                entity.renderId === selectedEntityId &&
+                                new URLSearchParams(window.location.search).get("editCard") === "true",
+                              isFocused: focusedIndex === index,
+                              onClick: handleEntitySelect,
+                              onDoubleClick: handleEntityDoubleClick,
+                              viewOptions: externalViewOptions,
+                              onSave: onSave,
+                            })
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            // Flat rendering
+            <div className={isCardsMode ? "space-y-0.5 pr-2 pb-2" : ""}>
+              {allItems.map((entity, index) => {
+                const isFirstOccurrence = allItems.findIndex((e) => e.renderId === entity.renderId) === index;
+                const isEntitySelected = entity.renderId === selectedEntityId;
+                return (
+                  EntityListCard &&
+                  EntityListCard(entity, {
+                    key: entity.renderId,
+                    "data-entity-id": entity.renderId,
+                    isSelected: isEntitySelected && isFirstOccurrence,
+                    editMode:
+                      entity.renderId === selectedEntityId && new URLSearchParams(window.location.search).get("editCard") === "true",
+                    isFocused: focusedIndex === index,
+                    onClick: handleEntitySelect,
+                    onDoubleClick: handleEntityDoubleClick,
+                    viewOptions: externalViewOptions,
+                    onSave: onSave,
+                  })
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Scroll fade indicator */}
+        {hasOverflow && !isScrolledToBottom && (
+          <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white to-transparent pointer-events-none z-10" />
+        )}
+      </div>
+    );
+  }
+
+  // Default rendering with absolute positioning
+  return (
+    <div className="relative h-full bg-white">
+      {/* Header - Absolutely positioned at top */}
+      {EntityListHeading && (
+        <div ref={headerRef} className="absolute top-0 left-0 right-0 z-40 bg-white">
+          {(() => {
+            const headingProps = {
+              itemCount: allItems.length,
+              hasGroups: hasGroupedData && groupedItems.length > 0,
+              allGroupsExpanded: !allGroupsCollapsed,
+              onToggleAllGroups: allGroupsCollapsed ? expandAll : collapseAll,
+              // Multi-select support - pass entities and bulk delete handler
+              entities: allItems,
+              onBulkDelete: onBulkDelete, // Will be undefined if not provided
+              viewOptions: {
+                ...externalViewOptions,
+                viewMode: externalViewOptions.viewMode || "split", // Explicitly ensure viewMode is set
+              },
+            };
+            return EntityListHeading(headingProps);
+          })()}
+        </div>
+      )}
+
+      {/* Entity List - Absolutely positioned below header */}
+      <div
+        ref={listContainerRef}
+        className="absolute left-0 right-0 bottom-0 overflow-y-auto pr-2"
+        style={{ top: `${headerHeight}px`, overscrollBehavior: "contain" }}
+      >
         <div>
           {isLoading && allItems.length === 0 ? (
             <div className="flex items-center justify-center h-32 text-gray-500">
@@ -252,7 +443,7 @@ const EntityListPane = ({
             <div>
               {groupedItems.map((groupData, groupIndex) => {
                 // Create a more unique groupKey by including item IDs to handle duplicate emne contexts
-                const itemIds = (groupData.items || []).map(item => item.id || item.renderId).join('-');
+                const itemIds = (groupData.items || []).map((item) => item.id || item.renderId).join("-");
                 const groupKey = `${entityType}-group-${groupData.group.emne?.id || "no-emne"}-${groupIndex}-${itemIds.substring(0, 20)}`;
                 const isCollapsed = collapsedGroups.has(groupKey);
                 const groupItems = groupData.items;
@@ -265,36 +456,38 @@ const EntityListPane = ({
                         isCollapsed,
                         onToggle: () => toggleGroupCollapse(groupKey),
                         itemCount: groupItems.length,
-                        viewMode: isCardsMode ? 'cards' : 'split',
+                        viewMode: isCardsMode ? "cards" : "split",
                         viewOptions: externalViewOptions, // Pass viewOptions for TOC mode detection
                       })}
 
                     {/* Group items */}
                     {!isCollapsed && (
-                      <div className={isCardsMode ? "space-y-0.5 px-2 pb-2" : ""}>
-                        {groupItems.map(
-                          (entity, index) => {
-                            // Create truly unique key using related krav context when available
-                            // _relatedToKrav is a string number, not an object
-                            const relatedKravId = entity._relatedToKrav || entity.parentId || '';
-                            const uniqueKey = relatedKravId 
-                              ? `${groupKey}-${entity.renderId}-related-${relatedKravId}`
-                              : `${groupKey}-${entity.renderId}`;
-                              
-                            return EntityListCard &&
+                      <div className={isCardsMode ? "space-y-0.5 pr-2 pb-2" : ""}>
+                        {groupItems.map((entity, index) => {
+                          // Create truly unique key using related krav context when available
+                          // _relatedToKrav is a string number, not an object
+                          const relatedKravId = entity._relatedToKrav || entity.parentId || "";
+                          const uniqueKey = relatedKravId
+                            ? `${groupKey}-${entity.renderId}-related-${relatedKravId}`
+                            : `${groupKey}-${entity.renderId}`;
+
+                          return (
+                            EntityListCard &&
                             EntityListCard(entity, {
                               key: uniqueKey,
                               "data-entity-id": entity.renderId,
                               isSelected: entity.renderId === selectedEntityId || `${groupKey}-${entity.renderId}` === selectedEntityId,
-                              editMode: entity.renderId === selectedEntityId && new URLSearchParams(window.location.search).get("editCard") === "true",
+                              editMode:
+                                entity.renderId === selectedEntityId &&
+                                new URLSearchParams(window.location.search).get("editCard") === "true",
                               isFocused: focusedIndex === index,
                               onClick: handleEntitySelect,
                               onDoubleClick: handleEntityDoubleClick,
                               viewOptions: externalViewOptions,
                               onSave: onSave, // Pass onSave to renderer
-                            });
-                          }
-                        )}
+                            })
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -303,31 +496,37 @@ const EntityListPane = ({
             </div>
           ) : (
             // Flat rendering (no emne groups)
-            <div className={isCardsMode ? "space-y-0.5 p-2" : ""}>
-              {allItems.map(
-                (entity, index) => {
-                  // For non-grouped view, only select first occurrence of duplicate entities
-                  const isFirstOccurrence = allItems.findIndex(e => e.renderId === entity.renderId) === index;
-                  const isEntitySelected = entity.renderId === selectedEntityId;
-                  
-                  return EntityListCard &&
+            <div className={isCardsMode ? "space-y-0.5 pr-2 pb-2" : ""}>
+              {allItems.map((entity, index) => {
+                // For non-grouped view, only select first occurrence of duplicate entities
+                const isFirstOccurrence = allItems.findIndex((e) => e.renderId === entity.renderId) === index;
+                const isEntitySelected = entity.renderId === selectedEntityId;
+
+                return (
+                  EntityListCard &&
                   EntityListCard(entity, {
                     key: entity.renderId,
                     "data-entity-id": entity.renderId,
                     isSelected: isEntitySelected && isFirstOccurrence,
-                    editMode: entity.renderId === selectedEntityId && new URLSearchParams(window.location.search).get("editCard") === "true",
+                    editMode:
+                      entity.renderId === selectedEntityId && new URLSearchParams(window.location.search).get("editCard") === "true",
                     isFocused: focusedIndex === index,
                     onClick: handleEntitySelect,
                     onDoubleClick: handleEntityDoubleClick,
                     viewOptions: externalViewOptions,
                     onSave: onSave, // Pass onSave to renderer
-                  });
-                }
-              )}
+                  })
+                );
+              })}
             </div>
           )}
         </div>
-      </FlexScrollableContainer>
+      </div>
+
+      {/* Scroll fade indicator - hide when scrolled to bottom */}
+      {hasOverflow && !isScrolledToBottom && (
+        <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white to-transparent pointer-events-none z-10" />
+      )}
     </div>
   );
 };

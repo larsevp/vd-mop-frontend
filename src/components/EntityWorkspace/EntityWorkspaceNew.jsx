@@ -125,17 +125,23 @@ const EntityWorkspaceNew = ({
   }, [entities]);
 
   // Memoize viewOptions to prevent unnecessary re-renders and effect triggers
-  const cardsViewOptions = useMemo(() => ({
-    ...viewOptions,
-    viewMode: "cards",
-    selectionMode: ui.selectionMode
-  }), [viewOptions, ui.selectionMode]);
+  const cardsViewOptions = useMemo(
+    () => ({
+      ...viewOptions,
+      viewMode: "cards",
+      selectionMode: ui.selectionMode,
+    }),
+    [viewOptions, ui.selectionMode]
+  );
 
-  const splitViewOptions = useMemo(() => ({
-    ...viewOptions,
-    viewMode: "split",
-    selectionMode: ui.selectionMode
-  }), [viewOptions, ui.selectionMode]);
+  const splitViewOptions = useMemo(
+    () => ({
+      ...viewOptions,
+      viewMode: "split",
+      selectionMode: ui.selectionMode,
+    }),
+    [viewOptions, ui.selectionMode]
+  );
 
   // Reset filters when entityType changes (switching workspaces)
   useEffect(() => {
@@ -191,7 +197,7 @@ const EntityWorkspaceNew = ({
       }
 
       // Scroll all containers to top (only if we're not creating a new entity AND not in multi-select mode)
-      if (!ui.selectedEntity?.__isNew && ui.selectionMode !== 'multi') {
+      if (!ui.selectedEntity?.__isNew && ui.selectionMode !== "multi") {
         setTimeout(() => {
           const scrollContainers = document.querySelectorAll(".overflow-y-auto");
           scrollContainers.forEach((container) => {
@@ -348,7 +354,7 @@ const EntityWorkspaceNew = ({
 
       // Confirmation dialog
       const confirmed = window.confirm(
-        `Er du sikker på at du vil slette ${uiKeys.size} ${uiKeys.size === 1 ? 'element' : 'elementer'}? Dette kan ikke angres.`
+        `Er du sikker på at du vil slette ${uiKeys.size} ${uiKeys.size === 1 ? "element" : "elementer"}? Dette kan ikke angres.`
       );
 
       if (!confirmed) return;
@@ -363,7 +369,7 @@ const EntityWorkspaceNew = ({
       const deletePromises = Array.from(uiKeys).map(async (uiKey) => {
         try {
           // Find the full entity from the entities list using dto.getUIKey()
-          const entity = entities.find(e => dto.getUIKey(e) === uiKey);
+          const entity = entities.find((e) => dto.getUIKey(e) === uiKey);
 
           if (entity) {
             // Entity found in current page - pass full entity
@@ -374,17 +380,17 @@ const EntityWorkspaceNew = ({
             // For single views: 5 -> { id: 5 }
             let entityToDelete = { id: uiKey };
 
-            if (typeof uiKey === 'string' && uiKey.includes('-')) {
+            if (typeof uiKey === "string" && uiKey.includes("-")) {
               // Parse "entityType-id" format
-              const parts = uiKey.split('-');
+              const parts = uiKey.split("-");
               const numericId = parseInt(parts[parts.length - 1], 10);
-              const entityType = parts.slice(0, -1).join('-'); // Handle multi-word types
+              const entityType = parts.slice(0, -1).join("-"); // Handle multi-word types
 
               entityToDelete = {
                 id: numericId,
                 entityType: entityType,
                 // Add renderId to help adapter detect type
-                renderId: uiKey
+                renderId: uiKey,
               };
             }
 
@@ -397,8 +403,7 @@ const EntityWorkspaceNew = ({
           // Handle "not found" errors gracefully - entity already deleted
           const isNotFound =
             error.response?.status === 400 &&
-            (error.response?.data?.error?.includes('not found') ||
-             error.response?.data?.error?.includes('Not found'));
+            (error.response?.data?.error?.includes("not found") || error.response?.data?.error?.includes("Not found"));
 
           if (isNotFound) {
             results.success.push(uiKey);
@@ -427,10 +432,7 @@ const EntityWorkspaceNew = ({
           alert(`❌ Kunne ikke slette noen elementer`);
         } else {
           // Partial success - show warning
-          alert(
-            `⚠️ ${results.success.length} elementer slettet\n` +
-            `${results.failed.length} feilet`
-          );
+          alert(`⚠️ ${results.success.length} elementer slettet\n` + `${results.failed.length} feilet`);
         }
       }
       // Silent success: Items disappear from list = visual confirmation
@@ -441,9 +443,9 @@ const EntityWorkspaceNew = ({
 
         // Also clear URL parameter to prevent trying to fetch deleted entity
         const url = new URL(window.location);
-        if (url.searchParams.has('selected')) {
-          url.searchParams.delete('selected');
-          window.history.replaceState({}, '', url);
+        if (url.searchParams.has("selected")) {
+          url.searchParams.delete("selected");
+          window.history.replaceState({}, "", url);
         }
       }
     },
@@ -464,7 +466,7 @@ const EntityWorkspaceNew = ({
       const newEntity = dto.createNewEntity(entityType, initialData);
 
       // Allow workspace to handle domain-specific cleanup BEFORE setting entity to avoid race conditions
-      if (typeof newEntity?.__onCreateNew === 'function') {
+      if (typeof newEntity?.__onCreateNew === "function") {
         newEntity.__onCreateNew();
       }
 
@@ -586,28 +588,28 @@ const EntityWorkspaceNew = ({
 
         // Invalidate related query caches to ensure dropdowns are updated
         // This is crucial for parent/child relationships to work immediately
-        if (entityType === 'prosjekttiltak' || entityType === 'tiltak') {
+        if (entityType === "prosjekttiltak" || entityType === "tiltak") {
           // Invalidate prosjektTiltak queries so parent dropdowns refresh
           queryClient.invalidateQueries({
-            queryKey: ["prosjektTiltak", "simple"]
+            queryKey: ["prosjektTiltak", "simple"],
           });
         }
-        if (entityType === 'prosjektkrav' || entityType === 'krav') {
+        if (entityType === "prosjektkrav" || entityType === "krav") {
           // Invalidate prosjektKrav queries so parent dropdowns refresh
           queryClient.invalidateQueries({
-            queryKey: ["prosjektKrav", "simple"]
+            queryKey: ["prosjektKrav", "simple"],
           });
         }
-        if (entityType === 'tiltak') {
+        if (entityType === "tiltak") {
           // Also invalidate general tiltak queries
           queryClient.invalidateQueries({
-            queryKey: ["tiltak", "simple"]
+            queryKey: ["tiltak", "simple"],
           });
         }
-        if (entityType === 'krav') {
+        if (entityType === "krav") {
           // Also invalidate general krav queries
           queryClient.invalidateQueries({
-            queryKey: ["krav", "simple"]
+            queryKey: ["krav", "simple"],
           });
         }
 
@@ -652,9 +654,9 @@ const EntityWorkspaceNew = ({
 
           // Also clear URL parameter to prevent trying to fetch deleted entity
           const url = new URL(window.location);
-          if (url.searchParams.has('selected')) {
-            url.searchParams.delete('selected');
-            window.history.replaceState({}, '', url);
+          if (url.searchParams.has("selected")) {
+            url.searchParams.delete("selected");
+            window.history.replaceState({}, "", url);
           }
         });
       } catch (error) {
@@ -715,16 +717,13 @@ const EntityWorkspaceNew = ({
           <div className="flex flex-wrap items-center justify-between gap-3 xl:grid xl:grid-cols-[auto_1fr_auto]">
             {/* Left section: Navigation, Title, Count */}
             <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0 xl:flex-initial">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={goBack}
-                className="text-neutral-600 hover:text-neutral-900 flex-shrink-0"
-              >
+              <Button variant="ghost" size="sm" onClick={goBack} className="text-neutral-600 hover:text-neutral-900 flex-shrink-0">
                 <ArrowLeft className="w-4 h-4 sm:mr-1" />
                 <span className="hidden sm:inline">Tilbake</span>
               </Button>
-              <h1 className="text-lg sm:text-2xl font-semibold text-neutral-900 truncate">{dto?.getDisplayConfig?.()?.title || entityType}</h1>
+              <h1 className="text-lg sm:text-2xl font-semibold text-neutral-900 truncate">
+                {dto?.getDisplayConfig?.()?.title || entityType}
+              </h1>
               <div className="hidden sm:block text-sm text-neutral-600 flex-shrink-0">{totalEntityCount} elementer</div>
 
               {/* View Mode Toggle - shown next to title on desktop, separate on mobile */}
@@ -854,48 +853,47 @@ const EntityWorkspaceNew = ({
               {/* ─────────────────────────────────────────────────────────
                * TOC (Table of Contents) - Left Sidebar
                * ───────────────────────────────────────────────────────── */}
-              <div id="article-toc-sidebar" className="w-64 border-r border-gray-200 flex-shrink-0 sticky top-0 h-screen flex flex-col bg-white">
-                {/* TOC Header */}
-                <div className="px-3 border-b border-gray-200 bg-gray-50 flex-shrink-0 flex items-center h-[60px]">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-600">
-                    Innhold
-                  </h3>
-                </div>
-                {/* TOC List */}
-                <div className="flex-1 overflow-y-auto">
-                  <EntityListPane
-                    items={entities}
-                    entityType={entityType}
-                    selectedEntity={ui.selectedEntity}
-                    onEntitySelect={(entity) => {
-                      handleEntitySelect(entity);
-                      // Scroll to entity after selection
-                      setTimeout(() => {
-                        const element = document.getElementById(`entity-card-${entity.id}`);
-                        element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                      }, 100);
-                    }}
-                    isLoading={isLoading}
-                    adapter={dto}
-                    EntityListCard={renderEntityCard}
-                    EntityListGroupHeader={renderGroupHeader}
-                    EntityListHeading={null} // No heading in TOC
-                    viewOptions={{
-                      ...cardsViewOptions,
-                      viewMode: 'list',
-                      compactMode: true, // Extra compact for TOC
-                      isTOCMode: true, // Flag for compact TOC styling
-                      hideDescriptionSnippet: true, // No descriptions in TOC
-                      showHierarchy: false, // No hierarchy indentation
-                      showMerknad: false,
-                      showStatus: false,
-                      showVurdering: false,
-                      showPrioritet: false,
-                      showRelations: false,
-                      showFavorites: false,
-                    }}
-                  />
-                </div>
+              <div
+                id="article-toc-sidebar"
+                className="w-80 flex-shrink-0 sticky top-0 h-screen bg-white"
+                style={{ borderRight: "1px solid #e2e8f0" }}
+              >
+                <EntityListPane
+                  items={entities}
+                  entityType={entityType}
+                  selectedEntity={ui.selectedEntity}
+                  onEntitySelect={(entity) => {
+                    handleEntitySelect(entity);
+                    // Scroll to entity after selection
+                    setTimeout(() => {
+                      const element = document.getElementById(`entity-card-${entity.id}`);
+                      element?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }, 100);
+                  }}
+                  isLoading={isLoading}
+                  adapter={dto}
+                  EntityListCard={renderEntityCard}
+                  EntityListGroupHeader={renderGroupHeader}
+                  EntityListHeading={() => (
+                    <div className="px-3 border-b border-gray-200 bg-gray-50 flex items-center h-[62px]">
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-600">Innhold</h3>
+                    </div>
+                  )}
+                  viewOptions={{
+                    ...cardsViewOptions,
+                    viewMode: "list",
+                    compactMode: true, // Extra compact for TOC
+                    isTOCMode: true, // Flag for compact TOC styling
+                    hideDescriptionSnippet: true, // No descriptions in TOC
+                    showHierarchy: false, // No hierarchy indentation
+                    showMerknad: false,
+                    showStatus: false,
+                    showVurdering: false,
+                    showPrioritet: false,
+                    showRelations: false,
+                    showFavorites: false,
+                  }}
+                />
               </div>
               {/* ─────────────────────────────────────────────────────────
                * Main Article View - Right Content Area
@@ -941,7 +939,7 @@ const EntityWorkspaceNew = ({
               onDelete={handleDelete}
               onClose={handleDetailClose}
               onCreateNew={handleCreateNew}
-              dto={dto}  // NEW: Pass dto for inheritance logic
+              dto={dto} // NEW: Pass dto for inheritance logic
               renderListPane={({ entities, selectedEntity, onEntitySelect }) => (
                 <EntityListPane
                   items={entities}

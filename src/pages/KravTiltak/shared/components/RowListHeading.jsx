@@ -185,7 +185,7 @@ const RowListHeading = ({
               {showViewOptions && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setShowViewOptions(false)} />
-                  <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
+                  <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
                     <div className="p-4">
                       <h3 className="text-sm font-medium text-gray-900 mb-3">Vis informasjon</h3>
                       <div className="space-y-2">
