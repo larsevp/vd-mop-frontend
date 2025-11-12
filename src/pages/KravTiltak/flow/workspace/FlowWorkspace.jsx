@@ -264,6 +264,18 @@ const FlowWorkspace = ({
     setSelectedEntity(null);
   }, []);
 
+  // Handle escape key to close modal
+  React.useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && showDetailPane) {
+        handleDetailPaneClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [showDetailPane, handleDetailPaneClose]);
+
   const handleEntitySave = useCallback(async (saveData, isUpdate) => {
     try {
       // Use DTO's save method (works for both CombinedEntityDTO and SingleEntityDTO)
@@ -597,8 +609,25 @@ const FlowWorkspace = ({
 
       {/* EntityDetailPane Modal - z-[100] ensures it appears above status line and other UI elements */}
       {showDetailPane && selectedEntity && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl max-h-[90vh] w-full flex flex-col overflow-hidden">
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4"
+          onClick={handleDetailPaneClose}
+        >
+          <div
+            className="bg-white rounded-lg shadow-xl max-w-4xl max-h-[90vh] w-full flex flex-col overflow-hidden relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              onClick={handleDetailPaneClose}
+              className="absolute top-4 right-4 z-10 bg-white hover:bg-gray-100 text-gray-500 hover:text-gray-700 rounded-full p-2 shadow-md transition-colors"
+              aria-label="Lukk"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
             <div className="flex-1 min-h-0 overflow-auto">
               {renderEntityDetail(selectedEntity)}
             </div>

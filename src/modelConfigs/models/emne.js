@@ -37,6 +37,13 @@ export const emne = {
       required: false,
     },
     {
+      name: "sortIt",
+      label: "Sortering",
+      type: "number",
+      required: false,
+      adminOnly: true,
+    },
+    {
       name: "enhetId",
       label: "EnhetId",
       type: "enhetselect",
