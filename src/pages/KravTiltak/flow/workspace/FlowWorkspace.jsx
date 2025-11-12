@@ -490,10 +490,10 @@ const FlowWorkspace = ({
       </div>
       
       {/* Flow container */}
-      <div 
-        style={{ 
+      <div
+        style={{
           width: '100%',
-          height: '800px',
+          height: 'calc(100vh - 200px)',
           position: 'relative'
         }}
       >

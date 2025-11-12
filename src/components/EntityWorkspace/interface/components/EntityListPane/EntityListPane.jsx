@@ -267,14 +267,10 @@ const EntityListPane = ({
   // Conditional rendering for TOC mode (sticky header) vs. default mode (absolute header)
   if (isTOCMode) {
     return (
-      <div
-        ref={listContainerRef}
-        className="relative h-full w-full overflow-y-auto bg-white shadow-none"
-        style={{ overscrollBehavior: "contain" }}
-      >
-        {/* Sticky Header for TOC Mode */}
+      <div className="relative h-full w-full bg-white flex flex-col">
+        {/* Fixed Header for TOC Mode */}
         {EntityListHeading && (
-          <div ref={headerRef} className="sticky top-0 z-40 bg-white">
+          <div ref={headerRef} className="flex-shrink-0 z-40 bg-white">
             {(() => {
               const headingProps = {
                 itemCount: allItems.length,
@@ -293,8 +289,12 @@ const EntityListPane = ({
           </div>
         )}
 
-        {/* Content Area */}
-        <div className="pl-3">
+        {/* Scrollable Content Area */}
+        <div
+          ref={listContainerRef}
+          className="flex-1 overflow-y-auto pl-3"
+          style={{ overscrollBehavior: "contain" }}
+        >
           {isLoading && allItems.length === 0 ? (
             <div className="flex items-center justify-center h-32 text-gray-500">
               <div className="text-center">
