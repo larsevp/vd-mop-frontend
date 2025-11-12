@@ -66,7 +66,6 @@ const EmneGroupHeader = ({
               <h3 className="text-xs font-light text-slate-900 uppercase tracking-wider">
                 {emne?.tittel || "Uten emne"}
               </h3>
-              {emne && <InfoIcon info={emne.beskrivelse || "Ingen beskrivelse"} variant="gray" />}
             </div>
           </div>
 
@@ -117,7 +116,6 @@ const EmneGroupHeader = ({
                 <h3 className="text-base font-light text-slate-900 uppercase tracking-wider">
                   {emne?.tittel || "Uten emne"}
                 </h3>
-                {emne && <InfoIcon info={emne.beskrivelse || "Ingen beskrivelse"} variant="gray" />}
               </div>
             </div>
 
