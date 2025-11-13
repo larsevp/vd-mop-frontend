@@ -13,6 +13,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, Building, Trash2, Copy } from "lucide-react";
 import { CopyToProjectModal } from "../shared/components/CopyToProjectModal";
 import { massKopyProsjektTiltakToProject } from "@/api/endpoints/models/prosjektTiltak";
+import { useWorkspaceParams } from "@/hooks/useWorkspaceParams";
 
 /**
  * ProsjektTiltak Workspace using the generic EntityWorkspace component
@@ -34,6 +35,9 @@ import { massKopyProsjektTiltakToProject } from "@/api/endpoints/models/prosjekt
  * - File attachments and rich text editing
  */
 const ProsjektTiltakWorkspace = () => {
+  // Read and apply workspace context from URL params (fagområdeId, projectId)
+  useWorkspaceParams();
+
   const navigate = useNavigate();
   const location = useLocation();
   const { currentProject } = useProjectStore();

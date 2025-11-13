@@ -19,6 +19,7 @@ import { prosjektKrav as prosjektKravConfig } from "@/modelConfigs/models/prosje
 import { prosjektTiltak as prosjektTiltakConfig } from "@/modelConfigs/models/prosjektTiltak";
 import { useEntityData } from "@/components/EntityWorkspace/interface/hooks/useEntityData";
 import { useWorkspaceUI } from "@/components/EntityWorkspace/interface/hooks/useWorkspaceUI";
+import { useWorkspaceParams } from "@/hooks/useWorkspaceParams";
 
 /**
  * ProsjektKravTiltakFlowWorkspace - Extended workspace with React Flow visualization
@@ -34,9 +35,12 @@ import { useWorkspaceUI } from "@/components/EntityWorkspace/interface/hooks/use
  * - View mode toggle: Cards | Split | Flow
  */
 const ProsjektKravTiltakFlowWorkspace = () => {
+  // Read and apply workspace context from URL params (fagområdeId, projectId)
+  useWorkspaceParams();
+
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   // Flow view mode state - default to 'flow' since this is the Flow workspace
   const [flowViewMode, setFlowViewMode] = useState('flow');
 

@@ -9,6 +9,7 @@ import { useProjectStore } from '@/stores/userStore';
 import { useProsjektTiltakViewStore } from './store';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Building } from 'lucide-react';
+import { useWorkspaceParams } from '@/hooks/useWorkspaceParams';
 
 /**
  * ProsjektTiltakFlowWorkspace - Flow visualization for ProsjektTiltak entities
@@ -24,10 +25,13 @@ import { ArrowLeft, Building } from 'lucide-react';
  * - Automatic cache invalidation on save/delete operations
  */
 const ProsjektTiltakFlowWorkspace = ({ onFlowToggle: providedOnFlowToggle }) => {
+  // Read and apply workspace context from URL params (fagområdeId, projectId)
+  useWorkspaceParams();
+
   const navigate = useNavigate();
   const location = useLocation();
   const { currentProject } = useProjectStore();
-  
+
   // Get the same viewOptions that split view uses
   const { viewOptions } = useProsjektTiltakViewStore();
 

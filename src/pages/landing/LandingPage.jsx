@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { getProsjekter } from "@/api/endpoints";
 import { useQuery } from "@tanstack/react-query";
-import { useUserStore } from "@/stores/userStore";
+import { useUserStore, useProjectStore } from "@/stores/userStore";
 import { useNavigate } from "react-router-dom";
 import { SimpleCard } from "@/components/ui";
 import ProjectLandingTable from "@/components/parts/LandingPage/ProjectLandingTable";
@@ -15,9 +15,23 @@ import { Link } from "react-router-dom";
 
 export default function LandingPage() {
   const { user } = useUserStore();
+  const { currentProject } = useProjectStore();
   const isAdmin = user?.rolle === "ADMIN";
   const navigate = useNavigate();
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // Build URL params for workspace links to preserve context
+  const workspaceParams = useMemo(() => {
+    const params = new URLSearchParams();
+    if (user?.fagomradeId) {
+      params.set('fagomradeId', user.fagomradeId);
+    }
+    if (currentProject?.id) {
+      params.set('projectId', currentProject.id);
+    }
+    const paramString = params.toString();
+    return paramString ? `?${paramString}` : '';
+  }, [user?.fagomradeId, currentProject?.id]);
 
   const {
     data,
@@ -82,7 +96,7 @@ export default function LandingPage() {
       <section className="max-w-6xl mx-auto px-6 py-16 sm:px-8">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {/* Generelle tiltak card */}
-          <Link to="/tiltak-workspace?preset=generelle" className="group block">
+          <Link to={`/tiltak-workspace?preset=generelle${workspaceParams ? '&' + workspaceParams.substring(1) : ''}`} className="group block">
             <div className="bg-white border-2 border-gray-200 rounded-lg p-6 hover:border-sky-300 hover:shadow-md transition-all h-full">
               <div className="flex items-center gap-3 mb-4">
                 <div className="inline-flex p-2.5 rounded-lg bg-blue-100 text-blue-600">

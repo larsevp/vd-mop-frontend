@@ -12,6 +12,7 @@ import { RowListHeading } from "../shared";
 import { Trash2, Copy } from "lucide-react";
 import { CopyToProjectModal } from "../shared/components/CopyToProjectModal/CopyToProjectModal";
 import { copyTiltakToProject } from "@/api/endpoints/models/prosjektTiltak";
+import { useWorkspaceParams } from "@/hooks/useWorkspaceParams";
 
 /**
  * Tiltak Workspace using the generic EntityWorkspace component
@@ -37,6 +38,9 @@ import { copyTiltakToProject } from "@/api/endpoints/models/prosjektTiltak";
  * - preset=generelle: Shows only generelle tiltak (not obligatory, not linked to krav)
  */
 const TiltakWorkspace = () => {
+  // Read and apply workspace context from URL params (fagområdeId, projectId)
+  useWorkspaceParams();
+
   // Get URL params to check for preset mode
   const [searchParams] = useSearchParams();
   const preset = searchParams.get("preset");

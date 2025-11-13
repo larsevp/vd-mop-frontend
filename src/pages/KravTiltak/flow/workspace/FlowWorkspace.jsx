@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import ReactFlow, {
   MiniMap,
@@ -99,6 +99,12 @@ const FlowWorkspace = ({
   const [showDetailPane, setShowDetailPane] = useState(false);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [newEntityType, setNewEntityType] = useState(null);
+
+  // Store viewport position and zoom when opening modal
+  const savedViewportRef = useRef(null);
+
+  // Store ReactFlow instance from onInit callback
+  const reactFlowInstanceRef = useRef(null);
   
   // Use either provided single entity DTO or create combined DTO
   const dto = useMemo(() => {
@@ -249,6 +255,12 @@ const FlowWorkspace = ({
     if (entityNodeTypes.includes(node.type)) {
       const entity = node.data?.entity;
       if (entity) {
+        // Save current viewport before opening modal
+        if (reactFlowInstanceRef.current) {
+          const viewport = reactFlowInstanceRef.current.getViewport();
+          savedViewportRef.current = viewport;
+        }
+
         setSelectedEntity(entity);
         setShowDetailPane(true);
       }
@@ -266,10 +278,25 @@ const FlowWorkspace = ({
     setSelectedEntity(null);
     setIsCreatingNew(false);
     setNewEntityType(null);
+
+    // Restore viewport position and zoom without animation
+    if (savedViewportRef.current && reactFlowInstanceRef.current) {
+      // Use setTimeout to ensure modal is fully closed before restoring viewport
+      setTimeout(() => {
+        reactFlowInstanceRef.current.setViewport(savedViewportRef.current);
+        savedViewportRef.current = null;
+      }, 50);
+    }
   }, []);
 
   // Handle creating new entity (from header buttons)
   const handleCreateNew = useCallback((entityType) => {
+    // Save current viewport before opening modal
+    if (reactFlowInstanceRef.current) {
+      const viewport = reactFlowInstanceRef.current.getViewport();
+      savedViewportRef.current = viewport;
+    }
+
     const newEntity = {
       __isNew: true,
       entityType: entityType,
@@ -285,6 +312,12 @@ const FlowWorkspace = ({
   // Handle creating connected entity (from EntityDetailPane)
   // EntityDetailPane calls: onCreateNew(entityType, initialData)
   const handleCreateConnected = useCallback((entityType, initialData = {}) => {
+    // Save current viewport before opening modal (if not already saved)
+    if (!savedViewportRef.current && reactFlowInstanceRef.current) {
+      const viewport = reactFlowInstanceRef.current.getViewport();
+      savedViewportRef.current = viewport;
+    }
+
     const newEntity = {
       __isNew: true,
       entityType: entityType,
@@ -416,12 +449,13 @@ const FlowWorkspace = ({
       onClose: handleDetailPaneClose,
       onCreateNew: handleCreateConnected,
       dto: dto, // Pass DTO for emne inheritance logic
+      entities: flowData?.items || [], // Pass entities for TipTap mention functionality
       // For combined workspaces, pass workspaceType so EntityDetailPane shows "Tilknyttet tiltak" button
       ...((!singleEntityDTO) && { workspaceType: 'prosjektkrav-tiltak-combined' })
     };
 
     return renderer.renderDetailPane(entity, rendererProps);
-  }, [renderer, handleEntitySave, handleEntityDelete, handleDetailPaneClose, handleCreateConnected, singleEntityDTO, dto]);
+  }, [renderer, handleEntitySave, handleEntityDelete, handleDetailPaneClose, handleCreateConnected, singleEntityDTO, dto, flowData]);
 
   // Flow settings
   const flowSettings = getDefaultFlowSettings();
@@ -582,6 +616,9 @@ const FlowWorkspace = ({
           onEdgesChange={onEdgesChange}
           onNodeClick={onNodeClick}
           onNodeDoubleClick={onNodeDoubleClick}
+          onInit={(instance) => {
+            reactFlowInstanceRef.current = instance;
+          }}
           nodeTypes={effectiveNodeTypes}
           fitView={true}
           fitViewOptions={{ padding: layoutMode === 'vertical' ? 0.2 : 0.3 }}

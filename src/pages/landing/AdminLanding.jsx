@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   Users,
@@ -18,11 +18,12 @@ import {
   ChevronDown,
   Tag,
 } from "lucide-react";
-import { useUserStore } from "@/stores/userStore";
+import { useUserStore, useProjectStore } from "@/stores/userStore";
 import { getModelConfig } from "@/modelConfigs";
 
 export default function AdminLanding() {
   const { user } = useUserStore();
+  const { currentProject } = useProjectStore();
   const isAdmin = user?.rolle === "ADMIN";
 
   // State for collapsible sections
@@ -37,6 +38,19 @@ export default function AdminLanding() {
       [section]: !prev[section]
     }));
   };
+
+  // Build URL params for workspace links to preserve context
+  const workspaceParams = useMemo(() => {
+    const params = new URLSearchParams();
+    if (user?.fagomradeId) {
+      params.set('fagomradeId', user.fagomradeId);
+    }
+    if (currentProject?.id) {
+      params.set('projectId', currentProject.id);
+    }
+    const paramString = params.toString();
+    return paramString ? `?${paramString}` : '';
+  }, [user?.fagomradeId, currentProject?.id]);
 
   // Krav & Tiltak Workspaces
   const kravTiltakCards = [
@@ -241,12 +255,13 @@ export default function AdminLanding() {
     );
   };
 
-  const CardGrid = ({ cards }) => (
+  const CardGrid = ({ cards, appendParams = false }) => (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {cards.map((card) => {
         const IconComponent = card.icon;
+        const linkTo = appendParams ? `${card.link}${workspaceParams}` : card.link;
         return (
-          <Link key={card.link} to={card.link} className="group block">
+          <Link key={card.link} to={linkTo} className="group block">
             <div className="bg-white border-2 border-gray-200 rounded-lg p-6 h-full hover:border-sky-300 hover:shadow-md transition-all">
               <div className={`inline-flex p-2.5 rounded-lg ${card.iconBg} ${card.iconColor} mb-4`}>
                 <IconComponent size={20} />
@@ -294,7 +309,7 @@ export default function AdminLanding() {
               isExpanded={expandedSections.kravTiltak}
               onToggle={() => toggleSection('kravTiltak')}
             >
-              <CardGrid cards={kravTiltakCards} />
+              <CardGrid cards={kravTiltakCards} appendParams={true} />
             </CollapsibleSection>
 
             {/* Administration Section */}
@@ -303,7 +318,7 @@ export default function AdminLanding() {
               isExpanded={expandedSections.administrasjon}
               onToggle={() => toggleSection('administrasjon')}
             >
-              <CardGrid cards={administrasjonCards} />
+              <CardGrid cards={administrasjonCards} appendParams={false} />
             </CollapsibleSection>
           </div>
         ) : (

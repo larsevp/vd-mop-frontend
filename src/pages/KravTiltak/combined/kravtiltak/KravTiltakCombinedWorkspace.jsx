@@ -11,6 +11,7 @@ import { Trash2, Copy } from "lucide-react";
 import { CombinedCopyModal } from "../../shared/components/CopyToProjectModal";
 import { copyKravToProject } from "@/api/endpoints/models/prosjektKrav";
 import { copyTiltakToProject } from "@/api/endpoints/models/prosjektTiltak";
+import { useWorkspaceParams } from "@/hooks/useWorkspaceParams";
 
 /**
  * KravTiltakCombinedWorkspace - Combined workspace for Krav and Tiltak entities
@@ -32,6 +33,9 @@ import { copyTiltakToProject } from "@/api/endpoints/models/prosjektTiltak";
  * - File attachments and rich text editing
  */
 const KravTiltakCombinedWorkspace = () => {
+  // Read and apply workspace context from URL params (fagområdeId, projectId)
+  useWorkspaceParams();
+
   const location = useLocation();
   const [showCopyModal, setShowCopyModal] = useState(false);
   const isInitialMount = useRef(true);

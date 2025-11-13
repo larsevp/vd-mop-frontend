@@ -10,6 +10,7 @@ import { RowListHeading } from "../shared";
 import { Trash2, Copy } from "lucide-react";
 import { CopyToProjectModal } from "../shared/components/CopyToProjectModal";
 import { copyKravToProject } from "@/api/endpoints/models/prosjektKrav";
+import { useWorkspaceParams } from "@/hooks/useWorkspaceParams";
 
 /**
  * Krav Workspace using the generic EntityWorkspace component
@@ -30,6 +31,9 @@ import { copyKravToProject } from "@/api/endpoints/models/prosjektKrav";
  * - File attachments and rich text editing
  */
 const KravWorkspace = () => {
+  // Read and apply workspace context from URL params (fagområdeId, projectId)
+  useWorkspaceParams();
+
   // Modal state for copy to project
   const [showCopyModal, setShowCopyModal] = useState(false);
 

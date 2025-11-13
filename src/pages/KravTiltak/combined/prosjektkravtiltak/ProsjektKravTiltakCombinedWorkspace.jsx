@@ -12,6 +12,7 @@ import { CombinedCopyModal } from "../../shared/components/CopyToProjectModal";
 import { massKopyProsjektKravToProject } from "@/api/endpoints/models/prosjektKrav";
 import { massKopyProsjektTiltakToProject } from "@/api/endpoints/models/prosjektTiltak";
 import { useProjectStore } from "@/stores/userStore";
+import { useWorkspaceParams } from "@/hooks/useWorkspaceParams";
 
 // Import individual renderers
 import { renderEntityCard as ProsjektKravCardRenderer } from "../../prosjektkrav/renderer/ProsjektKravRenderer";
@@ -44,6 +45,9 @@ import { prosjektTiltak as prosjektTiltakConfig } from "@/modelConfigs/models/pr
  * - Project context awareness
  */
 const ProsjektKravTiltakCombinedWorkspace = () => {
+  // Read and apply workspace context from URL params (fagområdeId, projectId)
+  useWorkspaceParams();
+
   const navigate = useNavigate();
   const location = useLocation();
   const { currentProject } = useProjectStore();

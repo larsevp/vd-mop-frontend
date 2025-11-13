@@ -12,6 +12,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, Building, Trash2, Copy } from "lucide-react";
 import { CopyToProjectModal } from "../shared/components/CopyToProjectModal";
 import { massKopyProsjektKravToProject } from "@/api/endpoints/models/prosjektKrav";
+import { useWorkspaceParams } from "@/hooks/useWorkspaceParams";
 
 /**
  * ProsjektKrav Workspace using the generic EntityWorkspace component
@@ -32,6 +33,9 @@ import { massKopyProsjektKravToProject } from "@/api/endpoints/models/prosjektKr
  * - File attachments and rich text editing
  */
 const ProsjektKravWorkspace = () => {
+  // Read and apply workspace context from URL params (fagområdeId, projectId)
+  useWorkspaceParams();
+
   const { currentProject } = useProjectStore();
   const [showCopyModal, setShowCopyModal] = useState(false);
 
