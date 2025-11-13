@@ -359,6 +359,12 @@ const EntityDetailPane = ({
   // Close create menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
+      // Check if clicking on a menu item - don't close yet, let the onClick fire
+      const isMenuItem = event.target.closest('[role="menuitem"]');
+      if (isMenuItem) {
+        return;
+      }
+
       if (createMenuRef.current && !createMenuRef.current.contains(event.target)) {
         setIsCreateMenuOpen(false);
       }
@@ -783,7 +789,10 @@ const EntityDetailPane = ({
                         <div className="py-1" role="menu">
                           {!entity?.parentId && (
                             <button
-                              onClick={() => {
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
                                 handleCreateChildKrav();
                                 setIsCreateMenuOpen(false);
                               }}
@@ -796,7 +805,10 @@ const EntityDetailPane = ({
                           )}
                           {entityType.toLowerCase().includes('combined') && (
                             <button
-                              onClick={() => {
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
                                 handleCreateConnectedTiltak();
                                 setIsCreateMenuOpen(false);
                               }}

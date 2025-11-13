@@ -8,7 +8,7 @@ import ReactFlow, {
   useEdgesState
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Network, Columns3, Columns2 } from 'lucide-react';
+import { Network, Columns3, Columns2, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/primitives/button';
 
 // Import horizontal flow components and utilities
@@ -97,6 +97,8 @@ const FlowWorkspace = ({
   // Modal state for EntityDetailPane
   const [selectedEntity, setSelectedEntity] = useState(null);
   const [showDetailPane, setShowDetailPane] = useState(false);
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
+  const [newEntityType, setNewEntityType] = useState(null);
   
   // Use either provided single entity DTO or create combined DTO
   const dto = useMemo(() => {
@@ -262,6 +264,38 @@ const FlowWorkspace = ({
   const handleDetailPaneClose = useCallback(() => {
     setShowDetailPane(false);
     setSelectedEntity(null);
+    setIsCreatingNew(false);
+    setNewEntityType(null);
+  }, []);
+
+  // Handle creating new entity (from header buttons)
+  const handleCreateNew = useCallback((entityType) => {
+    const newEntity = {
+      __isNew: true,
+      entityType: entityType,
+      tittel: '',
+      // Add other required fields based on entity type
+    };
+    setSelectedEntity(newEntity);
+    setIsCreatingNew(true);
+    setNewEntityType(entityType);
+    setShowDetailPane(true);
+  }, []);
+
+  // Handle creating connected entity (from EntityDetailPane)
+  // EntityDetailPane calls: onCreateNew(entityType, initialData)
+  const handleCreateConnected = useCallback((entityType, initialData = {}) => {
+    const newEntity = {
+      __isNew: true,
+      entityType: entityType,
+      tittel: '',
+      ...initialData  // Merge in the initial data (includes __sourceKrav, parentId, etc.)
+    };
+
+    setSelectedEntity(newEntity);
+    setIsCreatingNew(true);
+    setNewEntityType(entityType);
+    setShowDetailPane(true);
   }, []);
 
   // Handle escape key to close modal
@@ -366,7 +400,7 @@ const FlowWorkspace = ({
         secondaryCreate: "Nytt tiltak",
         primaryCount: "prosjektkrav", 
         secondaryCount: "prosjekttiltak",
-        workspaceType: "prosjektkrav-tiltak-flow",
+        workspaceType: "prosjektkrav-tiltak-combined",
       },
       viewOptions: {}
     });
@@ -375,15 +409,19 @@ const FlowWorkspace = ({
   // Get appropriate detail renderer for selected entity using renderer
   const renderEntityDetail = useCallback((entity) => {
     if (!entity) return null;
-    
+
     const rendererProps = {
       onSave: handleEntitySave,
       onDelete: handleEntityDelete,
-      onClose: handleDetailPaneClose
+      onClose: handleDetailPaneClose,
+      onCreateNew: handleCreateConnected,
+      dto: dto, // Pass DTO for emne inheritance logic
+      // For combined workspaces, pass workspaceType so EntityDetailPane shows "Tilknyttet tiltak" button
+      ...((!singleEntityDTO) && { workspaceType: 'prosjektkrav-tiltak-combined' })
     };
-    
+
     return renderer.renderDetailPane(entity, rendererProps);
-  }, [renderer, handleEntitySave, handleEntityDelete, handleDetailPaneClose]);
+  }, [renderer, handleEntitySave, handleEntityDelete, handleDetailPaneClose, handleCreateConnected, singleEntityDTO, dto]);
 
   // Flow settings
   const flowSettings = getDefaultFlowSettings();
@@ -452,6 +490,45 @@ const FlowWorkspace = ({
               })}
             </div>
           )}
+
+          {/* Create buttons - conditional based on workspace type */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {/* For combined workspace (no singleEntityDTO), show both buttons */}
+            {!singleEntityDTO && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleCreateNew('prosjektKrav')}
+                  className="h-8 flex items-center gap-1.5"
+                >
+                  <Plus className="w-4 h-4" />
+                  Nytt Krav
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleCreateNew('prosjektTiltak')}
+                  className="h-8 flex items-center gap-1.5"
+                >
+                  <Plus className="w-4 h-4" />
+                  Nytt Tiltak
+                </Button>
+              </>
+            )}
+            {/* For single entity workspace, show appropriate button */}
+            {singleEntityDTO && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleCreateNew(dto?.entityType || dto?.getPrimaryEntityType?.())}
+                className="h-8 flex items-center gap-1.5"
+              >
+                <Plus className="w-4 h-4" />
+                {dto?.entityType?.toLowerCase().includes('krav') ? 'Nytt Krav' : 'Nytt Tiltak'}
+              </Button>
+            )}
+          </div>
 
           {/* Layout Mode Toggle - matching EntityWorkspace pattern */}
           <div className="flex items-center border rounded-lg p-1 bg-neutral-50 flex-shrink-0">
@@ -526,8 +603,9 @@ const FlowWorkspace = ({
           />
           
           {/* Navigation controls */}
-          <Controls 
-            position="bottom-left"
+          <Controls
+            position="top-right"
+            orientation="horizontal"
             showInteractive={false}
           />
           
@@ -548,52 +626,6 @@ const FlowWorkspace = ({
             maskColor="rgba(240, 240, 240, 0.8)"
           />
           
-          {/* Legend */}
-          <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg p-4 z-10">
-            <h4 className="font-semibold text-gray-900 mb-3">Legend</h4>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                <span className="text-sm text-gray-700">Emne (Subject Area)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                <span className="text-sm text-gray-700">Krav</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                <span className="text-sm text-gray-700">Tiltak</span>
-              </div>
-            </div>
-
-            {/* Flow direction indicator - dynamic based on layout */}
-            <div className="mt-4 pt-3 border-t border-gray-200">
-              <div className="text-sm text-gray-600">
-                {layoutMode === 'horizontal' ? (
-                  <div className="flex items-center gap-1">
-                    <span>Flow:</span>
-                    <span className="text-purple-600">Emne</span>
-                    <span>→</span>
-                    <span className="text-blue-600">Krav</span>
-                    <span>→</span>
-                    <span className="text-green-600">Tiltak</span>
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    <div className="text-xs font-medium text-gray-700">Columnar Layout</div>
-                    <div className="flex flex-col items-center gap-0.5">
-                      <span className="text-purple-600">Emne</span>
-                      <span>↓</span>
-                      <span className="text-blue-600">Krav</span>
-                      <span>↓</span>
-                      <span className="text-green-600">Tiltak</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
           {/* Empty state */}
           {nodes.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center">
@@ -614,21 +646,22 @@ const FlowWorkspace = ({
           onClick={handleDetailPaneClose}
         >
           <div
-            className="bg-white rounded-lg shadow-xl max-w-4xl max-h-[90vh] w-full flex flex-col overflow-hidden relative"
+            className="bg-white rounded-lg shadow-xl max-w-4xl w-full flex flex-col overflow-hidden relative"
             onClick={(e) => e.stopPropagation()}
+            style={{ height: '90vh' }}
           >
-            {/* Close button */}
+            {/* Close button - positioned at very top-right corner */}
             <button
               onClick={handleDetailPaneClose}
-              className="absolute top-4 right-4 z-10 bg-white hover:bg-gray-100 text-gray-500 hover:text-gray-700 rounded-full p-2 shadow-md transition-colors"
+              className="absolute top-1 right-1 z-50 bg-white hover:bg-red-50 text-gray-500 hover:text-red-600 rounded-full p-1.5 shadow-lg transition-colors border border-gray-200"
               aria-label="Lukk"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
               </svg>
             </button>
-            <div className="flex-1 min-h-0 overflow-auto">
+            <div className="flex-1 min-h-0 overflow-hidden">
               {renderEntityDetail(selectedEntity)}
             </div>
           </div>
