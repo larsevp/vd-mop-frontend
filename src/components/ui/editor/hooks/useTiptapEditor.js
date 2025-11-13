@@ -14,6 +14,7 @@ import { Heading } from "@tiptap/extension-heading";
 import { SafariBulletList } from "../extensions/SafariBulletList";
 import { SmartPasteExtension } from "../extensions/SmartPasteExtension";
 import { KeyboardShortcutsExtension } from "../extensions/KeyboardShortcutsExtension";
+import { EntityMention } from "../extensions/EntityMentionExtension";
 import { getEditorStyles } from "../utils/editorStyles";
 
 export const useTiptapEditor = ({
@@ -120,6 +121,11 @@ export const useTiptapEditor = ({
             TableCell.configure({
               HTMLAttributes: {
                 class: "border border-border p-2",
+              },
+            }),
+            EntityMention.configure({
+              HTMLAttributes: {
+                class: "entity-mention",
               },
             }),
           ]),

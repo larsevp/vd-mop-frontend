@@ -16,6 +16,7 @@ import {
   Layers,
   FolderTree,
   ChevronDown,
+  Tag,
 } from "lucide-react";
 import { useUserStore } from "@/stores/userStore";
 import { getModelConfig } from "@/modelConfigs";
@@ -93,6 +94,13 @@ export default function AdminLanding() {
       icon: FolderTree,
       iconBg: "bg-emerald-100",
       iconColor: "text-emerald-600",
+    },
+    {
+      config: getModelConfig("emner"),
+      link: "/emner",
+      icon: Tag,
+      iconBg: "bg-violet-100",
+      iconColor: "text-violet-600",
     },
     {
       config: getModelConfig("prosjekter"),

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ChevronDown, User, Building2, Check, Plus, LogOut, Home, Layers } from "lucide-react";
+import { ChevronDown, User, Building2, Check, Plus, LogOut, Home, Layers, Tag, Building } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useUserStore, useProjectStore } from "@/stores/userStore";
 import { LogoutButton } from "@/components/ui";
@@ -280,10 +280,39 @@ export const UserProjectMenu = () => {
             />
           </div>
 
+          {/* Administration Links */}
+          <div className="p-3 border-b border-gray-100">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Administrasjon
+              </span>
+            </div>
+
+            <div className="space-y-1">
+              <Link
+                to="/emner"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors text-gray-700 hover:text-gray-900"
+              >
+                <Tag size={16} className="text-violet-600" />
+                <span className="text-sm font-medium">Emner</span>
+              </Link>
+
+              <Link
+                to="/prosjekter"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors text-gray-700 hover:text-gray-900"
+              >
+                <Building size={16} className="text-green-600" />
+                <span className="text-sm font-medium">Prosjekter</span>
+              </Link>
+            </div>
+          </div>
+
           {/* Actions */}
           <div className="p-2">
-            <LogoutButton 
-              variant="ghost" 
+            <LogoutButton
+              variant="ghost"
               className="w-full justify-start text-gray-700 hover:bg-gray-50 hover:text-gray-900 p-2 text-sm font-medium"
             />
           </div>

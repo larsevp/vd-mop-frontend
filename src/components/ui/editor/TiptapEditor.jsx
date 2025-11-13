@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import { EditorContent } from "@tiptap/react";
 import { cn } from "@/lib/utils";
 import { useTiptapEditor } from "./hooks/useTiptapEditor";
@@ -15,6 +15,7 @@ export const TiptapEditor = ({
   className = "",
   uploadUrl = null, // Can be { relatedModelType: 'Krav', relatedModelId: 123 } for context
   basic = false, // If true, only shows B, I, U and H1/H2 buttons - no images, tables, links
+  availableEntities = [], // List of entities for @-mentions
 }) => {
   const [toast, setToast] = useState({ show: false, message: "", type: "info" });
   const [isFocused, setIsFocused] = useState(false);
@@ -43,6 +44,16 @@ export const TiptapEditor = ({
     onShowToast: showToast,
     uploadUrl,
   });
+
+  // Store available entities in editor storage for mention extension
+  useEffect(() => {
+    if (editor && availableEntities) {
+      if (!editor.storage.entityMention) {
+        editor.storage.entityMention = {};
+      }
+      editor.storage.entityMention.entities = availableEntities;
+    }
+  }, [editor, availableEntities]);
 
   // Handle link addition - open modal or exit link mode if button is active
   const handleAddLink = useCallback(() => {

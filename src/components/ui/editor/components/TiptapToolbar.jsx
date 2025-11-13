@@ -664,6 +664,16 @@ export const TiptapToolbar = ({ editor, onAddLink, uploadUrl, onShowToast, basic
               Link
             </ToolbarButton>
             <ToolbarButton
+              onClick={() => {
+                editor.chain().focus().insertContent('@').run();
+              }}
+              active={editor.isActive("entityMention")}
+              title="Insert entity reference (@)"
+              className="hidden lg:inline-flex"
+            >
+              @Ref
+            </ToolbarButton>
+            <ToolbarButton
               onClick={addImage}
               title="Last opp bilde"
               className="hidden lg:inline-flex"

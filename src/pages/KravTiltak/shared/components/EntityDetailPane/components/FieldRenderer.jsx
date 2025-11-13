@@ -5,7 +5,7 @@ import { DisplayValueResolver } from "@/components/tableComponents/displayValues
 import { InfoIcon } from "@/components/ui/InfoIcon.jsx";
 import InheritanceIndicator from "./InheritanceIndicator.jsx";
 
-const FieldRenderer = ({ field, value, onChange, error, form, entity, modelName, isEditing, inheritanceInfo, hideLabel = false, isCollapsible = false, isExpanded = true, onToggle }) => {
+const FieldRenderer = ({ field, value, onChange, error, form, entity, modelName, isEditing, inheritanceInfo, hideLabel = false, isCollapsible = false, isExpanded = true, onToggle, availableEntities = [] }) => {
   // Check if this field should be hidden in view mode when empty
   const shouldHideInView = !isEditing && field.hideInViewIfEmpty && (!value || value === '' || (Array.isArray(value) && value.length === 0));
 
@@ -63,6 +63,7 @@ const FieldRenderer = ({ field, value, onChange, error, form, entity, modelName,
         row={entity}
         modelName={modelName}
         disabled={isFieldDisabledByInheritance}  // NEW: Pass disabled state
+        availableEntities={availableEntities}  // NEW: Pass available entities for mentions
       />
     );
   }
@@ -116,6 +117,7 @@ const FieldRenderer = ({ field, value, onChange, error, form, entity, modelName,
               modelName={modelName}
               disabled={false}
               isEditing={false}  // Pass false to hide upload/delete buttons
+              availableEntities={availableEntities}  // NEW: Pass available entities for mentions
             />
           )}
         </div>
@@ -223,6 +225,7 @@ const FieldRenderer = ({ field, value, onChange, error, form, entity, modelName,
             modelName={modelName}
             disabled={isFieldDisabledByInheritance}
             isEditing={isEditing}  // Pass edit mode to components
+            availableEntities={availableEntities}  // NEW: Pass available entities for mentions
           />
           {showInheritanceIndicator && (
             <InheritanceIndicator

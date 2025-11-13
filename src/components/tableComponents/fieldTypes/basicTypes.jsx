@@ -174,7 +174,7 @@ export const BASIC_FIELD_TYPES = {
     />
   ),
 
-  richtext: ({ field, value, onChange, error }) => {
+  richtext: ({ field, value, onChange, error, availableEntities }) => {
     const handleEditorChange = (html) => {
       // Create a synthetic event to match the expected onChange signature
       const syntheticEvent = {
@@ -195,6 +195,7 @@ export const BASIC_FIELD_TYPES = {
         error={!!error}
         disabled={field.disabled}
         uploadUrl={field.uploadUrl} // Future backend integration
+        availableEntities={availableEntities || []} // Pass entities for @-mentions
       />
     );
   },

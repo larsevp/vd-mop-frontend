@@ -194,6 +194,17 @@
     margin: 0.15rem 0;
   }
 
+  /* Entity mention styles - @ references to other entities */
+  .entity-mention {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-sm font-medium bg-blue-50 text-blue-700 border border-blue-200;
+    white-space: nowrap;
+    cursor: default;
+  }
+
+  .ProseMirror .entity-mention {
+    @apply hover:bg-blue-100 transition-colors;
+  }
+
   /* SweetAlert2 toast customization - smaller toast notifications */
   .swal2-toast-small {
     min-height: auto !important;

@@ -65,7 +65,8 @@ const EntityDetailPane = ({
   onCreateNew,
   entityType = "entity",
   dto,  // NEW: DTO instance for inheritance logic
-  kravConfig  // NEW: ModelConfig for krav/prosjektKrav (needed for Tiltak entities)
+  kravConfig,  // NEW: ModelConfig for krav/prosjektKrav (needed for Tiltak entities)
+  entities = []  // NEW: Entities list from workspace (already filtered)
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({});
@@ -76,12 +77,28 @@ const EntityDetailPane = ({
   const detailViewRef = useRef(null);
   const createMenuRef = useRef(null);
   const lastInitializedEntityId = useRef(null); // Track which entity we initialized sections for
-  
+
   // Query client for cache invalidation
   const queryClient = useQueryClient();
 
   // Configuration
   const modelName = modelConfig?.modelPrintName || entityType;
+
+  // Use entities from workspace (already filtered by access control and workspace context)
+  // Flatten grouped entities (workspace groups by emne) into a flat array for mentions
+  const availableEntities = useMemo(() => {
+    if (!entities || entities.length === 0) return [];
+
+    // Entities from workspace are grouped: { group: {emne}, items: [...entities] }
+    // Flatten to get all entities
+    const flatEntities = entities.flatMap(group => group.items || []);
+
+    // Add uid field for mention extension (unify kravUID/tiltakUID)
+    return flatEntities.map(entity => ({
+      ...entity,
+      uid: entity.uid || entity.kravUID || entity.tiltakUID || `ID-${entity.id}`
+    }));
+  }, [entities]);
 
   // Check if save/delete operations are actually available
   const canSave = useMemo(() => {
@@ -1063,6 +1080,7 @@ const EntityDetailPane = ({
                         modelName={modelName}
                         isEditing={isEditing}
                         inheritanceInfo={inheritanceInfo}
+                        availableEntities={availableEntities}
                       />
                     );
                   } else {
@@ -1095,6 +1113,7 @@ const EntityDetailPane = ({
                                 modelName={modelName}
                                 isEditing={isEditing}
                                 inheritanceInfo={inheritanceInfo}
+                                availableEntities={availableEntities}
                               />
                             </div>
                           ))
@@ -1139,6 +1158,7 @@ const EntityDetailPane = ({
                     modelName={modelName}
                     isEditing={isEditing}
                     inheritanceInfo={inheritanceInfo}
+                    availableEntities={availableEntities}
                     isCollapsible={true}
                     isExpanded={shouldBeExpanded}
                     onToggle={() => handleToggleSection(sectionName)}

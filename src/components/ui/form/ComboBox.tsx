@@ -58,6 +58,7 @@ export function ComboBox({
   const [isFocused, setIsFocused] = React.useState(false);
   const [highlightedIndex, setHighlightedIndex] = React.useState(-1);
   const [lastInteractionType, setLastInteractionType] = React.useState<"mouse" | "keyboard" | null>(null);
+  const [dropdownPosition, setDropdownPosition] = React.useState<"below" | "above">("below");
   const inputRef = React.useRef<HTMLInputElement>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
   const selectedItemRef = React.useRef<HTMLDivElement>(null);
@@ -91,6 +92,24 @@ export function ComboBox({
   const getActiveIndex = React.useCallback(() => {
     return highlightedIndex;
   }, [highlightedIndex]);
+
+  // Calculate dropdown position based on available viewport space
+  React.useEffect(() => {
+    if (open && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const dropdownHeight = 250; // Approximate max dropdown height
+
+      // Render above if there's not enough space below but more space above
+      if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
+        setDropdownPosition("above");
+      } else {
+        setDropdownPosition("below");
+      }
+    }
+  }, [open]);
 
   // Close dropdown when clicking outside
   React.useEffect(() => {
@@ -421,7 +440,10 @@ export function ComboBox({
 
         {open && (
           <div
-            className="absolute z-50 w-full mt-2 rounded-md border bg-popover p-0 text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+            className={cn(
+              "absolute z-50 w-full rounded-md border bg-popover p-0 text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+              dropdownPosition === "above" ? "bottom-full mb-2" : "mt-2"
+            )}
             onMouseLeave={handleDropdownMouseLeave}
           >
             <div className="rounded-md bg-popover">
