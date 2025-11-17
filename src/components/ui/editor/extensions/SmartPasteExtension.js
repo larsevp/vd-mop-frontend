@@ -3,6 +3,7 @@ import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { buildMinimalTableFromHTML, buildHTMLTableFromTSV } from '../utils/tablePaste';
 import { storeTempImage } from '@/utils/tempImageStorage';
 import { cleanPDFText } from '../utils/pdfTextCleaner';
+import { convertToListStructure, hasListPatterns } from '../utils/listRecognition';
 
 /**
  * Smart Paste Extension for TipTap
@@ -205,44 +206,82 @@ export const SmartPasteExtension = Extension.create({
                 const { state } = view;
                 const { selection, schema } = state;
 
-                // Both basic and richtext: convert newlines to proper structure
-                // Basic mode uses simple paragraphs, richtext uses TipTap paragraph nodes
-                const paragraphs = cleanedText.split('\n\n').filter(p => p.trim());
-
-                if (paragraphs.length === 0) {
-                  // No content
-                  return true;
-                }
-
                 if (isBasic) {
                   // Basic mode: just insert the cleaned text as-is
                   const tr = state.tr.insertText(cleanedText, selection.from, selection.to);
                   view.dispatch(tr);
                 } else {
-                  // Richtext mode: create proper paragraph nodes for each paragraph
+                  // Richtext mode: detect lists and create proper nodes
                   const nodes = [];
 
-                  paragraphs.forEach(para => {
-                    // Each paragraph becomes one paragraph node
-                    // Single newlines within become hard breaks
-                    const lines = para.split('\n').filter(l => l.trim());
+                  // Check if text contains list patterns
+                  if (hasListPatterns(cleanedText)) {
+                    // Parse text into structured blocks (paragraphs and lists)
+                    const { blocks } = convertToListStructure(cleanedText);
 
-                    if (lines.length === 1) {
-                      // Single line paragraph
-                      const textNode = schema.text(lines[0]);
-                      nodes.push(schema.nodes.paragraph.create(null, textNode));
-                    } else {
-                      // Multiple lines: use hard breaks between them
-                      const content = [];
-                      lines.forEach((line, idx) => {
-                        content.push(schema.text(line));
-                        if (idx < lines.length - 1) {
-                          content.push(schema.nodes.hardBreak.create());
+                    blocks.forEach(block => {
+                      if (block.type === 'bulletList') {
+                        // Create bullet list with list items
+                        const listItems = block.items.map(itemText => {
+                          const textNode = schema.text(itemText);
+                          const paragraph = schema.nodes.paragraph.create(null, textNode);
+                          return schema.nodes.listItem.create(null, paragraph);
+                        });
+                        nodes.push(schema.nodes.bulletList.create(null, listItems));
+                      } else if (block.type === 'orderedList') {
+                        // Create ordered list with list items
+                        const listItems = block.items.map(itemText => {
+                          const textNode = schema.text(itemText);
+                          const paragraph = schema.nodes.paragraph.create(null, textNode);
+                          return schema.nodes.listItem.create(null, paragraph);
+                        });
+                        nodes.push(schema.nodes.orderedList.create(null, listItems));
+                      } else if (block.type === 'paragraph') {
+                        // Create paragraph node with hard breaks for multi-line content
+                        const lines = block.content.split('\n').filter(l => l.trim());
+
+                        if (lines.length === 1) {
+                          const textNode = schema.text(lines[0]);
+                          nodes.push(schema.nodes.paragraph.create(null, textNode));
+                        } else {
+                          const content = [];
+                          lines.forEach((line, idx) => {
+                            content.push(schema.text(line));
+                            if (idx < lines.length - 1) {
+                              content.push(schema.nodes.hardBreak.create());
+                            }
+                          });
+                          nodes.push(schema.nodes.paragraph.create(null, content));
                         }
-                      });
-                      nodes.push(schema.nodes.paragraph.create(null, content));
-                    }
-                  });
+                      }
+                    });
+                  } else {
+                    // No lists detected - use original paragraph logic
+                    const paragraphs = cleanedText.split('\n\n').filter(p => p.trim());
+
+                    paragraphs.forEach(para => {
+                      const lines = para.split('\n').filter(l => l.trim());
+
+                      if (lines.length === 1) {
+                        const textNode = schema.text(lines[0]);
+                        nodes.push(schema.nodes.paragraph.create(null, textNode));
+                      } else {
+                        const content = [];
+                        lines.forEach((line, idx) => {
+                          content.push(schema.text(line));
+                          if (idx < lines.length - 1) {
+                            content.push(schema.nodes.hardBreak.create());
+                          }
+                        });
+                        nodes.push(schema.nodes.paragraph.create(null, content));
+                      }
+                    });
+                  }
+
+                  if (nodes.length === 0) {
+                    // No content
+                    return true;
+                  }
 
                   const tr = state.tr.replaceWith(selection.from, selection.to, nodes);
                   view.dispatch(tr);

@@ -154,30 +154,43 @@ const groupIntoParagraphs = (lines, targetLength, tolerance) => {
     const line = lines[i];
     const nextLine = lines[i + 1];
 
-    currentParagraph.push(line);
+    // Check if current line is a list item (preserve as individual line with newline)
+    const isListItem = /^[-•*]\s/.test(line.trim()) || /^\d+\.\s/.test(line.trim());
 
-    // Detect paragraph boundaries - but be more conservative than before
-    const endsWithSentence = /[.!?]$/.test(line.trim());
-    const nextStartsWithCapital = nextLine && /^[A-ZÆØÅ]/.test(nextLine);
-    const nextLooksLikeNewParagraph = nextLine && (/^\d+\.?\s/.test(nextLine) || /^[-•*]\s/.test(nextLine));
-
-    // Check if combining would exceed reasonable length
-    const combinedLength = currentParagraph.join(" ").length + (nextLine ? nextLine.length + 1 : 0);
-    const wouldBeTooLong = combinedLength > (targetLength + tolerance) * 2; // Allow longer paragraphs
-
-    // Only break into new paragraph for strong indicators
-    if (nextLooksLikeNewParagraph || !nextLine || wouldBeTooLong) {
-      paragraphs.push(currentParagraph.join(" "));
-      currentParagraph = [];
-    } else if (endsWithSentence && nextStartsWithCapital) {
-      // For sentence boundaries, check if we should really break
-      // Only break if the current paragraph is already quite substantial
-      const currentParagraphLength = currentParagraph.join(" ").length;
-      if (currentParagraphLength > (targetLength + tolerance) * 1.5) {
+    if (isListItem) {
+      // Flush any accumulated paragraph first
+      if (currentParagraph.length > 0) {
         paragraphs.push(currentParagraph.join(" "));
         currentParagraph = [];
-      } else {
-        // Continue the paragraph
+      }
+      // Add list item as standalone line (with newline to separate from next item)
+      paragraphs.push(line);
+    } else {
+      currentParagraph.push(line);
+
+      // Detect paragraph boundaries - but be more conservative than before
+      const endsWithSentence = /[.!?]$/.test(line.trim());
+      const nextStartsWithCapital = nextLine && /^[A-ZÆØÅ]/.test(nextLine);
+      const nextLooksLikeNewParagraph = nextLine && (/^\d+\.?\s/.test(nextLine) || /^[-•*]\s/.test(nextLine));
+
+      // Check if combining would exceed reasonable length
+      const combinedLength = currentParagraph.join(" ").length + (nextLine ? nextLine.length + 1 : 0);
+      const wouldBeTooLong = combinedLength > (targetLength + tolerance) * 2; // Allow longer paragraphs
+
+      // Only break into new paragraph for strong indicators
+      if (nextLooksLikeNewParagraph || !nextLine || wouldBeTooLong) {
+        paragraphs.push(currentParagraph.join(" "));
+        currentParagraph = [];
+      } else if (endsWithSentence && nextStartsWithCapital) {
+        // For sentence boundaries, check if we should really break
+        // Only break if the current paragraph is already quite substantial
+        const currentParagraphLength = currentParagraph.join(" ").length;
+        if (currentParagraphLength > (targetLength + tolerance) * 1.5) {
+          paragraphs.push(currentParagraph.join(" "));
+          currentParagraph = [];
+        } else {
+          // Continue the paragraph
+        }
       }
     }
   }
