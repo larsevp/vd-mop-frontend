@@ -292,7 +292,7 @@ const EntityListPane = ({
         {/* Scrollable Content Area */}
         <div
           ref={listContainerRef}
-          className="flex-1 overflow-y-auto pl-3 pb-16"
+          className="flex-1 overflow-y-auto pl-3"
           style={{ overscrollBehavior: "contain" }}
         >
           {isLoading && allItems.length === 0 ? (
@@ -311,7 +311,7 @@ const EntityListPane = ({
             </div>
           ) : hasGroupedData ? (
             // Grouped rendering
-            <div>
+            <div className="mb-16">
               {groupedItems.map((groupData, groupIndex) => {
                 const itemIds = (groupData.items || []).map((item) => item.id || item.renderId).join("-");
                 const groupKey = `${entityType}-group-${groupData.group.emne?.id || "no-emne"}-${groupIndex}-${itemIds.substring(0, 20)}`;
@@ -360,7 +360,7 @@ const EntityListPane = ({
             </div>
           ) : (
             // Flat rendering
-            <div className={isCardsMode ? "space-y-0.5 pr-2 pb-2" : ""}>
+            <div className={isCardsMode ? "space-y-0.5 pr-2 pb-2 mb-16" : "mb-16"}>
               {allItems.map((entity, index) => {
                 const isFirstOccurrence = allItems.findIndex((e) => e.renderId === entity.renderId) === index;
                 const isEntitySelected = entity.renderId === selectedEntityId;
@@ -423,7 +423,7 @@ const EntityListPane = ({
         className="absolute left-0 right-0 bottom-0 overflow-y-auto pr-2"
         style={{ top: `${headerHeight}px`, overscrollBehavior: "contain" }}
       >
-        <div className="pb-16">
+        <div>
           {isLoading && allItems.length === 0 ? (
             <div className="flex items-center justify-center h-32 text-gray-500">
               <div className="text-center">
@@ -440,7 +440,7 @@ const EntityListPane = ({
             </div>
           ) : hasGroupedData ? (
             // Grouped rendering (with emne headers)
-            <div>
+            <div className="mb-16">
               {groupedItems.map((groupData, groupIndex) => {
                 // Create a more unique groupKey by including item IDs to handle duplicate emne contexts
                 const itemIds = (groupData.items || []).map((item) => item.id || item.renderId).join("-");
@@ -496,7 +496,7 @@ const EntityListPane = ({
             </div>
           ) : (
             // Flat rendering (no emne groups)
-            <div className={isCardsMode ? "space-y-0.5 pr-2 pb-2" : ""}>
+            <div className={isCardsMode ? "space-y-0.5 pr-2 pb-2 mb-16" : "mb-16"}>
               {allItems.map((entity, index) => {
                 // For non-grouped view, only select first occurrence of duplicate entities
                 const isFirstOccurrence = allItems.findIndex((e) => e.renderId === entity.renderId) === index;
