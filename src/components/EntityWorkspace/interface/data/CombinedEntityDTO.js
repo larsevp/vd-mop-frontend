@@ -70,7 +70,7 @@ export class CombinedEntityDTO extends EntityDTOInterface {
 
   _transformAPIResponse(rawData) {
     if (!rawData || (typeof rawData === "object" && Object.keys(rawData).length === 0)) {
-      return { items: [], total: 0, page: 1, pageSize: 50 };
+      return { items: [], total: 0, page: 1, pageSize: 10000 };
     }
 
     if (this._isGroupedResponse(rawData)) {
@@ -123,7 +123,7 @@ export class CombinedEntityDTO extends EntityDTOInterface {
       items: normalizedGroups,
       total: rawData.total || 0,
       page: rawData.page || 1,
-      pageSize: rawData.pageSize || 50,
+      pageSize: rawData.pageSize || 10000,
       totalPages: rawData.totalPages || 1,
       isGrouped: true,
     };
@@ -134,8 +134,8 @@ export class CombinedEntityDTO extends EntityDTOInterface {
       items: rawData.items || [],
       total: rawData.total || rawData.count || 0,
       page: rawData.page || 1,
-      pageSize: rawData.pageSize || 50,
-      totalPages: rawData.totalPages || Math.ceil((rawData.total || rawData.count || 0) / (rawData.pageSize || 50)),
+      pageSize: rawData.pageSize || 10000,
+      totalPages: rawData.totalPages || Math.ceil((rawData.total || rawData.count || 0) / (rawData.pageSize || 10000)),
     };
   }
 
@@ -168,7 +168,7 @@ export class CombinedEntityDTO extends EntityDTOInterface {
 
       // Extract individual parameters from queryParams object
       // API functions expect individual parameters, not an object
-      const { page = 1, pageSize = 50, searchQuery = "", filters = {}, pagination = {} } = queryParams;
+      const { page = 1, pageSize = 10000, searchQuery = "", filters = {}, pagination = {} } = queryParams;
 
       const actualPage = pagination.page || page;
       const actualPageSize = pagination.pageSize || pageSize;

@@ -6,7 +6,7 @@ import { API } from "@/api";
  * EntityWorkspace expects a function that accepts (page, pageSize, search, sortBy, sortOrder)
  * Uses the combined-entities route with projectId parameter
  */
-export const getPaginatedCombinedProsjektEntities = async (page = 1, pageSize = 50, search = "", sortBy = "", sortOrder = "asc", filterBy = "all", additionalFilters = {}) => {
+export const getPaginatedCombinedProsjektEntities = async (page = 1, pageSize = 10000, search = "", sortBy = "", sortOrder = "asc", filterBy = "all", additionalFilters = {}) => {
   // Handle case where page is passed as an object (fix for object parameter issue)
   const actualPage = typeof page === "object" && page !== null ? page.page || page.pageNumber || page.currentPage || 1 : parseInt(page) || 1;
   
@@ -54,7 +54,7 @@ export const getPaginatedCombinedProsjektEntities = async (page = 1, pageSize = 
 export const getPaginatedCombinedProsjektEntitiesWithOptions = async (params = {}) => {
   const {
     page = 1,
-    pageSize = 50,
+    pageSize = 10000,
     search = "",
     sortBy = "",
     sortOrder = "asc",
@@ -85,7 +85,7 @@ export const getPaginatedCombinedProsjektEntitiesWithOptions = async (params = {
  * Get combined view with ProsjektKrav-first hierarchy (convenience method)
  */
 export const getCombinedProsjektEntitiesKravFirst = async (params = {}) => {
-  const { page = 1, pageSize = 50, search = "", sortBy = "", sortOrder = "asc" } = params;
+  const { page = 1, pageSize = 10000, search = "", sortBy = "", sortOrder = "asc" } = params;
   return await getPaginatedCombinedProsjektEntities(page, pageSize, search, sortBy, sortOrder);
 };
 
@@ -93,14 +93,14 @@ export const getCombinedProsjektEntitiesKravFirst = async (params = {}) => {
  * Get combined view with ProsjektTiltak-first hierarchy (convenience method)
  */
 export const getCombinedProsjektEntitiesTiltakFirst = async (params = {}) => {
-  const { page = 1, pageSize = 50, search = "", sortBy = "", sortOrder = "asc" } = params;
+  const { page = 1, pageSize = 10000, search = "", sortBy = "", sortOrder = "asc" } = params;
   return await getPaginatedCombinedProsjektEntities(page, pageSize, search, sortBy, sortOrder);
 };
 
 /**
  * Get combined view grouped by Emne (convenience method)
  */
-export const getCombinedProsjektEntitiesGroupedByEmne = async (page = 1, pageSize = 50, search = "", sortBy = "", sortOrder = "asc", filterBy = "all", additionalFilters = {}) => {
+export const getCombinedProsjektEntitiesGroupedByEmne = async (page = 1, pageSize = 10000, search = "", sortBy = "", sortOrder = "asc", filterBy = "all", additionalFilters = {}) => {
   return await getPaginatedCombinedProsjektEntities(page, pageSize, search, sortBy, sortOrder, filterBy, additionalFilters);
 };
 
