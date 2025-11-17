@@ -292,7 +292,7 @@ const EntityListPane = ({
         {/* Scrollable Content Area */}
         <div
           ref={listContainerRef}
-          className="flex-1 overflow-y-auto pl-3"
+          className="flex-1 overflow-y-auto pl-3 pb-16"
           style={{ overscrollBehavior: "contain" }}
         >
           {isLoading && allItems.length === 0 ? (
@@ -423,7 +423,7 @@ const EntityListPane = ({
         className="absolute left-0 right-0 bottom-0 overflow-y-auto pr-2"
         style={{ top: `${headerHeight}px`, overscrollBehavior: "contain" }}
       >
-        <div>
+        <div className="pb-16">
           {isLoading && allItems.length === 0 ? (
             <div className="flex items-center justify-center h-32 text-gray-500">
               <div className="text-center">
