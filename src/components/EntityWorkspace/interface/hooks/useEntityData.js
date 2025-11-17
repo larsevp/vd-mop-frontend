@@ -19,7 +19,7 @@ export const useEntityData = (dto, options = {}) => {
   const {
     searchQuery = "",
     filters = {},
-    pagination = { page: 1, pageSize: 50 },
+    pagination = { page: 1, pageSize: 10000 },
     enabled = true,
     staleTime = 30 * 1000, // 30 seconds - balance between freshness and performance
     cacheTime = 5 * 60 * 1000, // 5 minutes
