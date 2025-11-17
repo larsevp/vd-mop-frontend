@@ -65,18 +65,44 @@ function isContinuationLine(line, inList) {
  * @returns {string} - Text with bullets split into separate lines
  */
 function splitInlineBullets(text) {
+  // Step 1: Split on bullets that appear in merged text
   // Pattern: any non-newline character followed by space, bullet, and space
   // Example: "krom til • Utvendig kledning • Rør"
-  // Split before the bullet marker to create separate lines
-
   let result = text.replace(/([^\n])\s+([•\-*])\s+/g, '$1\n$2 ');
 
-  // Also detect text after last bullet that starts with capital letter (likely new paragraph)
-  // Pattern: lowercase letter/punctuation + space + Capital letter (not a bullet continuation)
-  // Example: "valgt bort Dersom det er" -> split after "bort"
-  result = result.replace(/([a-zæøå.,;!?])\s+([A-ZÆØÅ][a-zæøå]+\s)/g, '$1\n\n$2');
+  // Step 2: Detect paragraph AFTER LAST BULLET by looking for:
+  // Last list item line (starts with bullet) followed by text starting with capital
+  // Pattern: line starting with bullet marker, ending with lowercase/punctuation,
+  // then capital word on what should be next paragraph
+  // Example: "• dokumentere ... valgt bort Dersom det er behov"
+  // ONLY applies to lines that start with bullets (not normal text)
+  const paragraphStarters = /\b(Dersom|Det|Dette|Disse|Følgende|For|Ved|Alle|Ingen|Hvis|Når|En|Et)\b/;
 
-  return result;
+  // Split lines for processing
+  const lines = result.split('\n');
+  const processedLines = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // Check if this line starts with a bullet marker (it's a list item)
+    if (/^[•\-*]\s/.test(line.trim())) {
+      // Check if there's text after the list item that looks like a new paragraph
+      const match = line.match(new RegExp(`^([•\\-*]\\s.+[a-zæøå.,;!?])\\s+(${paragraphStarters.source}.*)$`));
+      if (match) {
+        // Split this list item from the paragraph that follows
+        processedLines.push(match[1]); // The list item part
+        processedLines.push(''); // Empty line for paragraph separation
+        processedLines.push(match[2]); // The paragraph part
+      } else {
+        processedLines.push(line);
+      }
+    } else {
+      processedLines.push(line);
+    }
+  }
+
+  return processedLines.join('\n');
 }
 
 /**
