@@ -5,6 +5,7 @@ import { useTiptapEditor } from "./hooks/useTiptapEditor";
 import { TiptapToolbar } from "./components/TiptapToolbar";
 import { Toast } from "./components/Toast";
 import { TableInlineControls } from "./components/TableInlineControls";
+import ScrollPreventWrapper from "@/components/EntityWorkspace/interface/components/ScrollPreventWrapper";
 
 export const TiptapEditor = ({
   value = "",
@@ -165,7 +166,7 @@ export const TiptapEditor = ({
   return (
     <div
       className={cn(
-        "border rounded-md overflow-hidden transition-colors",
+        "border rounded-md transition-colors flex flex-col",
         error ? "border-destructive" : "border-input",
         "focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
         disabled && "bg-muted cursor-not-allowed",
@@ -211,12 +212,12 @@ export const TiptapEditor = ({
         }}
       />
 
-      {/* Always show toolbar in edit mode, not just when focused */}
-      <div className="tiptap-toolbar">
+      {/* Always show toolbar in edit mode, not just when focused - Sticky accounting for container padding */}
+      <ScrollPreventWrapper className="tiptap-toolbar sticky z-20 bg-white flex-shrink-0" style={{ top: '-2rem' }}>
         <TiptapToolbar editor={editor} onAddLink={handleAddLink} uploadUrl={uploadUrl} onShowToast={showToast} basic={basic} />
-      </div>
+      </ScrollPreventWrapper>
       <div
-        className="min-h-[120px] max-h-[600px] overflow-y-auto cursor-text"
+        className="min-h-[120px] overflow-y-visible cursor-text flex-1"
         onClick={() => {
           // Focus the editor when clicking anywhere in the content area
           if (editor && !disabled) {

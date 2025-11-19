@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/primitives/button';
 import BulkActionsMenu from './BulkActionsMenu';
 import { API } from '@/api';
 import { useProjectStore } from '@/stores/userStore';
+import ScrollPreventWrapper from '@/components/EntityWorkspace/interface/components/ScrollPreventWrapper';
 
 /**
  * RowListHeading - Shared component for KravTiltak entity list headers
@@ -102,7 +103,7 @@ const RowListHeading = ({
   };
 
   return (
-    <div className="flex-shrink-0 border-b border-gray-200 bg-white print-hide">
+    <ScrollPreventWrapper className="flex-shrink-0 border-b border-gray-200 bg-white print-hide">
       {/* Main toolbar - always visible */}
       <div className="flex items-center justify-between px-3 h-[60px]">
         <div className="flex items-center gap-2">
@@ -254,7 +255,7 @@ const RowListHeading = ({
         </div>
       </div>
       )}
-    </div>
+    </ScrollPreventWrapper>
   );
 };
 

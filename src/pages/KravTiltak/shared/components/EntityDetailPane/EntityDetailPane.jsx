@@ -41,6 +41,7 @@ import { ValidationErrorSummary, FieldRenderer, FieldSection } from "./component
 import { getEntityTypeConfig } from "../../utils/entityTypeBadges";
 import EntityBadge from "../EntityBadge/EntityBadge";
 import { TiptapDisplay } from "@/components/ui/editor/TiptapDisplay";
+import ScrollPreventWrapper from "@/components/EntityWorkspace/interface/components/ScrollPreventWrapper";
 import {
   getVisibleFields,
   getFieldsBySection,
@@ -77,6 +78,12 @@ const EntityDetailPane = ({
   const detailViewRef = useRef(null);
   const createMenuRef = useRef(null);
   const lastInitializedEntityId = useRef(null); // Track which entity we initialized sections for
+  const lastSyncedEmneRef = useRef(null); // Track last synced emneId for inheritance
+  const lastInitializedEntityRef = useRef(null); // Track which entity we initialized form data for
+  const headerRef = useRef(null); // Ref for measuring header height
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const handleCancelRef = useRef(); // Stable ref for cancel handler (keyboard shortcuts)
+  const handleSaveRef = useRef(); // Stable ref for save handler (keyboard shortcuts)
 
   // Query client for cache invalidation
   const queryClient = useQueryClient();
@@ -223,8 +230,6 @@ const EntityDetailPane = ({
     kravConfig,
     modelConfig  // Pass modelConfig for fetching parent data
   });
-  const lastSyncedEmneRef = useRef(null);
-  const lastInitializedEntityRef = useRef(null);
 
   // Sync inherited emneId to form (only when editing and inheritance is active)
   useEffect(() => {
@@ -332,11 +337,11 @@ const EntityDetailPane = ({
       });
     }
 
-    // Apply special handling for child tiltak beskrivelse (applies to BOTH edit and view mode)
-    const isChildTiltak = entity && (entity.parentId || entity._relatedToKrav) &&
-                          entity.entityType?.toLowerCase().includes('tiltak');
+    // Apply special handling for tiltak/prosjekttiltak beskrivelse (applies to BOTH edit and view mode)
+    // For all tiltak entities: expand beskrivelse/info sections only when they have content
+    const isTiltak = entity && entity.entityType?.toLowerCase().includes('tiltak');
 
-    if (isChildTiltak) {
+    if (isTiltak) {
       // Check 'beskrivelse' and 'info' sections
       ['beskrivelse', 'info'].forEach(sectionName => {
         if (!sections[sectionName]) return;
@@ -517,11 +522,7 @@ const EntityDetailPane = ({
     toggleSection(sectionName, setExpandedSections);
   }, []);
 
-  // Keyboard shortcuts - create stable refs for handlers
-  const handleCancelRef = useRef();
-  const handleSaveRef = useRef();
-
-  // Update refs when functions change
+  // Update refs when functions change (for keyboard shortcuts)
   useEffect(() => {
     handleCancelRef.current = handleCancel;
     handleSaveRef.current = handleSave;
@@ -558,6 +559,16 @@ const EntityDetailPane = ({
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isEditing]); // Only depend on isEditing state
+
+  // Measure header height on mount and when it changes
+  useEffect(() => {
+    if (headerRef.current) {
+      const height = headerRef.current.offsetHeight;
+      if (height !== headerHeight) {
+        setHeaderHeight(height);
+      }
+    }
+  }, [isEditing, errors, headerHeight]); // Re-measure when editing state or errors change
 
   // Handle creating connected tiltak from krav - MUST be before early returns
   const handleCreateConnectedTiltak = useCallback(() => {
@@ -629,18 +640,18 @@ const EntityDetailPane = ({
   // IMPORTANT: Early return AFTER all hooks to avoid hook consistency errors
   if (!entity) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-500">
+      <ScrollPreventWrapper className="flex items-center justify-center h-full text-gray-500">
         <p>Ingen element valgt</p>
-      </div>
+      </ScrollPreventWrapper>
     );
   }
 
   // IMPORTANT: For consistent hook patterns, ensure modelConfig is always defined
   if (!modelConfig) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-500">
+      <ScrollPreventWrapper className="flex items-center justify-center h-full text-gray-500">
         <p>Laster...</p>
-      </div>
+      </ScrollPreventWrapper>
     );
   }
 
@@ -656,25 +667,10 @@ const EntityDetailPane = ({
   const currentEntityType = entity?.entityType || entity?.__entityType || entityType;
   const entityConfig = getEntityTypeConfig(currentEntityType);
 
-
-  // Ref for measuring header height
-  const headerRef = React.useRef(null);
-  const [headerHeight, setHeaderHeight] = React.useState(0);
-
-  // Measure header height on mount and when it changes
-  React.useEffect(() => {
-    if (headerRef.current) {
-      const height = headerRef.current.offsetHeight;
-      if (height !== headerHeight) {
-        setHeaderHeight(height);
-      }
-    }
-  }, [isEditing, errors, headerHeight]); // Re-measure when editing state or errors change
-
   return (
     <div className="relative h-full bg-white">
       {/* Header - Scandinavian Clean Design - Absolutely positioned with 2px offset */}
-      <div
+      <ScrollPreventWrapper
         ref={headerRef}
         className={`absolute left-0 right-0 z-20 border-b px-4 sm:px-8 py-4 sm:py-6 transition-all duration-200 ${isEditing ? "bg-slate-50 border-slate-200" : "bg-white border-gray-200"}`}
         style={{ top: '2px' }}
@@ -950,7 +946,7 @@ const EntityDetailPane = ({
         {!isEditing && (
           <div className="hidden lg:block mt-4 text-xs text-gray-500 font-normal">Trykk E for å redigere</div>
         )}
-      </div>
+      </ScrollPreventWrapper>
 
       {/* Content - Increased spacing for Nordic minimalism - Absolutely positioned below header */}
       <div
@@ -988,7 +984,7 @@ const EntityDetailPane = ({
           </div>
         )}
 
-        <div className="space-y-10">
+        <div className="space-y-10 mb-16">
           {Object.entries(sections).map(([sectionName, sectionInfo]) => {
             const sectionFields = getFieldsBySection(visibleFields)[sectionName] || [];
             if (sectionFields.length === 0) return null;
@@ -1125,10 +1121,9 @@ const EntityDetailPane = ({
               </div>
             );
 
-            // Check if this is a child tiltak with single field in beskrivelse section
-            const isChildTiltak = entity && (entity.parentId || entity._relatedToKrav) &&
-                                  entity.entityType?.toLowerCase().includes('tiltak');
-            const isSingleFieldBeskrivelseSection = isChildTiltak &&
+            // Check if this is a tiltak with single field in beskrivelse section
+            const isTiltakEntity = entity && entity.entityType?.toLowerCase().includes('tiltak');
+            const isSingleFieldBeskrivelseSection = isTiltakEntity &&
                                                      sectionName === 'beskrivelse' &&
                                                      items.length === 1 &&
                                                      items[0].type === 'field';

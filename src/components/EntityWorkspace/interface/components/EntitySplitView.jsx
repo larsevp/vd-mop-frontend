@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { GripVertical, ChevronLeft, ChevronRight } from "lucide-react";
 import FlexScrollableContainer from "./FlexScrollableContainer";
+import ScrollPreventWrapper from "./ScrollPreventWrapper";
 
 /**
  * EntitySplitView - Split view mode layout component
@@ -123,7 +124,7 @@ const EntitySplitView = ({
     if (isDragging) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
-      
+
       return () => {
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
@@ -161,7 +162,7 @@ const EntitySplitView = ({
       </div>
 
       {/* Resizer Handle - Scandinavian minimal design */}
-      <div
+      <ScrollPreventWrapper
         className={`relative bg-slate-100 hover:bg-slate-200 cursor-col-resize transition-colors duration-150 ${
           isDragging ? 'bg-slate-300' : ''
         }`}
@@ -200,7 +201,7 @@ const EntitySplitView = ({
             <GripVertical className="w-3 h-3 text-slate-400" />
           </div>
         )}
-      </div>
+      </ScrollPreventWrapper>
 
       {/* Right Panel - Detail View */}
       <div className="flex-1 bg-white min-w-0">

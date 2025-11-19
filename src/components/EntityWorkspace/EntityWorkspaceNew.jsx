@@ -45,6 +45,7 @@ import { useUserStore } from "@/stores/userStore";
 import EntitySplitView from "./interface/components/EntitySplitView";
 import EntityListPane from "./interface/components/EntityListPane/index.js";
 import SearchBarPlaceholder from "./interface/components/SearchBarPlaceholder";
+import ScrollPreventWrapper from "./interface/components/ScrollPreventWrapper";
 
 // New hooks (TanStack Query + simple state)
 import { useEntityData } from "./interface/hooks/useEntityData";
@@ -713,7 +714,7 @@ const EntityWorkspaceNew = ({
     <div className="bg-white min-h-screen">
       <div className="max-w-none w-full" style={{ maxWidth: "none" }}>
         {/* Header with search - Responsive layout */}
-        <div className="sticky z-50 bg-white border-b border-neutral-200 px-4 sm:px-6 py-4 shadow-sm" style={{ top: "85px" }}>
+        <ScrollPreventWrapper className="sticky z-50 bg-white border-b border-neutral-200 px-4 sm:px-6 py-4 shadow-sm" style={{ top: "85px" }}>
           <div className="flex flex-wrap items-center justify-between gap-3 xl:grid xl:grid-cols-[auto_1fr_auto]">
             {/* Left section: Navigation, Title, Count */}
             <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0 xl:flex-initial">
@@ -838,7 +839,7 @@ const EntityWorkspaceNew = ({
               )}
             </div>
           </div>
-        </div>
+        </ScrollPreventWrapper>
 
         {/* Main content - conditional rendering based on viewMode */}
         <div className="flex-1" style={{ height: "calc(100vh - 120px)" }}>
@@ -978,12 +979,12 @@ const EntityWorkspaceNew = ({
                             </div>
                           </div>
                         ) : (
-                          <div className="p-8 text-center text-gray-500 h-full flex items-center justify-center">
+                          <ScrollPreventWrapper className="p-8 text-center text-gray-500 h-full flex items-center justify-center">
                             <div>
                               <h3 className="text-lg font-medium mb-2">Velg et element</h3>
                               <p>Klikk på et element i listen for å se detaljer</p>
                             </div>
-                          </div>
+                          </ScrollPreventWrapper>
                         )}
                       </div>
                     )

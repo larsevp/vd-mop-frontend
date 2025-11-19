@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { Loader2, FileText, Minimize2, Maximize2 } from "lucide-react";
+import ScrollPreventWrapper from "../ScrollPreventWrapper";
 
 /**
  * EntityListPane - Generic list interface using render prop pattern
@@ -270,7 +271,7 @@ const EntityListPane = ({
       <div className="relative h-full w-full bg-white flex flex-col">
         {/* Fixed Header for TOC Mode */}
         {EntityListHeading && (
-          <div ref={headerRef} className="flex-shrink-0 z-40 bg-white">
+          <ScrollPreventWrapper ref={headerRef} className="flex-shrink-0 z-40 bg-white">
             {(() => {
               const headingProps = {
                 itemCount: allItems.length,
@@ -286,7 +287,7 @@ const EntityListPane = ({
               };
               return EntityListHeading(headingProps);
             })()}
-          </div>
+          </ScrollPreventWrapper>
         )}
 
         {/* Scrollable Content Area */}
@@ -397,7 +398,7 @@ const EntityListPane = ({
     <div className="relative h-full bg-white">
       {/* Header - Absolutely positioned at top */}
       {EntityListHeading && (
-        <div ref={headerRef} className="absolute top-0 left-0 right-0 z-40 bg-white">
+        <ScrollPreventWrapper ref={headerRef} className="absolute top-0 left-0 right-0 z-40 bg-white">
           {(() => {
             const headingProps = {
               itemCount: allItems.length,
@@ -414,7 +415,7 @@ const EntityListPane = ({
             };
             return EntityListHeading(headingProps);
           })()}
-        </div>
+        </ScrollPreventWrapper>
       )}
 
       {/* Entity List - Absolutely positioned below header */}
