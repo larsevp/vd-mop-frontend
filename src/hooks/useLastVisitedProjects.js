@@ -23,13 +23,19 @@ export const useLastVisitedProjects = () => {
     select: (response) => {
       // Transform the API response to extract project data
       if (response?.data && Array.isArray(response.data)) {
-        return response.data
+        const transformed = response.data
           .filter(item => item.project) // Only items with valid project data
           .map(item => ({
             ...item.project,
             lastVisited: item.updatedAt // Include last visited timestamp
           }));
+
+        console.log('LOGBACKEND useLastVisitedProjects - Raw response:', response.data);
+        console.log('LOGBACKEND useLastVisitedProjects - Transformed projects:', transformed);
+
+        return transformed;
       }
+      console.log('LOGBACKEND useLastVisitedProjects - No valid data in response:', response);
       return [];
     },
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
@@ -117,6 +123,7 @@ export const useLastVisitedProjects = () => {
       return;
     }
 
+    console.log('LOGBACKEND trackProjectVisit - Tracking project:', { id: project.id, navn: project.navn, prosjektnummer: project.prosjektnummer });
     visitProjectMutation.mutate(project);
   };
 

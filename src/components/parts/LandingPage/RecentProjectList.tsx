@@ -1,11 +1,11 @@
 /*
  * Used for the recent project list in the landing page
  */
-import React, { useEffect } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Clock } from "lucide-react";
 import LastVisitedProjectsList from "@/components/ui/projects/LastVisitedProjectsList";
-import { useRecentProjectsStore } from "@/stores/recentProjectsStore";
+import { useLastVisitedProjects } from "@/hooks/useLastVisitedProjects";
 import { useUserStore, useProjectStore } from "@/stores/userStore";
 import { getProsjektById } from "@/api/endpoints";
 import ScrollableContainer from "@/components/ui/layout/scrollable-container";
@@ -18,14 +18,7 @@ const RecentProjectList = (): JSX.Element => {
   const navigate = useNavigate();
   const { user } = useUserStore();
   const { setCurrentProject } = useProjectStore();
-  const { recentProjects, fetchRecentProjects, trackProjectVisit, isLoading } = useRecentProjectsStore();
-
-  // Fetch recent projects when component mounts
-  useEffect(() => {
-    if (user?.id) {
-      fetchRecentProjects(user.id);
-    }
-  }, [user?.id, fetchRecentProjects]);
+  const { projects, isLoading, trackProjectVisit } = useLastVisitedProjects();
 
   const handleProjectSelect = async (project: any) => {
     // Use the same logic as the working "Åpne" button in the table
@@ -37,8 +30,8 @@ const RecentProjectList = (): JSX.Element => {
       // Set current project in global store
       setCurrentProject(fullProject);
 
-      // Track project visit using the store
-      trackProjectVisit(fullProject, user?.id);
+      // Track project visit using the hook
+      trackProjectVisit(fullProject);
 
       // Navigate to project landing page with current project context
       navigate(`/prosjekt/${project.id}`);
@@ -48,7 +41,7 @@ const RecentProjectList = (): JSX.Element => {
 
       // At minimum, set the basic project info we have and track the visit
       setCurrentProject(project);
-      trackProjectVisit(project, user?.id);
+      trackProjectVisit(project);
       navigate(`/prosjekt/${project.id}`);
     }
   };
@@ -62,15 +55,15 @@ const RecentProjectList = (): JSX.Element => {
         <h2 className="text-base font-medium text-gray-900">Sist brukte prosjekter</h2>
       </div>
 
-      <ScrollableContainer maxHeight="105px" fadeColor="from-white" dependencies={[recentProjects.length]}>
+      <ScrollableContainer maxHeight="105px" fadeColor="from-white" dependencies={[projects.length]}>
         <LastVisitedProjectsList
           onProjectSelect={handleProjectSelect}
           variant="menu"
           limit={10}
           showCurrentFirst={false}
-          projects={recentProjects}
+          projects={projects}
           isLoading={isLoading}
-          hasProjects={recentProjects.length > 0}
+          hasProjects={projects.length > 0}
         />
       </ScrollableContainer>
     </div>
