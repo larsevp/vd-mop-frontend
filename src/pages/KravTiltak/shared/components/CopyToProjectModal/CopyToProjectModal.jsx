@@ -51,20 +51,18 @@ export const CopyToProjectModal = ({
       setLoading(true);
       setError(null);
       setStep(3); // Progress step
-      setCopyProgress(10);
+      setCopyProgress(5);
 
       const entityIds = Array.from(selectedEntities);
 
-      setCopyProgress(30);
-
-      // Call the provided copy function
+      // Call the provided copy function with progress callback
       const response = await copyFunction(
         entityIds,
         project.id,
-        currentProject.id
+        currentProject.id,
+        false, // includeRelatedTiltak
+        (progress) => setCopyProgress(Math.min(progress, 90)) // Cap at 90% until queries invalidated
       );
-
-      setCopyProgress(70);
 
       // Extract results
       const data = response.data || response;

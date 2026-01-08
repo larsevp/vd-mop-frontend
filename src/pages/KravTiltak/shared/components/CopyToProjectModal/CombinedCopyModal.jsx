@@ -91,13 +91,19 @@ export const CombinedCopyModal = ({
       setLoading(true);
       setError(null);
       setStep(3); // Progress step
-      setCopyProgress(10);
+      setCopyProgress(5);
 
       const results = {
         kravCopied: 0,
         tiltakCopied: 0,
         relatedTiltakCopied: 0,
       };
+
+      // Calculate progress weights based on what's being copied
+      const hasTiltak = tiltakIds.length > 0;
+      const hasKrav = kravIds.length > 0;
+      const tiltakWeight = hasTiltak ? (hasKrav ? 0.3 : 0.9) : 0; // 30% for tiltak if both, 90% if only tiltak
+      const kravWeight = hasKrav ? (hasTiltak ? 0.6 : 0.9) : 0; // 60% for krav if both, 90% if only krav
 
       // IMPORTANT: Copy Tiltak/ProsjektTiltak FIRST, then Krav/ProsjektKrav
       // This ensures that when we copy Krav's relationships, the connected Tiltak already exists in the target project
@@ -106,11 +112,12 @@ export const CombinedCopyModal = ({
       // Support both "tiltak" and "prosjektTiltak" keys for flexibility
       const tiltakCopyFn = copyFunctions.tiltak || copyFunctions.prosjektTiltak;
       if (tiltakIds.length > 0 && tiltakCopyFn) {
-        setCopyProgress(30);
         const tiltakResponse = await tiltakCopyFn(
           tiltakIds,
           project.id,
-          effectiveSourceProjectId // Null for generelle entities, source project ID for project-specific
+          effectiveSourceProjectId, // Null for generelle entities, source project ID for project-specific
+          false, // includeRelatedKrav
+          (progress) => setCopyProgress(5 + Math.round((progress / 100) * tiltakWeight * 100))
         );
         const tiltakData = tiltakResponse.data || tiltakResponse;
         results.tiltakCopied = tiltakData.length || 0;
@@ -120,18 +127,18 @@ export const CombinedCopyModal = ({
       // Support both "krav" and "prosjektKrav" keys for flexibility
       const kravCopyFn = copyFunctions.krav || copyFunctions.prosjektKrav;
       if (kravIds.length > 0 && kravCopyFn) {
-        setCopyProgress(60);
+        const kravStartProgress = 5 + Math.round(tiltakWeight * 100);
         const kravResponse = await kravCopyFn(
           kravIds,
           project.id,
-          effectiveSourceProjectId // Null for generelle entities, source project ID for project-specific
+          effectiveSourceProjectId, // Null for generelle entities, source project ID for project-specific
+          false, // includeRelatedTiltak
+          (progress) => setCopyProgress(kravStartProgress + Math.round((progress / 100) * kravWeight * 100))
         );
         const kravData = kravResponse.data || kravResponse;
         results.kravCopied = kravData.kravCount || kravData.krav?.length || 0;
         results.relatedTiltakCopied = kravData.tiltakCount || 0;
       }
-
-      setCopyProgress(80);
 
       // Invalidate queries to refresh data
       // EntityWorkspace uses complex query keys: ["entities", entityType, projectId, ...]

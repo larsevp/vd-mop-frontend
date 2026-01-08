@@ -217,18 +217,22 @@ export const checkKravDuplicates = (projectId, kravIds) => {
  * @param {number} targetProjectId - Target project ID
  * @param {number} sourceProjectId - Source project ID
  * @param {boolean} includeRelatedTiltak - Whether to copy related ProsjektTiltak (default: false)
+ * @param {function} onProgress - Optional callback for progress updates (0-100)
  */
-export const massKopyProsjektKravToProject = async (prosjektKravIds, targetProjectId, sourceProjectId, includeRelatedTiltak = false) => {
+export const massKopyProsjektKravToProject = async (prosjektKravIds, targetProjectId, sourceProjectId, includeRelatedTiltak = false, onProgress = null) => {
   const BATCH_SIZE = 30;
 
   // For small requests, send directly without batching
   if (prosjektKravIds.length <= BATCH_SIZE) {
-    return API.post("/prosjekt-krav/mass-copy", {
+    if (onProgress) onProgress(50);
+    const result = await API.post("/prosjekt-krav/mass-copy", {
       prosjektKravIds,
       targetProjectId,
       sourceProjectId,
       includeRelatedTiltak
     });
+    if (onProgress) onProgress(100);
+    return result;
   }
 
   // Split into batches
@@ -249,7 +253,15 @@ export const massKopyProsjektKravToProject = async (prosjektKravIds, targetProje
   let accumulatedIdMapping = {};
 
   // Process batches sequentially, passing accumulated idMapping
-  for (const batch of batches) {
+  for (let i = 0; i < batches.length; i++) {
+    const batch = batches[i];
+
+    // Report progress (reserve 10% at start and end for setup/cleanup)
+    if (onProgress) {
+      const progress = 10 + Math.round((i / batches.length) * 80);
+      onProgress(progress);
+    }
+
     const response = await API.post("/prosjekt-krav/mass-copy", {
       prosjektKravIds: batch,
       targetProjectId,
@@ -272,6 +284,7 @@ export const massKopyProsjektKravToProject = async (prosjektKravIds, targetProje
     }
   }
 
+  if (onProgress) onProgress(100);
   return { data: results };
 };
 

@@ -240,14 +240,60 @@ export const checkTiltakDuplicates = (projectId, tiltakIds) => {
 
 /**
  * Mass copy ProsjektTiltak from one project to another
+ * Automatically batches large requests to avoid gateway timeout (504)
+ *
  * @param {number[]} prosjektTiltakIds - Array of ProsjektTiltak IDs to copy
  * @param {number} targetProjectId - Target project ID
  * @param {number} sourceProjectId - Source project ID
+ * @param {boolean} _includeRelatedKrav - Unused, for API consistency with krav copy
+ * @param {function} onProgress - Optional callback for progress updates (0-100)
  */
-export const massKopyProsjektTiltakToProject = (prosjektTiltakIds, targetProjectId, sourceProjectId) => {
-  return API.post("/prosjekt-tiltak/mass-copy", {
-    prosjektTiltakIds,
-    targetProjectId,
-    sourceProjectId
-  });
+export const massKopyProsjektTiltakToProject = async (prosjektTiltakIds, targetProjectId, sourceProjectId, _includeRelatedKrav = false, onProgress = null) => {
+  const BATCH_SIZE = 30;
+
+  // For small requests, send directly without batching
+  if (prosjektTiltakIds.length <= BATCH_SIZE) {
+    if (onProgress) onProgress(50);
+    const result = await API.post("/prosjekt-tiltak/mass-copy", {
+      prosjektTiltakIds,
+      targetProjectId,
+      sourceProjectId
+    });
+    if (onProgress) onProgress(100);
+    return result;
+  }
+
+  // Split into batches
+  const batches = [];
+  for (let i = 0; i < prosjektTiltakIds.length; i += BATCH_SIZE) {
+    batches.push(prosjektTiltakIds.slice(i, i + BATCH_SIZE));
+  }
+
+  // Aggregate results
+  const allCopiedTiltak = [];
+
+  // Process batches sequentially
+  for (let i = 0; i < batches.length; i++) {
+    const batch = batches[i];
+
+    // Report progress
+    if (onProgress) {
+      const progress = 10 + Math.round((i / batches.length) * 80);
+      onProgress(progress);
+    }
+
+    const response = await API.post("/prosjekt-tiltak/mass-copy", {
+      prosjektTiltakIds: batch,
+      targetProjectId,
+      sourceProjectId
+    });
+
+    // Aggregate results
+    if (response.data) {
+      allCopiedTiltak.push(...(Array.isArray(response.data) ? response.data : []));
+    }
+  }
+
+  if (onProgress) onProgress(100);
+  return { data: allCopiedTiltak };
 };
