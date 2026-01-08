@@ -30,12 +30,8 @@ export const useLastVisitedProjects = () => {
             lastVisited: item.updatedAt // Include last visited timestamp
           }));
 
-        console.log('LOGBACKEND useLastVisitedProjects - Raw response:', response.data);
-        console.log('LOGBACKEND useLastVisitedProjects - Transformed projects:', transformed);
-
         return transformed;
       }
-      console.log('LOGBACKEND useLastVisitedProjects - No valid data in response:', response);
       return [];
     },
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
@@ -123,7 +119,6 @@ export const useLastVisitedProjects = () => {
       return;
     }
 
-    console.log('LOGBACKEND trackProjectVisit - Tracking project:', { id: project.id, navn: project.navn, prosjektnummer: project.prosjektnummer });
     visitProjectMutation.mutate(project);
   };
 

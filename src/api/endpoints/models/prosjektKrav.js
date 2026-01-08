@@ -210,17 +210,68 @@ export const checkKravDuplicates = (projectId, kravIds) => {
 
 /**
  * Mass copy ProsjektKrav from one project to another
+ * Automatically batches large requests to avoid gateway timeout (504)
+ * Preserves parent-child hierarchy across batches via idMapping
+ *
  * @param {number[]} prosjektKravIds - Array of ProsjektKrav IDs to copy
  * @param {number} targetProjectId - Target project ID
  * @param {number} sourceProjectId - Source project ID
  * @param {boolean} includeRelatedTiltak - Whether to copy related ProsjektTiltak (default: false)
  */
-export const massKopyProsjektKravToProject = (prosjektKravIds, targetProjectId, sourceProjectId, includeRelatedTiltak = false) => {
-  return API.post("/prosjekt-krav/mass-copy", {
-    prosjektKravIds,
-    targetProjectId,
-    sourceProjectId,
-    includeRelatedTiltak
-  });
+export const massKopyProsjektKravToProject = async (prosjektKravIds, targetProjectId, sourceProjectId, includeRelatedTiltak = false) => {
+  const BATCH_SIZE = 30;
+
+  // For small requests, send directly without batching
+  if (prosjektKravIds.length <= BATCH_SIZE) {
+    return API.post("/prosjekt-krav/mass-copy", {
+      prosjektKravIds,
+      targetProjectId,
+      sourceProjectId,
+      includeRelatedTiltak
+    });
+  }
+
+  // Split into batches
+  const batches = [];
+  for (let i = 0; i < prosjektKravIds.length; i += BATCH_SIZE) {
+    batches.push(prosjektKravIds.slice(i, i + BATCH_SIZE));
+  }
+
+  // Aggregate results
+  const results = {
+    krav: [],
+    kravCount: 0,
+    tiltakIds: [],
+    tiltakCount: 0,
+  };
+
+  // Accumulated ID mapping for hierarchy preservation across batches
+  let accumulatedIdMapping = {};
+
+  // Process batches sequentially, passing accumulated idMapping
+  for (const batch of batches) {
+    const response = await API.post("/prosjekt-krav/mass-copy", {
+      prosjektKravIds: batch,
+      targetProjectId,
+      sourceProjectId,
+      includeRelatedTiltak,
+      existingIdMapping: accumulatedIdMapping
+    });
+
+    // Aggregate results
+    if (response.data) {
+      results.krav.push(...(response.data.krav || []));
+      results.kravCount += response.data.kravCount || 0;
+      results.tiltakIds.push(...(response.data.tiltakIds || []));
+      results.tiltakCount += response.data.tiltakCount || 0;
+
+      // Merge idMapping for next batch (preserves parent-child hierarchy)
+      if (response.data.idMapping) {
+        accumulatedIdMapping = { ...accumulatedIdMapping, ...response.data.idMapping };
+      }
+    }
+  }
+
+  return { data: results };
 };
 
