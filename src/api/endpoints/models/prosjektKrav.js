@@ -218,8 +218,9 @@ export const checkKravDuplicates = (projectId, kravIds) => {
  * @param {number} sourceProjectId - Source project ID
  * @param {boolean} includeRelatedTiltak - Whether to copy related ProsjektTiltak (default: false)
  * @param {function} onProgress - Optional callback for progress updates (0-100)
+ * @param {object} tiltakIdMapping - For combined copy: maps source Tiltak IDs to target Tiltak IDs
  */
-export const massKopyProsjektKravToProject = async (prosjektKravIds, targetProjectId, sourceProjectId, includeRelatedTiltak = false, onProgress = null) => {
+export const massKopyProsjektKravToProject = async (prosjektKravIds, targetProjectId, sourceProjectId, includeRelatedTiltak = false, onProgress = null, tiltakIdMapping = null) => {
   const BATCH_SIZE = 30;
 
   // For small requests, send directly without batching
@@ -229,7 +230,8 @@ export const massKopyProsjektKravToProject = async (prosjektKravIds, targetProje
       prosjektKravIds,
       targetProjectId,
       sourceProjectId,
-      includeRelatedTiltak
+      includeRelatedTiltak,
+      tiltakIdMapping
     });
     if (onProgress) onProgress(100);
     return result;
@@ -267,7 +269,8 @@ export const massKopyProsjektKravToProject = async (prosjektKravIds, targetProje
       targetProjectId,
       sourceProjectId,
       includeRelatedTiltak,
-      existingIdMapping: accumulatedIdMapping
+      existingIdMapping: accumulatedIdMapping,
+      tiltakIdMapping
     });
 
     // Aggregate results

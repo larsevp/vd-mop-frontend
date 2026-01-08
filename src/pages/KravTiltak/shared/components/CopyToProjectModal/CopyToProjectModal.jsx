@@ -73,7 +73,8 @@ export const CopyToProjectModal = ({
         copiedCount = data.kravCount || data.krav?.length || 0;
         relatedCount = data.tiltakCount || 0;
       } else if (entityType === 'prosjekttiltak') {
-        copiedCount = data.length || 0;
+        // Handle both old format (array) and new format ({ tiltak, tiltakCount, idMapping })
+        copiedCount = data.tiltakCount || data.tiltak?.length || data.length || 0;
       }
 
       // Invalidate queries to refresh data

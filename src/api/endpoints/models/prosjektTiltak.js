@@ -241,6 +241,7 @@ export const checkTiltakDuplicates = (projectId, tiltakIds) => {
 /**
  * Mass copy ProsjektTiltak from one project to another
  * Automatically batches large requests to avoid gateway timeout (504)
+ * Preserves parent-child hierarchy across batches via idMapping
  *
  * @param {number[]} prosjektTiltakIds - Array of ProsjektTiltak IDs to copy
  * @param {number} targetProjectId - Target project ID
@@ -270,9 +271,16 @@ export const massKopyProsjektTiltakToProject = async (prosjektTiltakIds, targetP
   }
 
   // Aggregate results
-  const allCopiedTiltak = [];
+  const results = {
+    tiltak: [],
+    tiltakCount: 0,
+    idMapping: {}, // Will be populated with accumulated mappings
+  };
 
-  // Process batches sequentially
+  // Accumulated ID mapping for hierarchy preservation across batches
+  let accumulatedIdMapping = {};
+
+  // Process batches sequentially, passing accumulated idMapping
   for (let i = 0; i < batches.length; i++) {
     const batch = batches[i];
 
@@ -285,15 +293,25 @@ export const massKopyProsjektTiltakToProject = async (prosjektTiltakIds, targetP
     const response = await API.post("/prosjekt-tiltak/mass-copy", {
       prosjektTiltakIds: batch,
       targetProjectId,
-      sourceProjectId
+      sourceProjectId,
+      existingIdMapping: accumulatedIdMapping
     });
 
     // Aggregate results
     if (response.data) {
-      allCopiedTiltak.push(...(Array.isArray(response.data) ? response.data : []));
+      // Handle new response format: { tiltak, tiltakCount, idMapping }
+      const tiltak = response.data.tiltak || (Array.isArray(response.data) ? response.data : []);
+      results.tiltak.push(...tiltak);
+      results.tiltakCount += response.data.tiltakCount || tiltak.length;
+
+      // Merge idMapping for next batch (preserves parent-child hierarchy)
+      if (response.data.idMapping) {
+        accumulatedIdMapping = { ...accumulatedIdMapping, ...response.data.idMapping };
+      }
     }
   }
 
   if (onProgress) onProgress(100);
-  return { data: allCopiedTiltak };
+  results.idMapping = accumulatedIdMapping;
+  return { data: results };
 };

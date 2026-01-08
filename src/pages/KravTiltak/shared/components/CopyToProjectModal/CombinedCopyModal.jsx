@@ -110,6 +110,7 @@ export const CombinedCopyModal = ({
 
       // Copy Tiltak/ProsjektTiltak if any
       // Support both "tiltak" and "prosjektTiltak" keys for flexibility
+      let tiltakIdMapping = null; // Will hold old Tiltak ID -> new Tiltak ID mapping
       const tiltakCopyFn = copyFunctions.tiltak || copyFunctions.prosjektTiltak;
       if (tiltakIds.length > 0 && tiltakCopyFn) {
         const tiltakResponse = await tiltakCopyFn(
@@ -120,7 +121,10 @@ export const CombinedCopyModal = ({
           (progress) => setCopyProgress(5 + Math.round((progress / 100) * tiltakWeight * 100))
         );
         const tiltakData = tiltakResponse.data || tiltakResponse;
-        results.tiltakCopied = tiltakData.length || 0;
+        // Handle both old format (array) and new format ({ tiltak, tiltakCount, idMapping })
+        results.tiltakCopied = tiltakData.tiltakCount || tiltakData.tiltak?.length || tiltakData.length || 0;
+        // Capture idMapping for Krav copy to preserve Krav->Tiltak relationships
+        tiltakIdMapping = tiltakData.idMapping || null;
       }
 
       // Copy Krav/ProsjektKrav if any
@@ -133,7 +137,8 @@ export const CombinedCopyModal = ({
           project.id,
           effectiveSourceProjectId, // Null for generelle entities, source project ID for project-specific
           false, // includeRelatedTiltak
-          (progress) => setCopyProgress(kravStartProgress + Math.round((progress / 100) * kravWeight * 100))
+          (progress) => setCopyProgress(kravStartProgress + Math.round((progress / 100) * kravWeight * 100)),
+          tiltakIdMapping // Pass Tiltak ID mapping so Krav->Tiltak relationships are preserved
         );
         const kravData = kravResponse.data || kravResponse;
         results.kravCopied = kravData.kravCount || kravData.krav?.length || 0;
