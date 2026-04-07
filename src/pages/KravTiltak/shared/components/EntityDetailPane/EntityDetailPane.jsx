@@ -81,7 +81,7 @@ const EntityDetailPane = ({
   const lastSyncedEmneRef = useRef(null); // Track last synced emneId for inheritance
   const lastInitializedEntityRef = useRef(null); // Track which entity we initialized form data for
   const headerRef = useRef(null); // Ref for measuring header height
-  const [headerHeight, setHeaderHeight] = useState(0);
+  // headerHeight no longer needed — flex layout handles header/content sizing
   const handleCancelRef = useRef(); // Stable ref for cancel handler (keyboard shortcuts)
   const handleSaveRef = useRef(); // Stable ref for save handler (keyboard shortcuts)
 
@@ -560,15 +560,7 @@ const EntityDetailPane = ({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isEditing]); // Only depend on isEditing state
 
-  // Measure header height on mount and when it changes
-  useEffect(() => {
-    if (headerRef.current) {
-      const height = headerRef.current.offsetHeight;
-      if (height !== headerHeight) {
-        setHeaderHeight(height);
-      }
-    }
-  }, [isEditing, errors, headerHeight]); // Re-measure when editing state or errors change
+  // headerRef is still used by ScrollPreventWrapper for ref forwarding
 
   // Handle creating connected tiltak from krav - MUST be before early returns
   const handleCreateConnectedTiltak = useCallback(() => {
