@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { GripVertical, ChevronLeft, ChevronRight } from "lucide-react";
-import FlexScrollableContainer from "./FlexScrollableContainer";
 import ScrollPreventWrapper from "./ScrollPreventWrapper";
 
 /**
@@ -203,20 +202,15 @@ const EntitySplitView = ({
         )}
       </ScrollPreventWrapper>
 
-      {/* Right Panel - Detail View */}
-      <div className="flex-1 bg-white min-w-0">
-        <FlexScrollableContainer
-          className="h-full"
-          dependencies={[selectedEntity]}
-          fadeColor="from-white"
-        >
+      {/* Right Panel - Detail View (no FlexScrollableContainer — EntityDetailPane manages its own scroll) */}
+      <div className="flex-1 bg-white min-w-0 h-full">
           {renderDetailPane && selectedEntity ? renderDetailPane(selectedEntity, {
             onSave,
             onDelete,
             onClose: onClose || (() => onEntitySelect(null)),
             onCreateNew,
             entities,
-            dto  // NEW: Pass dto for inheritance logic
+            dto
           }) : (
             renderDetailPane && renderDetailPane(null, {
               onSave,
@@ -224,10 +218,9 @@ const EntitySplitView = ({
               onClose: onClose || (() => onEntitySelect(null)),
               onCreateNew,
               entities,
-              dto  // NEW: Pass dto for inheritance logic
+              dto
             })
           )}
-        </FlexScrollableContainer>
       </div>
 
       {/* Drag overlay during resize */}

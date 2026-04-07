@@ -8,7 +8,6 @@ import { useLogout } from "@/hooks/useLogout";
 import { useUserStore } from "@/stores/userStore";
 import { getReturnUrl } from "../../utils/msalUtils";
 import { handleLogin, handleSignup, handleLogout } from "../../utils/authFlows";
-import { getMsalInstance } from "../../utils/msalUtils";
 import { getStatusPageContent, shouldShowSignupButton, shouldShowReloadButton } from "../../utils/statusPageUtils";
 
 /**
@@ -34,26 +33,14 @@ export default function StatusPage({
   const { logout } = useLogout();
   const { user } = useUserStore();
 
+  // Get MSAL instance from the provider (must be at top level)
+  const { instance } = useMsal();
+
   // Local state
   const [loginError, setLoginError] = useState(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isSigningUp, setIsSigningUp] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-
-  // Get MSAL instance safely - only when needed
-  const getMsalData = () => {
-    try {
-      const { instance, accounts } = useMsal();
-      return { instance, accounts, available: true };
-    } catch (error) {
-      console.warn("MSAL not available, using fallback instance");
-      return {
-        instance: getMsalInstance(),
-        accounts: [],
-        available: false,
-      };
-    }
-  };
 
   // Error handling
   useEffect(() => {
@@ -76,9 +63,8 @@ export default function StatusPage({
   }, [isAuthenticated, navigate, type, location, isLoggingIn, isSigningUp]);
 
   const onLogin = () => {
-    const msalData = getMsalData();
     handleLogin({
-      instance: msalData.instance,
+      instance,
       loginRequest,
       location,
       navigate,
@@ -90,9 +76,8 @@ export default function StatusPage({
   };
 
   const onSignup = () => {
-    const msalData = getMsalData();
     handleSignup({
-      instance: msalData.instance,
+      instance,
       signupRequest,
       location,
       setIsSigningUp,

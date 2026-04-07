@@ -8,13 +8,9 @@ import PublicRoutes from "./PublicRoutes";
 function AppRouterInner() {
   const { user } = useUserStore();
 
-  //console.log('[AppRouter] Current user state:', user);
-
   const isManuallyAuthenticated = user && user.isManualLogin;
-  //console.log('[AppRouter] Is manually authenticated:', isManuallyAuthenticated);
 
   if (isManuallyAuthenticated) {
-    //console.log('[AppRouter] Showing manual authenticated app - bypassing MSAL');
     return (
       <UserInitializer>
         <ManualAuthenticatedApp />
@@ -22,7 +18,6 @@ function AppRouterInner() {
     );
   }
 
-  //console.log('[AppRouter] Showing MSAL-based authentication flow');
   return (
     <>
       <AuthenticatedTemplate>
