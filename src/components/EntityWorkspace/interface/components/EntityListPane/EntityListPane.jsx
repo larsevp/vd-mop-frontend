@@ -393,24 +393,23 @@ const EntityListPane = ({
     );
   }
 
-  // Default rendering with absolute positioning
+  // Default rendering with flex column layout
   return (
-    <div className="relative h-full bg-white">
-      {/* Header - Absolutely positioned at top */}
+    <div className="relative h-full bg-white flex flex-col">
+      {/* Header - Fixed at top via flex-shrink-0 */}
       {EntityListHeading && (
-        <ScrollPreventWrapper ref={headerRef} className="absolute top-0 left-0 right-0 z-40 bg-white">
+        <ScrollPreventWrapper ref={headerRef} className="flex-shrink-0 z-40 bg-white">
           {(() => {
             const headingProps = {
               itemCount: allItems.length,
               hasGroups: hasGroupedData && groupedItems.length > 0,
               allGroupsExpanded: !allGroupsCollapsed,
               onToggleAllGroups: allGroupsCollapsed ? expandAll : collapseAll,
-              // Multi-select support - pass entities and bulk delete handler
               entities: allItems,
-              onBulkDelete: onBulkDelete, // Will be undefined if not provided
+              onBulkDelete: onBulkDelete,
               viewOptions: {
                 ...externalViewOptions,
-                viewMode: externalViewOptions.viewMode || "split", // Explicitly ensure viewMode is set
+                viewMode: externalViewOptions.viewMode || "split",
               },
             };
             return EntityListHeading(headingProps);
@@ -418,11 +417,11 @@ const EntityListPane = ({
         </ScrollPreventWrapper>
       )}
 
-      {/* Entity List - Absolutely positioned below header */}
+      {/* Entity List - Scrollable content area */}
       <div
         ref={listContainerRef}
-        className="absolute left-0 right-0 bottom-0 overflow-y-auto pr-2"
-        style={{ top: `${headerHeight}px`, overscrollBehavior: "contain" }}
+        className="flex-1 min-h-0 overflow-y-auto pr-2"
+        style={{ overscrollBehavior: "contain" }}
       >
         <div>
           {isLoading && allItems.length === 0 ? (

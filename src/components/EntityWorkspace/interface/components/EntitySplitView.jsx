@@ -202,8 +202,8 @@ const EntitySplitView = ({
         )}
       </ScrollPreventWrapper>
 
-      {/* Right Panel - Detail View (no FlexScrollableContainer — EntityDetailPane manages its own scroll) */}
-      <div className="flex-1 bg-white min-w-0 h-full">
+      {/* Right Panel - Detail View (EntityDetailPane manages its own scroll via flex column) */}
+      <div className="flex-1 bg-white min-w-0 h-full min-h-0">
           {renderDetailPane && selectedEntity ? renderDetailPane(selectedEntity, {
             onSave,
             onDelete,
