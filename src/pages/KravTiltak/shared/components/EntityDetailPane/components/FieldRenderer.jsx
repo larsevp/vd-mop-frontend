@@ -62,8 +62,9 @@ const FieldRenderer = ({ field, value, onChange, error, form, entity, modelName,
         form={form}
         row={entity}
         modelName={modelName}
-        disabled={isFieldDisabledByInheritance}  // NEW: Pass disabled state
-        availableEntities={availableEntities}  // NEW: Pass available entities for mentions
+        disabled={isFieldDisabledByInheritance}
+        isEditing={isEditing}
+        availableEntities={availableEntities}
       />
     );
   }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Check, ChevronDown } from "lucide-react";
+import { X, Check, ChevronDown, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/primitives/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/primitives/command";
@@ -22,6 +22,9 @@ interface MultiSelectProps {
   className?: string;
   disabled?: boolean;
   maxDisplayCount?: number;
+  allowCreate?: boolean;
+  onCreateOption?: (value: string) => void;
+  createLabel?: string;
 }
 
 export function MultiSelect({
@@ -34,6 +37,9 @@ export function MultiSelect({
   className,
   disabled = false,
   maxDisplayCount = 3,
+  allowCreate = false,
+  onCreateOption,
+  createLabel = "Legg til",
 }: MultiSelectProps) {
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
@@ -41,6 +47,23 @@ export function MultiSelect({
   const selectedOptions = options.filter((option) => selectedValues.includes(option.value));
 
   const filteredOptions = options.filter((option) => option.label.toLowerCase().includes(searchValue.toLowerCase()));
+
+  // Show "create" option when search doesn't exactly match any existing option
+  const canCreate = allowCreate && searchValue.trim() &&
+    !options.some((opt) => opt.label.toLowerCase() === searchValue.trim().toLowerCase()) &&
+    !selectedValues.includes(searchValue.trim());
+
+  const handleCreate = () => {
+    const trimmed = searchValue.trim();
+    if (!trimmed) return;
+    if (onCreateOption) {
+      onCreateOption(trimmed);
+    } else {
+      onSelectionChange([...selectedValues, trimmed]);
+    }
+    setSearchValue("");
+    setOpen(false);
+  };
 
   const handleSelect = (optionValue: string | number) => {
     const isSelected = selectedValues.includes(optionValue);
@@ -104,9 +127,31 @@ export function MultiSelect({
         </PopoverTrigger>
         <PopoverContent className="w-full p-0" align="start">
           <Command>
-            <CommandInput placeholder={searchPlaceholder} value={searchValue} onValueChange={setSearchValue} />
-            <CommandEmpty>{emptyMessage}</CommandEmpty>
+            <CommandInput
+              placeholder={searchPlaceholder}
+              value={searchValue}
+              onValueChange={setSearchValue}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === "Enter" && canCreate) {
+                  e.preventDefault();
+                  handleCreate();
+                }
+              }}
+            />
+            {!canCreate && <CommandEmpty>{emptyMessage}</CommandEmpty>}
             <CommandGroup className="max-h-64 overflow-auto">
+              {canCreate && (
+                <CommandItem
+                  value={`__create__${searchValue}`}
+                  onSelect={handleCreate}
+                  className="cursor-pointer"
+                >
+                  <div className="flex items-center space-x-2 w-full">
+                    <Plus className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">{createLabel} "<span className="font-medium">{searchValue.trim()}</span>"</span>
+                  </div>
+                </CommandItem>
+              )}
               {filteredOptions.map((option) => {
                 const isSelected = selectedValues.includes(option.value);
                 const optionContent = (

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { List, Briefcase, Home, Users } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useMsal } from "@azure/msal-react";
@@ -11,6 +11,16 @@ export default function HeaderNav() {
   const { accounts } = useMsal();
   const [tenantError] = React.useState(false);
   const isAdmin = user?.rolle === "ADMIN";
+  const headerRef = useRef(null);
+
+  // Prevent scroll events from passing through header to content below
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
+    el.addEventListener('wheel', prevent, { passive: false });
+    return () => el.removeEventListener('wheel', prevent);
+  }, []);
 
   const navItems = [
     { path: "/tiltak", label: "Generelle tiltak", icon: <List size={16} /> },
@@ -31,7 +41,7 @@ export default function HeaderNav() {
     );
   }
   return (
-    <header className="bg-background-primary border-b border-border-muted sticky top-0 z-[70] shadow-sm">
+    <header ref={headerRef} className="bg-background-primary border-b border-border-muted sticky top-0 z-[70] shadow-sm" style={{ overscrollBehavior: 'none' }}>
       <div className="max-w-screen-xl mx-auto">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-2">

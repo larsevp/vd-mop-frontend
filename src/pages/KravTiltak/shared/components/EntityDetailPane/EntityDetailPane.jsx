@@ -787,55 +787,80 @@ const EntityDetailPane = ({
               <>
                 {/* Desktop: Individual buttons */}
                 {onCreateNew && (currentEntityType.toLowerCase() === 'krav' || currentEntityType.toLowerCase() === 'prosjektkrav') && !isNewEntity && (
-                  <div className="hidden lg:block relative" ref={createMenuRef}>
-                    <button
-                      onClick={() => setIsCreateMenuOpen(!isCreateMenuOpen)}
-                      className="inline-flex items-center px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Ny
-                      <ChevronDown className="w-4 h-4 ml-1" />
-                    </button>
+                  <>
+                    {/* xl+: Expanded individual buttons */}
+                    <div className="hidden xl:flex items-center gap-2">
+                      {!entity?.parentId && (
+                        <button
+                          onClick={handleCreateChildKrav}
+                          className="inline-flex items-center px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Ny krav
+                        </button>
+                      )}
+                      {entityType.toLowerCase().includes('combined') && (
+                        <button
+                          onClick={handleCreateConnectedTiltak}
+                          className="inline-flex items-center px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Ny tiltak
+                        </button>
+                      )}
+                    </div>
 
-                    {isCreateMenuOpen && (
-                      <div className="absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
-                        <div className="py-1" role="menu">
-                          {!entity?.parentId && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleCreateChildKrav();
-                                setIsCreateMenuOpen(false);
-                              }}
-                              className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
-                              role="menuitem"
-                            >
-                              <Plus className="w-4 h-4 mr-2" />
-                              Tilknyttet krav
-                            </button>
-                          )}
-                          {entityType.toLowerCase().includes('combined') && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleCreateConnectedTiltak();
-                                setIsCreateMenuOpen(false);
-                              }}
-                              className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
-                              role="menuitem"
-                            >
-                              <Plus className="w-4 h-4 mr-2" />
-                              Tilknyttet tiltak
-                            </button>
-                          )}
+                    {/* lg–xl: Dropdown */}
+                    <div className="hidden lg:block xl:hidden relative" ref={createMenuRef}>
+                      <button
+                        onClick={() => setIsCreateMenuOpen(!isCreateMenuOpen)}
+                        className="inline-flex items-center px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Ny
+                        <ChevronDown className="w-4 h-4 ml-1" />
+                      </button>
+
+                      {isCreateMenuOpen && (
+                        <div className="absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                          <div className="py-1" role="menu">
+                            {!entity?.parentId && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleCreateChildKrav();
+                                  setIsCreateMenuOpen(false);
+                                }}
+                                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
+                                role="menuitem"
+                              >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Tilknyttet krav
+                              </button>
+                            )}
+                            {entityType.toLowerCase().includes('combined') && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleCreateConnectedTiltak();
+                                  setIsCreateMenuOpen(false);
+                                }}
+                                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
+                                role="menuitem"
+                              >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Tilknyttet tiltak
+                              </button>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
+                      )}
+                    </div>
+                  </>
                 )}
                 {canSave && (
                   <button
@@ -941,7 +966,7 @@ const EntityDetailPane = ({
 
         {/* Keyboard hints */}
         {isEditing && (
-          <div className="hidden lg:block mt-4 text-xs text-slate-600 font-normal">Redigeringsmodus - trykk Enter for å lagre eller Esc for å avbryte</div>
+          <div className="hidden lg:block mt-4 text-xs text-slate-600 font-normal">Redigeringsmodus - trykk Ctrl+Enter for å lagre eller Esc for å avbryte</div>
         )}
         {!isEditing && (
           <div className="hidden lg:block mt-4 text-xs text-gray-500 font-normal">Trykk E for å redigere</div>

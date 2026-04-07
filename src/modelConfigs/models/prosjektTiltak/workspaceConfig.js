@@ -170,6 +170,16 @@ const workspaceConfigData = {
         { field: "vurderingId" },
       ],
     },
+    kontroll: {
+      title: "Kontroll og styring",
+      defaultExpanded: false,
+      layout: [
+        { field: "styrendeDokumentasjon" },
+        { row: ["lopendeKontroll", "kontrollHyppighet"] },
+        { row: ["kontrolleresVed", "kontrollobjekt"] },
+        { field: "kontrollDokumentasjon" },
+      ],
+    },
     references: {
       title: "Referanser",
       defaultExpanded: false,

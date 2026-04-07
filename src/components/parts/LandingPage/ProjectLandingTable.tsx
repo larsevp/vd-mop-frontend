@@ -4,36 +4,58 @@ import { useMutation } from "@tanstack/react-query";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
   Input,
   TablePagination,
 } from "@/components/ui";
-import { useReactTable, getCoreRowModel, getFilteredRowModel, ColumnFiltersState, flexRender } from "@tanstack/react-table";
+import { useReactTable, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, ColumnFiltersState, flexRender } from "@tanstack/react-table";
 // @ts-ignore - JavaScript file without type declarations
-import { getPaginatedProsjekt, getProsjektById, setLastVisitedProject } from "@/api/endpoints";
+import { getProsjektById, setLastVisitedProject } from "@/api/endpoints";
+// @ts-ignore - JavaScript file without type declarations
+import { useLastVisitedProjects } from "@/hooks/useLastVisitedProjects";
 import { useUserStore, useProjectStore } from "@/stores/userStore";
 
-export default function ProjectLandingTable() {
+interface ProjectLandingTableProps {
+  projects?: any[];
+}
+
+export default function ProjectLandingTable({ projects = [] }: ProjectLandingTableProps) {
   const navigate = useNavigate();
   const { user } = useUserStore();
   const { setCurrentProject } = useProjectStore();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [data, setData] = useState([]);
-  const [totalPages, setTotalPages] = useState(1);
   const [expandedPages, setExpandedPages] = useState(false);
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
+
+  const { projects: recentProjects } = useLastVisitedProjects();
+
+  // Sort projects: recently visited first, then alphabetical
+  const sortedProjects = useMemo(() => {
+    if (!projects.length) return [];
+
+    const recentIds = new Map<string, number>();
+    recentProjects.forEach((p: any, idx: number) => {
+      recentIds.set(p.id, idx);
+    });
+
+    return [...projects].sort((a, b) => {
+      const aRecent = recentIds.has(a.id);
+      const bRecent = recentIds.has(b.id);
+      if (aRecent && !bRecent) return -1;
+      if (!aRecent && bRecent) return 1;
+      if (aRecent && bRecent) return recentIds.get(a.id)! - recentIds.get(b.id)!;
+      return (a.navn || "").localeCompare(b.navn || "", "nb");
+    });
+  }, [projects, recentProjects]);
 
   // Mutation for updating last visited project
   const updateLastVisitedMutation = useMutation({
     mutationFn: setLastVisitedProject,
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Failed to update last visited project:", error);
     },
   });
@@ -69,20 +91,6 @@ export default function ProjectLandingTable() {
     }
   };
 
-  // Fetch paginated data
-  React.useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await getPaginatedProsjekt(page, pageSize);
-        setData(response.data.items);
-        setTotalPages(response.data.totalPages);
-      } catch (error) {
-        console.error("Error fetching paginated data:", error);
-      }
-    };
-    fetchData();
-  }, [page, pageSize]);
-
   const columns = [
     {
       accessorKey: "prosjektnummer",
@@ -116,16 +124,19 @@ export default function ProjectLandingTable() {
   ];
 
   const table = useReactTable({
-    data,
+    data: sortedProjects,
     columns,
     state: {
       columnFilters,
       globalFilter,
+      pagination,
     },
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
+    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
     globalFilterFn: "includesString",
   });
 
@@ -173,9 +184,9 @@ export default function ProjectLandingTable() {
         </Table>
       </div>
       <TablePagination
-        currentPage={page}
-        totalPages={totalPages}
-        onPageChange={setPage}
+        currentPage={table.getState().pagination.pageIndex + 1}
+        totalPages={table.getPageCount()}
+        onPageChange={(p: number) => table.setPageIndex(p - 1)}
         expandedPages={expandedPages}
         onToggleExpandedPages={() => setExpandedPages(!expandedPages)}
       />

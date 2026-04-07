@@ -81,7 +81,14 @@ export const useProsjektKravTiltakCombinedViewStore = create(
     }),
     {
       name: 'prosjekt-krav-tiltak-combined-view-options',
-      version: 2 // Bumped to reset showObligatorisk to false
+      version: 3,
+      migrate: (persistedState) => ({
+        viewOptions: persistedState?.viewOptions || {},
+        entityTypeFilter: persistedState?.entityTypeFilter || 'all',
+        primaryView: persistedState?.primaryView || 'prosjektkrav-first',
+        showCrossRelations: persistedState?.showCrossRelations ?? true,
+        showGeneralRelations: persistedState?.showGeneralRelations ?? true,
+      }),
     }
   )
 );

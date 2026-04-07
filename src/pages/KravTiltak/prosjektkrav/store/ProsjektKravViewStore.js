@@ -38,8 +38,12 @@ export const useProsjektKravViewStore = create(
       getViewOptions: () => get().viewOptions,
     }),
     {
-      name: 'prosjektkrav-view-options', // localStorage key
-      partialize: (state) => ({ viewOptions: state.viewOptions }), // Only persist view options
+      name: 'prosjektkrav-view-options',
+      version: 1,
+      migrate: (persistedState) => ({
+        viewOptions: { ...getDefaultViewOptions(), ...persistedState?.viewOptions },
+      }),
+      partialize: (state) => ({ viewOptions: state.viewOptions }),
     }
   )
 );

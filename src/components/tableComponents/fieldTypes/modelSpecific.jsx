@@ -5,6 +5,7 @@ import React from "react";
 import { KravSelect } from "../../ui/form/KravSelect";
 import ParentSelectField from "../ParentSelectField";
 import { TiptapEditor } from "../../ui/editor/TiptapEditor";
+import StyrendeDokumentasjonField from "./StyrendeDokumentasjonField";
 
 export const MODEL_SPECIFIC_FIELDS = {
   // Krav model specific field configurations
@@ -59,7 +60,19 @@ export const MODEL_SPECIFIC_FIELDS = {
     fieldTypes: {},
   },
 
-  // Add more models as needed...
+  tiltak: {
+    fieldNames: {
+      styrendeDokumentasjon: StyrendeDokumentasjonField,
+    },
+    fieldTypes: {},
+  },
+
+  prosjektTiltak: {
+    fieldNames: {
+      styrendeDokumentasjon: StyrendeDokumentasjonField,
+    },
+    fieldTypes: {},
+  },
 };
 
 // Model-specific validation rules
