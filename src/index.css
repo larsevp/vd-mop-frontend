@@ -1,9 +1,31 @@
+/* Import print styles (must come before @tailwind per CSS @import rules) */
+@import './styles/print.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Import print styles */
-@import './styles/print.css';
+/* iOS Safari auto-zooms on inputs with font-size < 16px.
+ * Force 16px minimum on mobile only — desktop designs stay untouched.
+ * This is the industry-standard accessible fix (no user-scalable=no). */
+@media screen and (max-width: 767px) {
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="month"],
+  input[type="time"],
+  input[type="week"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
 
 @layer base {
   /* Font loading optimization to prevent CLS */

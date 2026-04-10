@@ -689,7 +689,7 @@ const EntityWorkspaceNew = ({
   // Simple error handling
   if (error) {
     return (
-      <div className="bg-neutral-50 min-h-screen">
+      <div className="bg-neutral-50 h-full overflow-y-auto">
         <div className="max-w-none w-full p-8">
           <div className="bg-red-50 border border-red-200 rounded-lg p-6">
             <h3 className="text-red-800 font-medium mb-2">Feil ved lasting av {entityType}</h3>
@@ -711,10 +711,10 @@ const EntityWorkspaceNew = ({
 
   // Main render - reuse existing EntitySplitView structure
   return (
-    <div className="bg-white min-h-screen">
-      <div className="max-w-none w-full" style={{ maxWidth: "none" }}>
-        {/* Header with search - Responsive layout */}
-        <ScrollPreventWrapper className="sticky z-50 bg-white border-b border-neutral-200 px-4 sm:px-6 py-4 shadow-sm" style={{ top: "85px" }}>
+    <div className="bg-white h-full flex flex-col overflow-hidden">
+      <div className="max-w-none w-full flex flex-col h-full min-h-0" style={{ maxWidth: "none" }}>
+        {/* Header with search - stays at top via flex-shrink-0 */}
+        <ScrollPreventWrapper className="flex-shrink-0 bg-white border-b border-neutral-200 px-4 sm:px-6 py-4 shadow-sm z-50">
           <div className="flex flex-wrap items-center justify-between gap-3 xl:grid xl:grid-cols-[auto_1fr_auto]">
             {/* Left section: Navigation, Title, Count */}
             <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0 xl:flex-initial">
@@ -842,7 +842,7 @@ const EntityWorkspaceNew = ({
         </ScrollPreventWrapper>
 
         {/* Main content - conditional rendering based on viewMode */}
-        <div className="flex-1" style={{ height: "calc(100vh - 120px)" }}>
+        <div className="flex-1 min-h-0">
           {ui.viewMode === "cards" ? (
             /* ═══════════════════════════════════════════════════════════
              * ARTICLE VIEW MODE

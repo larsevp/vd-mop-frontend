@@ -5,23 +5,37 @@
 ```
 <body>
 │
+└── <div> MainLayout root
+    CSS: h-screen flex flex-col overflow-hidden
+    Height: EXACTLY 100vh (the anchor for the whole tree)
+    Purpose: Lock the page to viewport, no outer page scroll
+│
 ├── <header> HeaderNav
-│   CSS: sticky top-0 z-[70]
-│   Height: auto (~60px)
-│   Purpose: Global app header, stays at viewport top
+│   CSS: flex-shrink-0 (natural height ~85px)
+│   Purpose: Global app header, natural height in flex column
 │
-├── <div> EntityWorkspaceNew outer
-│   CSS: bg-white min-h-screen
-│   Height: min-h-screen
+└── <div> Outlet wrapper
+    CSS: flex-1 min-h-0 overflow-y-auto
+    Height: remaining = 100vh - HeaderNav
+    Purpose: Fills remaining viewport. Pages that overflow (forms, tables)
+             scroll inside this wrapper. Pages that fit (workspace) use
+             `h-full` so the wrapper has no content overflow.
 │
-│   ├── <ScrollPreventWrapper> Workspace header (search, title, view toggle)
-│   │   CSS: sticky z-50 top-85px
-│   │   Height: auto (~60px)
-│   │   Purpose: Workspace controls, stays below HeaderNav
-│   │
-│   └── <div> Main content container
-│       CSS: flex-1
-│       Height: calc(100vh - 120px)  ← EXPLICIT PIXEL HEIGHT (the anchor)
+└── <div> EntityWorkspaceNew outer  (when workspace route is active)
+    CSS: bg-white h-full flex flex-col overflow-hidden
+    Height: matches Outlet wrapper exactly (no outer scroll triggered)
+    │
+    └── <div> inner container
+        CSS: max-w-none w-full flex flex-col h-full min-h-0
+        │
+        ├── <ScrollPreventWrapper> Workspace header (search, title, view toggle)
+        │   CSS: flex-shrink-0 bg-white border-b shadow-sm z-50
+        │   Height: natural (~60-80px)
+        │   Purpose: Top of workspace, doesn't scroll
+        │
+        └── <div> Main content container
+            CSS: flex-1 min-h-0
+            Height: remaining space after workspace header
 │
 │       └── <div> EntitySplitView
 │           CSS: flex h-full bg-slate-50 relative
