@@ -210,27 +210,11 @@ const EntityListPane = ({
 
   const isTOCMode = externalViewOptions.isTOCMode === true;
 
-  // Ref for measuring header height
   const headerRef = React.useRef(null);
-  const [headerHeight, setHeaderHeight] = React.useState(EntityListHeading ? 60 : 0); // Default 60px if heading exists, 0 otherwise
 
   // Scroll fade indicator state
   const [hasOverflow, setHasOverflow] = React.useState(false);
   const [isScrolledToBottom, setIsScrolledToBottom] = React.useState(false);
-
-  // Measure header height on mount and when it changes
-  React.useEffect(() => {
-    if (!EntityListHeading) {
-      setHeaderHeight(0);
-      return;
-    }
-    if (headerRef.current) {
-      const height = headerRef.current.offsetHeight;
-      if (height !== headerHeight) {
-        setHeaderHeight(height);
-      }
-    }
-  }, [EntityListHeading, allItems.length, headerHeight]); // Re-measure when heading or items change
 
   // Check overflow and scroll position
   React.useEffect(() => {
