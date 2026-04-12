@@ -297,45 +297,36 @@ const EntityDetailPane = ({
     // Entity changed - initialize based on mode
     let expandedSet;
 
-    if (isEditing) {
-      // In edit mode: Use default expansion from config
-      expandedSet = initializeExpandedSections(sections);
-    } else {
-      // In view mode: Smart expansion based on content and config
-      expandedSet = new Set();
+    // Smart expansion based on content and config (both view and edit mode)
+    expandedSet = new Set();
 
-      Object.keys(sections).forEach(sectionName => {
-        const section = sections[sectionName];
-        const sectionFields = getFieldsBySection(visibleFields)[sectionName] || [];
+    Object.keys(sections).forEach(sectionName => {
+      const section = sections[sectionName];
+      const sectionFields = getFieldsBySection(visibleFields)[sectionName] || [];
 
-        // Check if section has any filled fields
-        const hasFilledFields = sectionFields.some(field => {
-          const value = formData[field.name];
-          const isEmpty = value === null || value === undefined || value === '' ||
-                         (Array.isArray(value) && value.length === 0) ||
-                         (typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 0);
-          return !isEmpty;
-        });
-
-        // Expansion logic for view mode:
-        let shouldExpand = false;
-
-        if (section.defaultExpanded === true) {
-          // Always expand if defaultExpanded: true
-          shouldExpand = true;
-        } else if (autoExpandSectionsWithContent && hasFilledFields) {
-          // Auto-expand sections with content (if feature enabled)
-          shouldExpand = true;
-        } else if (!autoExpandSectionsWithContent && section.defaultExpanded !== false) {
-          // Fallback to default expansion if auto-expand is disabled
-          shouldExpand = true;
-        }
-
-        if (shouldExpand) {
-          expandedSet.add(sectionName);
-        }
+      // Check if section has any filled fields (use entity directly — formData may not be initialized yet)
+      const hasFilledFields = sectionFields.some(field => {
+        const value = entity[field.name];
+        const isEmpty = value === null || value === undefined || value === '' || value === false ||
+                       (Array.isArray(value) && value.length === 0) ||
+                       (typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 0);
+        return !isEmpty;
       });
-    }
+
+      let shouldExpand = false;
+
+      if (section.defaultExpanded === true) {
+        shouldExpand = true;
+      } else if (autoExpandSectionsWithContent && hasFilledFields) {
+        shouldExpand = true;
+      } else if (!autoExpandSectionsWithContent && section.defaultExpanded !== false) {
+        shouldExpand = true;
+      }
+
+      if (shouldExpand) {
+        expandedSet.add(sectionName);
+      }
+    });
 
     // Apply special handling for tiltak/prosjekttiltak beskrivelse (applies to BOTH edit and view mode)
     // For all tiltak entities: expand beskrivelse/info sections only when they have content

@@ -221,6 +221,14 @@ export const fields = [
     hiddenIndex: true,
   },
   {
+    name: "kontrollKommentar",
+    label: "Kontrollkommentar",
+    type: "text",
+    required: false,
+    field_info: "Kommentar til kontroll og styring",
+    hiddenIndex: true,
+  },
+  {
     name: "krav",
     label: "Tilknyttet krav",
     type: "multiselect",

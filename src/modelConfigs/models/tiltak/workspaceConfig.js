@@ -22,15 +22,24 @@ const newTiltakWorkspaceConfig = {
       showStatus: false,
       showVurdering: false,
       showPrioritet: false,
-      showObligatorisk: false, // Hidden in article view
+      showObligatorisk: false,
+      showKontroll: true,
       showRelations: true,
     },
 
     // Article View Configuration (Cards Mode)
     articleView: {
-      mainContentFields: ["beskrivelse", "implementasjon", "tilbakemelding"], // Rich text fields shown in article body
-      merknadField: "merknad", // Note field (tiltak uses 'merknad', not 'merknader')
-      statusFields: ["vurderingId", "statusId", "prioritet", "obligatorisk"], // Status metadata
+      mainContentFields: ["beskrivelse", "implementasjon", "styrendeDokumentasjon", "tilbakemelding"],
+      merknadField: "merknad",
+      statusFields: ["vurderingId", "statusId", "prioritet"],
+      kontrollFields: {
+        title: "Kontroll og styring",
+        layout: [
+          ["kontrollHyppighet", "kontrolleresVed"],
+          ["kontrollobjekt", "kontrollDokumentasjon"],
+          ["kontrollKommentar"],
+        ],
+      },
     },
 
     // Configuration for "Lag tilknyttet tiltak" creation flow
@@ -113,6 +122,7 @@ const newTiltakWorkspaceConfig = {
     "vurderingId",
     "statusId",
     "prioritet",
+    "lopendeKontroll",
   ],
   workspaceHiddenEdit: [
     "tiltakUID",
@@ -126,6 +136,7 @@ const newTiltakWorkspaceConfig = {
     "vurderingId",
     "statusId",
     "prioritet",
+    "lopendeKontroll",
   ],
   workspaceHiddenCreate: [
     "tiltakUID",
@@ -139,6 +150,7 @@ const newTiltakWorkspaceConfig = {
     "vurderingId",
     "statusId",
     "prioritet",
+    "lopendeKontroll",
   ],
 
   // Sections with their field overrides and row definitions
@@ -147,34 +159,35 @@ const newTiltakWorkspaceConfig = {
       title: "Grunnleggende informasjon",
       defaultExpanded: true,
       layout: [
-        { field: "beskrivelse", required: true }, // 1. Description (full-width) - required for non-linked creation
-        { field: "implementasjon" }, // 2. Implementation (full-width)
+        { field: "beskrivelse", required: true },
+        { field: "implementasjon" },
+        { field: "styrendeDokumentasjon" },
       ],
     },
     prioritering: {
       title: "Organisering og prioritering",
       defaultExpanded: true,
       layout: [
-        { row: ["emneId", "statusId", "prioritet"] }, // 1. Subject, Status, Priority (side-by-side)
-        { field: "merknad" }, // 2. Note (full-width)
-      ],
-    },
-    merinfo: {
-      title: "Tilbakemelding og notater",
-      defaultExpanded: false,
-      layout: [
-        { field: "tilbakemelding" }, // 1. Feedback (full-width)
-        { field: "vurderingId" }, // 2. Assessment
+        { row: ["emneId", "statusId", "prioritet"] },
+        { field: "merknad" },
       ],
     },
     kontroll: {
       title: "Kontroll og styring",
       defaultExpanded: false,
       layout: [
-        { field: "styrendeDokumentasjon" },
-        { row: ["lopendeKontroll", "kontrollHyppighet"] },
+        { field: "kontrollHyppighet" },
         { row: ["kontrolleresVed", "kontrollobjekt"] },
         { field: "kontrollDokumentasjon" },
+        { field: "kontrollKommentar" },
+      ],
+    },
+    merinfo: {
+      title: "Tilbakemelding og notater",
+      defaultExpanded: false,
+      layout: [
+        { field: "tilbakemelding" },
+        { field: "vurderingId" },
       ],
     },
     references: {

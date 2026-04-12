@@ -1,4 +1,5 @@
 import React from 'react';
+import { ShieldCheck } from 'lucide-react';
 import EntityBadge from '@/pages/KravTiltak/shared/components/EntityBadge/EntityBadge';
 
 /**
@@ -61,9 +62,12 @@ const EntityTableOfContents = ({
                   badgeText={badgeText}
                   size="xs"
                 />
-                <span className={`text-sm truncate ${isSelected ? 'font-medium text-gray-900' : 'text-gray-700'}`}>
+                <span className={`text-sm truncate flex-1 min-w-0 ${isSelected ? 'font-medium text-gray-900' : 'text-gray-700'}`}>
                   {title}
                 </span>
+                {(entity.kontrollHyppighet || entity.kontrolleresVed || entity.kontrollobjekt || entity.kontrollDokumentasjon || entity.kontrollKommentar || entity.styrendeDokumentasjon) && (
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" title="Har kontroll og styring" />
+                )}
               </div>
             </button>
           );

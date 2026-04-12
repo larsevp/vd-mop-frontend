@@ -166,6 +166,7 @@ export const createKravTiltakRenderer = (config) => {
         showStatus: "Status",
         showPrioritet: "Prioritet",
         showObligatorisk: "Obligatorisk/Valgfri",
+        showKontroll: "Kontrollikon",
         showFavorites: "Favoritter", // Tiltak-specific, but included in common set
         showUID: "Vis ID",
       };

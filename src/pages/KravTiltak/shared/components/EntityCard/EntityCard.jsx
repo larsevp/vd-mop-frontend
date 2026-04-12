@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Eye, Edit, Trash2, Copy, ArrowRight } from 'lucide-react';
+import { Eye, Edit, Trash2, Copy, ArrowRight, ShieldCheck } from 'lucide-react';
 import { DisplayValueResolver } from "@/components/tableComponents/displayValues/DisplayValueResolver.jsx";
 
 // Import helpers
@@ -85,7 +85,7 @@ const EntityCard = ({
   const articleViewConfig = modelConfig?.workspace?.articleView || {
     mainContentFields: ['beskrivelse', 'implementasjon', 'tilbakemelding'],
     merknadField: 'merknad',
-    statusFields: ['vurderingId', 'statusId', 'prioritet', 'obligatorisk'],
+    statusFields: ['vurderingId', 'statusId', 'prioritet'],
   };
 
   // Use shared form hook when inline editing is active
@@ -515,10 +515,12 @@ const EntityCard = ({
                   }
 
                   // View mode - show label for children, full title for parents
+                  const hasKontroll = entity.kontrollHyppighet || entity.kontrolleresVed || entity.kontrollobjekt || entity.kontrollDokumentasjon || entity.kontrollKommentar || entity.styrendeDokumentasjon;
                   return (
-                    <h2 className={`${fontSize} font-light ${textColor} leading-snug truncate flex-1 min-w-0`}>
-                      {uid && <span className="font-mono text-xs mr-2 text-slate-500">{uid}</span>}
-                      {isChild ? childLabel : title}
+                    <h2 className={`${fontSize} font-light ${textColor} leading-snug flex-1 min-w-0 flex items-center gap-1.5`}>
+                      {uid && <span className="font-mono text-xs mr-1 text-slate-500 flex-shrink-0">{uid}</span>}
+                      <span className="truncate">{isChild ? childLabel : title}</span>
+                      {hasKontroll && <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" title="Har kontroll og styring" />}
                     </h2>
                   );
                 })()}
@@ -664,6 +666,85 @@ const EntityCard = ({
               </div>
             );
           })}
+
+          {/* Kontroll og styring grid - show if has data OR if in edit mode */}
+          {articleViewConfig.kontrollFields && (() => {
+            const kontrollConfig = articleViewConfig.kontrollFields;
+            const isEditable = editMode && onFieldSave && !editingDisabled;
+            const hasAnyKontrollData = kontrollConfig.layout.flat().some(fieldName => {
+              const val = entity[fieldName];
+              return val !== null && val !== undefined && val !== '' && val !== false;
+            });
+            if (!hasAnyKontrollData && !isEditable) return null;
+
+            return (
+              <div className="space-y-3">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                  {kontrollConfig.title}
+                </h3>
+                <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-3">
+                  {kontrollConfig.layout.map((row, rowIndex) => (
+                    <div key={rowIndex} className={`grid gap-4 ${row.length === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                      {row.map(fieldName => {
+                        const fieldConfig = allFields.find(f => f.name === fieldName);
+                        if (!fieldConfig) return null;
+                        const value = entity[fieldName];
+                        const isEmpty = value === null || value === undefined || value === '' || value === false;
+
+                        if (isEditable) {
+                          // Edit mode — render inline field editor
+                          const FieldComponent = FieldResolver.getFieldComponent(fieldConfig, entity.entityType);
+                          return (
+                            <div key={fieldName} onClick={(e) => e.stopPropagation()}>
+                              <div className="text-xs font-medium text-slate-500 mb-1">{fieldConfig.label}</div>
+                              <FieldComponent
+                                field={fieldConfig}
+                                value={formData[fieldName] ?? entity[fieldName] ?? ""}
+                                onChange={(eventOrValue) => {
+                                  handleFieldChange(eventOrValue);
+                                  let actualValue;
+                                  if (typeof eventOrValue === "object" && eventOrValue?.target) {
+                                    actualValue = eventOrValue.target.value;
+                                  } else {
+                                    actualValue = eventOrValue;
+                                  }
+                                  debouncedSave(fieldName, actualValue, entity);
+                                }}
+                                onBlur={(eventOrValue) => {
+                                  let actualValue;
+                                  if (typeof eventOrValue === "object" && eventOrValue?.target) {
+                                    actualValue = eventOrValue.target.value;
+                                  } else {
+                                    actualValue = formData[fieldName] ?? entity[fieldName] ?? "";
+                                  }
+                                  immediateSave(fieldName, actualValue, entity);
+                                }}
+                                className="text-sm"
+                                error={null}
+                              />
+                            </div>
+                          );
+                        }
+
+                        // View mode — display value
+                        return (
+                          <div key={fieldName}>
+                            <div className="text-xs font-medium text-slate-500 mb-1">{fieldConfig.label}</div>
+                            <div className="text-sm text-slate-800">
+                              {isEmpty ? <span className="text-slate-400 italic">Ikke angitt</span> : (
+                                DisplayValueResolver.getDisplayComponent(entity, fieldConfig, 'DETAIL', entity.entityType)
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Merknad */}
           {viewOptions.showMerknad && (formData[merknadFieldName] || merknadValue || (editMode && onFieldSave && !editingDisabled)) && (
@@ -870,6 +951,10 @@ const EntityCard = ({
                 {viewOptions.isTOCMode && uid && <span className="font-mono text-xs mr-2 text-slate-500">{uid}</span>}
                 {title}
               </span>
+              {/* Kontroll icon — toggled via Visning → Kontrollikon */}
+              {viewOptions.showKontroll && (entity.kontrollHyppighet || entity.kontrolleresVed || entity.kontrollobjekt || entity.kontrollDokumentasjon || entity.kontrollKommentar || entity.styrendeDokumentasjon) && (
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" title="Har kontroll og styring" />
+              )}
             </div>
 
             {/* Right side: Status icons + UID (if enabled) */}

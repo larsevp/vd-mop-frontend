@@ -15,16 +15,25 @@ const workspaceConfigData = {
       showStatus: true,
       showVurdering: true,
       showPrioritet: true,
-      showObligatorisk: false, // Hidden in article view
+      showObligatorisk: false,
+      showKontroll: true,
       showRelations: true,
     },
 
     // Article view configuration - which fields to show in cards/article mode
     // Shows rich text fields in article body: beskrivelse, implementasjon (contains "Eplekake" for PT5), tilbakemelding
     articleView: {
-      mainContentFields: ["beskrivelse", "implementasjon", "tilbakemelding"],
+      mainContentFields: ["beskrivelse", "implementasjon", "styrendeDokumentasjon", "tilbakemelding"],
       merknadField: "merknad",
-      statusFields: ["vurderingId", "statusId", "prioritet", "obligatorisk"],
+      statusFields: ["vurderingId", "statusId", "prioritet"],
+      kontrollFields: {
+        title: "Kontroll og styring",
+        layout: [
+          ["kontrollHyppighet", "kontrolleresVed"],
+          ["kontrollobjekt", "kontrollDokumentasjon"],
+          ["kontrollKommentar"],
+        ],
+      },
     },
 
     // Configuration for "Lag tilknyttet prosjekttiltak" creation flow
@@ -111,6 +120,7 @@ const workspaceConfigData = {
     "generalTiltakId",
     "enhetId",
     "obligatorisk",
+    "lopendeKontroll",
   ],
   workspaceHiddenEdit: [
     "tiltakUID",
@@ -123,6 +133,7 @@ const workspaceConfigData = {
     "generalTiltakId",
     "enhetId",
     "obligatorisk",
+    "lopendeKontroll",
   ],
   workspaceHiddenCreate: [
     "tiltakUID",
@@ -135,6 +146,7 @@ const workspaceConfigData = {
     "generalTiltakId",
     "enhetId",
     "obligatorisk",
+    "lopendeKontroll",
   ],
 
   sections: {
@@ -149,8 +161,9 @@ const workspaceConfigData = {
       title: "Grunnleggende informasjon",
       defaultExpanded: true,
       layout: [
-        { field: "navn" }, // 1. Name (full-width)
-        { field: "implementasjon" }, // 2. Implementation (full-width)
+        { field: "navn" },
+        { field: "implementasjon" },
+        { field: "styrendeDokumentasjon" },
       ],
     },
 
@@ -158,26 +171,26 @@ const workspaceConfigData = {
       title: "Organisering og prioritering",
       defaultExpanded: true,
       layout: [
-        { row: ["emneId", "statusId", "prioritet"] }, // 1. Assessment, Status, Priority (side-by-side)
-        { field: "merknad" }, // 1. Note (full-width)
-      ],
-    },
-    merinfo: {
-      title: "Tilbakemelding og notater",
-      defaultExpanded: false,
-      layout: [
-        { field: "tilbakemelding" }, // 2. Feedback (full-width)
-        { field: "vurderingId" },
+        { row: ["emneId", "statusId", "prioritet"] },
+        { field: "merknad" },
       ],
     },
     kontroll: {
       title: "Kontroll og styring",
       defaultExpanded: false,
       layout: [
-        { field: "styrendeDokumentasjon" },
-        { row: ["lopendeKontroll", "kontrollHyppighet"] },
+        { field: "kontrollHyppighet" },
         { row: ["kontrolleresVed", "kontrollobjekt"] },
         { field: "kontrollDokumentasjon" },
+        { field: "kontrollKommentar" },
+      ],
+    },
+    merinfo: {
+      title: "Tilbakemelding og notater",
+      defaultExpanded: false,
+      layout: [
+        { field: "tilbakemelding" },
+        { field: "vurderingId" },
       ],
     },
     references: {

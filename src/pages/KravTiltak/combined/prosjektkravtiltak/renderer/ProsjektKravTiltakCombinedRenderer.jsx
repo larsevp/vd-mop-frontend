@@ -45,7 +45,7 @@ const config = {
     showVurdering: "Vurdering",
     showStatus: "Status",
     showPrioritet: "Prioritet",
-    showObligatorisk: "Obligatorisk/Valgfri",
+    showKontroll: "Kontrollikon",
     showEntityType: "Vis enhetstype",
     showUID: "Vis ID",
   },
