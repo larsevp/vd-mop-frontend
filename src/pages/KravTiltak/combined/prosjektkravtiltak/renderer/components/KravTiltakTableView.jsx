@@ -2,7 +2,6 @@ import React, { useMemo, useState, useCallback } from 'react';
 import { ShieldCheck, Link2Off, ChevronDown, ChevronRight, ArrowUp, ArrowDown } from 'lucide-react';
 import { buildTableRows } from '../helpers/tableRowBuilder';
 import { getIcon } from '../../../../shared/components/EntityCard/helpers/iconHelpers.jsx';
-import HorizontalScrollableContainer from '@/components/ui/layout/horizontal-scrollable-container';
 
 // ─── Utility ───────────────────────────────────────────────────────
 
@@ -261,7 +260,7 @@ export default function KravTiltakTableView({ entities, selectedEntity, onEntity
 
   return (
     <div className="h-full flex flex-col bg-white">
-      <HorizontalScrollableContainer fadeColor="from-white" dependencies={[entities]} className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 overflow-auto">
         <table className="w-full border-collapse text-[11px]" style={{ minWidth: '1300px' }}>
           <thead className="sticky top-0 z-20">
             {/* Section labels */}
@@ -398,7 +397,9 @@ export default function KravTiltakTableView({ entities, selectedEntity, onEntity
             })}
           </tbody>
         </table>
-      </HorizontalScrollableContainer>
+        {/* Bottom padding for breathing room */}
+        <div className="h-24" />
+      </div>
     </div>
   );
 }
