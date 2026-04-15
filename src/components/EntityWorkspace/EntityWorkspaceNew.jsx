@@ -63,7 +63,7 @@ function TableViewWithOverlay({
 }) {
   const [panelWidth, setPanelWidth] = useState(() => {
     const saved = localStorage.getItem('tableView-panelWidth');
-    return saved ? parseInt(saved) : 550;
+    return saved ? parseInt(saved) : Math.round(window.innerWidth * 0.4);
   });
   const isDragging = useRef(false);
   const containerRef = useRef(null);

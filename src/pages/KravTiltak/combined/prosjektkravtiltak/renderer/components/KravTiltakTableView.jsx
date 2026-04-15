@@ -12,6 +12,136 @@ function parseJsonArray(value) {
   return value?.trim() ? [value.trim()] : [];
 }
 
+// ─── Sort config: header key → entity field mapping ────────────────
+
+const SORT_MAP = {
+  kravTittel:              { side: 'krav', field: 'id' },
+  beskrivelse:             { side: 'krav', field: 'beskrivelseSnippet' },
+  tiltakTittel:            { side: 'tiltak', field: 'id' },
+  implementasjon:          { side: 'tiltak', field: 'implementasjonSnippet' },
+  styrendeDokumentasjon:   { side: 'tiltak', field: 'styrendeDokumentasjon' },
+  kontrolleresVed:         { side: 'tiltak', field: 'kontrolleresVed' },
+  kontrollobjekt:          { side: 'tiltak', field: 'kontrollobjekt' },
+  kontrollHyppighet:       { side: 'tiltak', field: 'kontrollHyppighet' },
+  kontrollDokumentasjon:   { side: 'tiltak', field: 'kontrollDokumentasjon' },
+  kontrollKommentar:       { side: 'tiltak', field: 'kontrollKommentar' },
+  statusId:                { side: 'tiltak', field: 'statusId', displayField: (e) => e?.status?.navn ?? '' },
+};
+
+/**
+ * Sort an interleaved entity list within an emne group.
+ * Krav blocks (krav + related tiltak) move as units.
+ * Orphan tiltak sort independently at the end.
+ */
+function sortGroupItems(items, sortKey, sortOrder) {
+  if (!sortKey || !sortOrder || !items?.length) return items;
+
+  const mapping = SORT_MAP[sortKey];
+  if (!mapping) return items;
+
+  // 1. Parse into krav blocks + orphans
+  const blocks = [];
+  const orphans = [];
+  let currentBlock = null;
+
+  for (const entity of items) {
+    const isKrav = entity.entityType?.toLowerCase().includes('krav');
+
+    if (isKrav) {
+      if (currentBlock) blocks.push(currentBlock);
+      currentBlock = { krav: entity, tiltak: [] };
+    } else {
+      // Tiltak — belongs to current krav block if related
+      if (currentBlock && entity._relatedToKrav === currentBlock.krav.id) {
+        currentBlock.tiltak.push(entity);
+      } else {
+        // Orphan or unrelated — close current block
+        if (currentBlock) {
+          blocks.push(currentBlock);
+          currentBlock = null;
+        }
+        orphans.push(entity);
+      }
+    }
+  }
+  if (currentBlock) blocks.push(currentBlock);
+
+  // 2. Get sort value from an entity
+  const getValue = (entity) => {
+    if (!entity) return '';
+    if (mapping.displayField) return mapping.displayField(entity);
+    return entity[mapping.field] ?? '';
+  };
+
+  // 3. Get sort value for a block
+  const getBlockValue = (block) => {
+    if (mapping.side === 'krav') {
+      return getValue(block.krav);
+    }
+    // Tiltak field — use first tiltak's value
+    return getValue(block.tiltak[0]);
+  };
+
+  // 4. Compare function (numeric-aware)
+  const compare = (a, b) => {
+    const rawA = getBlockValue(a);
+    const rawB = getBlockValue(b);
+    const numA = Number(rawA);
+    const numB = Number(rawB);
+    let cmp;
+    if (!isNaN(numA) && !isNaN(numB)) {
+      cmp = numA - numB;
+    } else {
+      const va = String(rawA).toLowerCase();
+      const vb = String(rawB).toLowerCase();
+      cmp = va < vb ? -1 : va > vb ? 1 : 0;
+    }
+    return sortOrder === 'asc' ? cmp : -cmp;
+  };
+
+  // 5. Sort blocks
+  blocks.sort(compare);
+
+  // 6. Also sort tiltak within each block if sorting by tiltak field
+  if (mapping.side === 'tiltak') {
+    for (const block of blocks) {
+      if (block.tiltak.length > 1) {
+        block.tiltak.sort((a, b) => {
+          const rawA = getValue(a);
+          const rawB = getValue(b);
+          const numA = Number(rawA);
+          const numB = Number(rawB);
+          let cmp;
+          if (!isNaN(numA) && !isNaN(numB)) { cmp = numA - numB; }
+          else { cmp = String(rawA).toLowerCase() < String(rawB).toLowerCase() ? -1 : 1; }
+          return sortOrder === 'asc' ? cmp : -cmp;
+        });
+      }
+    }
+  }
+
+  // 7. Flatten back to interleaved list
+  const result = [];
+  for (const block of blocks) {
+    result.push(block.krav);
+    result.push(...block.tiltak);
+  }
+
+  // 8. Sort and append orphans
+  if (orphans.length > 0 && mapping.side === 'tiltak') {
+    orphans.sort((a, b) => {
+      const va = String(getValue(a)).toLowerCase();
+      const vb = String(getValue(b)).toLowerCase();
+      if (va === vb) return 0;
+      const cmp = va < vb ? -1 : 1;
+      return sortOrder === 'asc' ? cmp : -cmp;
+    });
+  }
+  result.push(...orphans);
+
+  return result;
+}
+
 // ─── Display components ────────────────────────────────────────────
 
 function PillBadges({ values }) {
@@ -37,9 +167,10 @@ function StatusCell({ entity }) {
   );
 }
 
-function Trunc({ value }) {
+function Trunc({ value, max = 0 }) {
   if (!value) return null;
-  return <span className="text-[11px] leading-tight text-slate-600 truncate block" title={value}>{value}</span>;
+  const display = max > 0 && value.length > max ? value.substring(0, max) + '…' : value;
+  return <span className="text-[11px] leading-tight text-slate-600 truncate block" title={value}>{display}</span>;
 }
 
 function FrequencyBadge({ value }) {
@@ -158,7 +289,8 @@ export default function KravTiltakTableView({ entities, selectedEntity, onEntity
             {groupedData.map((group, gi) => {
               const emne = group.emne || group.group?.emne || group.group;
               const items = group.items || group.entities || [];
-              const tableRows = buildTableRows(items);
+              const sortedItems = sortGroupItems(items, sort.field, sort.order);
+              const tableRows = buildTableRows(sortedItems);
               const emneKey = emne?.id || `group-${gi}`;
               const isCollapsed = collapsedEmne.has(emneKey);
               const hasRealEmne = emne && emne.id;
@@ -210,7 +342,7 @@ export default function KravTiltakTableView({ entities, selectedEntity, onEntity
                                 { rowSpan: kravRowSpan, field: 'tittel' }
                               )}
                               {cell(krav,
-                                <Trunc value={krav.beskrivelseSnippet || krav.informasjonSnippet} />,
+                                <Trunc value={krav.beskrivelseSnippet || krav.informasjonSnippet} max={100} />,
                                 { rowSpan: kravRowSpan, className: 'border-r border-slate-300', field: 'beskrivelse' }
                               )}
                             </>
@@ -241,7 +373,7 @@ export default function KravTiltakTableView({ entities, selectedEntity, onEntity
                               </div>,
                               { field: 'tittel' }
                             )}
-                            {cell(tiltak, <Trunc value={tiltak.implementasjonSnippet} />, { field: 'implementasjon' })}
+                            {cell(tiltak, <Trunc value={tiltak.implementasjonSnippet} max={100} />, { field: 'implementasjon' })}
                             {cell(tiltak, <PillBadges values={parseJsonArray(tiltak.styrendeDokumentasjon)} />, { field: 'styrendeDokumentasjon' })}
                             {cell(tiltak, <PillBadges values={parseJsonArray(tiltak.kontrolleresVed)} />, { field: 'kontrolleresVed' })}
                             {cell(tiltak, <Trunc value={tiltak.kontrollobjekt} />, { field: 'kontrollobjekt' })}
