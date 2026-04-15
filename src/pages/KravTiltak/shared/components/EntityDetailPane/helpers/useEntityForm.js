@@ -9,22 +9,14 @@ export const useEntityForm = (entity, allFields, modelName) => {
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
 
-  // Initialize form data when entity changes
+  // Initialize form data when entity ID changes (new entity selected)
   useEffect(() => {
     if (entity && allFields) {
       const initialForm = initializeFormData(allFields, entity, modelName);
       setFormData(initialForm);
-      setErrors({}); // Reset errors when entity changes
+      setErrors({});
     }
-  }, [entity?.id]); // Only reset when entity ID changes, not on field or model changes
-
-  // Update form data when fields or model change (without clearing errors)
-  useEffect(() => {
-    if (entity && allFields) {
-      const initialForm = initializeFormData(allFields, entity, modelName);
-      setFormData(initialForm);
-    }
-  }, [entity, allFields, modelName]);
+  }, [entity?.id, allFields, modelName]);
 
   // Field change handler - same logic as EntityDetailPane
   const handleFieldChange = useCallback((fieldNameOrEvent, value) => {

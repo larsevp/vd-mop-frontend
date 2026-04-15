@@ -6,6 +6,7 @@ import { KravSelect } from "../../ui/form/KravSelect";
 import ParentSelectField from "../ParentSelectField";
 import { TiptapEditor } from "../../ui/editor/TiptapEditor";
 import StyrendeDokumentasjonField from "./StyrendeDokumentasjonField";
+import KontrolleresVedField from "./KontrolleresVedField";
 
 export const MODEL_SPECIFIC_FIELDS = {
   // Krav model specific field configurations
@@ -63,6 +64,7 @@ export const MODEL_SPECIFIC_FIELDS = {
   tiltak: {
     fieldNames: {
       styrendeDokumentasjon: StyrendeDokumentasjonField,
+      kontrolleresVed: KontrolleresVedField,
     },
     fieldTypes: {},
   },
@@ -70,6 +72,7 @@ export const MODEL_SPECIFIC_FIELDS = {
   prosjektTiltak: {
     fieldNames: {
       styrendeDokumentasjon: StyrendeDokumentasjonField,
+      kontrolleresVed: KontrolleresVedField,
     },
     fieldTypes: {},
   },

@@ -168,14 +168,49 @@ const EntityDetailPane = ({
     return Object.keys(newErrors).length === 0;
   }, [visibleFields, formData, modelName, allFields]);
 
-  // Handle new entity creation
+  // Handle new entity creation or focusField from table view
   useEffect(() => {
     if (entity?.__isNew) {
       setIsEditing(true);
+    } else if (entity?.__focusField) {
+      // Table view clicked a specific field — auto-enter edit mode
+      setIsEditing(true);
+
+      // Find which section contains this field and expand it
+      const fieldDef = allFields.find(f => f.name === entity.__focusField);
+      if (fieldDef) {
+        const sectionName = fieldDef.detailSection || 'main';
+        setExpandedSections(prev => {
+          const next = new Set(prev);
+          next.add(sectionName);
+          return next;
+        });
+
+        // Scroll to the field after sections have expanded and DOM has rendered
+        const focusField = entity.__focusField;
+        setTimeout(() => {
+          // Search in both the header area and the scrollable content
+          const headerEl = headerRef.current?.querySelector(`[data-field-name="${focusField}"]`);
+          const contentEl = detailViewRef.current?.querySelector(`[data-field-name="${focusField}"]`);
+          const fieldEl = headerEl || contentEl;
+
+          if (fieldEl) {
+            // Only scroll if the field is in the content area (not the header)
+            if (contentEl && !headerEl) {
+              fieldEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            // Focus the first input/textarea/select inside
+            setTimeout(() => {
+              const input = fieldEl.querySelector('input, textarea, select, [contenteditable="true"]');
+              if (input) input.focus();
+            }, 100);
+          }
+        }, 350);
+      }
     } else {
       setIsEditing(false);
     }
-  }, [entity?.__isNew]);
+  }, [entity?.__isNew, entity?.__focusField, entity?.id, allFields]);
 
   // Initialize form data
   useEffect(() => {
@@ -675,7 +710,7 @@ const EntityDetailPane = ({
             )}
 
             {isEditing ? (
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0" data-field-name="tittel">
                 <input
                   type="text"
                   value={formData.tittel || ""}
@@ -1072,19 +1107,20 @@ const EntityDetailPane = ({
                   if (item.type === 'field') {
                     const field = item.content;
                     return (
-                      <FieldRenderer
-                        key={field.name}
-                        field={field}
-                        value={formData[field.name] ?? ""}
-                        onChange={handleFieldChange}
-                        error={errors[field.name]}
-                        form={formData}
-                        entity={entity}
-                        modelName={modelName}
-                        isEditing={isEditing}
-                        inheritanceInfo={inheritanceInfo}
-                        availableEntities={availableEntities}
-                      />
+                      <div key={field.name} data-field-name={field.name}>
+                        <FieldRenderer
+                          field={field}
+                          value={formData[field.name] ?? ""}
+                          onChange={handleFieldChange}
+                          error={errors[field.name]}
+                          form={formData}
+                          entity={entity}
+                          modelName={modelName}
+                          isEditing={isEditing}
+                          inheritanceInfo={inheritanceInfo}
+                          availableEntities={availableEntities}
+                        />
+                      </div>
                     );
                   } else {
                     // Render row with improved spacing and progressive collapse
@@ -1105,7 +1141,7 @@ const EntityDetailPane = ({
                         {rowFields
                           .sort((a, b) => (a.detailOrder || 0) - (b.detailOrder || 0))
                           .map(field => (
-                            <div key={field.name}>
+                            <div key={field.name} data-field-name={field.name}>
                               <FieldRenderer
                                 field={field}
                                 value={formData[field.name] ?? ""}
@@ -1149,7 +1185,7 @@ const EntityDetailPane = ({
               }
 
               return (
-                <div key={sectionName} className="space-y-6 pl-7">
+                <div key={sectionName} className="space-y-6 pl-7" data-field-name={field.name}>
                   <FieldRenderer
                     field={field}
                     value={formData[field.name] ?? ""}

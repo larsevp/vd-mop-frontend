@@ -33,12 +33,12 @@
  * - Render props pattern for domain-specific rendering
  */
 
-import React, { useCallback, useEffect, useRef, useMemo } from "react";
+import React, { useCallback, useEffect, useRef, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { Button } from "@/components/ui/primitives/button";
-import { Plus, ArrowLeft, LayoutGrid, Columns, Network } from "lucide-react";
+import { Plus, ArrowLeft, LayoutGrid, Columns, Network, Table2, X, GripVertical } from "lucide-react";
 import { useUserStore } from "@/stores/userStore";
 
 // Existing components (reuse these)
@@ -55,6 +55,107 @@ import { useWorkspaceUI as useDefaultWorkspaceUI } from "./interface/hooks/useWo
 import { validateEntityDTO } from "./interface/data/EntityDTOInterface";
 
 /**
+ * TableViewWithOverlay — Table view with draggable detail overlay
+ */
+function TableViewWithOverlay({
+  entities, selectedEntity, renderTableView, renderDetailPane,
+  splitViewOptions, dto, onEntitySelect, onClose, onSave, onDelete, onCreateNew,
+}) {
+  const [panelWidth, setPanelWidth] = useState(() => {
+    const saved = localStorage.getItem('tableView-panelWidth');
+    return saved ? parseInt(saved) : 550;
+  });
+  const isDragging = useRef(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isDragging.current || !containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const newWidth = rect.right - e.clientX;
+      const clamped = Math.max(350, Math.min(rect.width * 0.85, newWidth));
+      setPanelWidth(clamped);
+    };
+    const handleMouseUp = () => {
+      if (isDragging.current) {
+        isDragging.current = false;
+        localStorage.setItem('tableView-panelWidth', panelWidth.toString());
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      }
+    };
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [panelWidth]);
+
+  const startDrag = (e) => {
+    e.preventDefault();
+    isDragging.current = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  };
+
+  return (
+    <div className="h-full relative" ref={containerRef}>
+      <div className="h-full overflow-x-auto">
+        {renderTableView({
+          entities,
+          selectedEntity,
+          onEntitySelect,
+          viewOptions: splitViewOptions,
+          dto,
+          onSave,
+          onOpenDetail: onEntitySelect,
+        })}
+      </div>
+
+      {selectedEntity && renderDetailPane && (
+        <>
+          <div className="absolute inset-0 bg-black/5 z-30" onClick={onClose} />
+          <div
+            className="absolute top-0 right-0 bottom-0 z-40 bg-white shadow-2xl border-l border-slate-200 flex"
+            style={{ width: `${panelWidth}px` }}
+          >
+            {/* Drag handle */}
+            <div
+              className="w-2 flex-shrink-0 cursor-col-resize hover:bg-slate-200 transition-colors flex items-center justify-center"
+              onMouseDown={startDrag}
+            >
+              <GripVertical className="w-3 h-3 text-slate-400" />
+            </div>
+
+            {/* Panel content */}
+            <div className="flex-1 min-w-0 h-full relative">
+              {/* Close button */}
+              <button
+                onClick={onClose}
+                className="absolute top-3 right-3 z-50 p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 shadow-sm transition-colors"
+                title="Lukk"
+              >
+                <X className="w-4 h-4 text-slate-500" />
+              </button>
+
+              {renderDetailPane(selectedEntity, {
+                onSave,
+                onDelete,
+                onClose,
+                onCreateNew,
+                entities,
+                dto,
+              })}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
  * Minimal EntityWorkspace component (~40 lines)
  * Uses existing components, adds TanStack Query integration
  */
@@ -66,6 +167,7 @@ const EntityWorkspaceNew = ({
   renderDetailPane,
   renderSearchBar, // NEW: Allow domains to provide their own search implementation
   renderActionButtons, // NEW: Allow domains to provide custom action buttons
+  renderTableView, // Table view renderer for combined environmental plan table
   useWorkspaceUIHook, // NEW: Allow domains to provide their workspace-specific UI hook
   viewOptions = {},
   debug = false,
@@ -747,6 +849,18 @@ const EntityWorkspaceNew = ({
                 >
                   <LayoutGrid className="w-4 h-4" />
                 </Button>
+                {/* Table View Toggle - only if renderTableView is provided */}
+                {renderTableView && (
+                  <Button
+                    variant={ui.viewMode === "table" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => ui.setViewMode("table")}
+                    className="h-8 w-8 p-0"
+                    title="Tabellvisning"
+                  >
+                    <Table2 className="w-4 h-4" />
+                  </Button>
+                )}
                 {/* Flow View Toggle - Optional */}
                 {onFlowToggle && (
                   <Button
@@ -782,6 +896,17 @@ const EntityWorkspaceNew = ({
               >
                 <LayoutGrid className="w-3 h-3" />
               </Button>
+              {renderTableView && (
+                <Button
+                  variant={ui.viewMode === "table" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => ui.setViewMode("table")}
+                  className="h-7 w-7 p-0"
+                  title="Tabellvisning"
+                >
+                  <Table2 className="w-3 h-3" />
+                </Button>
+              )}
               {/* Flow View Toggle - Optional */}
               {onFlowToggle && (
                 <Button
@@ -843,7 +968,35 @@ const EntityWorkspaceNew = ({
 
         {/* Main content - conditional rendering based on viewMode */}
         <div className="flex-1 min-h-0">
-          {ui.viewMode === "cards" ? (
+          {ui.viewMode === "table" && renderTableView ? (
+            /* ═══════════════════════════════════════════════════════════
+             * TABLE VIEW MODE
+             * ═══════════════════════════════════════════════════════════
+             * Standalone full-width table. No EntitySplitView wrapper.
+             * Detail pane slides in from right when a row is clicked.
+             * Click same row again or Esc to close.
+             * ═══════════════════════════════════════════════════════════ */
+            <TableViewWithOverlay
+              entities={entities}
+              selectedEntity={ui.selectedEntity}
+              renderTableView={renderTableView}
+              renderDetailPane={renderDetailPane}
+              splitViewOptions={splitViewOptions}
+              dto={dto}
+              onEntitySelect={(entity) => {
+                if (entity && ui.selectedEntity &&
+                    (entity.renderId === ui.selectedEntity.renderId || entity.id === ui.selectedEntity.id)) {
+                  handleDetailClose();
+                } else {
+                  handleEntitySelect(entity);
+                }
+              }}
+              onClose={handleDetailClose}
+              onSave={handleSave}
+              onDelete={handleDelete}
+              onCreateNew={handleCreateNew}
+            />
+          ) : ui.viewMode === "cards" ? (
             /* ═══════════════════════════════════════════════════════════
              * ARTICLE VIEW MODE
              * ═══════════════════════════════════════════════════════════

@@ -702,13 +702,13 @@ const EntityCard = ({
                                 field={fieldConfig}
                                 value={formData[fieldName] ?? entity[fieldName] ?? ""}
                                 onChange={(eventOrValue) => {
-                                  handleFieldChange(eventOrValue);
                                   let actualValue;
                                   if (typeof eventOrValue === "object" && eventOrValue?.target) {
                                     actualValue = eventOrValue.target.value;
                                   } else {
                                     actualValue = eventOrValue;
                                   }
+                                  handleFieldChange(fieldName, actualValue);
                                   debouncedSave(fieldName, actualValue, entity);
                                 }}
                                 onBlur={(eventOrValue) => {

@@ -13,6 +13,7 @@ import { massKopyProsjektKravToProject } from "@/api/endpoints/models/prosjektKr
 import { massKopyProsjektTiltakToProject } from "@/api/endpoints/models/prosjektTiltak";
 import { useProjectStore } from "@/stores/userStore";
 import { useWorkspaceParams } from "@/hooks/useWorkspaceParams";
+import KravTiltakTableView from "./renderer/components/KravTiltakTableView";
 
 // Import individual renderers
 import { renderEntityCard as ProsjektKravCardRenderer } from "../../prosjektkrav/renderer/ProsjektKravRenderer";
@@ -217,6 +218,7 @@ const ProsjektKravTiltakCombinedWorkspace = () => {
         renderSearchBar={renderer.renderSearchBar}
         renderActionButtons={renderer.renderActionButtons}
         renderListHeading={renderListHeading}
+        renderTableView={(props) => <KravTiltakTableView {...props} />}
         useWorkspaceUIHook={useWorkspaceUI}
         viewOptions={viewOptions}
         debug={false}
