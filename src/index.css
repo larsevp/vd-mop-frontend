@@ -259,3 +259,8 @@
     font-size: 0.875rem !important;
   }
 }
+
+/* KravNavigator: hide TipTap toolbar until field is focused */
+.hide-tiptap-toolbar .tiptap-toolbar {
+  display: none !important;
+}

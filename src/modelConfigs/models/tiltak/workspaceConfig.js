@@ -50,6 +50,7 @@ const newTiltakWorkspaceConfig = {
           defaultExpanded: true,
           layout: [
             { field: "implementasjon" }, // 1. Implementation (full-width)
+            { field: "styrendeDokumentasjon" }, // 2. Styrende dokumenter
           ],
         },
         prioritering: {

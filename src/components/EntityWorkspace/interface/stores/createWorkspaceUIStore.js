@@ -48,7 +48,7 @@ export const createWorkspaceUIStore = (workspaceId, options = {}) => {
         viewMode: (() => {
           // Initialize viewMode from localStorage with workspace-specific key
           const saved = localStorage.getItem(`entityWorkspace-${workspaceId}-viewMode`);
-          return saved && ['split', 'cards', 'list', 'flow', 'table'].includes(saved) ? saved : defaultViewMode;
+          return saved && ['split', 'cards', 'list', 'flow', 'table', 'navigator'].includes(saved) ? saved : defaultViewMode;
         })(),
 
         // ============ EXPANSION STATE ============

@@ -14,6 +14,7 @@ import { massKopyProsjektTiltakToProject } from "@/api/endpoints/models/prosjekt
 import { useProjectStore } from "@/stores/userStore";
 import { useWorkspaceParams } from "@/hooks/useWorkspaceParams";
 import KravTiltakTableView from "./renderer/components/KravTiltakTableView";
+import { KravNavigator } from "./renderer/components/KravNavigator";
 
 // Import individual renderers
 import { renderEntityCard as ProsjektKravCardRenderer } from "../../prosjektkrav/renderer/ProsjektKravRenderer";
@@ -219,6 +220,43 @@ const ProsjektKravTiltakCombinedWorkspace = () => {
         renderActionButtons={renderer.renderActionButtons}
         renderListHeading={renderListHeading}
         renderTableView={(props) => <KravTiltakTableView {...props} />}
+        renderNavigatorView={({ entities, dto, onSave, onCreateNew }) => {
+          const handleFieldSave = async (fieldName, newValue, entity) => {
+            let actualValue = newValue;
+            if (typeof newValue === 'object' && newValue !== null) {
+              actualValue = newValue.value ?? newValue.id ?? newValue;
+            }
+            const saveData = {
+              id: entity.id,
+              entityType: entity.entityType,
+              [fieldName]: actualValue,
+            };
+            await onSave(saveData, true);
+          };
+          const handleCreateTiltak = async (kravId) => {
+            const newTiltak = {
+              tittel: 'Nytt tiltak',
+              entityType: 'prosjekttiltak',
+              prosjektKrav: [kravId],
+            };
+            await onSave(newTiltak, false);
+          };
+          const handleCreateKrav = async () => {
+            const newKrav = {
+              tittel: 'Nytt krav',
+              entityType: 'prosjektkrav',
+            };
+            await onSave(newKrav, false);
+          };
+          return (
+            <KravNavigator
+              entities={entities}
+              onFieldSave={handleFieldSave}
+              onCreateTiltak={handleCreateTiltak}
+              onCreateKrav={handleCreateKrav}
+            />
+          );
+        }}
         useWorkspaceUIHook={useWorkspaceUI}
         viewOptions={viewOptions}
         debug={false}

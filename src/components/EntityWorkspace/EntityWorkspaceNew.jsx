@@ -38,7 +38,7 @@ import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { Button } from "@/components/ui/primitives/button";
-import { Plus, ArrowLeft, LayoutGrid, Columns, Network, Table2, X, GripVertical } from "lucide-react";
+import { Plus, ArrowLeft, LayoutGrid, Columns, Network, Table2, BookOpen, X, GripVertical } from "lucide-react";
 import { useUserStore } from "@/stores/userStore";
 
 // Existing components (reuse these)
@@ -100,8 +100,9 @@ function TableViewWithOverlay({
   };
 
   return (
-    <div className="h-full relative" ref={containerRef}>
-      <div className="h-full overflow-x-auto">
+    <div className="h-full flex" ref={containerRef}>
+      {/* Table — left side, scrollable */}
+      <div className={`h-full overflow-auto ${selectedEntity ? 'flex-1 min-w-0' : 'w-full'}`}>
         {renderTableView({
           entities,
           selectedEntity,
@@ -113,43 +114,36 @@ function TableViewWithOverlay({
         })}
       </div>
 
+      {/* Detail pane — right side, scrollable */}
       {selectedEntity && renderDetailPane && (
-        <>
-          <div className="absolute inset-0 bg-black/5 z-30" onClick={onClose} />
+        <div
+          className="h-full flex-shrink-0 border-l border-slate-200 bg-white overflow-y-auto relative"
+          style={{ width: `${panelWidth}px` }}
+        >
+          {/* Drag handle */}
           <div
-            className="absolute top-0 right-0 bottom-0 z-40 bg-white shadow-2xl border-l border-slate-200 flex"
-            style={{ width: `${panelWidth}px` }}
+            className="absolute top-0 left-0 w-1.5 h-full cursor-col-resize hover:bg-blue-400/30 active:bg-blue-400/50 z-10 transition-colors"
+            onMouseDown={startDrag}
+          />
+
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 z-20 p-1.5 rounded-lg bg-white/80 border border-slate-200 hover:bg-slate-100 shadow-sm transition-colors"
+            title="Lukk (Esc)"
           >
-            {/* Drag handle */}
-            <div
-              className="w-2 flex-shrink-0 cursor-col-resize hover:bg-slate-200 transition-colors flex items-center justify-center"
-              onMouseDown={startDrag}
-            >
-              <GripVertical className="w-3 h-3 text-slate-400" />
-            </div>
+            <X className="w-4 h-4 text-slate-500" />
+          </button>
 
-            {/* Panel content */}
-            <div className="flex-1 min-w-0 h-full relative">
-              {/* Close button */}
-              <button
-                onClick={onClose}
-                className="absolute top-3 right-3 z-50 p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 shadow-sm transition-colors"
-                title="Lukk"
-              >
-                <X className="w-4 h-4 text-slate-500" />
-              </button>
-
-              {renderDetailPane(selectedEntity, {
-                onSave,
-                onDelete,
-                onClose,
-                onCreateNew,
-                entities,
-                dto,
-              })}
-            </div>
-          </div>
-        </>
+          {renderDetailPane(selectedEntity, {
+            onSave,
+            onDelete,
+            onClose,
+            onCreateNew,
+            entities,
+            dto,
+          })}
+        </div>
       )}
     </div>
   );
@@ -168,6 +162,7 @@ const EntityWorkspaceNew = ({
   renderSearchBar, // NEW: Allow domains to provide their own search implementation
   renderActionButtons, // NEW: Allow domains to provide custom action buttons
   renderTableView, // Table view renderer for combined environmental plan table
+  renderNavigatorView, // Navigator view renderer for krav-by-krav navigation
   useWorkspaceUIHook, // NEW: Allow domains to provide their workspace-specific UI hook
   viewOptions = {},
   debug = false,
@@ -668,6 +663,34 @@ const EntityWorkspaceNew = ({
     }
   }, [ui.selectedEntity, ui.setSelectedEntity, entities, dto]);
 
+  // Esc closes detail pane — delayed to let EntityDetailPane handle edit-mode Esc first.
+  useEffect(() => {
+    const handleEscKey = (e) => {
+      if (e.key !== 'Escape') return;
+      if (!ui.selectedEntity) return;
+
+      // Check if detail pane is in edit mode (EntityDetailPane sets data-editing)
+      const detailPane = document.querySelector('[data-detail-pane-editing]');
+      if (detailPane?.getAttribute('data-detail-pane-editing') === 'true') {
+        // EntityDetailPane will handle this Esc (exit edit mode)
+        return;
+      }
+
+      // Don't close if an input is focused — blur it instead
+      const active = document.activeElement;
+      const isInputFocused = ['INPUT', 'TEXTAREA', 'SELECT'].includes(active?.tagName) ||
+        active?.contentEditable === 'true';
+      if (isInputFocused) {
+        active.blur();
+        return;
+      }
+
+      handleDetailClose();
+    };
+    document.addEventListener('keydown', handleEscKey);
+    return () => document.removeEventListener('keydown', handleEscKey);
+  }, [ui.selectedEntity, handleDetailClose]);
+
   // CRUD handlers via DTO interface methods
   const handleSave = useCallback(
     async (entityData, isUpdate) => {
@@ -861,6 +884,18 @@ const EntityWorkspaceNew = ({
                     <Table2 className="w-4 h-4" />
                   </Button>
                 )}
+                {/* Navigator View Toggle - only if renderNavigatorView is provided */}
+                {renderNavigatorView && (
+                  <Button
+                    variant={ui.viewMode === "navigator" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => ui.setViewMode("navigator")}
+                    className="h-8 w-8 p-0"
+                    title="Kravnavigator"
+                  >
+                    <BookOpen className="w-4 h-4" />
+                  </Button>
+                )}
                 {/* Flow View Toggle - Optional */}
                 {onFlowToggle && (
                   <Button
@@ -905,6 +940,17 @@ const EntityWorkspaceNew = ({
                   title="Tabellvisning"
                 >
                   <Table2 className="w-3 h-3" />
+                </Button>
+              )}
+              {renderNavigatorView && (
+                <Button
+                  variant={ui.viewMode === "navigator" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => ui.setViewMode("navigator")}
+                  className="h-7 w-7 p-0"
+                  title="Kravnavigator"
+                >
+                  <BookOpen className="w-3 h-3" />
                 </Button>
               )}
               {/* Flow View Toggle - Optional */}
@@ -968,7 +1014,21 @@ const EntityWorkspaceNew = ({
 
         {/* Main content - conditional rendering based on viewMode */}
         <div className="flex-1 min-h-0">
-          {ui.viewMode === "table" && renderTableView ? (
+          {ui.viewMode === "navigator" && renderNavigatorView ? (
+            /* ═══════════════════════════════════════════════════════════
+             * NAVIGATOR VIEW MODE
+             * ═══════════════════════════════════════════════════════════
+             * One krav per page with all its tiltak below.
+             * Navigate between krav with arrows/keyboard.
+             * All fields inline-editable.
+             * ═══════════════════════════════════════════════════════════ */
+            renderNavigatorView({
+              entities,
+              dto,
+              onSave: handleSave,
+              onCreateNew: handleCreateNew,
+            })
+          ) : ui.viewMode === "table" && renderTableView ? (
             /* ═══════════════════════════════════════════════════════════
              * TABLE VIEW MODE
              * ═══════════════════════════════════════════════════════════

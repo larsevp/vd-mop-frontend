@@ -122,31 +122,13 @@ export default function ProjectLanding() {
     // Project-specific cards for individual project view
     const projectCards = [
       {
-        title: "Prosjekt Krav Workspace",
-        desc: "Modern håndtering av prosjektspesifikke krav med kortvisning, avanserte søkefilter og sømløs filhåndtering",
-        link: `/prosjekt-krav-workspace`,
-        icon: Briefcase,
-        iconBg: "bg-red-100",
-        iconColor: "text-red-600",
-        available: true, // Now implemented
-      },
-      {
-        title: "Prosjekt Tiltak Workspace",
-        desc: "Modern håndtering av prosjektspesifikke tiltak med kortvisning, avanserte søkefilter og sømløs filhåndtering",
-        link: `/prosjekt-tiltak-workspace`,
-        icon: Briefcase,
-        iconBg: "bg-green-100",
-        iconColor: "text-green-600",
-        available: true, // Now implemented
-      },
-      {
-        title: "Prosjekt Krav & Tiltak Combined",
-        desc: "Unified view av prosjektspesifikke krav og tiltak med hierarkiske forhold og kryssreferanser",
+        title: "MOP",
+        desc: "Krav og tiltak med hierarkiske forhold og kryssreferanser",
         link: `/prosjekt-krav-tiltak-combined`,
         icon: Briefcase,
         iconBg: "bg-purple-100",
         iconColor: "text-purple-600",
-        available: true, // Now implemented
+        available: true,
       },
     ];
 

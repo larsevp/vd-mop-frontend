@@ -172,11 +172,12 @@ const EntityDetailPane = ({
   useEffect(() => {
     if (entity?.__isNew) {
       setIsEditing(true);
-    } else if (entity?.__focusField) {
-      // Table view clicked a specific field — auto-enter edit mode
-      setIsEditing(true);
+    } else {
+      setIsEditing(false);
+    }
 
-      // Find which section contains this field and expand it
+    // If a focusField was passed (from table cell click), scroll to that field's section
+    if (entity?.__focusField && !entity?.__isNew) {
       const fieldDef = allFields.find(f => f.name === entity.__focusField);
       if (fieldDef) {
         const sectionName = fieldDef.detailSection || 'main';
@@ -186,29 +187,17 @@ const EntityDetailPane = ({
           return next;
         });
 
-        // Scroll to the field after sections have expanded and DOM has rendered
         const focusField = entity.__focusField;
         setTimeout(() => {
-          // Search in both the header area and the scrollable content
           const headerEl = headerRef.current?.querySelector(`[data-field-name="${focusField}"]`);
           const contentEl = detailViewRef.current?.querySelector(`[data-field-name="${focusField}"]`);
           const fieldEl = headerEl || contentEl;
 
-          if (fieldEl) {
-            // Only scroll if the field is in the content area (not the header)
-            if (contentEl && !headerEl) {
-              fieldEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-            // Focus the first input/textarea/select inside
-            setTimeout(() => {
-              const input = fieldEl.querySelector('input, textarea, select, [contenteditable="true"]');
-              if (input) input.focus();
-            }, 100);
+          if (fieldEl && contentEl && !headerEl) {
+            fieldEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }
         }, 350);
       }
-    } else {
-      setIsEditing(false);
     }
   }, [entity?.__isNew, entity?.__focusField, entity?.id, allFields]);
 
@@ -571,6 +560,7 @@ const EntityDetailPane = ({
         setIsEditing(true);
       } else if (e.key === 'Escape' && isEditing) {
         e.preventDefault();
+        e.stopImmediatePropagation();
         if (handleCancelRef.current) {
           handleCancelRef.current();
         }
@@ -686,7 +676,7 @@ const EntityDetailPane = ({
   const entityConfig = getEntityTypeConfig(currentEntityType);
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-white" data-detail-pane-editing={isEditing ? 'true' : 'false'}>
       {/* Header - Fixed at top via flex-shrink-0 */}
       <ScrollPreventWrapper
         ref={headerRef}

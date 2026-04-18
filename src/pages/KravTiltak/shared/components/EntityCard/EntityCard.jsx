@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Eye, Edit, Trash2, Copy, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Eye, Edit, Trash2, Copy, ArrowRight, ShieldCheck, Plus } from 'lucide-react';
 import { DisplayValueResolver } from "@/components/tableComponents/displayValues/DisplayValueResolver.jsx";
 
 // Import helpers
@@ -94,6 +94,12 @@ const EntityCard = ({
     allFields,
     modelName
   );
+
+  // Track manually revealed secondary content fields (reset when exiting edit mode)
+  const [revealedFields, setRevealedFields] = useState([]);
+  useEffect(() => {
+    if (!editMode) setRevealedFields([]);
+  }, [editMode]);
 
   const handleClick = (event) => {
     // Don't handle clicks on form inputs and interactive elements
@@ -232,6 +238,14 @@ const EntityCard = ({
       const isInputFocused = ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeElement?.tagName) ||
                             activeElement?.contentEditable === 'true';
       const isTextareaFocused = activeElement?.tagName === 'TEXTAREA';
+
+      // Ctrl+Enter: save and exit edit mode
+      if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && editMode && viewOptions?.viewMode === 'cards') {
+        event.preventDefault();
+        document.activeElement?.blur();
+        onClick(entity, 'select');
+        return;
+      }
 
       // Handle Enter key for single-line inputs in edit mode
       if (event.key === 'Enter' && editMode && viewOptions?.viewMode === 'cards' && isInputFocused && !isTextareaFocused) {
@@ -372,7 +386,7 @@ const EntityCard = ({
       className={`
         relative cursor-pointer
         ${isExpandedCards
-          ? `max-w-5xl mx-auto py-4 px-8 transition-all duration-200 ${isSelected ? '' : 'hover:bg-slate-50/20'}`
+          ? `max-w-5xl mx-auto py-3 px-6 transition-all duration-200`
           : `block w-full mb-1 ${viewOptions.isTOCMode ? 'px-2 py-1' : 'px-4 py-3'} rounded-md transition-colors duration-150 ${
               isSelected
                 ? `bg-slate-100`
@@ -388,8 +402,8 @@ const EntityCard = ({
 
       <div className={isExpandedCards ? '' : (shouldIndent && !viewOptions.isTOCMode ? 'ml-8' : '')}>
         {isExpandedCards ? (
-          /* 📰 ARTICLE MODE - Clean editorial layout */
-        <article className={`space-y-3 transition-all duration-200 ${isSelected ? (editMode ? 'border-2 border-slate-300 p-6 rounded-xl -mx-8 -my-4' : 'bg-slate-100 p-6 rounded-xl -mx-8 -my-4') : ''}`}>
+          /* 📰 ARTICLE MODE - Clean card layout */
+        <article className={`group bg-white rounded-lg border transition-all duration-200 p-5 space-y-4 ${isSelected ? (editMode ? 'border-slate-300 shadow-md ring-1 ring-slate-200' : 'border-slate-300 shadow-sm') : 'border-slate-200 shadow-sm'}`}>
           {/* Article Header */}
           <header className="space-y-2">
             {/* Title with Icon (One Line) */}
@@ -517,7 +531,7 @@ const EntityCard = ({
                   // View mode - show label for children, full title for parents
                   const hasKontroll = entity.kontrollHyppighet || entity.kontrolleresVed || entity.kontrollobjekt || entity.kontrollDokumentasjon || entity.kontrollKommentar || entity.styrendeDokumentasjon;
                   return (
-                    <h2 className={`${fontSize} font-light ${textColor} leading-snug flex-1 min-w-0 flex items-center gap-1.5`}>
+                    <h2 className={`${fontSize} ${isChild ? 'font-normal' : 'font-light'} ${textColor} leading-snug flex-1 min-w-0 flex items-center gap-1.5`}>
                       {uid && <span className="font-mono text-xs mr-1 text-slate-500 flex-shrink-0">{uid}</span>}
                       <span className="truncate">{isChild ? childLabel : title}</span>
                       {hasKontroll && <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" title="Har kontroll og styring" />}
@@ -526,69 +540,67 @@ const EntityCard = ({
                 })()}
               </div>
 
-              {/* Right: Action buttons - only when selected */}
-              {isSelected && (
-                <div className="flex gap-2 ml-4 flex-shrink-0">
-                  {/* Read-only mode: Show copy button */}
-                  {(!onFieldSave || editingDisabled) && onCopyToProject && (
+              {/* Right: Action buttons */}
+              <div className="flex gap-2 ml-4 flex-shrink-0">
+                {/* Read-only mode: Show copy button (only when selected) */}
+                {isSelected && (!onFieldSave || editingDisabled) && onCopyToProject && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onCopyToProject(entity);
+                    }}
+                    className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 flex items-center gap-1.5 text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200"
+                    title="Kopier til prosjekt"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    Kopier til prosjekt
+                  </button>
+                )}
+
+                {/* Edit/Done button — visible on hover or when selected */}
+                {onFieldSave && !editingDisabled && (
+                  <>
                     <button
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        onCopyToProject(entity);
+                        if (editMode) {
+                          onClick(entity, 'select');
+                        } else {
+                          onClick(entity, 'editCard');
+                        }
                       }}
-                      className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 flex items-center gap-1.5 text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200"
-                      title="Kopier til prosjekt"
+                      className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
+                        editMode
+                          ? 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200'
+                          : isSelected
+                            ? 'text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200'
+                            : 'text-slate-400 opacity-0 group-hover:opacity-100 hover:text-slate-700 hover:bg-slate-100 border border-transparent hover:border-slate-200'
+                      }`}
+                      title={editMode ? "Avslutt redigering" : "Rediger"}
                     >
-                      <Copy className="w-3.5 h-3.5" />
-                      Kopier til prosjekt
+                      <Edit className="w-3.5 h-3.5" />
+                      {editMode ? 'Ferdig' : 'Rediger'}
                     </button>
-                  )}
-
-                  {/* Edit mode: Show edit/delete buttons */}
-                  {onFieldSave && !editingDisabled && (
-                    <>
+                    {/* Delete — only when selected */}
+                    {isSelected && selectionMode === 'single' && (
                       <button
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          if (editMode) {
-                            // Exit edit mode by selecting without edit
-                            onClick(entity, 'select');
-                          } else {
-                            // Enter edit mode
-                            onClick(entity, 'editCard');
-                          }
+                          onClick(entity, 'delete');
                         }}
-                        className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
-                          editMode
-                            ? 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200'
-                            : 'text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200'
-                        }`}
-                        title={editMode ? "Avslutt redigering" : "Rediger (trykk E)"}
+                        className="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100 border border-red-200 transition-all duration-200 flex items-center gap-1.5"
+                        title="Slett"
                       >
-                        <Edit className="w-3.5 h-3.5" />
-                        {editMode ? 'Ferdig' : 'Rediger'}
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Slett
                       </button>
-                      {/* Hide delete button in multi-select mode */}
-                      {selectionMode === 'single' && (
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            onClick(entity, 'delete');
-                          }}
-                          className="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100 border border-red-200 transition-all duration-200 flex items-center gap-1.5"
-                          title="Slett"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          Slett
-                        </button>
-                      )}
-                    </>
-                  )}
-                </div>
-              )}
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           </header>
 
@@ -600,8 +612,8 @@ const EntityCard = ({
             const fieldConfig = allFields.find(f => f.name === fieldName);
             if (!fieldConfig) return null;
 
-            // Show field if it has value OR if in edit mode
-            const shouldShow = fieldValue || (editMode && onFieldSave && !editingDisabled);
+            // First field always shows; others only if they have content or were revealed
+            const shouldShow = index === 0 || fieldValue || revealedFields.includes(fieldName);
             if (!shouldShow) return null;
 
             // First field (beskrivelse) has no header, others get a section header
@@ -623,22 +635,16 @@ const EntityCard = ({
                           field={fieldConfig}
                           value={formData[fieldName] ?? entity[fieldName] ?? ""}
                           onChange={(eventOrValue) => {
-                            // Update form data immediately
                             handleFieldChange(eventOrValue);
-
-                            // Extract actual value
                             let actualValue;
                             if (typeof eventOrValue === "object" && eventOrValue?.target) {
                               actualValue = eventOrValue.target.value;
                             } else {
                               actualValue = eventOrValue;
                             }
-
-                            // Use debounced save for rich text fields
                             debouncedSave(fieldName, actualValue, entity);
                           }}
                           onBlur={(eventOrValue) => {
-                            // Save immediately on blur
                             let actualValue;
                             if (typeof eventOrValue === "object" && eventOrValue?.target) {
                               actualValue = eventOrValue.target.value;
@@ -666,6 +672,32 @@ const EntityCard = ({
               </div>
             );
           })}
+
+          {/* "Add field" buttons for hidden secondary fields in edit mode */}
+          {editMode && onFieldSave && !editingDisabled && (() => {
+            const hiddenFields = articleViewConfig.mainContentFields
+              .filter((fn, i) => i > 0 && !entity[fn] && !revealedFields.includes(fn))
+              .map(fn => ({ name: fn, config: allFields.find(f => f.name === fn) }))
+              .filter(f => f.config);
+            if (hiddenFields.length === 0) return null;
+            return (
+              <div className="flex flex-wrap gap-2">
+                {hiddenFields.map(({ name, config }) => (
+                  <button
+                    key={name}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setRevealedFields(prev => [...prev, name]);
+                    }}
+                    className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1 px-2 py-1 rounded border border-dashed border-slate-300 hover:border-slate-400 transition-colors"
+                  >
+                    <Plus className="w-3 h-3" />
+                    {config.label}
+                  </button>
+                ))}
+              </div>
+            );
+          })()}
 
           {/* Kontroll og styring grid - show if has data OR if in edit mode */}
           {articleViewConfig.kontrollFields && (() => {
@@ -809,7 +841,7 @@ const EntityCard = ({
           <div className="space-y-3 pt-2">
             {/* Status Fields - Horizontal */}
             {(viewOptions.showVurdering || viewOptions.showStatus || viewOptions.showPrioritet || viewOptions.showObligatorisk) && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="flex flex-wrap gap-4 pt-1 border-t border-slate-100">
                 {viewOptions.showVurdering && renderStatusField('vurderingId', getVurderingDisplay, 'Vurdering')}
                 {viewOptions.showStatus && renderStatusField('statusId', getStatusDisplay, 'Status')}
                 {viewOptions.showPrioritet && renderStatusField('prioritet', getPrioritetDisplay, 'Prioritet')}

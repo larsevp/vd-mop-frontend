@@ -52,6 +52,7 @@ const workspaceConfigData = {
           layout: [
             { field: "navn" }, // 1. Name (full-width)
             { field: "implementasjon" }, // 2. Implementation (full-width)
+            { field: "styrendeDokumentasjon" }, // 3. Styrende dokumenter
           ],
         },
         prioritering: {
