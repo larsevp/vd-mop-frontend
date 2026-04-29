@@ -120,11 +120,13 @@ export default function ProjectLanding() {
     }
 
     // Project-specific cards for individual project view
+    const projectId = project?.id || prosjektId;
+    const fagomradeId = user?.fagomradeId || 1;
     const projectCards = [
       {
         title: "MOP",
         desc: "Krav og tiltak med hierarkiske forhold og kryssreferanser",
-        link: `/prosjekt-krav-tiltak-combined`,
+        link: `/prosjekt-krav-tiltak-combined?fagomradeId=${fagomradeId}&projectId=${projectId}`,
         icon: Briefcase,
         iconBg: "bg-purple-100",
         iconColor: "text-purple-600",

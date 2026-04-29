@@ -29,7 +29,7 @@ export default function ProjectLandingTable({ projects = [] }: ProjectLandingTab
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
   const [expandedPages, setExpandedPages] = useState(false);
-  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 5 });
 
   const { projects: recentProjects } = useLastVisitedProjects();
 

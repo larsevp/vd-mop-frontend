@@ -59,7 +59,7 @@ const RecentProjectList = (): JSX.Element => {
         <LastVisitedProjectsList
           onProjectSelect={handleProjectSelect}
           variant="menu"
-          limit={10}
+          limit={5}
           showCurrentFirst={false}
           projects={projects}
           isLoading={isLoading}

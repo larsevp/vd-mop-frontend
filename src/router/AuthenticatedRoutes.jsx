@@ -1,7 +1,7 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
-import { AdminRoute } from "@/components/auth";
+import { AdminRoute, InternalRoute } from "@/components/auth";
 import { adminRoutes } from "./AdminRoutes";
 import LandingPage from "@/pages/landing/LandingPage";
 import TiltaksoversiktGenerelle from "@/pages/TiltaksoversiktGenerelle";
@@ -34,92 +34,82 @@ import ProsjektKravTiltakFlowWorkspace from "@/pages/KravTiltak/combined/prosjek
 export default function AuthenticatedRoutes() {
   return (
     <Routes>
-      {/* Protected routes with main layout */}
       <Route element={<MainLayout />}>
+        {/* Routes accessible to ALL users (intern + ekstern) */}
         <Route path="/" element={<LandingPage />} />
-        <Route
-          path="/tiltakgenerell"
-          element={
-            <div className="pb-20 max-w-screen-xl mx-auto">
-              <TiltaksoversiktGenerelle />
-            </div>
-          }
-        />
-        <Route
-          path="/tiltak-prosjekt"
-          element={
-            <div className="pb-20 max-w-screen-xl mx-auto">
-              <TiltaksoversiktProsjekt />
-            </div>
-          }
-        />
-        <Route path="/admin" element={<Brukeradministrasjon />} />
         <Route path="/project-landing" element={<ProjectLanding />} />
-        <Route path="/admin-landing" element={<AdminLanding />} />
-        <Route path="/admin/ny" element={<RowNew />} />
-        <Route path="/admin/:id/rediger" element={<RowEdit />} />
-        <Route path="/prosjekter" element={<Prosjektadministrasjon />} />
-        <Route path="/prosjekter/ny" element={<RowNew />} />
-        <Route path="/prosjekter/:id/rediger" element={<RowEdit />} />
         <Route path="/prosjekt/:prosjektId" element={<ProjectLanding />} />
-        <Route path="/enheter" element={<Enhetsadministrasjon />} />
-        <Route path="/enheter/ny" element={<RowNew />} />
-        <Route path="/enheter/:id/rediger" element={<RowEdit />} />
-        <Route path="/fagomrader" element={<Fagomradeadministrasjon />} />
-        <Route path="/fagomrader/ny" element={<RowNew />} />
-        <Route path="/fagomrader/:id/rediger" element={<RowEdit />} />
-        <Route path="/emner" element={<Emneadministrasjon />} />
-        <Route path="/emner/ny" element={<RowNew />} />
-        <Route path="/emner/:id/rediger" element={<RowEdit />} />
-        <Route path="/status" element={<Statusadministrasjon />} />
-        <Route path="/status/ny" element={<RowNew />} />
-        <Route path="/status/:id/rediger" element={<RowEdit />} />
-        <Route path="/vurderinger" element={<Vurderingadministrasjon />} />
-        <Route path="/vurdering/ny" element={<RowNew />} />
-        <Route path="/vurdering/:id/rediger" element={<RowEdit />} />
-        <Route path="/kravpakker" element={<Kravpakkeradministrasjon />} />
-        <Route path="/kravpakker/ny" element={<RowNew />} />
-        <Route path="/kravpakker/:id/rediger" element={<RowEdit />} />
-        <Route path="/kravreferansetyper" element={<Kravreferansetype />} />
-        <Route path="/kravreferansetype/ny" element={<RowNew />} />
-        <Route path="/kravreferansetype/:id/rediger" element={<RowEdit />} />
-        <Route path="/lover" element={<Lov />} />
-        <Route path="/lover/ny" element={<RowNew />} />
-        <Route path="/lover/:id/rediger" element={<RowEdit />} />
-        <Route path="/krav" element={<Krav />} />
-        <Route path="/krav/ny" element={<RowNew />} />
-        <Route path="/krav/:id/rediger" element={<RowEdit />} />
-        <Route path="/tiltak" element={<Tiltak />} />
-        <Route path="/tiltak/ny" element={<RowNew />} />
-        <Route path="/tiltak/:id/rediger" element={<RowEdit />} />
-        <Route path="/prosjekt-krav" element={<ProsjektKrav />} />
-        <Route path="/prosjekt-krav/ny" element={<RowNew />} />
-        <Route path="/prosjekt-krav/:id/rediger" element={<RowEdit />} />
-        <Route path="/prosjekt-tiltak" element={<ProsjektTiltak />} />
-        <Route path="/prosjekt-tiltak/ny" element={<RowNew />} />
-        <Route path="/prosjekt-tiltak/:id/rediger" element={<RowEdit />} />
-        <Route path="/krav-workspace" element={<KravWorkspace />} />
-        <Route path="/krav-workspace/:entityId" element={<KravWorkspace />} />
-        <Route path="/tiltak-workspace" element={<TiltakWorkspace />} />
-        <Route path="/tiltak-workspace/:entityId" element={<TiltakWorkspace />} />
-        <Route path="/prosjekt-krav-workspace" element={<ProsjektKravWorkspace />} />
-        <Route path="/prosjekt-krav-workspace/:entityId" element={<ProsjektKravWorkspace />} />
-        <Route path="/prosjekt-tiltak-workspace" element={<ProsjektTiltakWorkspace />} />
-        <Route path="/prosjekt-tiltak-workspace/:entityId" element={<ProsjektTiltakWorkspace />} />
-        {/* Combined workspace routes */}
-        <Route path="/krav-tiltak-combined" element={<KravTiltakCombinedWorkspace />} />
-        <Route path="/krav-tiltak-combined/:entityId" element={<KravTiltakCombinedWorkspace />} />
         <Route path="/prosjekt-krav-tiltak-combined" element={<ProsjektKravTiltakCombinedWorkspace />} />
         <Route path="/prosjekt-krav-tiltak-combined/:entityId" element={<ProsjektKravTiltakCombinedWorkspace />} />
         <Route path="/prosjekt-krav-tiltak-flow" element={<ProsjektKravTiltakFlowWorkspace />} />
         <Route path="/prosjekt-krav-tiltak-flow/:entityId" element={<ProsjektKravTiltakFlowWorkspace />} />
-        <Route path="/prosjekt-tiltak-flow" element={<ProsjektTiltakFlowWorkspace />} />
-        <Route path="/prosjekt-tiltak-flow/:entityId" element={<ProsjektTiltakFlowWorkspace />} />
-        <Route path="/prosjekt-tiltak-flow-workspace" element={<ProsjektTiltakFlowWorkspace />} />
-        <Route path="/prosjekt-tiltak-flow-workspace/:entityId" element={<ProsjektTiltakFlowWorkspace />} />
-        {/* Admin routes */}
-        {adminRoutes}
-        {/* Redirect any other route (including /login) to home when authenticated */}
+
+        {/* Routes only for INTERNAL users */}
+        <Route element={<InternalRoute />}>
+          <Route path="/tiltakgenerell" element={<div className="pb-20 max-w-screen-xl mx-auto"><TiltaksoversiktGenerelle /></div>} />
+          <Route path="/tiltak-prosjekt" element={<div className="pb-20 max-w-screen-xl mx-auto"><TiltaksoversiktProsjekt /></div>} />
+          <Route path="/admin" element={<Brukeradministrasjon />} />
+          <Route path="/admin-landing" element={<AdminLanding />} />
+          <Route path="/admin/ny" element={<RowNew />} />
+          <Route path="/admin/:id/rediger" element={<RowEdit />} />
+          <Route path="/prosjekter" element={<Prosjektadministrasjon />} />
+          <Route path="/prosjekter/ny" element={<RowNew />} />
+          <Route path="/prosjekter/:id/rediger" element={<RowEdit />} />
+          <Route path="/enheter" element={<Enhetsadministrasjon />} />
+          <Route path="/enheter/ny" element={<RowNew />} />
+          <Route path="/enheter/:id/rediger" element={<RowEdit />} />
+          <Route path="/fagomrader" element={<Fagomradeadministrasjon />} />
+          <Route path="/fagomrader/ny" element={<RowNew />} />
+          <Route path="/fagomrader/:id/rediger" element={<RowEdit />} />
+          <Route path="/emner" element={<Emneadministrasjon />} />
+          <Route path="/emner/ny" element={<RowNew />} />
+          <Route path="/emner/:id/rediger" element={<RowEdit />} />
+          <Route path="/status" element={<Statusadministrasjon />} />
+          <Route path="/status/ny" element={<RowNew />} />
+          <Route path="/status/:id/rediger" element={<RowEdit />} />
+          <Route path="/vurderinger" element={<Vurderingadministrasjon />} />
+          <Route path="/vurdering/ny" element={<RowNew />} />
+          <Route path="/vurdering/:id/rediger" element={<RowEdit />} />
+          <Route path="/kravpakker" element={<Kravpakkeradministrasjon />} />
+          <Route path="/kravpakker/ny" element={<RowNew />} />
+          <Route path="/kravpakker/:id/rediger" element={<RowEdit />} />
+          <Route path="/kravreferansetyper" element={<Kravreferansetype />} />
+          <Route path="/kravreferansetype/ny" element={<RowNew />} />
+          <Route path="/kravreferansetype/:id/rediger" element={<RowEdit />} />
+          <Route path="/lover" element={<Lov />} />
+          <Route path="/lover/ny" element={<RowNew />} />
+          <Route path="/lover/:id/rediger" element={<RowEdit />} />
+          <Route path="/krav" element={<Krav />} />
+          <Route path="/krav/ny" element={<RowNew />} />
+          <Route path="/krav/:id/rediger" element={<RowEdit />} />
+          <Route path="/tiltak" element={<Tiltak />} />
+          <Route path="/tiltak/ny" element={<RowNew />} />
+          <Route path="/tiltak/:id/rediger" element={<RowEdit />} />
+          <Route path="/prosjekt-krav" element={<ProsjektKrav />} />
+          <Route path="/prosjekt-krav/ny" element={<RowNew />} />
+          <Route path="/prosjekt-krav/:id/rediger" element={<RowEdit />} />
+          <Route path="/prosjekt-tiltak" element={<ProsjektTiltak />} />
+          <Route path="/prosjekt-tiltak/ny" element={<RowNew />} />
+          <Route path="/prosjekt-tiltak/:id/rediger" element={<RowEdit />} />
+          <Route path="/krav-workspace" element={<KravWorkspace />} />
+          <Route path="/krav-workspace/:entityId" element={<KravWorkspace />} />
+          <Route path="/tiltak-workspace" element={<TiltakWorkspace />} />
+          <Route path="/tiltak-workspace/:entityId" element={<TiltakWorkspace />} />
+          <Route path="/prosjekt-krav-workspace" element={<ProsjektKravWorkspace />} />
+          <Route path="/prosjekt-krav-workspace/:entityId" element={<ProsjektKravWorkspace />} />
+          <Route path="/prosjekt-tiltak-workspace" element={<ProsjektTiltakWorkspace />} />
+          <Route path="/prosjekt-tiltak-workspace/:entityId" element={<ProsjektTiltakWorkspace />} />
+          <Route path="/krav-tiltak-combined" element={<KravTiltakCombinedWorkspace />} />
+          <Route path="/krav-tiltak-combined/:entityId" element={<KravTiltakCombinedWorkspace />} />
+          <Route path="/prosjekt-tiltak-flow" element={<ProsjektTiltakFlowWorkspace />} />
+          <Route path="/prosjekt-tiltak-flow/:entityId" element={<ProsjektTiltakFlowWorkspace />} />
+          <Route path="/prosjekt-tiltak-flow-workspace" element={<ProsjektTiltakFlowWorkspace />} />
+          <Route path="/prosjekt-tiltak-flow-workspace/:entityId" element={<ProsjektTiltakFlowWorkspace />} />
+          {/* Admin routes */}
+          {adminRoutes}
+        </Route>
+
+        {/* Fallback */}
         <Route path="*" element={<LandingPage />} />
       </Route>
     </Routes>

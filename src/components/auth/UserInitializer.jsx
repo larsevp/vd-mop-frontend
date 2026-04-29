@@ -25,7 +25,9 @@ export default function UserInitializer({ children }) {
 
     // User already validated - allow through
     // IMPORTANT: Always fetch if fagomradeId is missing (for users who logged in before this feature)
-    const isValidated = ((!user.isManualLogin && user.rolle) || (user.isManualLogin && user.enhetId)) && 'fagomradeId' in user;
+    // External users (userType === 'ekstern') don't need enhetId
+    const isExtern = user.userType === 'ekstern';
+    const isValidated = ((!user.isManualLogin && user.rolle) || (user.isManualLogin && (user.enhetId || isExtern))) && 'fagomradeId' in user;
 
     if (isValidated) {
       setHasFetched(true);
@@ -76,7 +78,7 @@ export default function UserInitializer({ children }) {
     return <LoadingSpinner text="Laster bruker..." />;
   }
 
-  if (user && user.isManualLogin && !user.enhetId) {
+  if (user && user.isManualLogin && !user.enhetId && user.userType !== 'ekstern') {
     return <LoadingSpinner text="Laster bruker..." />;
   }
 

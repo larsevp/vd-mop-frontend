@@ -14,6 +14,18 @@ export const user = {
   fields: [
     { name: "navn", label: "Navn", type: "text", required: true },
     { name: "epost", label: "E-post", type: "email", required: true },
+    { name: "password", label: "Passord", type: "password", required: false, hideIndex: true, hideEdit: true, placeholder: "Sett passord for manuell innlogging" },
+    {
+      name: "userType",
+      label: "Brukertype",
+      type: "select",
+      required: true,
+      options: [
+        { value: "intern", label: "Intern" },
+        { value: "ekstern", label: "Ekstern" },
+      ],
+      helpText: "Eksterne brukere har kun tilgang til tildelte prosjekter"
+    },
     {
       name: "rolle",
       label: "Rolle",
@@ -28,7 +40,7 @@ export const user = {
         { value: "KING", label: "King" },
       ],
     },
-    { name: "enhetId", label: "Enhet", type: "enhetselect", required: true, placeholder: "Velg enhet" },
+    { name: "enhetId", label: "Enhet", type: "enhetselect", required: false, placeholder: "Velg enhet" },
     { name: "fagomradeId", label: "Fagområde", type: "fagomradeselect", required: false, placeholder: "Velg fagområde" },
     {
       name: "restricted",

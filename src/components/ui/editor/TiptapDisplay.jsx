@@ -64,6 +64,20 @@ export const TiptapDisplay = ({
     uploadUrl: null,
   });
 
+  // Sync content when prop changes (e.g. after save and refetch)
+  React.useEffect(() => {
+    if (editor && cleanContent !== undefined) {
+      try {
+        const currentHTML = editor.getHTML();
+        if (currentHTML !== cleanContent) {
+          editor.commands.setContent(cleanContent || "");
+        }
+      } catch (error) {
+        // Silently fail - content sync is best-effort
+      }
+    }
+  }, [editor, cleanContent]);
+
   // Only override styles after creation - no more setEditable calls
   React.useEffect(() => {
     if (editor) {

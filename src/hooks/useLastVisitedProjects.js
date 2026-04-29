@@ -99,12 +99,8 @@ export const useLastVisitedProjects = () => {
       }
       console.error("Failed to track project visit:", err);
     },
-    onSuccess: () => {
-      // Invalidate and refetch after successful backend update
-      queryClient.invalidateQueries({ queryKey: ["lastVisitedProjects"] });
-    },
     onSettled: () => {
-      // Force re-render by invalidating cache regardless of success/failure
+      // Refetch after mutation completes (success or error)
       queryClient.invalidateQueries({ queryKey: ["lastVisitedProjects"] });
     },
   });

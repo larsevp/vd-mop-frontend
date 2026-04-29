@@ -34,7 +34,7 @@
  */
 
 import React, { useCallback, useEffect, useRef, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { Button } from "@/components/ui/primitives/button";
@@ -171,6 +171,7 @@ const EntityWorkspaceNew = ({
   onFlowToggle = null,
 }) => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { goBack } = useBackNavigation();
   const cardsContainerRef = useRef(null);
@@ -198,6 +199,23 @@ const EntityWorkspaceNew = ({
 
   // Keep uiRef updated with latest UI actions (avoids dependency loops in effects)
   uiRef.current = ui;
+
+  // Sync viewMode with URL ?view= param (two-way)
+  useEffect(() => {
+    const viewParam = searchParams.get('view');
+    if (viewParam && ['split', 'cards', 'table', 'navigator'].includes(viewParam) && ui.viewMode !== viewParam) {
+      ui.setViewMode(viewParam);
+    }
+  }, []); // Only on mount — URL → store
+
+  useEffect(() => {
+    const currentView = searchParams.get('view');
+    if (ui.viewMode && ui.viewMode !== currentView) {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.set('view', ui.viewMode);
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [ui.viewMode]); // Store → URL on change
 
   // Get server data via TanStack Query + DTO
   const {

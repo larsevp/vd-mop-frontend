@@ -34,6 +34,7 @@ export const useUserStore = create(
             ...currentUser,
             navn: userInfo.navn,
             rolle: userInfo.rolle,
+            userType: userInfo.userType || 'intern',
             enhetId: userInfo.enhetId,
             fagomradeId: userInfo.fagomradeId,
           };
@@ -78,6 +79,7 @@ export const useUserStore = create(
             ...currentUser,
             navn: userInfo.navn,
             rolle: userInfo.rolle,
+            userType: userInfo.userType || 'intern',
             enhetId: userInfo.enhetId,
             fagomradeId: userInfo.fagomradeId,
           };

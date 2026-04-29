@@ -386,7 +386,7 @@ const EntityCard = ({
       className={`
         relative cursor-pointer
         ${isExpandedCards
-          ? `max-w-5xl mx-auto py-3 px-6 transition-all duration-200`
+          ? `max-w-5xl mx-auto py-4 px-8 transition-all duration-200 ${isSelected ? '' : 'hover:bg-slate-50/20'}`
           : `block w-full mb-1 ${viewOptions.isTOCMode ? 'px-2 py-1' : 'px-4 py-3'} rounded-md transition-colors duration-150 ${
               isSelected
                 ? `bg-slate-100`
@@ -402,8 +402,8 @@ const EntityCard = ({
 
       <div className={isExpandedCards ? '' : (shouldIndent && !viewOptions.isTOCMode ? 'ml-8' : '')}>
         {isExpandedCards ? (
-          /* 📰 ARTICLE MODE - Clean card layout */
-        <article className={`group bg-white rounded-lg border transition-all duration-200 p-5 space-y-4 ${isSelected ? (editMode ? 'border-slate-300 shadow-md ring-1 ring-slate-200' : 'border-slate-300 shadow-sm') : 'border-slate-200 shadow-sm'}`}>
+          /* 📰 ARTICLE MODE - Clean editorial layout */
+        <article className={`group space-y-3 transition-all duration-200 ${isSelected ? (editMode ? 'bg-slate-50 border border-slate-200 rounded-xl p-6 -mx-2' : 'bg-slate-50/50 rounded-xl p-6 -mx-2') : ''}`}>
           {/* Article Header */}
           <header className="space-y-2">
             {/* Title with Icon (One Line) */}
