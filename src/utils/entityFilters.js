@@ -72,7 +72,17 @@ export const filterEntities = (entities, filterBy, additionalFilters) => {
       const entityTypeLower = entity.entityType?.toLowerCase() || "";
       if (entityTypeLower !== additionalFilters.entityType.toLowerCase()) return false;
     }
-    
+
+    // Kravreferansetype filter (by ID)
+    if (additionalFilters.kravreferansetypeId) {
+      if (entity.kravreferansetypeId !== additionalFilters.kravreferansetypeId) return false;
+    }
+
+    // Kravreferanse filter (by exact text value)
+    if (additionalFilters.kravreferanse) {
+      if (entity.kravreferanse !== additionalFilters.kravreferanse) return false;
+    }
+
     return true;
   });
 };
