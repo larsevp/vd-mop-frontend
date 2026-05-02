@@ -25,6 +25,7 @@ export class SingleEntityDTO extends EntityDTOInterface {
     this.adapter = adapter;
     this.options = options;
     this._entityType = this.adapter.getDisplayConfig().entityTypes[0];
+    this._cachedAvailableFilters = null;
   }
 
   // === REQUIRED INTERFACE PROPERTIES ===
@@ -242,11 +243,17 @@ export class SingleEntityDTO extends EntityDTOInterface {
       }
 
       // Extract available filters from the loaded data if adapter supports it
+      // Cache filters from the first unfiltered load so search doesn't shrink dropdown options
       let availableFilters = {};
       if (this.adapter.extractAvailableFilters) {
-        // Get flat list of entities for filter extraction
         const flatEntities = this.extractAllEntities(transformedResponse.items);
-        availableFilters = this.adapter.extractAvailableFilters(flatEntities);
+        const currentFilters = this.adapter.extractAvailableFilters(flatEntities);
+
+        if (!search) {
+          this._cachedAvailableFilters = currentFilters;
+        }
+
+        availableFilters = this._cachedAvailableFilters || currentFilters;
       }
 
       return {

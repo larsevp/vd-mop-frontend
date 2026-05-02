@@ -26,6 +26,7 @@ export class CombinedEntityDTO extends EntityDTOInterface {
     this.options = options;
     this.entityTypes = this.adapter.getDisplayConfig().entityTypes || [];
     this.primaryEntityType = this.adapter.getDisplayConfig().primaryType || this.entityTypes[0];
+    this._cachedAvailableFilters = null; // Cache filter options from first full load
   }
 
   // === REQUIRED INTERFACE PROPERTIES ===
@@ -196,10 +197,17 @@ export class CombinedEntityDTO extends EntityDTOInterface {
       }
 
       // Extract available filters from the data for UI dropdowns
+      // Cache filters from unfiltered loads so search doesn't shrink dropdown options
       if (transformedData.items) {
         const flatEntities = transformedData.isGrouped ? this.extractAllEntities(transformedData.items) : transformedData.items;
+        const currentFilters = this.extractAvailableFilters(flatEntities);
 
-        transformedData.availableFilters = this.extractAvailableFilters(flatEntities);
+        // Update cache whenever we have an unfiltered load (no search active)
+        if (!search) {
+          this._cachedAvailableFilters = currentFilters;
+        }
+
+        transformedData.availableFilters = this._cachedAvailableFilters || currentFilters;
       }
 
       return transformedData;
