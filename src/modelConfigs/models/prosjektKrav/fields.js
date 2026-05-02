@@ -88,6 +88,30 @@ export const fields = [
     hideIndexKrav: true, // Hide in KravCard/list view
   },
   {
+    name: "huskIKalkyle",
+    label: "Husk i kalkyle",
+    type: "bool",
+    required: false,
+    default: false,
+    hiddenIndex: true,
+  },
+  {
+    name: "paKritiskLinje",
+    label: "På kritisk linje",
+    type: "bool",
+    required: false,
+    default: false,
+    hiddenIndex: true,
+  },
+  {
+    name: "huskMeg",
+    label: "Husk meg",
+    type: "bool",
+    required: false,
+    default: false,
+    hiddenIndex: true,
+  },
+  {
     name: "obligatorisk",
     label: "Obligatorisk",
     type: "bool",

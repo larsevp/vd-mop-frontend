@@ -83,6 +83,17 @@ export const filterEntities = (entities, filterBy, additionalFilters) => {
       if (entity.kravreferanse !== additionalFilters.kravreferanse) return false;
     }
 
+    // Anbudshensyn boolean filters
+    if (additionalFilters.huskIKalkyle !== undefined) {
+      if (Boolean(entity.huskIKalkyle) !== (additionalFilters.huskIKalkyle === "true")) return false;
+    }
+    if (additionalFilters.paKritiskLinje !== undefined) {
+      if (Boolean(entity.paKritiskLinje) !== (additionalFilters.paKritiskLinje === "true")) return false;
+    }
+    if (additionalFilters.huskMeg !== undefined) {
+      if (Boolean(entity.huskMeg) !== (additionalFilters.huskMeg === "true")) return false;
+    }
+
     return true;
   });
 };

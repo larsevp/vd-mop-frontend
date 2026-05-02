@@ -197,11 +197,12 @@ const newProsjektKravWorkspaceConfig = {
         { row: ["statusId", "prioritet"] }, // 1. Status & Priority (side-by-side)
       ],
     },
-    details: {
-      title: "Detaljert informasjon",
+    anbudshensyn: {
+      title: "Anbudshensyn",
       defaultExpanded: false,
-      fieldOverrides: {},
-      rows: {},
+      layout: [
+        { row: ["huskIKalkyle", "paKritiskLinje", "huskMeg"] },
+      ],
     },
     references: {
       title: "Referanser",

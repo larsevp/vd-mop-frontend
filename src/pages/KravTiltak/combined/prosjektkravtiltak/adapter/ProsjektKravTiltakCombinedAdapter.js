@@ -79,6 +79,9 @@ export class ProsjektKravTiltakCombinedAdapter {
           label: "Kravreferanse",
           placeholder: "Alle referanser",
         },
+        huskIKalkyle: { enabled: true, label: "Husk i kalkyle", placeholder: "Alle" },
+        paKritiskLinje: { enabled: true, label: "På kritisk linje", placeholder: "Alle" },
+        huskMeg: { enabled: true, label: "Husk meg", placeholder: "Alle" },
       },
 
       sortFields: [

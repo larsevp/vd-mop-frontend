@@ -26,6 +26,10 @@ export const useTiptapEditor = ({
   onShowToast,
   uploadUrl = null,
 }) => {
+  const onChangeRef = React.useRef(onChange);
+  onChangeRef.current = onChange;
+  const debounceRef = React.useRef(null);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -155,29 +159,27 @@ export const useTiptapEditor = ({
       (typeof navigator !== "undefined" && /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent) ? "<p>A</p>" : ""),
     editable: !disabled,
     onUpdate: ({ editor }) => {
-      try {
-        // Safari safety check - ensure view is available before getting HTML
-        if (!editor.view || !editor.view.dom) {
-          return;
-        }
+      // Debounce getHTML() — this is the expensive call when base64 images are in the document.
+      // The editor still renders instantly; only the React state sync is delayed.
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        try {
+          if (!editor.view || !editor.view.dom) return;
 
-        const html = editor.getHTML();
-        // Handle Safari's initial test letter and empty paragraph states
-        // Also check for the garbage empty paragraph with classes
-        const isEmpty =
-          html === "<p></p>" ||
-          html === "<p>&nbsp;</p>" ||
-          html === "<p> </p>" ||
-          html === "<p>A</p>" ||
-          html === '<p class="mb-3 text-foreground"></p>' ||
-          html.trim() === "" ||
-          // Check if it's just an empty paragraph with any classes
-          /^<p[^>]*><\/p>$/.test(html.trim());
-        onChange?.(isEmpty ? null : html);
-      } catch (error) {
-        console.error('Safari: Failed to get HTML content:', error);
-        // Don't call onChange if we can't get the content safely
-      }
+          const html = editor.getHTML();
+          const isEmpty =
+            html === "<p></p>" ||
+            html === "<p>&nbsp;</p>" ||
+            html === "<p> </p>" ||
+            html === "<p>A</p>" ||
+            html === '<p class="mb-3 text-foreground"></p>' ||
+            html.trim() === "" ||
+            /^<p[^>]*><\/p>$/.test(html.trim());
+          onChangeRef.current?.(isEmpty ? null : html);
+        } catch (error) {
+          console.error('Failed to get HTML content:', error);
+        }
+      }, 150);
     },
     editorProps: {
       attributes: {
@@ -185,6 +187,11 @@ export const useTiptapEditor = ({
       },
     },
   });
+
+  // Cleanup debounce on unmount
+  React.useEffect(() => {
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, []);
 
   // Note: Removed custom event handler setup that was causing Safari mounting issues
   // TipTap now uses its default event handling which works reliably across all browsers

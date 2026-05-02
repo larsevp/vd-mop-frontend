@@ -137,7 +137,13 @@ export const SmartPasteExtension = Extension.create({
                 } catch (error) {
                   console.error('SmartPaste: Failed to store image:', error);
                   if (options.onShowToast) {
-                    options.onShowToast('Kunne ikke sette inn bilde', 'error');
+                    const isQuota = error?.message?.includes('limit') || error?.message?.includes('quota') || error?.name === 'QuotaExceededError';
+                    options.onShowToast(
+                      isQuota
+                        ? 'Bildelagring full — lagre dokumentet først for å frigjøre plass, og prøv igjen'
+                        : 'Kunne ikke sette inn bilde',
+                      'error'
+                    );
                   }
                 }
               })();

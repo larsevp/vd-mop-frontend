@@ -80,7 +80,10 @@ const KravTiltakSearchBar = ({
       additionalFilters.entityType ||
       additionalFilters.onlyProjectCreated ||
       additionalFilters.kravreferansetypeId ||
-      additionalFilters.kravreferanse;
+      additionalFilters.kravreferanse ||
+      additionalFilters.huskIKalkyle ||
+      additionalFilters.paKritiskLinje ||
+      additionalFilters.huskMeg;
   };
 
   // Trigger pulse animation when searching with active filters
@@ -431,6 +434,33 @@ const KravTiltakSearchBar = ({
                     </SelectContent>
                   </Select>
                 </div>
+              )}
+
+              {/* Anbudshensyn boolean filters */}
+              {["huskIKalkyle", "paKritiskLinje", "huskMeg"].map((fieldKey) =>
+                filterConfig?.fields?.[fieldKey]?.enabled ? (
+                  <div key={fieldKey}>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{filterConfig.fields[fieldKey].label}</label>
+                    <Select
+                      value={additionalFilters[fieldKey] || "all"}
+                      onValueChange={(val) =>
+                        onAdditionalFiltersChange({
+                          ...additionalFilters,
+                          [fieldKey]: val === "all" ? undefined : val,
+                        })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={filterConfig.fields[fieldKey].placeholder} />
+                      </SelectTrigger>
+                      <SelectContent className="z-[10000]">
+                        <SelectItem value="all">{filterConfig.fields[fieldKey].placeholder}</SelectItem>
+                        <SelectItem value="true">Ja</SelectItem>
+                        <SelectItem value="false">Nei</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ) : null
               )}
 
               {/* Custom filter fields - allow models to extend */}

@@ -5,7 +5,7 @@
  */
 
 const STORAGE_KEY = "tiptap_temp_images";
-const MAX_STORAGE_SIZE = 50 * 1024 * 1024; // 50MB limit
+const MAX_STORAGE_SIZE = 4 * 1024 * 1024; // 4MB limit (browser localStorage cap is typically 5-10MB)
 
 /**
  * Generate a unique temporary ID for an image
@@ -15,10 +15,57 @@ export function generateTempImageId() {
 }
 
 /**
+ * Compress an image file using canvas.
+ * Resizes if wider than maxWidth and converts to JPEG/WebP.
+ */
+function compressImage(file, { maxWidth = 2400, quality = 0.92 } = {}) {
+  return new Promise((resolve) => {
+    // Skip compression for small images or SVGs
+    if (file.size < 50 * 1024 || file.type === "image/svg+xml") {
+      resolve(file);
+      return;
+    }
+
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      let { width, height } = img;
+
+      if (width > maxWidth) {
+        height = Math.round((height * maxWidth) / width);
+        width = maxWidth;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob(
+        (blob) => {
+          if (blob && blob.size < file.size) {
+            resolve(new File([blob], file.name || "image.webp", { type: blob.type }));
+          } else {
+            resolve(file); // Original was smaller, keep it
+          }
+        },
+        "image/webp",
+        quality
+      );
+    };
+    img.onerror = () => resolve(file); // On error, keep original
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+/**
  * Store an image file in localStorage with a temporary ID
  */
 export async function storeTempImage(file, tempId = null) {
   const id = tempId || generateTempImageId();
+
+  // Compress before storing
+  const compressed = await compressImage(file);
 
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -28,25 +75,50 @@ export async function storeTempImage(file, tempId = null) {
         const base64Data = reader.result;
         const imageData = {
           id,
-          fileName: file.name || `pasted-image-${Date.now()}.png`,
-          mimeType: file.type,
-          size: file.size,
+          fileName: compressed.name || `pasted-image-${Date.now()}.webp`,
+          mimeType: compressed.type,
+          size: compressed.size,
           base64Data,
           timestamp: Date.now(),
         };
 
         // Check storage size limit
         const currentData = getTempImages();
-        const totalSize = Object.values(currentData).reduce((sum, img) => sum + img.size, 0) + file.size;
+        const totalSize = Object.values(currentData).reduce((sum, img) => sum + img.size, 0) + compressed.size;
 
         if (totalSize > MAX_STORAGE_SIZE) {
-          reject(new Error("Storage limit exceeded. Please upload existing images first."));
-          return;
+          // Auto-cleanup images older than 1 hour before rejecting
+          const oneHourAgo = Date.now() - 60 * 60 * 1000;
+          let cleaned = false;
+          Object.entries(currentData).forEach(([imgId, img]) => {
+            if (img.timestamp && img.timestamp < oneHourAgo) {
+              delete currentData[imgId];
+              cleaned = true;
+            }
+          });
+          if (cleaned) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(currentData));
+            const newTotal = Object.values(currentData).reduce((sum, img) => sum + img.size, 0) + compressed.size;
+            if (newTotal <= MAX_STORAGE_SIZE) {
+              // Freed enough space, continue below
+            } else {
+              reject(new Error("Storage limit exceeded. Please upload existing images first."));
+              return;
+            }
+          } else {
+            reject(new Error("Storage limit exceeded. Please upload existing images first."));
+            return;
+          }
         }
 
         // Store in localStorage
         const tempImages = { ...currentData, [id]: imageData };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(tempImages));
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(tempImages));
+        } catch (storageError) {
+          reject(new Error("Storage limit exceeded. Please upload existing images first."));
+          return;
+        }
 
         //console.log("📦 Stored temp image:", { id, fileName: imageData.fileName, size: file.size });
 
