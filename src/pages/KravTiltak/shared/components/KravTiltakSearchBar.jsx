@@ -393,11 +393,12 @@ const KravTiltakSearchBar = ({
                   <label className="block text-sm font-medium text-gray-700 mb-1">{filterConfig.fields.kravreferansetypeId.label}</label>
                   <KravreferansetypeSelect
                     name="kravreferansetypeId"
-                    value={additionalFilters.kravreferansetypeId || null}
+                    value={additionalFilters.kravreferansetypeId ? String(additionalFilters.kravreferansetypeId) : null}
                     onChange={(event) => {
+                      const val = event.target.value;
                       onAdditionalFiltersChange({
                         ...additionalFilters,
-                        kravreferansetypeId: event.target.value,
+                        kravreferansetypeId: val ? parseInt(val) : undefined,
                       });
                     }}
                     allowEmpty={true}

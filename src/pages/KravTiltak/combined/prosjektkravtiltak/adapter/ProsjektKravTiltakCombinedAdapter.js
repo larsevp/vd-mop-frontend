@@ -361,14 +361,14 @@ export class ProsjektKravTiltakCombinedAdapter {
       const emne = entity.emne?.navn || entity.emne?.name;
       if (emne) filters.emner.add(emne);
 
-      if (entity.kravreferansetypeId && entity.kravreferansetype) {
-        const label = entity.kravreferansetype.tittel || entity.kravreferansetype.navn || entity.kravreferansetype.name;
+      if (entity.kravreferansetypeId && entity.kravreferanseType) {
+        const label = entity.kravreferanseType.tittel || entity.kravreferanseType.navn || entity.kravreferanseType.name;
         if (label) {
           filters.kravreferanseTypesMap.set(entity.kravreferansetypeId, { id: entity.kravreferansetypeId, label });
         }
       }
 
-      if (entity.kravreferanse && typeof entity.kravreferanse === "string" && entity.kravreferanse.trim()) {
+      if (entity.kravreferanse && typeof entity.kravreferanse === "string" && entity.kravreferanse.trim() && entity.kravreferanse.trim() !== "None") {
         filters.kravreferanser.add(entity.kravreferanse.trim());
       }
     });
