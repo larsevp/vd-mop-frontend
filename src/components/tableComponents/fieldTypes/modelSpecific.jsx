@@ -7,20 +7,22 @@ import ParentSelectField from "../ParentSelectField";
 import { TiptapEditor } from "../../ui/editor/TiptapEditor";
 import StyrendeDokumentasjonField from "./StyrendeDokumentasjonField";
 import KontrolleresVedField from "./KontrolleresVedField";
+import KravreferanseField from "./KravreferanseField";
 
 export const MODEL_SPECIFIC_FIELDS = {
   // Krav model specific field configurations
   krav: {
-    // Field name specific configurations
     fieldNames: {
-      // No field name specific overrides for Krav currently
-      // parentId now uses the standard kravselect type with RowForm handling labels
+      kravreferanse: KravreferanseField,
     },
+    fieldTypes: {},
+  },
 
-    // Field type overrides for this model
-    fieldTypes: {
-      // No field type overrides for krav - uses general entityTypes instead
+  prosjektKrav: {
+    fieldNames: {
+      kravreferanse: KravreferanseField,
     },
+    fieldTypes: {},
   },
 
   // Enhet model specific configurations
