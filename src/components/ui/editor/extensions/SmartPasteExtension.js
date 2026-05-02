@@ -160,7 +160,12 @@ export const SmartPasteExtension = Extension.create({
 
                     // Use TipTap's editor.chain() API to insert the table HTML
                     if (editor && editor.chain) {
-                      editor.chain().focus().insertContent(tableHTML).run();
+                      const isEmpty = !editor.state.doc.textContent.trim() && editor.state.doc.childCount === 1;
+                      if (isEmpty) {
+                        editor.chain().focus().setContent(tableHTML).run();
+                      } else {
+                        editor.chain().focus().insertContent(tableHTML).run();
+                      }
                     } else {
                       const { state } = view;
                       const tr = state.tr.insertText(textData);
@@ -283,7 +288,14 @@ export const SmartPasteExtension = Extension.create({
                     return true;
                   }
 
-                  const tr = state.tr.replaceWith(selection.from, selection.to, nodes);
+                  // If editor is empty (single empty paragraph), replace entire content
+                  // to avoid leaving a blank line at the top
+                  const docContent = state.doc.textContent;
+                  const isEditorEmpty = !docContent.trim() && state.doc.childCount === 1;
+
+                  const tr = isEditorEmpty
+                    ? state.tr.replaceWith(0, state.doc.content.size, nodes)
+                    : state.tr.replaceWith(selection.from, selection.to, nodes);
                   view.dispatch(tr);
                 }
 

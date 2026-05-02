@@ -67,9 +67,10 @@ export class FieldResolver {
           return `${field.label} er påkrevet`;
         }
       } else if (field.type === "richtext") {
-        // Richtext validation - check if content is empty (ignoring empty HTML tags)
+        // Richtext validation - images and tables count as valid content even without text
+        const hasMedia = /<img\s|<table[\s>]/.test(value || "");
         const textContent = value?.replace(/<[^>]*>/g, "").trim();
-        if (!textContent) {
+        if (!textContent && !hasMedia) {
           return `${field.label} er påkrevet`;
         }
       } else if (field.type === "fileupload") {

@@ -53,15 +53,8 @@ export const useUserStore = create(
 
       // Fetch current user info (role and name) from backend
       fetchUserInfo: async () => {
-        const { user } = get();
-
         // Don't fetch if already loading
         if (get().isLoadingUserInfo) {
-          return;
-        }
-
-        // For manual login users, only fetch if they don't have enhetId
-        if (user && user.isManualLogin && user.enhetId) {
           return;
         }
 
