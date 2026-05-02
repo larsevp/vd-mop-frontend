@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { StatusSelect } from "@/components/ui/form/StatusSelect";
 import { VurderingSelect } from "@/components/ui/form/VurderingSelect";
 import { EmneSelect } from "@/components/ui/form/EmneSelect";
+import { KravreferansetypeSelect } from "@/components/ui/form/Kravreferansetype";
 import { getPriorityIcon as getCentralizedPriorityIcon } from "../config/priorityConfig";
 
 const KravTiltakSearchBar = ({
@@ -77,7 +78,9 @@ const KravTiltakSearchBar = ({
       additionalFilters.prioritet ||
       additionalFilters.obligatorisk ||
       additionalFilters.entityType ||
-      additionalFilters.onlyProjectCreated;
+      additionalFilters.onlyProjectCreated ||
+      additionalFilters.kravreferansetypeId ||
+      additionalFilters.kravreferanse;
   };
 
   // Trigger pulse animation when searching with active filters
@@ -379,6 +382,51 @@ const KravTiltakSearchBar = ({
                       <SelectItem value="all">Alle typer</SelectItem>
                       <SelectItem value="true">Obligatorisk</SelectItem>
                       <SelectItem value="false">Valgfri</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Kravreferansetype filter */}
+              {filterConfig?.fields?.kravreferansetypeId?.enabled && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{filterConfig.fields.kravreferansetypeId.label}</label>
+                  <KravreferansetypeSelect
+                    name="kravreferansetypeId"
+                    value={additionalFilters.kravreferansetypeId || null}
+                    onChange={(event) => {
+                      onAdditionalFiltersChange({
+                        ...additionalFilters,
+                        kravreferansetypeId: event.target.value,
+                      });
+                    }}
+                    allowEmpty={true}
+                    emptyLabel={filterConfig.fields.kravreferansetypeId.placeholder}
+                  />
+                </div>
+              )}
+
+              {/* Kravreferanse filter */}
+              {filterConfig?.fields?.kravreferanse?.enabled && availableFilters?.kravreferanser?.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{filterConfig.fields.kravreferanse.label}</label>
+                  <Select
+                    value={additionalFilters.kravreferanse || "all"}
+                    onValueChange={(kravreferanse) =>
+                      onAdditionalFiltersChange({
+                        ...additionalFilters,
+                        kravreferanse: kravreferanse === "all" ? undefined : kravreferanse,
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={filterConfig.fields.kravreferanse.placeholder} />
+                    </SelectTrigger>
+                    <SelectContent className="z-[10000]">
+                      <SelectItem value="all">{filterConfig.fields.kravreferanse.placeholder}</SelectItem>
+                      {availableFilters.kravreferanser.map((ref) => (
+                        <SelectItem key={ref} value={ref}>{ref}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

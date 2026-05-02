@@ -34,6 +34,8 @@ export const getPaginatedCombinedProsjektEntities = async (page = 1, pageSize = 
     ...(additionalFilters.status && { status: additionalFilters.status }),
     ...(additionalFilters.vurdering && { vurdering: additionalFilters.vurdering }),
     ...(additionalFilters.onlyProjectCreated && { onlyProjectCreated: 'true' }),
+    ...(additionalFilters.kravreferansetypeId && { kravreferansetypeId: additionalFilters.kravreferansetypeId.toString() }),
+    ...(additionalFilters.kravreferanse && { kravreferanse: additionalFilters.kravreferanse }),
     // Default view options for project entities
     primaryView: "prosjektkrav-first",
     showHierarchy: "true",

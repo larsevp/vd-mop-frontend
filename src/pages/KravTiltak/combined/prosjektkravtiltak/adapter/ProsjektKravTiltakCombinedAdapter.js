@@ -69,6 +69,16 @@ export class ProsjektKravTiltakCombinedAdapter {
         prioritet: { enabled: true, label: "Prioritet", placeholder: "Alle prioriteter" },
         emne: { enabled: true, label: "Emne", placeholder: "Alle emner" },
         obligatorisk: { enabled: true, label: "Obligatorisk", placeholder: "Alle" },
+        kravreferansetypeId: {
+          enabled: true,
+          label: "Type krav",
+          placeholder: "Alle typer",
+        },
+        kravreferanse: {
+          enabled: true,
+          label: "Kravreferanse",
+          placeholder: "Alle referanser",
+        },
       },
 
       sortFields: [
@@ -335,6 +345,8 @@ export class ProsjektKravTiltakCombinedAdapter {
       statuses: new Set(),
       vurderinger: new Set(),
       emner: new Set(),
+      kravreferanseTypesMap: new Map(),
+      kravreferanser: new Set(),
     };
 
     entities.forEach((entity) => {
@@ -348,6 +360,17 @@ export class ProsjektKravTiltakCombinedAdapter {
 
       const emne = entity.emne?.navn || entity.emne?.name;
       if (emne) filters.emner.add(emne);
+
+      if (entity.kravreferansetypeId && entity.kravreferansetype) {
+        const label = entity.kravreferansetype.tittel || entity.kravreferansetype.navn || entity.kravreferansetype.name;
+        if (label) {
+          filters.kravreferanseTypesMap.set(entity.kravreferansetypeId, { id: entity.kravreferansetypeId, label });
+        }
+      }
+
+      if (entity.kravreferanse && typeof entity.kravreferanse === "string" && entity.kravreferanse.trim()) {
+        filters.kravreferanser.add(entity.kravreferanse.trim());
+      }
     });
 
     return {
@@ -355,6 +378,8 @@ export class ProsjektKravTiltakCombinedAdapter {
       statuses: Array.from(filters.statuses).sort(),
       vurderinger: Array.from(filters.vurderinger).sort(),
       emner: Array.from(filters.emner).sort(),
+      kravreferanseTypes: Array.from(filters.kravreferanseTypesMap.values()).sort((a, b) => a.label.localeCompare(b.label)),
+      kravreferanser: Array.from(filters.kravreferanser).sort(),
     };
   }
 

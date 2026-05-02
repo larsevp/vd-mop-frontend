@@ -9,11 +9,23 @@ import NewTiltakButton from './components/NewTiltakButton';
 const KravNavigator = ({ entities, onFieldSave, onCreateTiltak, onCreateKrav }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [editing, setEditing] = useState(false);
+  const [editingTiltakId, setEditingTiltakId] = useState(null); // Track single newly-created tiltak in edit mode
 
   const { blocks, orphanTiltak, emneList } = useMemo(
     () => buildKravBlocks(entities),
     [entities]
   );
+
+  // Flatten all entities for field components that need project-wide data (e.g. KravreferanseField)
+  const allEntities = useMemo(() => {
+    if (!entities || entities.length === 0) return [];
+    const first = entities[0];
+    const isGrouped = first?.items || first?.group;
+    if (isGrouped) {
+      return entities.flatMap(group => group.items || []);
+    }
+    return entities;
+  }, [entities]);
 
   // Total navigable items: krav blocks + orphan tiltak (shown as separate "pages")
   const totalItems = blocks.length + (orphanTiltak.length > 0 ? 1 : 0);
@@ -40,6 +52,7 @@ const KravNavigator = ({ entities, onFieldSave, onCreateTiltak, onCreateKrav }) 
   // Reset editing when navigating
   useEffect(() => {
     setEditing(false);
+    setEditingTiltakId(null);
   }, [currentIndex]);
 
   // Keyboard: arrows to navigate, E to edit, Esc to exit edit
@@ -104,16 +117,14 @@ const KravNavigator = ({ entities, onFieldSave, onCreateTiltak, onCreateKrav }) 
         onPrev={goPrev}
         onNext={goNext}
         isOrphanPage={isOrphanPage}
-        editing={editing}
-        onToggleEdit={() => setEditing(prev => !prev)}
-        onCreateKrav={onCreateKrav ? async () => {
-          await onCreateKrav();
-          // Navigate to the last block (new krav will be appended)
-          setTimeout(() => {
-            setCurrentIndex(blocks.length); // will be clamped by useEffect if needed
-            setEditing(true);
-          }, 300);
-        } : null}
+        editing={editing || !!editingTiltakId}
+        onToggleEdit={() => {
+          if (editingTiltakId) {
+            setEditingTiltakId(null);
+          } else {
+            setEditing(prev => !prev);
+          }
+        }}
       />
 
       <div className="flex-1 min-h-0 flex overflow-hidden">
@@ -150,6 +161,7 @@ const KravNavigator = ({ entities, onFieldSave, onCreateTiltak, onCreateKrav }) 
                   emne={currentBlock.emne}
                   onFieldSave={onFieldSave}
                   editing={editing}
+                  availableEntities={allEntities}
                 />
 
                 {/* Tiltak section */}
@@ -163,8 +175,14 @@ const KravNavigator = ({ entities, onFieldSave, onCreateTiltak, onCreateKrav }) 
                       <TiltakSubCard
                         key={tiltak.id}
                         tiltak={tiltak}
-                        onFieldSave={onFieldSave}
-                        editing={editing}
+                        onFieldSave={(fieldName, value, entity) => {
+                          onFieldSave(fieldName, value, entity);
+                          // Clear single-edit state after first save from the new tiltak
+                          if (editingTiltakId === tiltak.id) {
+                            // Keep it editable until user navigates away
+                          }
+                        }}
+                        editing={editing || editingTiltakId === tiltak.id}
                       />
                     ))}
 
@@ -172,8 +190,8 @@ const KravNavigator = ({ entities, onFieldSave, onCreateTiltak, onCreateKrav }) 
                       <NewTiltakButton
                         currentKravId={currentBlock.krav.id}
                         onCreateTiltak={async (kravId) => {
-                          await onCreateTiltak(kravId);
-                          setEditing(true);
+                          const newId = await onCreateTiltak(kravId);
+                          if (newId) setEditingTiltakId(newId);
                         }}
                       />
                     )}

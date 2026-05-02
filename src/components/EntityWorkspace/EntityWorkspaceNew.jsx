@@ -176,6 +176,7 @@ const EntityWorkspaceNew = ({
   const { goBack } = useBackNavigation();
   const cardsContainerRef = useRef(null);
   const isCreatingNewRef = useRef(false); // Track when we're creating new entity to prevent race conditions
+  const [showCreateModal, setShowCreateModal] = useState(false); // Modal overlay for creating entities in views without detail panes
   const uiRef = useRef(null); // Store latest UI actions to prevent effect dependency loops
   const hasRestoredSelectionRef = useRef(false); // Track if we've already restored selection from URL
 
@@ -600,12 +601,17 @@ const EntityWorkspaceNew = ({
       // Set entity AFTER cleanup to ensure store is clear before components render
       ui.setSelectedEntity(enhancedNewEntity);
 
+      // Open modal overlay for views without a built-in detail pane
+      if (ui.viewMode === "cards" || ui.viewMode === "navigator") {
+        setShowCreateModal(true);
+      }
+
       // Clear the flag after a brief delay to allow the selection to settle
       setTimeout(() => {
         isCreatingNewRef.current = false;
       }, 100);
     },
-    [ui.setSelectedEntity, dto]
+    [ui.setSelectedEntity, ui.viewMode, ui.setViewMode, dto]
   );
 
   const handleDetailClose = useCallback(async () => {
@@ -1223,6 +1229,59 @@ const EntityWorkspaceNew = ({
             />
           )}
         </div>
+
+        {/* Create entity modal — used in views without a built-in detail pane (cards, navigator)
+            Same pattern as FlowWorkspace's EntityDetailPane modal */}
+        {showCreateModal && ui.selectedEntity && renderDetailPane && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4"
+            onClick={() => {
+              setShowCreateModal(false);
+              ui.setSelectedEntity(null);
+            }}
+          >
+            <div
+              className="bg-white rounded-lg shadow-xl max-w-4xl w-full flex flex-col overflow-hidden relative"
+              onClick={(e) => e.stopPropagation()}
+              style={{ height: '90vh' }}
+            >
+              <button
+                onClick={() => {
+                  setShowCreateModal(false);
+                  ui.setSelectedEntity(null);
+                }}
+                className="absolute top-1 right-1 z-50 bg-white hover:bg-red-50 text-gray-500 hover:text-red-600 rounded-full p-1.5 shadow-lg transition-colors border border-gray-200"
+                aria-label="Lukk"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+              <div className="flex-1 min-h-0 overflow-hidden">
+                {renderDetailPane(ui.selectedEntity, {
+                  onSave: async (data, isUpdate) => {
+                    const result = await handleSave(data, isUpdate);
+                    setShowCreateModal(false);
+                    return result;
+                  },
+                  onDelete: async (entity) => {
+                    await handleDelete(entity);
+                    setShowCreateModal(false);
+                    ui.setSelectedEntity(null);
+                  },
+                  onClose: () => {
+                    setShowCreateModal(false);
+                    ui.setSelectedEntity(null);
+                  },
+                  onCreateNew: handleCreateNew,
+                  entities,
+                  dto,
+                })}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Debug info */}
         {debug && (

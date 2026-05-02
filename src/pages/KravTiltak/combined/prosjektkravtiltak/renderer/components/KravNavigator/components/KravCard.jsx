@@ -13,7 +13,7 @@ const STATUS_FIELDS = [
   { name: 'prioritet', label: 'Prioritet', getDisplay: getPrioritetDisplay },
 ];
 
-const KravCard = ({ krav, emne, onFieldSave, editing }) => {
+const KravCard = ({ krav, emne, onFieldSave, editing, availableEntities = [] }) => {
   const modelConfigKey = 'prosjektKrav';
   const modelConfig = getModelConfig(modelConfigKey);
   const allFields = modelConfig?.fields || [];
@@ -68,6 +68,8 @@ const KravCard = ({ krav, emne, onFieldSave, editing }) => {
           }}
           className={opts.className || 'text-sm'}
           error={null}
+          isEditing={true}
+          availableEntities={availableEntities}
         />
       </div>
     );

@@ -239,7 +239,10 @@ const ProsjektKravTiltakCombinedWorkspace = () => {
               entityType: 'prosjekttiltak',
               prosjektKrav: [kravId],
             };
-            await onSave(newTiltak, false);
+            const result = await onSave(newTiltak, false);
+            // Return the new entity ID so navigator can track it for inline editing
+            const newEntity = result?.data || result;
+            return newEntity?.id;
           };
           const handleCreateKrav = async () => {
             const newKrav = {

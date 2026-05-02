@@ -1,9 +1,9 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, Pencil, Save, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Pencil, Save } from 'lucide-react';
 import { DynamicIcon } from '@/components/ui/DynamicIcon';
 import { Button } from '@/components/ui/primitives/button';
 
-const NavigationBar = ({ currentBlock, currentIndex, totalCount, onPrev, onNext, isOrphanPage, editing, onToggleEdit, onCreateKrav }) => {
+const NavigationBar = ({ currentBlock, currentIndex, totalCount, onPrev, onNext, isOrphanPage, editing, onToggleEdit }) => {
   const emne = currentBlock?.emne;
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex < totalCount - 1;
@@ -40,16 +40,6 @@ const NavigationBar = ({ currentBlock, currentIndex, totalCount, onPrev, onNext,
 
         {/* Center: Action buttons */}
         <div className="flex items-center gap-2">
-          {onCreateKrav && !editing && (
-            <button
-              onClick={onCreateKrav}
-              className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 flex items-center gap-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200"
-              title="Nytt krav"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Nytt krav
-            </button>
-          )}
           {editing ? (
             <button
               onClick={() => {
