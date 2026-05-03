@@ -168,6 +168,12 @@ const newProsjektKravWorkspaceConfig = {
       layout: [
         { field: "beskrivelse" },
         { field: "informasjon" },
+      ],
+    },
+    anbudshensyn: {
+      title: "Anbudshensyn",
+      defaultExpanded: true,
+      layout: [
         { row: ["huskIKalkyle", "paKritiskLinje", "huskMeg"] },
       ],
     },
