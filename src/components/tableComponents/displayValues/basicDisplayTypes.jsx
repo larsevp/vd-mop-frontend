@@ -17,6 +17,19 @@ export const BASIC_DISPLAY_TYPES = {
     return displayValue;
   },
 
+  toggle: (row, field, context) => {
+    const isOn = row[field.name] === true || row[field.name] === "true";
+    if (context.format === "REACT") {
+      return (
+        <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${isOn ? "text-blue-700" : "text-slate-400"}`}>
+          <span className={`w-2 h-2 rounded-full ${isOn ? "bg-blue-500" : "bg-slate-300"}`} />
+          {isOn ? "Ja" : "Nei"}
+        </span>
+      );
+    }
+    return isOn ? "Ja" : "Nei";
+  },
+
   // Text fields
   text: (row, field, context) => {
     //console.log(field);

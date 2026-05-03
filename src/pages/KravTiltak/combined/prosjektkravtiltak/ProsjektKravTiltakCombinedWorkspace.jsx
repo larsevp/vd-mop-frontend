@@ -135,6 +135,7 @@ const ProsjektKravTiltakCombinedWorkspace = () => {
       showVurdering: "Vis vurdering",
       showPrioritet: "Vis prioritet",
       showKontroll: "Kontrollikon",
+      showAnbudshensyn: "Anbudshensyn",
       showEntityType: "Vis enhetstype",
       showUID: "Vis ID",
     },

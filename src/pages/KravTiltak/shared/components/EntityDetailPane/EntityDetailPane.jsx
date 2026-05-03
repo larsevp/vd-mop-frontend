@@ -38,6 +38,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import { Edit, X, Save, RotateCcw, Trash2, Plus, ChevronDown, MoreVertical } from "lucide-react";
 import { useQueryClient } from '@tanstack/react-query';
 import { ValidationErrorSummary, FieldRenderer, FieldSection } from "./components";
+import { useViewOptions } from "@/components/EntityWorkspace/interface/context/ViewOptionsContext";
 import { getEntityTypeConfig } from "../../utils/entityTypeBadges";
 import EntityBadge from "../EntityBadge/EntityBadge";
 import { TiptapDisplay } from "@/components/ui/editor/TiptapDisplay";
@@ -65,10 +66,11 @@ const EntityDetailPane = ({
   onClose,
   onCreateNew,
   entityType = "entity",
-  dto,  // NEW: DTO instance for inheritance logic
-  kravConfig,  // NEW: ModelConfig for krav/prosjektKrav (needed for Tiltak entities)
-  entities = []  // NEW: Entities list from workspace (already filtered)
+  dto,
+  kravConfig,
+  entities = [],
 }) => {
+  const viewOptions = useViewOptions();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
@@ -148,11 +150,14 @@ const EntityDetailPane = ({
   const autoExpandSectionsWithContent = useMemo(() => detailFormConfig.autoExpandSectionsWithContent !== false, [detailFormConfig.autoExpandSectionsWithContent]); // Default: true
   const allFields = useMemo(() => modelConfig?.fields || [], [modelConfig?.fields]);
 
-  // Get visible fields using helper
-  const visibleFields = useMemo(() =>
-    getVisibleFields(allFields, fieldOverrides, isEditing, workspaceHiddenEdit, workspaceHiddenIndex, sections),
-    [allFields, fieldOverrides, isEditing, workspaceHiddenEdit, workspaceHiddenIndex, sections]
-  );
+  // Get visible fields using helper, then filter by viewOptions visibility keys
+  const visibleFields = useMemo(() => {
+    const fields = getVisibleFields(allFields, fieldOverrides, isEditing, workspaceHiddenEdit, workspaceHiddenIndex, sections);
+    return fields.filter(field => {
+      if (field.visibilityKey && !viewOptions[field.visibilityKey]) return false;
+      return true;
+    });
+  }, [allFields, fieldOverrides, isEditing, workspaceHiddenEdit, workspaceHiddenIndex, sections, viewOptions]);
 
   // Validation function using helper
   const validateFormData = useCallback(() => {

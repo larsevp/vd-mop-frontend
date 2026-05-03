@@ -46,6 +46,7 @@ const EntitySplitView = ({
   onCreateNew,
   listWidth = "35%",
   dto,  // NEW: DTO instance for inheritance logic
+  viewOptions = {},
 }) => {
   // Collapsible panel state - persistent with localStorage (global preference)
   const [isCollapsed, setIsCollapsed] = useState(() => {
@@ -210,7 +211,8 @@ const EntitySplitView = ({
             onClose: onClose || (() => onEntitySelect(null)),
             onCreateNew,
             entities,
-            dto
+            dto,
+            viewOptions,
           }) : (
             renderDetailPane && renderDetailPane(null, {
               onSave,
@@ -218,7 +220,8 @@ const EntitySplitView = ({
               onClose: onClose || (() => onEntitySelect(null)),
               onCreateNew,
               entities,
-              dto
+              dto,
+              viewOptions,
             })
           )}
       </div>

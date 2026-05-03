@@ -166,8 +166,9 @@ const newProsjektKravWorkspaceConfig = {
       title: "Grunnleggende informasjon",
       defaultExpanded: true,
       layout: [
-        { field: "beskrivelse" }, // 1. Description (full-width)
-        { field: "informasjon" }, // 3. Information (full-width)
+        { field: "beskrivelse" },
+        { field: "informasjon" },
+        { row: ["huskIKalkyle", "paKritiskLinje", "huskMeg"] },
       ],
     },
     kravinformasjon: {
@@ -195,13 +196,6 @@ const newProsjektKravWorkspaceConfig = {
       defaultExpanded: false,
       layout: [
         { row: ["statusId", "prioritet"] }, // 1. Status & Priority (side-by-side)
-      ],
-    },
-    anbudshensyn: {
-      title: "Anbudshensyn",
-      defaultExpanded: false,
-      layout: [
-        { row: ["huskIKalkyle", "paKritiskLinje", "huskMeg"] },
       ],
     },
     references: {

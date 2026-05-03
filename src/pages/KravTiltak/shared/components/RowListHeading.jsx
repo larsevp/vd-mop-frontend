@@ -194,12 +194,12 @@ const RowListHeading = ({
                           <div key={key} className="flex items-center justify-between">
                             <span className="text-sm text-gray-700">{label}</span>
                             <button
-                              onClick={() => handleViewOptionToggle(key)}
+                              onClick={(e) => { e.stopPropagation(); handleViewOptionToggle(key); }}
                               className={`w-10 h-5 rounded-full relative transition-colors ${
                                 viewOptions[key] ? 'bg-blue-500' : 'bg-gray-300'
                               }`}
                             >
-                              <div className={`w-4 h-4 bg-white rounded-full shadow-sm absolute top-0.5 transition-transform ${
+                              <div className={`w-4 h-4 bg-white rounded-full shadow-sm absolute top-0.5 transition-transform pointer-events-none ${
                                 viewOptions[key] ? 'translate-x-5' : 'translate-x-0.5'
                               }`} />
                             </button>

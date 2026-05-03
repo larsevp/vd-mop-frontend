@@ -60,6 +60,29 @@ export const BASIC_FIELD_TYPES = {
     />
   ),
 
+  toggle: ({ field, value, onChange }) => {
+    const isOn = value === true || value === "true";
+    return (
+      <button
+        type="button"
+        role="switch"
+        aria-checked={isOn}
+        onClick={() =>
+          onChange({ target: { name: field.name, value: !isOn, type: "toggle" } })
+        }
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+          isOn ? "bg-blue-600" : "bg-slate-200"
+        }`}
+      >
+        <span
+          className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+            isOn ? "translate-x-6" : "translate-x-1"
+          }`}
+        />
+      </button>
+    );
+  },
+
   select: ({ field, value, onChange, error }) => (
     <select
       name={field.name}

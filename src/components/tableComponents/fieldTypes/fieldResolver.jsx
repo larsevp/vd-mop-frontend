@@ -106,7 +106,7 @@ export class FieldResolver {
    */
   static initializeFieldValue(field, row, editing, modelName) {
     // Handle boolean fields
-    if (field.type === "bool") {
+    if (field.type === "bool" || field.type === "toggle") {
       if (editing && row && row[field.name] !== undefined) {
         // Convert string booleans to actual booleans
         const value = row[field.name];
@@ -118,7 +118,7 @@ export class FieldResolver {
       if (field.default !== undefined) {
         return field.default;
       }
-      return null;
+      return false;
     }
 
     // Handle select fields with options
@@ -170,8 +170,8 @@ export class FieldResolver {
    * @returns {any} - Reset value for the field
    */
   static resetFieldValue(field, modelName) {
-    if (field.type === "bool") {
-      return field.default !== undefined ? field.default : null;
+    if (field.type === "bool" || field.type === "toggle") {
+      return field.default !== undefined ? field.default : false;
     }
 
     if (field.type === "multiselect") {

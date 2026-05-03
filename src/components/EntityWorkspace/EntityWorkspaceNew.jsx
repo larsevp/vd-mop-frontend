@@ -38,6 +38,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { Button } from "@/components/ui/primitives/button";
+import { ViewOptionsProvider } from "./interface/context/ViewOptionsContext";
 import { Plus, ArrowLeft, LayoutGrid, Columns, Network, Table2, BookOpen, X, GripVertical } from "lucide-react";
 import { useUserStore } from "@/stores/userStore";
 
@@ -860,6 +861,7 @@ const EntityWorkspaceNew = ({
 
   // Main render - reuse existing EntitySplitView structure
   return (
+    <ViewOptionsProvider value={viewOptions}>
     <div className="bg-white h-full flex flex-col overflow-hidden">
       <div className="max-w-none w-full flex flex-col h-full min-h-0" style={{ maxWidth: "none" }}>
         {/* Header with search - stays at top via flex-shrink-0 */}
@@ -1177,7 +1179,8 @@ const EntityWorkspaceNew = ({
               onDelete={handleDelete}
               onClose={handleDetailClose}
               onCreateNew={handleCreateNew}
-              dto={dto} // NEW: Pass dto for inheritance logic
+              dto={dto}
+              viewOptions={splitViewOptions}
               renderListPane={({ entities, selectedEntity, onEntitySelect }) => (
                 <EntityListPane
                   items={entities}
@@ -1297,6 +1300,7 @@ const EntityWorkspaceNew = ({
         )}
       </div>
     </div>
+    </ViewOptionsProvider>
   );
 };
 

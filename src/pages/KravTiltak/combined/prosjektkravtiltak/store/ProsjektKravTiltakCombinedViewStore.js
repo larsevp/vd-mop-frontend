@@ -20,6 +20,7 @@ export const useProsjektKravTiltakCombinedViewStore = create(
         showPrioritet: true,
         showObligatorisk: false,
         showKontroll: true,
+        showAnbudshensyn: false,
         showProjectRelations: true,
         compactMode: false,
         sortBy: 'id',
@@ -48,6 +49,7 @@ export const useProsjektKravTiltakCombinedViewStore = create(
             showPrioritet: true,
             showObligatorisk: false,
             showKontroll: true,
+            showAnbudshensyn: false,
             showProjectRelations: true,
             compactMode: false,
             sortBy: 'id',
@@ -83,12 +85,13 @@ export const useProsjektKravTiltakCombinedViewStore = create(
     }),
     {
       name: 'prosjekt-krav-tiltak-combined-view-options',
-      version: 5,
+      version: 6,
       migrate: (persistedState) => ({
         viewOptions: {
           ...persistedState?.viewOptions,
           showKontroll: persistedState?.viewOptions?.showKontroll ?? true,
-          showObligatorisk: false, // Force off — removed from tiltak/prosjekttiltak views
+          showAnbudshensyn: persistedState?.viewOptions?.showAnbudshensyn ?? false,
+          showObligatorisk: false,
         },
         entityTypeFilter: persistedState?.entityTypeFilter || 'all',
         primaryView: persistedState?.primaryView || 'prosjektkrav-first',
