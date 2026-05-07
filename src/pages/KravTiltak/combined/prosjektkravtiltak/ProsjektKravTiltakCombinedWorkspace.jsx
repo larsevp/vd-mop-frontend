@@ -15,6 +15,7 @@ import { useProjectStore } from "@/stores/userStore";
 import { useWorkspaceParams } from "@/hooks/useWorkspaceParams";
 import KravTiltakTableView from "./renderer/components/KravTiltakTableView";
 import { KravNavigator } from "./renderer/components/KravNavigator";
+import MatrixView from "./renderer/components/MatrixView/MatrixView";
 
 // Import individual renderers
 import { renderEntityCard as ProsjektKravCardRenderer } from "../../prosjektkrav/renderer/ProsjektKravRenderer";
@@ -261,6 +262,9 @@ const ProsjektKravTiltakCombinedWorkspace = () => {
             />
           );
         }}
+        renderMatrixView={({ entities, onEntitySelect }) => (
+          <MatrixView entities={entities} onEntitySelect={onEntitySelect} />
+        )}
         useWorkspaceUIHook={useWorkspaceUI}
         viewOptions={viewOptions}
         debug={false}

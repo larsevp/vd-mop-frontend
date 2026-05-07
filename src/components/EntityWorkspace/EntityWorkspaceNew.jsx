@@ -39,7 +39,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { Button } from "@/components/ui/primitives/button";
 import { ViewOptionsProvider } from "./interface/context/ViewOptionsContext";
-import { Plus, ArrowLeft, LayoutGrid, Columns, Network, Table2, BookOpen, X, GripVertical } from "lucide-react";
+import { Plus, ArrowLeft, LayoutGrid, Columns, Network, Table2, BookOpen, Grid3X3, X, GripVertical } from "lucide-react";
 import { useUserStore } from "@/stores/userStore";
 
 // Existing components (reuse these)
@@ -164,6 +164,7 @@ const EntityWorkspaceNew = ({
   renderActionButtons, // NEW: Allow domains to provide custom action buttons
   renderTableView, // Table view renderer for combined environmental plan table
   renderNavigatorView, // Navigator view renderer for krav-by-krav navigation
+  renderMatrixView, // Matrix view renderer for traceability matrix
   useWorkspaceUIHook, // NEW: Allow domains to provide their workspace-specific UI hook
   viewOptions = {},
   debug = false,
@@ -205,7 +206,7 @@ const EntityWorkspaceNew = ({
   // Sync viewMode with URL ?view= param (two-way)
   useEffect(() => {
     const viewParam = searchParams.get('view');
-    if (viewParam && ['split', 'cards', 'table', 'navigator'].includes(viewParam) && ui.viewMode !== viewParam) {
+    if (viewParam && ['split', 'cards', 'table', 'navigator', 'matrix'].includes(viewParam) && ui.viewMode !== viewParam) {
       ui.setViewMode(viewParam);
     }
   }, []); // Only on mount — URL → store
@@ -603,7 +604,7 @@ const EntityWorkspaceNew = ({
       ui.setSelectedEntity(enhancedNewEntity);
 
       // Open modal overlay for views without a built-in detail pane
-      if (ui.viewMode === "cards" || ui.viewMode === "navigator") {
+      if (ui.viewMode === "cards" || ui.viewMode === "navigator" || ui.viewMode === "matrix") {
         setShowCreateModal(true);
       }
 
@@ -922,6 +923,18 @@ const EntityWorkspaceNew = ({
                     <BookOpen className="w-4 h-4" />
                   </Button>
                 )}
+                {/* Matrix View Toggle */}
+                {renderMatrixView && (
+                  <Button
+                    variant={ui.viewMode === "matrix" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => ui.setViewMode("matrix")}
+                    className="h-8 w-8 p-0"
+                    title="Sporingsmatrise"
+                  >
+                    <Grid3X3 className="w-4 h-4" />
+                  </Button>
+                )}
                 {/* Flow View Toggle - Optional */}
                 {onFlowToggle && (
                   <Button
@@ -1040,14 +1053,13 @@ const EntityWorkspaceNew = ({
 
         {/* Main content - conditional rendering based on viewMode */}
         <div className="flex-1 min-h-0">
-          {ui.viewMode === "navigator" && renderNavigatorView ? (
-            /* ═══════════════════════════════════════════════════════════
-             * NAVIGATOR VIEW MODE
-             * ═══════════════════════════════════════════════════════════
-             * One krav per page with all its tiltak below.
-             * Navigate between krav with arrows/keyboard.
-             * All fields inline-editable.
-             * ═══════════════════════════════════════════════════════════ */
+          {ui.viewMode === "matrix" && renderMatrixView ? (
+            renderMatrixView({
+              entities,
+              dto,
+              onEntitySelect: handleEntitySelect,
+            })
+          ) : ui.viewMode === "navigator" && renderNavigatorView ? (
             renderNavigatorView({
               entities,
               dto,
